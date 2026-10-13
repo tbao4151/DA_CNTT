@@ -1,0 +1,31 @@
+name: Fetch CTU-13 Scenario 7 dataset
+
+on:
+  push:
+    paths:
+      - ".github/workflows/fetch-ctu13.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download and validate original dataset
+        run: python3 scripts/download_ctu13.py
+      - name: Commit verified dataset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/raw/ctu13_scenario_07/
+          if ! git diff --cached --quiet; then
+            git commit -m "data: add original CTU-13 scenario 7 labeled network flows"
+            git push origin HEAD:main
+          fi
