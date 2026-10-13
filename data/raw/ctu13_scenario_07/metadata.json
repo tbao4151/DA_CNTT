@@ -1,0 +1,19 @@
+{
+  "dataset": "CTU-13",
+  "scenario": 7,
+  "malware": "Sogou",
+  "filename": "capture20110816-2.binetflow",
+  "source_url": "https://mcfp.felk.cvut.cz/publicDatasets/CTU-Malware-Capture-Botnet-48/detailed-bidirectional-flow-labels/capture20110816-2.binetflow",
+  "download_verified_utc": "2026-10-13T06:32:50.612172+00:00",
+  "size_bytes": 15630512,
+  "sha256": "df0b5338190b967bd340a0d6c1bb3c34d1bbfb4b7ffa764c2dd26f77f1a26680",
+  "column_count": 15,
+  "record_count": 114077,
+  "coarse_label_counts": {
+    "Background": 112337,
+    "Botnet-related": 63,
+    "Normal": 1677
+  },
+  "license": "CC BY (see source website)",
+  "citation_doi": "10.1016/j.cose.2014.05.011"
+}
