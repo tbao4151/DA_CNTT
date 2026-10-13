@@ -1,0 +1,50 @@
+{
+  "dataset": "UNSW-NB15",
+  "variant": "official train/test partition",
+  "official_source": "https://research.unsw.edu.au/projects/unsw-nb15-dataset",
+  "mirror": "https://raw.githubusercontent.com/Nir-J/ML-Projects/master/UNSW-Network_Packet_Classification/",
+  "files": {
+    "UNSW_NB15_training-set.csv": {
+      "records": 175341,
+      "sha256": "bec7dd5ec88dc2a0ccc7a07879d338395ed7421750f675fd0339e07dfe0648fa",
+      "bytes": 32293018,
+      "binary_labels": {
+        "0": 56000,
+        "1": 119341
+      },
+      "attack_categories": {
+        "Analysis": 2000,
+        "Backdoor": 1746,
+        "DoS": 12264,
+        "Exploits": 33393,
+        "Fuzzers": 18184,
+        "Generic": 40000,
+        "Normal": 56000,
+        "Reconnaissance": 10491,
+        "Shellcode": 1133,
+        "Worms": 130
+      }
+    },
+    "UNSW_NB15_testing-set.csv": {
+      "records": 82332,
+      "sha256": "734fe6642edf758f7c94d7d9149426b49d202fe8e7bf0bef47392489c3c0a559",
+      "bytes": 15380800,
+      "binary_labels": {
+        "0": 37000,
+        "1": 45332
+      },
+      "attack_categories": {
+        "Analysis": 677,
+        "Backdoor": 583,
+        "DoS": 4089,
+        "Exploits": 11132,
+        "Fuzzers": 6062,
+        "Generic": 18871,
+        "Normal": 37000,
+        "Reconnaissance": 3496,
+        "Shellcode": 378,
+        "Worms": 44
+      }
+    }
+  }
+}
