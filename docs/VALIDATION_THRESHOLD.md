@@ -65,3 +65,27 @@ Workflow kiểm tra checksum trước khi chạy và chỉ xuất
 14 ngày. Kết quả phải báo cả thay đổi false positives **và** false
 negatives/recall, không tự chọn lại ngưỡng từ test. Không tự động áp
 ngưỡng này vào giao diện cảnh báo SOC.
+
+## Kết quả official test đã xác minh (không tối ưu lại)
+
+Workflow [40373007093](https://github.com/tbao4151/DA_CNTT/actions/runs/40373007093)
+đã thành công trên 82.332 flow official test với Random Forest được
+huấn luyện trên toàn bộ 175.341 flow official training. Báo cáo lưu tại
+`reports/official_locked_threshold_comparison.json`.
+
+| Chỉ số | Baseline 0,50 | Ngưỡng khóa 0,55 |
+| --- | ---: | ---: |
+| TP | 44.467 | 44.125 |
+| FP | 8.400 | 7.135 |
+| TN | 28.600 | 29.865 |
+| FN | 865 | 1.207 |
+| Attack Precision | 84,11% | 86,08% |
+| Attack Recall | 98,09% | 97,34% |
+| Attack F1 | 90,57% | 91,36% |
+
+Giảm 1.265 false positives tương đương khoảng 15,06% so với baseline,
+đổi lại **tăng 342 false negatives**. Ngưỡng 0,55 được chọn từ
+validation trước khi chạy official test, **không** được điều chỉnh theo
+kết quả này. Không suy diễn thành tỷ lệ phát hiện tấn công ngoài thực tế;
+chưa có kiểm thử Windows end-to-end và chưa triển khai ngưỡng mới trên
+SOC dashboard.
