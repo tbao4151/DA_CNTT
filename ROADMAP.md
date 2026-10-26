@@ -20,7 +20,7 @@
 - [ ] Kiểm thử Streamlit end-to-end trên Windows, sửa lỗi môi trường và các trường hợp biên (đã bổ sung smoke test AppTest không có model và integration test AI → SQLite SOC với dữ liệu tổng hợp; vẫn chưa phải E2E Windows).
 - [x] Huấn luyện Random Forest trên train/test chính thức, lưu metrics thật và artifact (GitHub Actions).
 - [ ] Tái lập benchmark độc lập trên môi trường sạch và xác minh artifact chạy với giao diện.
-- [x] Xây dựng và chạy chính sách chọn ngưỡng chỉ trên validation từ tập training: Actions 40366465257 thành công, ứng viên 0,55. Workflow đánh giá ứng viên đã khóa trên official test đang chờ chạy; chưa tích hợp tự động vào dashboard.
+- [x] Xây dựng và chạy chính sách chọn ngưỡng chỉ trên validation từ tập training: Actions 40366465257 thành công, ứng viên 0,55. Workflow đánh giá ứng viên đã khóa trên official test đã thành công (Actions 40373007093): FP giảm 1.265 nhưng FN tăng 342; chưa tích hợp tự động vào dashboard.
 - [ ] Bổ sung so sánh Logistic Regression / Random Forest / Gradient Boosting.
 - [ ] Thêm explainability (feature importance hoặc permutation importance trên tập cố định).
 - [ ] Nâng UX demo (đã bổ sung phân tích ngưỡng và bằng chứng flow đầy đủ cho case mới; còn lọc đa chiều và xuất báo cáo case).
