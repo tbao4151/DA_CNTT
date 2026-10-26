@@ -69,10 +69,17 @@ ROADMAP.md                  Mục tiêu / thứ tự ưu tiên
 
 **Xuất CSV an toàn:** Kết quả threat hunting được xử lý để chuỗi bắt đầu bằng ký tự công thức không tự thực thi khi mở bằng ứng dụng bảng tính. Giá trị text nguy hiểm được thêm dấu nháy đơn, vì vậy CSV xuất phục vụ xem và không phải bản sao nguyên trạng của dữ liệu gốc.
 
+## Phân tích ngưỡng ngay trên dashboard
+
+Tab **AI & đánh giá** có bảng và biểu đồ Precision, Recall, False Positive Rate theo ngưỡng khi có mô hình và nhãn ground truth 0/1. Đây là **phân tích trên mẫu đang tải** (mặc định là những dòng đầu của test), không phải kết quả chính thức trên toàn bộ test và không dùng để chọn ngưỡng triển khai. CSV không có nhãn chỉ hiển thị số lượng cảnh báo theo ngưỡng. Xem [docs/THRESHOLD_EVALUATION.md](docs/THRESHOLD_EVALUATION.md).
+
 ## Kiểm thử
 
 ```powershell
 python -m pytest -q tests
+
+# Bao gồm smoke test Streamlit không cần trình duyệt (AppTest).
+# Chưa thay thế kiểm thử thủ công với model trên Windows.
 ```
 
 ## Dữ liệu và trích dẫn
