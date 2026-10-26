@@ -92,6 +92,16 @@ def predict_batch(model, rows: pd.DataFrame) -> pd.DataFrame:
     }, index=rows.index)
 
 
+def model_artifact_signature(path: str | Path) -> tuple[int, int]:
+    """Cache key for a local model; changes when its mtime or size changes.
+
+    Use metadata rather than hashing a potentially large joblib file on every
+    Streamlit rerun. The file must exist; callers handle OSError on replacement.
+    """
+    stat = Path(path).stat()
+    return stat.st_mtime_ns, stat.st_size
+
+
 def load_local_model(path: str | Path):
     # joblib relies on pickle. Load ONLY artifacts that you generated and trust.
     return joblib.load(path)

@@ -18,7 +18,7 @@ from siem_ai.core import (
     CASE_STATES, create_case, list_cases, update_case, validate_flows, assess_signal, flow_id,
     case_evidence, case_history
 )
-from siem_ai.model import load_local_model, predict_batch
+from siem_ai.model import load_local_model, model_artifact_signature, predict_batch
 from siem_ai.export import safe_csv_bytes
 from siem_ai.thresholds import threshold_diagnostics
 from siem_ai.explain import global_feature_importance
@@ -58,7 +58,9 @@ def load_official(path: str, limit: int) -> pd.DataFrame:
 
 
 @st.cache_resource(show_spinner="Đang tải mô hình AI...")
-def cached_model(path: str):
+def cached_model(path: str, artifact_signature: tuple[int, int]):
+    # Streamlit includes artifact_signature in the cache key, so replacing a
+    # locally trained model at the same path invalidates the cached instance.
     return load_local_model(path)
 
 
@@ -70,7 +72,7 @@ sample_size = st.sidebar.slider("Số bản ghi phân tích", 100, 10000, 2500, 
 st.sidebar.caption("Chạy trên dữ liệu lịch sử; không thu thập mạng thời gian thực.")
 st.sidebar.divider()
 st.sidebar.markdown("**Trạng thái mô hình**")
-trained = ARTIFACT.exists()
+trained = ARTIFACT.is_file()
 st.sidebar.write("Đã huấn luyện / có thể dự đoán" if trained else "Chưa có mô hình · chỉ khám phá dữ liệu")
 st.sidebar.caption("Để huấn luyện: python scripts/train_siem.py")
 
@@ -107,7 +109,7 @@ except (ValueError, TypeError) as exc:
 model = None
 if trained:
     try:
-        model = cached_model(str(ARTIFACT))
+        model = cached_model(str(ARTIFACT), model_artifact_signature(ARTIFACT))
     except Exception as exc:
         st.error(f"Không thể tải mô hình tin cậy cục bộ: {exc}")
 
