@@ -79,6 +79,10 @@ Tab **AI & đánh giá** có bảng và biểu đồ Precision, Recall, False Po
 
 Đã kiểm chứng trên validation thật: ứng viên ngưỡng **0,55** (Attack Recall 95,78%, 567 false positives trên 35.069 flow validation) từ [GitHub Actions #40366465257](https://github.com/tbao4151/DA_CNTT/actions/runs/40366465257). Kết quả **không được so sánh trực tiếp** với baseline test 0,50 vì khác mô hình/tập dữ liệu. Workflow `locked-threshold-test.yml` đánh giá ngưỡng đã khóa 0,55 và baseline 0,50 trên **cùng** full-training model và official test; không tự chọn lại ngưỡng dựa trên test. Workflow đã chạy thành công tại [Actions #40373007093](https://github.com/tbao4151/DA_CNTT/actions/runs/40373007093). Trên **82.332 flow official test**, ngưỡng 0,55 giảm false positives từ **8.400 xuống 7.135** (giảm 1.265, khoảng 15,1%) nhưng false negatives tăng từ **865 lên 1.207** (tăng 342); Attack Recall giảm từ **98,09% xuống 97,34%**, F1 tăng từ **90,57% lên 91,36%**. Đây là trade-off có đo đạc, không phải cải thiện đồng thời mọi chỉ số. Báo cáo lưu tại `reports/official_locked_threshold_comparison.json`. Chưa tự động áp ngưỡng 0,55 vào dashboard.
 
+
+
+**Báo cáo held-out test đã xác minh:** [reports/official_locked_threshold_metrics.json](reports/official_locked_threshold_metrics.json) (GitHub Actions [#40373007093](https://github.com/tbao4151/DA_CNTT/actions/runs/40373007093)). Khi dùng cùng full-training Random Forest trên 82.332 flow test, tăng ngưỡng đã khóa từ 0,50 lên 0,55 giảm FP 8.400 → 7.135 (−1.265), nhưng FN tăng 865 → 1.207 (+342); Attack Recall 98,09% → 97,34%; Attack F1 90,57% → 91,36%. **Có đánh đổi phát hiện**, không tự kích hoạt ngưỡng trong SOC dashboard hay kết luận sẵn sàng production.
+
 ## Kiểm thử
 
 Bộ kiểm thử còn có `tests/test_soc_integration.py`: huấn luyện mô hình nhỏ trên dữ liệu **tổng hợp** để xác minh luồng dự đoán AI → tạo SOC case → lưu bằng chứng → cập nhật và truy xuất audit trail. Đây là integration regression test, không phải benchmark UNSW-NB15 hay kiểm thử giao diện Windows.
