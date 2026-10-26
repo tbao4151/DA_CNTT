@@ -143,9 +143,9 @@
 - Post-merge main CI **passed**: Actions run `40392183591` at squash commit `2f809cd79b07798000c498be7ec433a48375b68a`. Windows end-to-end with the official model remains unverified.
 
 
-## 2026-10-27: Guard AI training against incomplete labels and derived-field leakage (PR pending)
+## 2026-10-27: Guard AI training against incomplete labels and derived-field leakage (PR #18 merged, CI verified)
 
 - Tightened `fit_and_evaluate` input checks: both train and held-out test must have complete 0/1 labels; missing/invalid labels fail early instead of silently passing a `dropna()`-based subset check.
 - Excluded dashboard-generated `AI_verdict`, `AI_attack_probability` and `flow_ref` alongside ground-truth columns from model training, preventing accidental target leakage when an already-enriched dataframe is reused.
 - Added regression tests for NaN, non-binary and string labels in both splits, plus a synthetic-data test asserting that derived columns are absent from fitted features and inference still works.
-- These are code changes, not a new official UNSW benchmark or an improvement in measured AI scores. PR CI and post-merge main CI must be verified separately; Windows end-to-end with official model remains unverified.
+- PR #18 merged as squash commit `4589f6d6168998f97662b8df72e9d2d892251709`. PR CI syntax + pytest passed (Actions run `40400840066`); post-merge main CI also passed (Actions run `40400969036`). No new official UNSW benchmark or improvement in measured AI scores is claimed. Windows end-to-end with official model remains unverified.
