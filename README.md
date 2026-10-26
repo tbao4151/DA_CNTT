@@ -77,6 +77,8 @@ Tab **AI & đánh giá** có bảng và biểu đồ Precision, Recall, False Po
 
 Để nghiên cứu giảm False Positive mà không tối ưu trên tập test chính thức, chạy `python scripts/select_validation_threshold.py`. Script chỉ đọc tập train, tách train/validation có phân tầng, tìm ngưỡng giảm cảnh báo nhầm với ràng buộc Recall tối thiểu 95%. Kết quả được lưu cục bộ trong `artifacts/validation_threshold.json`; không tự áp dụng vào dashboard hoặc thay đổi benchmark. Để chạy thí nghiệm trên GitHub, vào **Actions → Validation-only alert threshold experiment → Run workflow**. Workflow xác minh checksum, huấn luyện trên phần train của training split, kiểm tra JSON và cung cấp artifact `da005-validation-threshold` (lưu 14 ngày); không ghi kết quả lên repository và không thay đổi báo cáo official test. Xem [docs/VALIDATION_THRESHOLD.md](docs/VALIDATION_THRESHOLD.md).
 
+Đã kiểm chứng trên validation thật: ứng viên ngưỡng **0,55** (Attack Recall 95,78%, 567 false positives trên 35.069 flow validation) từ [GitHub Actions #40366465257](https://github.com/tbao4151/DA_CNTT/actions/runs/40366465257). Kết quả **không được so sánh trực tiếp** với baseline test 0,50 vì khác mô hình/tập dữ liệu. Workflow `locked-threshold-test.yml` đánh giá ngưỡng đã khóa 0,55 và baseline 0,50 trên **cùng** full-training model và official test; không tự chọn lại ngưỡng dựa trên test. Chỉ xem đây là benchmark sau khi workflow chạy thành công.
+
 ## Kiểm thử
 
 Bộ kiểm thử còn có `tests/test_soc_integration.py`: huấn luyện mô hình nhỏ trên dữ liệu **tổng hợp** để xác minh luồng dự đoán AI → tạo SOC case → lưu bằng chứng → cập nhật và truy xuất audit trail. Đây là integration regression test, không phải benchmark UNSW-NB15 hay kiểm thử giao diện Windows.
