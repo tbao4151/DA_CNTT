@@ -1,0 +1,61 @@
+name: Validation-only alert threshold experiment
+
+# Run once when this workflow is added/modified on main, or on demand.
+# Never tunes on the official testing set and never commits model binaries.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/validation-threshold.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: da005-validation-threshold-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validation-threshold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements-app.txt
+      - name: Install dependencies
+        run: python -m pip install -r requirements-app.txt
+      - name: Verify UNSW-NB15 files and checksums
+        run: python scripts/download_unsw_nb15.py
+      - name: Select threshold from training-only validation split
+        run: python scripts/select_validation_threshold.py
+      - name: Validate experimental report schema
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("artifacts/validation_threshold.json").read_text(encoding="utf-8"))
+          assert report["selection_source"] == "UNSW-NB15 official training split only"
+          assert report["training_rows_for_temporary_model"] + report["validation_rows"] == 175341
+          assert report["random_state"] == 42
+          assert report["validation_fraction"] == 0.2
+          assert 0.5 <= report["threshold"] <= 0.95
+          assert report["validation_metrics"]["recall_attack"] >= 0.95
+          m = report["validation_metrics"]
+          assert sum(m[k] for k in ("true_positive", "false_positive", "true_negative", "false_negative")) == report["validation_rows"]
+          print("Validation-only artifact passed consistency checks.")
+          PY
+      - name: Upload reproducible validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: da005-validation-threshold
+          path: artifacts/validation_threshold.json
+          if-no-files-found: error
+          retention-days: 14

@@ -24,3 +24,18 @@ score có thể khác. Quy trình nghiên cứu đúng là chọn trước phư�
 ngưỡng và ràng buộc trên validation; sau đó refit mô hình theo thiết kế
 đã khóa và đánh giá *một lần* trên official test. Không dùng test để
 điều chỉnh ngưỡng hoặc chọn mô hình.
+
+## Chạy kiểm chứng trên GitHub Actions
+
+GitHub Actions workflow `.github/workflows/validation-threshold.yml` có thể chạy
+thủ công (Actions → **Validation-only alert threshold experiment** → **Run workflow**),
+hoặc chạy khi chính workflow được thêm/sửa trên nhánh `main`.
+
+Các bước gồm xác thực tệp UNSW-NB15 và SHA-256, chọn ngưỡng chỉ từ
+validation của training, xác nhận tổng TP/FP/TN/FN và Recall >= 95%,
+sau đó lưu `validation_threshold.json` dưới artifact
+`da005-validation-threshold` (14 ngày). Workflow không tự commit JSON,
+không xuất mô hình joblib và không cập nhật benchmark test chính thức.
+
+Dù workflow chạy thành công, ngưỡng được chọn mới là **ứng viên từ
+validation**, không phải bằng chứng hiệu năng đã cải thiện trên official test.
