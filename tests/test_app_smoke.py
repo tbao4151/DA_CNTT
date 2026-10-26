@@ -15,3 +15,4 @@ def test_default_dashboard_loads_without_model():
     assert len(app.exception) == 0, [str(e.message) for e in app.exception]
     assert any("DA005" in title.value for title in app.title)
     assert len(app.tabs) == 5
+    assert any("So sánh ngưỡng đã khóa" in header.value for header in app.subheader)
