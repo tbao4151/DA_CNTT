@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from siem_ai.export import safe_csv_bytes
 from siem_ai.thresholds import threshold_diagnostics
 from siem_ai.explain import global_feature_importance
 from siem_ai.official_comparison import load_official_comparison
+from siem_ai.case_report import export_case_report
 
 st.set_page_config(
     page_title="DA005 | Sentinel Lab", page_icon=None,
@@ -335,6 +337,18 @@ with tabs[4]:
         picked = st.selectbox("Chọn hồ sơ", cases["case_id"].tolist(),
             format_func=lambda x: f"Case #{x}")
         current = cases.loc[cases["case_id"] == picked].iloc[0]
+        try:
+            report_json = export_case_report(DB, int(picked))
+        except (ValueError, OSError, sqlite3.DatabaseError) as exc:
+            st.warning(f"Không thể xuất hồ sơ: {exc}")
+        else:
+            st.download_button(
+                "Xuất hồ sơ điều tra (JSON)",
+                data=report_json,
+                file_name=f"da005_soc_case_{picked}.json",
+                mime="application/json",
+            )
+            st.caption("Bản xuất từ SQLite cục bộ; có thể chứa ghi chú nhạy cảm, không có chữ ký chống sửa đổi.")
         st.markdown("**Bằng chứng lưu khi tạo hồ sơ (flow snapshot)**")
         st.json(case_evidence(DB, picked))
         st.markdown("**Lịch sử điều tra (audit trail)**")
