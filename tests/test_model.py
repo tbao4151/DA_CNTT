@@ -1,10 +1,11 @@
 """Unit test for ML reproducibility and label-leakage prevention."""
+import os
 import sys
 from pathlib import Path
 import pandas as pd
 import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from siem_ai.model import fit_and_evaluate, predict_batch
+from siem_ai.model import fit_and_evaluate, model_artifact_signature, predict_batch
 
 def fixtures():
     rows=[]
@@ -61,3 +62,27 @@ def test_training_excludes_predictions_and_view_fields():
     })
     assert set(report["features"]) == trained_features
     assert len(predict_batch(model, df.iloc[16:])) == 8
+
+
+def test_model_cache_signature_changes_when_artifact_replaced(tmp_path):
+    artifact = tmp_path / "unsw_binary_rf.joblib"
+    artifact.write_bytes(b"first")
+    original = model_artifact_signature(artifact)
+    assert original[1] == 5
+
+    # A new artifact at the same path must generate a different Streamlit
+    # cache key even if the original model was already loaded.
+    artifact.write_bytes(b"new-model-content")
+    assert model_artifact_signature(artifact) != original
+
+    # Rewrites with unchanged file size must also invalidate the key.
+    same_size = artifact.stat().st_size
+    old_mtime = artifact.stat().st_mtime_ns
+    artifact.write_bytes(b"x" * same_size)
+    os.utime(artifact, ns=(old_mtime + 2_000_000_000, old_mtime + 2_000_000_000))
+    assert model_artifact_signature(artifact) != (old_mtime, same_size)
+
+
+def test_model_cache_signature_missing_artifact(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        model_artifact_signature(tmp_path / "missing.joblib")
