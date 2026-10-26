@@ -1,0 +1,41 @@
+{
+  "comparison_method": "single locked validation candidate vs 0.50 on identical test probabilities",
+  "validation_selection_run_id": 40366465257,
+  "validation_selection_source": "UNSW-NB15 official training split only",
+  "candidate_threshold": 0.55,
+  "baseline": {
+    "threshold": 0.5,
+    "true_positive": 44467,
+    "false_positive": 8400,
+    "true_negative": 28600,
+    "false_negative": 865,
+    "precision_attack": 0.8411107117861805,
+    "recall_attack": 0.9809185564281302,
+    "f1_attack": 0.9056507703744437,
+    "false_positive_rate": 0.22702702702702704,
+    "alerts": 52867
+  },
+  "candidate": {
+    "threshold": 0.55,
+    "true_positive": 44125,
+    "false_positive": 7135,
+    "true_negative": 29865,
+    "false_negative": 1207,
+    "precision_attack": 0.860807647288334,
+    "recall_attack": 0.973374216888732,
+    "f1_attack": 0.9136367401027,
+    "false_positive_rate": 0.19283783783783784,
+    "alerts": 51260
+  },
+  "delta_false_positive_candidate_minus_baseline": -1265,
+  "delta_false_negative_candidate_minus_baseline": 342,
+  "delta_recall_attack_candidate_minus_baseline": -0.007544339539398148,
+  "interpretation": "Held-out test comparison. Lower FP coincides with more missed attacks; no re-selection from test.",
+  "dataset_split": "UNSW-NB15 official testing partition",
+  "test_rows": 82332,
+  "model_origin": "GitHub Actions refit on 175341 official training rows",
+  "evaluation_run_id": 40373007093,
+  "evaluation_run_url": "https://github.com/tbao4151/DA_CNTT/actions/runs/40373007093",
+  "evaluated_commit": "188283d099d2db694363606f1769b357d67763cd",
+  "disclaimer": "Validation-locked candidate evaluated once on official test; not production performance and not grounds for further test-driven tuning."
+}
