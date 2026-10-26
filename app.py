@@ -19,6 +19,7 @@ from siem_ai.core import (
 )
 from siem_ai.model import load_local_model, predict_batch
 from siem_ai.export import safe_csv_bytes
+from siem_ai.thresholds import threshold_diagnostics
 
 st.set_page_config(
     page_title="DA005 | Sentinel Lab", page_icon=None,
@@ -172,6 +173,54 @@ with tabs[2]:
     else:
         st.warning("Có mô hình nhưng thiếu số liệu đánh giá đi kèm.")
     st.markdown("**Cơ chế:** Random Forest học từ tập train, kiểm thử trên tập test độc lập. Cột nhãn không được đưa vào đầu vào.")
+
+    st.divider()
+    st.subheader("Phân tích ngưỡng cảnh báo · tập dữ liệu đang xem")
+    st.caption(
+        "Chỉ là phân tích chẩn đoán trên các flow đang tải (thường là N dòng đầu), "
+        "KHÔNG phải benchmark chính thức, không đại diện toàn bộ test set. "
+        "Không chọn ngưỡng tối ưu dựa trên tập test."
+    )
+    if predictions is None:
+        st.info("Cần mô hình AI đã huấn luyện để phân tích ngưỡng.")
+    elif "label" not in results:
+        st.info("CSV không có nhãn gốc 0/1; chỉ có thể xem số cảnh báo, không thể tính Precision/Recall.")
+        counts = pd.DataFrame({
+            "Ngưỡng": [0.5, 0.6, 0.7, 0.8, 0.9],
+            "Số cảnh báo": [
+                int((results["AI_attack_probability"] >= t).sum())
+                for t in [0.5, 0.6, 0.7, 0.8, 0.9]
+            ],
+        })
+        st.dataframe(counts, hide_index=True, use_container_width=True)
+    elif results["label"].isna().any() or not results["label"].isin([0, 1]).all():
+        st.warning("Nhãn gốc phải đầy đủ và chỉ gồm 0/1; bỏ qua đánh giá theo ngưỡng.")
+    else:
+        diagnostic = threshold_diagnostics(
+            results["label"].to_numpy(),
+            results["AI_attack_probability"].to_numpy(),
+        )
+        st.dataframe(
+            diagnostic.rename(columns={
+                "threshold": "Ngưỡng", "true_positive": "TP", "false_positive": "FP",
+                "true_negative": "TN", "false_negative": "FN",
+                "precision_attack": "Precision", "recall_attack": "Recall",
+                "f1_attack": "F1", "false_positive_rate": "FPR", "alerts": "Cảnh báo",
+            }),
+            hide_index=True, use_container_width=True,
+        )
+        curves = diagnostic.melt(
+            id_vars="threshold",
+            value_vars=["precision_attack", "recall_attack", "false_positive_rate"],
+            var_name="metric", value_name="value",
+        )
+        st.plotly_chart(
+            px.line(curves, x="threshold", y="value", color="metric", markers=True,
+                    labels={"threshold": "Ngưỡng", "value": "Tỷ lệ", "metric": "Chỉ số"},
+                    title="Đánh đổi giữa Precision, Recall và False Positive Rate"),
+            use_container_width=True,
+        )
+
 with tabs[3]:
     st.subheader("Alert Queue · chỉ từ dự đoán mô hình")
     if predictions is None:
