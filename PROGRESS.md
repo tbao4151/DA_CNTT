@@ -26,4 +26,5 @@
   same flow retains its reference before and after model inference.
 - Reject non-finite confidence values and whitespace-only analyst notes.
 - Add regression tests for those cases.
-- Unit tests and syntax checks passed in GitHub Actions runs 40304227558 and 40304234394.\n- Merged as PR #2, squash commit 688a3a245a1ce0a4cfce47df88ae28c60111d7ce.
+- Unit tests and syntax checks passed in GitHub Actions runs 40304227558 and 40304234394.
+- Merged as PR #2, squash commit 688a3a245a1ce0a4cfce47df88ae28c60111d7ce.
