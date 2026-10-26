@@ -94,6 +94,8 @@ Khi máy có mô hình Random Forest đã huấn luyện, tab **AI & đánh giá
 
 Bộ kiểm thử còn có `tests/test_soc_integration.py`: huấn luyện mô hình nhỏ trên dữ liệu **tổng hợp** để xác minh luồng dự đoán AI → tạo SOC case → lưu bằng chứng → cập nhật và truy xuất audit trail. Đây là integration regression test, không phải benchmark UNSW-NB15 hay kiểm thử giao diện Windows.
 
+`tests/test_app_model_integration.py` chạy **Streamlit AppTest với mô hình Random Forest thật được huấn luyện trên dữ liệu tổng hợp**, dùng bản sao ứng dụng trong thư mục tạm để kiểm tra AI alert → tạo SOC case → xuất JSON mà không ghi vào cơ sở dữ liệu thực. Đây là kiểm thử giao diện không trình duyệt trên CI, **không** phải E2E Windows hoặc benchmark UNSW-NB15.
+
 
 ```powershell
 python -m pytest -q tests
