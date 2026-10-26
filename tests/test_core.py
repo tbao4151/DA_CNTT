@@ -54,7 +54,7 @@ def test_case_rejects_invalid_confidence(tmp_path, confidence):
         create_case(tmp_path / "cases.sqlite3", row=record(), verdict="Attack", confidence=confidence)
 
 
-@pytest.mark.parametrize("note", [" ", "\\n  \\t", "x" * 2001])
+@pytest.mark.parametrize("note", [" ", "\n  \t", "x" * 2001])
 def test_case_rejects_empty_or_oversized_notes(tmp_path, note):
     db = tmp_path / "cases.sqlite3"
     case_id = create_case(db, row=record(), verdict="Attack", confidence=0.7)
