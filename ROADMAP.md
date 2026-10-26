@@ -16,8 +16,10 @@
 - [x] Cấu trúc MVP Mini-SIEM bằng Streamlit, thư viện phân tích, SQLite.
 - [x] Script Random Forest train/test không đưa nhãn vào features.
 - [x] CI khởi tạo (trạng thái chạy cần xác minh).
-- [ ] Kiểm thử thực tế CI, sửa lỗi môi trường và các trường hợp biên.
-- [ ] Huấn luyện mô hình, lưu metrics thật, xác minh reproducibility.
+- [x] CI syntax và unit tests đã chạy thành công (GitHub Actions, bao gồm PR #4); vẫn cần kiểm thử giao diện end-to-end trên Windows.
+- [ ] Kiểm thử Streamlit end-to-end trên Windows, sửa lỗi môi trường và các trường hợp biên.
+- [x] Huấn luyện Random Forest trên train/test chính thức, lưu metrics thật và artifact (GitHub Actions).
+- [ ] Tái lập benchmark độc lập trên môi trường sạch và xác minh artifact chạy với giao diện.
 - [ ] Bổ sung so sánh Logistic Regression / Random Forest / Gradient Boosting.
 - [ ] Thêm explainability (feature importance hoặc permutation importance trên tập cố định).
 - [ ] Nâng UX demo (lọc đa chiều, case evidence, export báo cáo).
