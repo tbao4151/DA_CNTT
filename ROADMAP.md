@@ -23,7 +23,7 @@
 - [ ] Bổ sung so sánh Logistic Regression / Random Forest / Gradient Boosting.
 - [ ] Thêm explainability (feature importance hoặc permutation importance trên tập cố định).
 - [ ] Nâng UX demo (lọc đa chiều, case evidence, export báo cáo).
-- [ ] Kiểm thử an toàn tệp đầu vào và giới hạn tài nguyên.
+- [ ] Kiểm thử an toàn tệp đầu vào và giới hạn tài nguyên (đã bổ sung bảo vệ CSV formula injection ở đường xuất; chưa hoàn tất kiểm thử upload, file lớn và tài nguyên).
 - [ ] Tài liệu kiến trúc, threat model, kịch bản demo và câu hỏi hội đồng.
 - [ ] Đề nghị GVHD xác nhận phạm vi Network Flow Logs và nghiệp vụ SOC.
 
