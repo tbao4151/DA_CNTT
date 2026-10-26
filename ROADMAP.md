@@ -17,7 +17,7 @@
 - [x] Script Random Forest train/test không đưa nhãn vào features.
 - [x] CI khởi tạo (trạng thái chạy cần xác minh).
 - [x] CI syntax và unit tests đã chạy thành công (GitHub Actions, bao gồm PR #4); vẫn cần kiểm thử giao diện end-to-end trên Windows.
-- [ ] Kiểm thử Streamlit end-to-end trên Windows, sửa lỗi môi trường và các trường hợp biên (đã bổ sung smoke test AppTest cho chế độ không có model; CI đang chờ xác minh).
+- [ ] Kiểm thử Streamlit end-to-end trên Windows, sửa lỗi môi trường và các trường hợp biên (đã bổ sung smoke test AppTest cho chế độ không có model; CI PR #7 thành công, chưa phải E2E Windows).
 - [x] Huấn luyện Random Forest trên train/test chính thức, lưu metrics thật và artifact (GitHub Actions).
 - [ ] Tái lập benchmark độc lập trên môi trường sạch và xác minh artifact chạy với giao diện.
 - [ ] Bổ sung so sánh Logistic Regression / Random Forest / Gradient Boosting.
