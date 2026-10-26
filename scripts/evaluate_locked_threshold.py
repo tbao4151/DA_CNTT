@@ -27,7 +27,6 @@ DEFAULT_OUTPUT = ROOT / "artifacts/locked_threshold_official_test.json"
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--test", type=Path, default=DEFAULT_TEST)
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
     parser.add_argument("--selection", type=Path, default=DEFAULT_SELECTION)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -36,12 +35,10 @@ def main():
     if not args.model.is_file():
         parser.error("Trusted locally trained model is missing; run python scripts/train_siem.py")
     selection = json.loads(args.selection.read_text(encoding="utf-8"))
-    frame = pd.read_csv(args.test)
+    # Fixed official held-out partition; the CLI does not accept arbitrary test data.
+    frame = pd.read_csv(DEFAULT_TEST)
     if frame.empty or "label" not in frame or frame["label"].isna().any() or not frame["label"].isin([0, 1]).all():
         parser.error("Official testing CSV must contain complete binary ground-truth labels")
-    if args.test.resolve() == (ROOT / "data/raw/unsw_nb15/UNSW_NB15_training-set.csv").resolve():
-        parser.error("Do not evaluate the locked candidate on training data")
-
     # Ground truth is NEVER included among inference features.
     unlabeled = frame.drop(columns=["id", "label", "attack_cat"], errors="ignore")
     probabilities = predict_batch(load_local_model(args.model), unlabeled)["attack_probability"]
