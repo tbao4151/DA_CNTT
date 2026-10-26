@@ -41,11 +41,18 @@ jobs:
           from pathlib import Path
 
           selection = json.loads(Path("reports/validation_threshold_experiment.json").read_text(encoding="utf-8"))
+          original = json.loads(Path("artifacts/metrics.json").read_text(encoding="utf-8"))
           report = json.loads(Path("artifacts/locked_threshold_official_test.json").read_text(encoding="utf-8"))
           assert report["dataset_split"] == "UNSW-NB15 official testing partition"
           assert report["test_rows"] == 82332
           assert report["candidate_threshold"] == selection["threshold"] == 0.55
           assert report["validation_selection_run_id"] == selection["source_run_id"] == 40366465257
+          # Ensure 0.50 comparison agrees with the baseline emitted by the SAME fitted model.
+          cm = original["confusion_matrix_0_1"]
+          assert report["baseline"]["true_negative"] == cm[0][0]
+          assert report["baseline"]["false_positive"] == cm[0][1]
+          assert report["baseline"]["false_negative"] == cm[1][0]
+          assert report["baseline"]["true_positive"] == cm[1][1]
           for group in ("baseline", "candidate"):
               m = report[group]
               assert sum(m[k] for k in ("true_positive", "false_positive", "true_negative", "false_negative")) == 82332
