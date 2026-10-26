@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - "src/**"
-      - "scripts/train_siem.py"
+      - "scripts/**"
       - "app.py"
       - "tests/**"
       - "requirements*.txt"
@@ -26,6 +26,6 @@ jobs:
       - name: Install
         run: pip install -r requirements-app.txt
       - name: Syntax check
-        run: python -m compileall -q app.py src scripts/train_siem.py
+        run: python -m compileall -q app.py src scripts
       - name: Unit tests
         run: pytest -q tests/
