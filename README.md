@@ -75,7 +75,7 @@ Tab **AI & đánh giá** có bảng và biểu đồ Precision, Recall, False Po
 
 ## Chọn ngưỡng trên tập validation
 
-Để nghiên cứu giảm False Positive mà không tối ưu trên tập test chính thức, chạy `python scripts/select_validation_threshold.py`. Script chỉ đọc tập train, tách train/validation có phân tầng, tìm ngưỡng giảm cảnh báo nhầm với ràng buộc Recall tối thiểu 95%. Kết quả được lưu cục bộ trong `artifacts/validation_threshold.json`; không tự áp dụng vào dashboard hoặc thay đổi benchmark. Xem [docs/VALIDATION_THRESHOLD.md](docs/VALIDATION_THRESHOLD.md).
+Để nghiên cứu giảm False Positive mà không tối ưu trên tập test chính thức, chạy `python scripts/select_validation_threshold.py`. Script chỉ đọc tập train, tách train/validation có phân tầng, tìm ngưỡng giảm cảnh báo nhầm với ràng buộc Recall tối thiểu 95%. Kết quả được lưu cục bộ trong `artifacts/validation_threshold.json`; không tự áp dụng vào dashboard hoặc thay đổi benchmark. Để chạy thí nghiệm trên GitHub, vào **Actions → Validation-only alert threshold experiment → Run workflow**. Workflow xác minh checksum, huấn luyện trên phần train của training split, kiểm tra JSON và cung cấp artifact `da005-validation-threshold` (lưu 14 ngày); không ghi kết quả lên repository và không thay đổi báo cáo official test. Xem [docs/VALIDATION_THRESHOLD.md](docs/VALIDATION_THRESHOLD.md).
 
 ## Kiểm thử
 
