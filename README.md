@@ -41,7 +41,7 @@ streamlit run app.py
 
 Lệnh huấn luyện tạo `artifacts/unsw_binary_rf.joblib` và `artifacts/metrics.json` **trên máy của bạn**. Những file này được gitignore; chạy train có thể tốn thời gian/bộ nhớ. Chỉ tải model joblib do chính bạn tạo và tin cậy (pickle có thể thực thi mã).
 
-Sau khi có mô hình: Tab **AI & đánh giá** hiển thị kết quả test chính thức; **Trung tâm cảnh báo** hiển thị điểm dự đoán và tạo case; **SOC case management** lưu hồ sơ, bản chụp bằng chứng flow và lịch sử thay đổi trạng thái vào SQLite tại `runtime/soc_cases.sqlite3` (audit trail cho demo, không chống sửa đổi bởi người có quyền DB).
+Sau khi có mô hình: Tab **AI & đánh giá** hiển thị kết quả test chính thức; **Trung tâm cảnh báo** hiển thị điểm dự đoán và tạo case; **SOC case management** lưu hồ sơ, bản chụp các đặc trưng flow (không gồm nhãn gốc hoặc cột AI/UI phát sinh) và lịch sử thay đổi trạng thái vào SQLite tại `runtime/soc_cases.sqlite3` (audit trail cho demo, không chống sửa đổi bởi người có quyền DB).
 
 ## Cấu trúc mã nguồn
 
@@ -74,6 +74,9 @@ ROADMAP.md                  Mục tiêu / thứ tự ưu tiên
 Tab **AI & đánh giá** có bảng và biểu đồ Precision, Recall, False Positive Rate theo ngưỡng khi có mô hình và nhãn ground truth 0/1. Đây là **phân tích trên mẫu đang tải** (mặc định là những dòng đầu của test), không phải kết quả chính thức trên toàn bộ test và không dùng để chọn ngưỡng triển khai. CSV không có nhãn chỉ hiển thị số lượng cảnh báo theo ngưỡng. Xem [docs/THRESHOLD_EVALUATION.md](docs/THRESHOLD_EVALUATION.md).
 
 ## Kiểm thử
+
+Bộ kiểm thử còn có `tests/test_soc_integration.py`: huấn luyện mô hình nhỏ trên dữ liệu **tổng hợp** để xác minh luồng dự đoán AI → tạo SOC case → lưu bằng chứng → cập nhật và truy xuất audit trail. Đây là integration regression test, không phải benchmark UNSW-NB15 hay kiểm thử giao diện Windows.
+
 
 ```powershell
 python -m pytest -q tests
