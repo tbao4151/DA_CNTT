@@ -20,6 +20,7 @@ from siem_ai.core import (
 from siem_ai.model import load_local_model, predict_batch
 from siem_ai.export import safe_csv_bytes
 from siem_ai.thresholds import threshold_diagnostics
+from siem_ai.explain import global_feature_importance
 
 st.set_page_config(
     page_title="DA005 | Sentinel Lab", page_icon=None,
@@ -173,6 +174,42 @@ with tabs[2]:
     else:
         st.warning("Có mô hình nhưng thiếu số liệu đánh giá đi kèm.")
     st.markdown("**Cơ chế:** Random Forest học từ tập train, kiểm thử trên tập test độc lập. Cột nhãn không được đưa vào đầu vào.")
+
+    st.divider()
+    st.subheader("AI Explainability · mức độ quan trọng đặc trưng")
+    if model is None:
+        st.info("Cần mô hình Random Forest tin cậy đã huấn luyện để xem feature importance.")
+    else:
+        try:
+            importance = global_feature_importance(model)
+        except (ValueError, KeyError, AttributeError) as exc:
+            st.warning(f"Không thể phân tích feature importance cho mô hình này: {exc}")
+        else:
+            st.caption(
+                "Đây là mức độ giảm độ hỗn tạp (MDI / Gini importance) của Random Forest "
+                "trên mô hình đã huấn luyện; các cột one-hot được cộng lại theo đặc trưng đầu vào. "
+                "Không phải giải thích riêng cho một flow, không chứng minh quan hệ nhân quả. "
+                "MDI có thể thiên lệch đối với biến nhiều giá trị."
+            )
+            top_features = importance.head(12).sort_values("importance", ascending=True)
+            st.plotly_chart(
+                px.bar(top_features, x="importance_percent", y="feature", orientation="h",
+                       labels={"importance_percent": "Mức quan trọng MDI (%)",
+                               "feature": "Đặc trưng mạng"},
+                       title="12 đặc trưng có MDI cao nhất"),
+                use_container_width=True,
+            )
+            st.dataframe(
+                importance.rename(columns={
+                    "feature": "Đặc trưng", "importance": "MDI",
+                    "importance_percent": "MDI (%)", "encoded_dimensions": "Số chiều sau mã hóa",
+                }),
+                hide_index=True, use_container_width=True,
+            )
+            st.download_button(
+                "Xuất bảng MDI (CSV)", data=safe_csv_bytes(importance),
+                file_name="da005_global_feature_importance.csv", mime="text/csv",
+            )
 
     st.divider()
     st.subheader("Phân tích ngưỡng cảnh báo · tập dữ liệu đang xem")
