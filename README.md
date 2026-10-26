@@ -82,7 +82,7 @@ Tab **AI & đánh giá** có bảng và biểu đồ Precision, Recall, False Po
 
 ## Giải thích mô hình (global explainability)
 
-Khi máy có mô hình Random Forest đã huấn luyện, tab **AI & đánh giá** hiển thị 12 đặc trưng network flow có MDI (Gini importance) cao nhất, gộp các chiều one-hot về tên cột nguồn; có bảng tất cả đặc trưng và xuất CSV an toàn. Đây là **mức quan trọng toàn cục**, không phải giải thích cho từng cảnh báo, và có thể thiên lệch với biến nhiều giá trị. Không có mô hình sẽ không hiển thị kết quả giả. Xem [docs/EXPLAINABILITY.md](docs/EXPLAINABILITY.md).
+Khi máy có mô hình Random Forest đã huấn luyện, tab **AI & đánh giá** hiển thị 12 đặc trưng network flow có MDI (Gini importance) cao nhất, gộp các chiều one-hot về tên cột nguồn; có bảng tất cả đặc trưng và xuất CSV an toàn. Đây là **mức quan trọng toàn cục**, không phải giải thích cho từng cảnh báo, và có thể thiên lệch với biến nhiều giá trị. Không có mô hình sẽ không hiển thị kết quả giả. Xem [docs/EXPLAINABILITY.md](docs/EXPLAINABILITY.md). Để tạo bảng xếp hạng **thực nghiệm** từ full-training UNSW, chạy `python scripts/train_siem.py` rồi `python scripts/report_feature_importance.py`; xuất `artifacts/official_feature_importance.json` gồm 42 đặc trưng, checksum dataset và model. Có workflow **Official UNSW-NB15 global AI explainability** trên GitHub Actions để kiểm chứng; chỉ dùng bảng ranking sau khi run thành công.
 
 ## Kiểm thử
 
