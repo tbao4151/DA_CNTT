@@ -14,7 +14,8 @@ import plotly.express as px
 import streamlit as st
 
 from siem_ai.core import (
-    CASE_STATES, create_case, list_cases, update_case, validate_flows, assess_signal, flow_id
+    CASE_STATES, create_case, list_cases, update_case, validate_flows, assess_signal, flow_id,
+    case_evidence, case_history
 )
 from siem_ai.model import load_local_model, predict_batch
 
@@ -202,6 +203,14 @@ with tabs[4]:
         picked = st.selectbox("Chọn hồ sơ", cases["case_id"].tolist(),
             format_func=lambda x: f"Case #{x}")
         current = cases.loc[cases["case_id"] == picked].iloc[0]
+        st.markdown("**Bằng chứng lưu khi tạo hồ sơ (flow snapshot)**")
+        st.json(case_evidence(DB, picked))
+        st.markdown("**Lịch sử điều tra (audit trail)**")
+        history = case_history(DB, picked)
+        if history.empty:
+            st.caption("Hồ sơ được tạo trước khi có audit trail nên chưa có lịch sử.")
+        else:
+            st.dataframe(history, hide_index=True, use_container_width=True)
         state = st.selectbox("Trạng thái xử lý", CASE_STATES,
             index=CASE_STATES.index(current["state"]))
         note = st.text_area("Ghi chú điều tra (bắt buộc)", value=str(current["analyst_note"]),

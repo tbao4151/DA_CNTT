@@ -73,6 +73,15 @@ def ensure_case_db(path: str | Path) -> None:
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         )""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS case_events (
+            event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_id INTEGER NOT NULL,
+            old_state TEXT,
+            new_state TEXT NOT NULL,
+            note TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (case_id) REFERENCES cases(case_id)
+        )""")
 
 
 def create_case(path: str | Path, *, row: dict, verdict: str, confidence: float | None) -> int:
@@ -92,7 +101,36 @@ def create_case(path: str | Path, *, row: dict, verdict: str, confidence: float 
                VALUES (?,?,?,?,?,?)""",
             (flow_id(row), verdict, confidence, json.dumps(evidence), now, now),
         )
-        return int(cursor.lastrowid)
+        case_id = int(cursor.lastrowid)
+        conn.execute(
+            """INSERT INTO case_events (case_id,old_state,new_state,note,created_at)
+               VALUES (?,?,?,?,?)""",
+            (case_id, None, "New", "Case created from selected flow", now),
+        )
+        return case_id
+
+
+def case_evidence(path: str | Path, case_id: int) -> dict:
+    """Read the immutable feature snapshot captured when a case was opened."""
+    ensure_case_db(path)
+    with sqlite3.connect(path) as conn:
+        result = conn.execute(
+            "SELECT evidence_json FROM cases WHERE case_id=?", (int(case_id),)
+        ).fetchone()
+    if result is None:
+        raise ValueError("Case not found")
+    return json.loads(result[0])
+
+
+def case_history(path: str | Path, case_id: int) -> pd.DataFrame:
+    """Return chronological SOC state transitions; legacy cases may have none."""
+    ensure_case_db(path)
+    with sqlite3.connect(path) as conn:
+        return pd.read_sql_query(
+            "SELECT event_id,old_state,new_state,note,created_at "
+            "FROM case_events WHERE case_id=? ORDER BY event_id",
+            conn, params=(int(case_id),)
+        )
 
 
 def list_cases(path: str | Path) -> pd.DataFrame:
@@ -109,10 +147,20 @@ def update_case(path: str | Path, case_id: int, state: str, note: str) -> None:
         raise ValueError("Invalid case state")
     if not isinstance(note, str) or not 0 < len(note.strip()) <= 2000:
         raise ValueError("Analyst note must be 1..2000 non-whitespace characters")
+    ensure_case_db(path)
     with sqlite3.connect(path) as conn:
-        cursor = conn.execute(
-            "UPDATE cases SET state=?, analyst_note=?, updated_at=? WHERE case_id=?",
-            (state, note.strip(), datetime.now(timezone.utc).isoformat(), int(case_id)),
-        )
-        if cursor.rowcount != 1:
+        existing = conn.execute(
+            "SELECT state FROM cases WHERE case_id=?", (int(case_id),)
+        ).fetchone()
+        if existing is None:
             raise ValueError("Case not found")
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute(
+            "UPDATE cases SET state=?, analyst_note=?, updated_at=? WHERE case_id=?",
+            (state, note.strip(), now, int(case_id)),
+        )
+        conn.execute(
+            """INSERT INTO case_events (case_id,old_state,new_state,note,created_at)
+               VALUES (?,?,?,?,?)""",
+            (int(case_id), existing[0], state, note.strip(), now),
+        )
