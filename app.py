@@ -24,6 +24,7 @@ from siem_ai.thresholds import threshold_diagnostics
 from siem_ai.explain import global_feature_importance
 from siem_ai.official_comparison import load_official_comparison
 from siem_ai.case_report import export_case_report
+from siem_ai.hunting import filter_hunting_flows
 
 st.set_page_config(
     page_title="DA005 | Sentinel Lab", page_icon=None,
@@ -148,11 +149,20 @@ with tabs[0]:
 with tabs[1]:
     st.subheader("Truy vấn và phân tích flow")
     filter_proto = st.multiselect("Giao thức", sorted(results["proto"].dropna().astype(str).unique().tolist()))
-    filtered = results[results["proto"].astype(str).isin(filter_proto)] if filter_proto else results
+    filter_service = st.multiselect("Dịch vụ", sorted(results["service"].dropna().astype(str).unique().tolist()))
+    filter_state = st.multiselect("Trạng thái kết nối", sorted(results["state"].dropna().astype(str).unique().tolist()))
+    only_attack = False
+    min_probability = None
     if predictions is not None:
         only_attack = st.checkbox("Chỉ những flow AI dự đoán Attack")
-        if only_attack:
-            filtered = filtered[filtered["AI_verdict"] == "Attack"]
+        if st.checkbox("Lọc theo xác suất Attack tối thiểu"):
+            min_probability = st.slider("Xác suất Attack tối thiểu", 0.0, 1.0, 0.8, 0.05)
+    filtered = filter_hunting_flows(
+        results, protocols=filter_proto, services=filter_service,
+        states=filter_state, only_ai_attacks=only_attack,
+        min_attack_probability=min_probability,
+    )
+    st.caption(f"Đang hiển thị {len(filtered):,}/{len(results):,} flow của mẫu đã tải; bộ lọc không áp dụng cho toàn bộ tập dữ liệu.")
     fields = [c for c in ["flow_ref","proto","service","state","dur","sbytes","dbytes","rate",
                            "AI_verdict","AI_attack_probability","label","attack_cat"] if c in filtered]
     st.dataframe(filtered[fields], use_container_width=True, hide_index=True, height=420)
