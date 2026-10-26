@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,6 +15,9 @@ from pathlib import Path
 import pandas as pd
 
 LABEL_FIELDS = frozenset({"id", "label", "attack_cat"})
+# Predictions and UI-generated columns must never alter a flow content digest.
+DERIVED_FIELDS = frozenset({"AI_verdict", "AI_attack_probability", "flow_ref"})
+NON_FEATURE_FIELDS = LABEL_FIELDS | DERIVED_FIELDS
 REQUIRED_FEATURES = frozenset({"dur", "proto", "service", "state", "sbytes", "dbytes", "spkts", "dpkts"})
 CASE_STATES = ("New", "Investigating", "Escalated", "Resolved", "False Positive")
 MAX_UPLOAD_ROWS = 30000
@@ -34,7 +38,7 @@ def validate_flows(frame: pd.DataFrame, *, max_rows: int = MAX_UPLOAD_ROWS) -> p
 
 def flow_id(row: dict) -> str:
     """Stable digest of flow features, independent of ground truth and row ID."""
-    features = {str(k): str(v)[:256] for k, v in row.items() if k not in LABEL_FIELDS}
+    features = {str(k): str(v)[:256] for k, v in row.items() if k not in NON_FEATURE_FIELDS}
     raw = json.dumps(features, sort_keys=True, ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(raw).hexdigest()[:16]
 
@@ -75,7 +79,7 @@ def create_case(path: str | Path, *, row: dict, verdict: str, confidence: float 
     ensure_case_db(path)
     if verdict not in ("Attack", "Normal", "Unclassified"):
         raise ValueError("Invalid verdict")
-    if confidence is not None and not (0 <= confidence <= 1):
+    if confidence is not None and (not math.isfinite(confidence) or not 0 <= confidence <= 1):
         raise ValueError("Confidence must be in [0,1]")
     evidence = {
         k: str(row[k])[:256] for k in ("proto", "service", "state", "dur", "sbytes", "dbytes", "rate")
@@ -103,8 +107,8 @@ def list_cases(path: str | Path) -> pd.DataFrame:
 def update_case(path: str | Path, case_id: int, state: str, note: str) -> None:
     if state not in CASE_STATES:
         raise ValueError("Invalid case state")
-    if not 0 < len(note) <= 2000:
-        raise ValueError("Analyst note must be 1..2000 characters")
+    if not isinstance(note, str) or not 0 < len(note.strip()) <= 2000:
+        raise ValueError("Analyst note must be 1..2000 non-whitespace characters")
     with sqlite3.connect(path) as conn:
         cursor = conn.execute(
             "UPDATE cases SET state=?, analyst_note=?, updated_at=? WHERE case_id=?",

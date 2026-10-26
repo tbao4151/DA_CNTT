@@ -19,3 +19,11 @@
 ## Khi tiếp tục ở cuộc trò chuyện mới
 
 Đọc `README.md`, `PROGRESS.md`, `ROADMAP.md`, kiểm tra commit mới nhất/CI trước khi thêm mã. Không diễn giải kế hoạch là công việc đã hoàn thành.
+
+## 2026-10-26: SOC data-integrity hardening (PR pending)
+
+- Flow digests exclude AI-derived prediction columns and UI identifiers, so the
+  same flow retains its reference before and after model inference.
+- Reject non-finite confidence values and whitespace-only analyst notes.
+- Add regression tests for those cases.
+- CI pass and merge must be verified before marking this item complete.
