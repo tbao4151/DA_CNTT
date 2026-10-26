@@ -117,3 +117,10 @@
 - Added schema/integrity regression tests for feature coverage, sum of importance, provenance and rejection of feature mismatches.
 - Added `.github/workflows/explainability.yml` to train on official UNSW training data, verify checksums, validate report, and upload a 14-day JSON artifact without pushing model binaries.
 - Status at creation: PR CI and actual full-training workflow not yet verified. No specific UNSW feature ranking or Windows end-to-end results claimed.
+
+## 2026-10-27: Official global MDI experiment verified; permanent report PR pending
+
+- PR #14 merged as commit `3c088136e3bdb3ed3e19babfc8436d64b5ef4814`; PR CI passed 58 tests (run 40377736217). Post-merge main CI also passed (run 40377900386).
+- GitHub Actions [run 40377900643](https://github.com/tbao4151/DA_CNTT/actions/runs/40377900643) **success**: official dataset checksums verified, full 175,341-row training RandomForest fitted; global MDI grouped from fitted model and validated for 42 original features / 194 encoded dimensions; feature importance sums to 1. No test label used for attribution.
+- Measured top original features: `sttl` 10.31795%, `ct_state_ttl` 6.86247%, `rate` 5.30762%, `dload` 5.22735%, `sload` 4.49849%. Full measured report and workflow/commit provenance archived in `reports/official_global_feature_importance.json` on this PR; no fabricated rankings.
+- **Caveats:** Global MDI may favor high-cardinality predictors and is neither causal nor a per-alert explanation. A real-model Windows UI end-to-end test remains outstanding. No new model quality improvement claimed.
