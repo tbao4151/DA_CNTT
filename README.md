@@ -37,3 +37,25 @@ Kết quả sinh tại `reports/baseline_metrics.json`. Không báo cáo điểm
 ### Trích dẫn
 
 Moustafa, N. & Slay, J. (2015). *UNSW-NB15: a comprehensive data set for network intrusion detection systems*. MilCIS. Xem yêu cầu trích dẫn và phạm vi sử dụng học thuật tại trang UNSW chính thức.
+
+## Mini-SIEM research dashboard (MVP)
+
+This repository now includes a **read-only, historical dataset explorer**. It
+does not perform live intrusion detection or SOC incident handling yet.
+
+```bash
+python -m venv .venv
+# Windows: .venv\\Scripts\\activate
+# Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+python scripts/download_unsw_nb15.py  # only if data files are missing
+streamlit run app.py
+```
+
+Open the local Streamlit URL displayed in your terminal. Select the official
+train/test split and row count in the sidebar. The traffic charts use dataset
+**ground-truth labels**, not model predictions. To produce actual baseline
+metrics, run `python scripts/evaluate_unsw_nb15.py` separately; it can take time.
+
+Run offline checks with `python -m unittest discover -s tests -v`.
+See [ROADMAP.md](ROADMAP.md) and [PROGRESS.md](PROGRESS.md) for verified status.
