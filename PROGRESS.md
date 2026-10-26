@@ -158,8 +158,8 @@
 - PR #19 squash-merged into `main` at commit `be747503f13b853a4dccb3f41c76549b91595b18`; post-merge main CI also passed in run `40409401639`.
 - No new UNSW-NB15 model experiment, performance improvement, deployment or model threshold change claimed. Windows end-to-end with official trained model remains **unverified**.
 
-## 2026-10-27: Headless trained-model dashboard integration regression (PR pending)
+## 2026-10-27: Headless trained-model dashboard integration regression (PR #20 merged, CI verified)
 
 - Added `tests/test_app_model_integration.py`: in an isolated temporary app copy, fit a real Random Forest on **synthetic** network flows, load the saved trusted joblib artifact through Streamlit AppTest, create a case from an AI-generated alert, then verify the SQLite case and portable JSON export.
 - The test uses neither official UNSW test labels for fitting nor the real runtime database. It does **not** constitute an official benchmark or Windows browser end-to-end verification.
-- Test file syntax was checked in the local authoring environment; full GitHub Actions pytest/AppTest result is **pending** at the time of this entry.
+- Syntax was checked locally. GitHub Actions PR CI (full pytest suite including the new AppTest) **passed** in [run 40416651430](https://github.com/tbao4151/DA_CNTT/actions/runs/40416651430); PR #20 was squash-merged into `main` as `378edd77dac48060c6ed125e0693c7fbad012035`. Post-merge main CI status is tracked separately; Windows browser E2E remains unverified.
