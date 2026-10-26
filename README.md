@@ -73,6 +73,10 @@ ROADMAP.md                  Mục tiêu / thứ tự ưu tiên
 
 Tab **AI & đánh giá** có bảng và biểu đồ Precision, Recall, False Positive Rate theo ngưỡng khi có mô hình và nhãn ground truth 0/1. Đây là **phân tích trên mẫu đang tải** (mặc định là những dòng đầu của test), không phải kết quả chính thức trên toàn bộ test và không dùng để chọn ngưỡng triển khai. CSV không có nhãn chỉ hiển thị số lượng cảnh báo theo ngưỡng. Xem [docs/THRESHOLD_EVALUATION.md](docs/THRESHOLD_EVALUATION.md).
 
+## Chọn ngưỡng trên tập validation
+
+Để nghiên cứu giảm False Positive mà không tối ưu trên tập test chính thức, chạy `python scripts/select_validation_threshold.py`. Script chỉ đọc tập train, tách train/validation có phân tầng, tìm ngưỡng giảm cảnh báo nhầm với ràng buộc Recall tối thiểu 95%. Kết quả được lưu cục bộ trong `artifacts/validation_threshold.json`; không tự áp dụng vào dashboard hoặc thay đổi benchmark. Xem [docs/VALIDATION_THRESHOLD.md](docs/VALIDATION_THRESHOLD.md).
+
 ## Kiểm thử
 
 Bộ kiểm thử còn có `tests/test_soc_integration.py`: huấn luyện mô hình nhỏ trên dữ liệu **tổng hợp** để xác minh luồng dự đoán AI → tạo SOC case → lưu bằng chứng → cập nhật và truy xuất audit trail. Đây là integration regression test, không phải benchmark UNSW-NB15 hay kiểm thử giao diện Windows.
