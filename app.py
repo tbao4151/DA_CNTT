@@ -40,6 +40,7 @@ DB = ROOT / "runtime" / "soc_cases.sqlite3"
 DATA = ROOT / "data/raw/unsw_nb15"
 ARTIFACT = ROOT / "artifacts/unsw_binary_rf.joblib"
 METRICS = ROOT / "artifacts/metrics.json"
+OFFICIAL_METRICS = ROOT / "reports/official_baseline_metrics.json"
 
 
 @st.cache_data(show_spinner=False)
@@ -152,11 +153,12 @@ with tabs[1]:
 with tabs[2]:
     st.subheader("Kiểm tra mô hình AI")
     if not trained:
-        st.info("Chưa có mô hình đã huấn luyện. Dashboard hiện không tạo dự đoán AI.")
+        st.info("Máy chưa có mô hình để dự đoán. Có thể xem benchmark đã chạy trên GitHub Actions.")
         st.code("pip install -r requirements-app.txt\npython scripts/train_siem.py\nstreamlit run app.py")
-    elif METRICS.exists():
-        metrics = json.loads(METRICS.read_text(encoding="utf-8"))
-        st.caption("Chỉ số dưới đây từ tập test chính thức, không phải tập CSV đang xem.")
+    if METRICS.exists() or OFFICIAL_METRICS.exists():
+        report_file = METRICS if METRICS.exists() else OFFICIAL_METRICS
+        metrics = json.loads(report_file.read_text(encoding="utf-8"))
+        st.caption("Benchmark đã đo trên tập test chính thức; các điểm này KHÔNG phải kết quả của CSV đang xem.")
         report = metrics["classification_report"]
         a, b, c = st.columns(3)
         a.metric("Attack precision", f"{report['1']['precision']:.1%}")
