@@ -38,3 +38,25 @@ def test_case_lifecycle(tmp_path):
         update_case(path,key,"Made Up","note")
     with pytest.raises(ValueError, match="note"):
         update_case(path,key,"Resolved","")
+
+def test_id_ignores_ai_outputs_and_view_metadata():
+    base = record() | {"id": 7, "label": 1, "attack_cat": "DoS"}
+    with_predictions = base | {
+        "AI_verdict": "Attack", "AI_attack_probability": 0.987,
+        "flow_ref": "unrelated-ui-value",
+    }
+    assert flow_id(base) == flow_id(with_predictions)
+
+
+@pytest.mark.parametrize("confidence", [float("nan"), float("inf"), float("-inf"), -0.1, 1.1])
+def test_case_rejects_invalid_confidence(tmp_path, confidence):
+    with pytest.raises(ValueError, match="Confidence"):
+        create_case(tmp_path / "cases.sqlite3", row=record(), verdict="Attack", confidence=confidence)
+
+
+@pytest.mark.parametrize("note", [" ", "\\n  \\t", "x" * 2001])
+def test_case_rejects_empty_or_oversized_notes(tmp_path, note):
+    db = tmp_path / "cases.sqlite3"
+    case_id = create_case(db, row=record(), verdict="Attack", confidence=0.7)
+    with pytest.raises(ValueError, match="note"):
+        update_case(db, case_id, "Resolved", note)
