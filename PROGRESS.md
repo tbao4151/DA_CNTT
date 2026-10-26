@@ -141,3 +141,11 @@
 - UI exposes a download button in SOC Investigation Workspace. No external upload or public deployment is performed.
 - PR #17 merged as squash commit `2f809cd79b07798000c498be7ec433a48375b68a`. GitHub Actions CI passed on PR head `1c9210df2a239ff169a8d980ff6e36861133684d`: push run `40392002072` and pull_request run `40392025167` (syntax and pytest suite).
 - Post-merge main CI **passed**: Actions run `40392183591` at squash commit `2f809cd79b07798000c498be7ec433a48375b68a`. Windows end-to-end with the official model remains unverified.
+
+
+## 2026-10-27: Guard AI training against incomplete labels and derived-field leakage (PR pending)
+
+- Tightened `fit_and_evaluate` input checks: both train and held-out test must have complete 0/1 labels; missing/invalid labels fail early instead of silently passing a `dropna()`-based subset check.
+- Excluded dashboard-generated `AI_verdict`, `AI_attack_probability` and `flow_ref` alongside ground-truth columns from model training, preventing accidental target leakage when an already-enriched dataframe is reused.
+- Added regression tests for NaN, non-binary and string labels in both splits, plus a synthetic-data test asserting that derived columns are absent from fitted features and inference still works.
+- These are code changes, not a new official UNSW benchmark or an improvement in measured AI scores. PR CI and post-merge main CI must be verified separately; Windows end-to-end with official model remains unverified.
