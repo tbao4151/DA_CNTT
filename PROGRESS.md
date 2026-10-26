@@ -28,3 +28,13 @@
 - Add regression tests for those cases.
 - Unit tests and syntax checks passed in GitHub Actions runs 40304227558 and 40304234394.
 - Merged as PR #2, squash commit 688a3a245a1ce0a4cfce47df88ae28c60111d7ce.
+
+## 2026-10-26: Benchmark chính thức và tài liệu bảo vệ (đã xác minh)
+
+- PR #3 đã hợp nhất: regression test chống rò rỉ nhãn, workflow benchmark và `docs/DEFENSE_GUIDE.md`.
+- GitHub Actions CI chạy thành công trên main tại commit `bce488f74`.
+- Benchmark trên tập UNSW-NB15 train (175.341) / test (82.332) chạy thành công, xuất `reports/official_baseline_metrics.json`.
+- Attack Precision = 0.8411107; Recall = 0.9809186; F1 = 0.9056508; macro-F1 = 0.8831270. Confusion matrix [Normal, Attack] = [[28600,8400],[865,44467]].
+- Model joblib có trong GitHub Actions artifact ngắn hạn (7 ngày), không commit pickle binary vào repository. Có thể tự huấn luyện để tái tạo model.
+- Còn nhiều False Positive (8.400/37.000 bản ghi Normal), cần nghiên cứu ngưỡng cảnh báo, so sánh các mô hình, tăng tính giải thích và kiểm thử tích hợp.
+- Có kết quả AI thật nhưng **không đồng nghĩa đã hoàn thành sản phẩm Mini-SIEM**, chưa xác minh giao diện end-to-end trên Windows.
