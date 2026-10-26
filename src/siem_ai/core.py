@@ -90,9 +90,15 @@ def create_case(path: str | Path, *, row: dict, verdict: str, confidence: float 
         raise ValueError("Invalid verdict")
     if confidence is not None and (not math.isfinite(confidence) or not 0 <= confidence <= 1):
         raise ValueError("Confidence must be in [0,1]")
+    # Capture the same feature set used by flow_id for traceable SOC evidence.
+    # Ground-truth labels, row IDs and AI/UI-derived columns are stored separately
+    # (or omitted), never mixed into the original network-flow feature snapshot.
+    # String values are capped like flow_id; this is a human-readable snapshot,
+    # not a lossless typed serialization for re-running model inference.
     evidence = {
-        k: str(row[k])[:256] for k in ("proto", "service", "state", "dur", "sbytes", "dbytes", "rate")
-        if k in row
+        str(k): str(v)[:256]
+        for k, v in row.items()
+        if k not in NON_FEATURE_FIELDS
     }
     now = datetime.now(timezone.utc).isoformat()
     with sqlite3.connect(path) as conn:
