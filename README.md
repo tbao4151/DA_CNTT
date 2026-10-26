@@ -58,6 +58,15 @@ PROGRESS.md                 Công việc thực tế / phần còn thiếu
 ROADMAP.md                  Mục tiêu / thứ tự ưu tiên
 ```
 
+## Minh chứng benchmark AI và chuẩn bị bảo vệ
+
+- **Metrics thực nghiệm:** [reports/official_baseline_metrics.json](reports/official_baseline_metrics.json), sinh từ workflow huấn luyện toàn bộ trên GitHub Actions (không phải số giả).
+- **Mô hình Random Forest:** Attack Precision 84,11%; Recall 98,09%; F1 90,57%. Tập test 82.332 flow. Đây là baseline ban đầu, còn 8.400 false positives, cần tối ưu.
+- **Tài liệu vấn đáp:** [docs/DEFENSE_GUIDE.md](docs/DEFENSE_GUIDE.md).
+- **Tải model dùng cho demo:** vào [Actions → Official UNSW-NB15 benchmark](https://github.com/tbao4151/DA_CNTT/actions/workflows/benchmark.yml), mở lần chạy thành công và tải artifact `da005-unsw-random-forest`. Giải nén các file `unsw_binary_rf.joblib` và `metrics.json` vào thư mục `artifacts/` của project. Chỉ tải artifact do workflow tin cậy của repository tạo.
+- Nếu artifact quá hạn 7 ngày, chạy `python scripts/train_siem.py` trên máy để tạo lại model.
+- Dashboard có thể hiển thị benchmark từ file report GitHub ngay cả khi chưa có model; **chức năng dự đoán và cảnh báo chỉ hoạt động khi có model thực sự**.
+
 ## Kiểm thử
 
 ```powershell
