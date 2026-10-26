@@ -1,39 +1,78 @@
-# DA005 – Ứng dụng AI trong phân tích nhật ký hệ thống và phát hiện tấn công
+# DA005 — AI Applications in System Log Analysis and Attack Detection
 
-Môn **Dự án CNTT**, Khoa CNTT, Đại học Tôn Đức Thắng (TDTU).
+**Môn học:** Dự án CNTT — Đại học Tôn Đức Thắng (TDTU)  
+**Mã đề tài:** DA005 — Ứng dụng AI trong phân tích nhật ký hệ thống và phát hiện tấn công  
+**Nhóm:** Nguyễn Văn Thiên Bảo (52300179) & Đặng Triệu Vỹ (52300274)  
+**Giảng viên hướng dẫn:** Trương Đình Tú
 
-- GVHD: Trương Đình Tú
-- Nguyễn Văn Thiên Bảo – 52300179
-- Đặng Triệu Vỹ – 52300274
-- Phạm vi: Network Logs / network intrusion detection
-- **Dataset chính: UNSW-NB15 (standard train/test split)**
-- Dataset CTU-13 Scenario 7 trước đây được giữ lại tại `data/raw/ctu13_scenario_07/` để tham khảo, không dùng làm tập huấn luyện chính.
+## Sentinel Lab: Mini-SIEM + AI + SOC Workflow (Prototype)
 
-## UNSW-NB15
+Nhóm lựa chọn **Network Flow Logs**, thiết kế một **bản mô phỏng Mini-SIEM** với AI phát hiện tấn công và quy trình SOC Analyst. Sản phẩm chạy cục bộ, đọc tệp lưu lượng mạng lịch sử UNSW-NB15, cho phép phân tích tương tác, tạo cảnh báo từ mô hình đã huấn luyện và theo dõi hồ sơ điều tra.
 
-[Nguồn học thuật chính thức](https://research.unsw.edu.au/projects/unsw-nb15-dataset). Sử dụng 2 CSV với tổng 257.673 dòng, gồm train (175.341) và test (82.332). Nhãn `label`: 0=Normal, 1=Attack; `attack_cat`: loại tấn công. Bản train/test có 45 cột (gồm `id`, `label`, `attack_cat`), khác với bản raw đầy đủ 49 đặc trưng.
+**Phân biệt quan trọng:** Đây là prototype nghiên cứu, không phải SIEM/SOC vận hành thật; bản UNSW-NB15 train/test không cung cấp IP nguồn/đích và thời gian sự kiện gốc. Không được diễn giải thứ tự dòng là timeline thời gian. Các nhãn `label` / `attack_cat` chỉ là ground truth, **không phải input AI**.
 
-Hai tệp được lấy từ [bản sao Nir-J/ML-Projects](https://github.com/Nir-J/ML-Projects/tree/master/UNSW-Network_Packet_Classification) và **đối chiếu SHA-256** theo [tài liệu kiểm tra bản sao](https://github.com/ausyeah/intrusion-detection-imbalance/blob/main/data/README.md). Không tuyên bố đã xác minh byte-by-byte trực tiếp với SharePoint chính thức.
+## Chạy nhanh trên Windows 10/11
 
-### Tải và xác minh
+Yêu cầu Python 3.11 và Git:
 
-```bash
+```powershell
+git clone https://github.com/tbao4151/DA_CNTT.git
+cd DA_CNTT
+py -3.11 -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r requirements-app.txt
+streamlit run app.py
+```
+
+Truy cập URL cục bộ Streamlit hiển thị trong terminal (thường là http://localhost:8501). Giao diện mặc định cho phép **khám phá ground truth ngay cả khi chưa có mô hình**; hệ thống không giả lập dự đoán khi chưa train.
+
+Dataset đã có ở `data/raw/unsw_nb15/`. Nếu thiếu:
+
+```powershell
 python scripts/download_unsw_nb15.py
 ```
 
-### Huấn luyện baseline
+## Huấn luyện và tạo cảnh báo AI thực sự
 
-```bash
-pip install -r requirements.txt
-python scripts/evaluate_unsw_nb15.py
+```powershell
+python scripts/train_siem.py
+streamlit run app.py
 ```
 
-Kết quả sinh tại `reports/baseline_metrics.json`. Không báo cáo điểm số khi chưa thực thi huấn luyện và kiểm tra. Mọi tiền xử lý được fit chỉ trên train; test chính thức giữ nguyên. Không đưa `id`, `attack_cat` hay `label` vào đặc trưng. Chỉ số chính: precision, recall, F1 cho Attack, macro-F1, confusion matrix, average precision. Không chỉ dùng accuracy.
+Lệnh huấn luyện tạo `artifacts/unsw_binary_rf.joblib` và `artifacts/metrics.json` **trên máy của bạn**. Những file này được gitignore; chạy train có thể tốn thời gian/bộ nhớ. Chỉ tải model joblib do chính bạn tạo và tin cậy (pickle có thể thực thi mã).
 
-### Hạn chế
+Sau khi có mô hình: Tab **AI & đánh giá** hiển thị kết quả test chính thức; **Trung tâm cảnh báo** hiển thị điểm dự đoán và tạo case; **SOC case management** lưu lịch sử điều tra vào SQLite tại `runtime/soc_cases.sqlite3`.
 
-Đây là dữ liệu lưu lượng mạng có gán nhãn (flow features), không phải syslog nguyên bản hoặc nhật ký hệ điều hành. Dataset được tạo trong môi trường thử nghiệm; tỷ lệ Normal/Attack và giữa các loại tấn công chưa cân bằng, đặc biệt Worms và Shellcode có ít mẫu. Không suy luận trực tiếp hiệu quả thực tế khi triển khai trên hạ tầng mới.
+## Cấu trúc mã nguồn
 
-### Trích dẫn
+```text
+app.py                     Giao diện Streamlit
+src/siem_ai/core.py         Kiểm tra log, rules mẫu, quản lý SOC cases
+src/siem_ai/model.py        Huấn luyện, đánh giá và dự đoán
+scripts/train_siem.py       CLI tạo mô hình/metrics
+scripts/download_unsw_nb15.py Tải và kiểm tra SHA-256
+data/raw/unsw_nb15/         Train/test chính thức và metadata
+tests/                      Unit tests
+.github/workflows/ci.yml    Kiểm tra tự động
+PROGRESS.md                 Công việc thực tế / phần còn thiếu
+ROADMAP.md                  Mục tiêu / thứ tự ưu tiên
+```
 
-Moustafa, N. & Slay, J. (2015). *UNSW-NB15: a comprehensive data set for network intrusion detection systems*. MilCIS. Xem yêu cầu trích dẫn và phạm vi sử dụng học thuật tại trang UNSW chính thức.
+## Kiểm thử
+
+```powershell
+python -m pytest -q tests
+```
+
+## Dữ liệu và trích dẫn
+
+- UNSW-NB15 official description: https://research.unsw.edu.au/projects/unsw-nb15-dataset
+- Bản train/test: 175.341 và 82.332 bản ghi, gồm nhãn Normal/Attack cùng 9 nhóm tấn công.
+- Nguồn tải và SHA-256 của bản sao được ghi tại `data/raw/unsw_nb15/metadata.json`.
+- Moustafa, N. & Slay, J. (2015). *UNSW-NB15: A comprehensive data set for network intrusion detection systems*. MilCIS.
+
+Đánh giá bằng Attack Precision/Recall/F1, macro-F1, confusion matrix và average precision; accuracy một mình không đủ. Đây là đánh giá trên dataset nghiên cứu, không suy rộng thành hiệu suất production.
+
+## Trạng thái
+
+Xem **[PROGRESS.md](PROGRESS.md)** (đã làm, đã kiểm chứng) và **[ROADMAP.md](ROADMAP.md)** (chưa làm). Tài liệu này không tuyên bố có kết quả huấn luyện hay kiểm thử đã hoàn thành nếu chưa có bằng chứng.
