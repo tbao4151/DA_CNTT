@@ -22,7 +22,7 @@
 - [ ] Tái lập benchmark độc lập trên môi trường sạch và xác minh artifact chạy với giao diện.
 - [x] Xây dựng và chạy chính sách chọn ngưỡng chỉ trên validation từ tập training: Actions 40366465257 thành công, ứng viên 0,55. Workflow đánh giá ứng viên đã khóa trên official test đã thành công (Actions 40373007093): FP giảm 1.265 nhưng FN tăng 342; chưa tích hợp tự động vào dashboard.
 - [ ] Bổ sung so sánh Logistic Regression / Random Forest / Gradient Boosting.
-- [x] Thêm global MDI importance gộp one-hot theo cột network flow, kèm UI và kiểm thử hồi quy; chưa có permutation importance trên validation và chưa xác minh giao diện trên Windows với model thật.
+- [x] Thêm global MDI importance gộp one-hot theo cột network flow, kèm UI và kiểm thử hồi quy. Đã chuẩn bị workflow tạo báo cáo **MDI thực nghiệm trên UNSW-NB15** (chờ CI và kết quả); chưa có permutation importance trên validation và chưa xác minh giao diện trên Windows với model thật.
 - [ ] Nâng UX demo (đã bổ sung phân tích ngưỡng và bằng chứng flow đầy đủ cho case mới; còn lọc đa chiều và xuất báo cáo case).
 - [ ] Kiểm thử an toàn tệp đầu vào và giới hạn tài nguyên (đã bổ sung bảo vệ CSV formula injection ở đường xuất; chưa hoàn tất kiểm thử upload, file lớn và tài nguyên).
 - [ ] Tài liệu kiến trúc, threat model, kịch bản demo và câu hỏi hội đồng.

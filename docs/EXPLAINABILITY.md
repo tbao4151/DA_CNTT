@@ -56,3 +56,26 @@ xỉ 1 (100%) và tổng chiều sau mã hóa bằng số chiều đầu vào fi
 Chưa có kết quả feature ranking chính thức trước khi chạy với
 mô hình UNSW-NB15 thật. Không được dùng thứ hạng từ synthetic unit tests
 làm kết luận nghiên cứu.
+
+## Thực nghiệm tái lập trên UNSW-NB15 chính thức
+
+```powershell
+python scripts/download_unsw_nb15.py
+python scripts/train_siem.py
+python scripts/report_feature_importance.py
+```
+
+Script báo cáo sử dụng `artifacts/unsw_binary_rf.joblib` do người dùng
+hoặc workflow tin cậy **tự huấn luyện**, không tải pickle không rõ nguồn.
+Nó chỉ sử dụng cấu trúc RandomForest đã fitted; không đọc nhãn test để
+xếp hạng biến. Kết quả `artifacts/official_feature_importance.json`
+có danh sách xếp hạng, tổng trọng số (xấp xỉ 1), tên đặc trưng,
+số chiều sau one-hot, SHA-256 dữ liệu training và SHA-256 file mô hình.
+
+Workflow `.github/workflows/explainability.yml` trên GitHub Actions
+thực hiện đúng các bước và lưu artifact `da005-official-global-explainability`
+trong 14 ngày, **không tự động commit** kết quả hay pickle lên nhánh chính.
+Chỉ kết luận thứ hạng đặc trưng sau khi kiểm tra log CI và báo cáo.
+Đây là **MDI toàn cục từ mô hình được fitted**; không phải phép kiểm định
+độ quan trọng độc lập, không phải giải thích cho từng alert và có thể có
+thiên lệch do cardinality/tương quan.

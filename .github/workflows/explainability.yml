@@ -1,0 +1,66 @@
+name: Official UNSW-NB15 global AI explainability
+
+# Reproducible research job. Trigger once when workflow lands on main,
+# or manually. Never publish joblib or commit unverified feature ranking.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/explainability.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: da005-feature-importance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  feature-importance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements-app.txt
+      - name: Dependencies
+        run: python -m pip install -r requirements-app.txt
+      - name: Verify official UNSW splits and checksums
+        run: python scripts/download_unsw_nb15.py
+      - name: Fit real RandomForest baseline (official training only)
+        run: python scripts/train_siem.py
+      - name: Export global MDI importance report
+        run: python scripts/report_feature_importance.py
+      - name: Verify report integrity and leakage prevention
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("artifacts/official_feature_importance.json").read_text(encoding="utf-8"))
+          metrics = json.loads(Path("artifacts/metrics.json").read_text(encoding="utf-8"))
+          metadata = json.loads(Path("data/raw/unsw_nb15/metadata.json").read_text(encoding="utf-8"))
+          assert data["training_rows"] == metrics["train_size"] == 175341
+          assert data["training_csv_sha256"] == metadata["files"]["UNSW_NB15_training-set.csv"]["sha256"]
+          assert data["feature_count"] == len(metrics["features"]) == 42
+          assert data["uses_test_labels"] is False
+          assert set(x["feature"] for x in data["features"]) == set(metrics["features"])
+          assert not {"id", "label", "attack_cat"} & {x["feature"] for x in data["features"]}
+          assert abs(sum(x["mdi_importance"] for x in data["features"]) - 1.0) < 1e-8
+          assert data["encoded_feature_count"] >= len(metrics["features"])
+          assert all(x["mdi_importance"] >= 0 for x in data["features"])
+          print("Official-trained global MDI report passed integrity checks.")
+          PY
+      - name: Upload short-lived explainability evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: da005-official-global-explainability
+          path: artifacts/official_feature_importance.json
+          if-no-files-found: error
+          retention-days: 14
