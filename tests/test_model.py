@@ -32,3 +32,32 @@ def test_missing_label_is_error():
     df=fixtures()
     with pytest.raises(ValueError,match="label"):
         fit_and_evaluate(df.drop(columns=["label"]),df)
+
+
+@pytest.mark.parametrize("split", ["train", "test"])
+@pytest.mark.parametrize("invalid_label", [float("nan"), 2, "1"])
+def test_training_rejects_missing_or_nonbinary_labels(split, invalid_label):
+    df = fixtures()
+    train = df.iloc[:16].copy()
+    test = df.iloc[16:].copy()
+    target = train if split == "train" else test
+    target.loc[target.index[0], "label"] = invalid_label
+    with pytest.raises(ValueError, match="complete binary 0/1 labels"):
+        fit_and_evaluate(train, test)
+
+
+def test_training_excludes_predictions_and_view_fields():
+    df = fixtures()
+    # A dataframe previously processed by the dashboard must not leak
+    # predicted labels/probabilities or UI flow references into retraining.
+    df["AI_verdict"] = df["label"].map({0: "Normal", 1: "Attack"})
+    df["AI_attack_probability"] = df["label"].astype(float)
+    df["flow_ref"] = df.index.astype(str)
+    model, report = fit_and_evaluate(df.iloc[:16], df.iloc[16:])
+    trained_features = set(model.named_steps["preprocess"].feature_names_in_)
+    assert not trained_features.intersection({
+        "id", "label", "attack_cat", "AI_verdict",
+        "AI_attack_probability", "flow_ref",
+    })
+    assert set(report["features"]) == trained_features
+    assert len(predict_batch(model, df.iloc[16:])) == 8

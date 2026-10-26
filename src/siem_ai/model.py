@@ -14,19 +14,23 @@ from sklearn.metrics import average_precision_score, classification_report, conf
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-from .core import LABEL_FIELDS, REQUIRED_FEATURES
+from .core import NON_FEATURE_FIELDS, REQUIRED_FEATURES
 
 
 def fit_and_evaluate(train: pd.DataFrame, test: pd.DataFrame):
     if "label" not in train or "label" not in test:
         raise ValueError("Train and test need binary label column")
-    if not set(train["label"].dropna().unique()).issubset({0, 1}):
-        raise ValueError("Expected binary integer labels")
-    if not set(test["label"].dropna().unique()).issubset({0, 1}):
-        raise ValueError("Expected binary integer labels in test")
+    # A partial/missing target is not a valid supervised benchmark.  dropna()
+    # previously allowed NaNs to pass this check, failing later in sklearn.
+    if train["label"].isna().any() or not train["label"].isin([0, 1]).all():
+        raise ValueError("Expected complete binary 0/1 labels in train")
+    if test["label"].isna().any() or not test["label"].isin([0, 1]).all():
+        raise ValueError("Expected complete binary 0/1 labels in test")
     if not REQUIRED_FEATURES.issubset(train.columns) or not REQUIRED_FEATURES.issubset(test.columns):
         raise ValueError("Required UNSW features missing")
-    fields = [c for c in train.columns if c not in LABEL_FIELDS]
+    # Also exclude predictions and view-only fields when reusing a dashboard
+    # dataframe as training input; they are not original network features.
+    fields = [c for c in train.columns if c not in NON_FEATURE_FIELDS]
     if not set(fields).issubset(test.columns):
         raise ValueError("Test is missing training features")
     categories = [c for c in fields if train[c].dtype == "object"]
