@@ -87,13 +87,13 @@
 - Added `.github/workflows/validation-threshold.yml` to run training-only validation threshold selection with official UNSW-NB15 checksums.
 - Workflow checks JSON consistency and recall floor, uploads `validation_threshold.json` as a time-limited Actions artifact (14 days), without overwriting official test metrics or committing model artifacts.
 - PR #10 merged as commit `9107e116b8df228db66228f44c919ed89d95abf4`; PR CI **passed** (run `40366310170`).
-- Main workflow automatically started on merge: [Actions run 40366465257](https://github.com/tbao4151/DA_CNTT/actions/runs/40366465257). Its final result is **not yet verified**. No selected threshold or improved False Positive performance claimed.
+- Main workflow automatically started on merge: [Actions run 40366465257](https://github.com/tbao4151/DA_CNTT/actions/runs/40366465257). Its final result was later verified **successful**, with candidate selection 0.55; see the section below. This is validation-only performance, not test performance.
 
-## 2026-10-27: Locked candidate for held-out test (PR pending)
+## 2026-10-27: Locked candidate for held-out test (PR #11 merged, experiment verified)
 
 - Verified Actions run 40366465257 **success**: validation-only threshold 0.55 on 35,069 rows (TP 22,861; FP 567; TN 10,633; FN 1,008; Attack Recall 0.95776949; F1 0.96669979). This is a temporary model trained on 140,272 training rows, **not** official test performance.
 - Added a provenance-tracked immutable candidate report in `reports/validation_threshold_experiment.json`, locked threshold evaluator and regression tests, and `.github/workflows/locked-threshold-test.yml` to refit the model on all 175,341 training rows and compare 0.50/0.55 on the same official held-out test scores. Does not tune on official test or overwrite baseline metrics.
-- At time of this commit, locked official test workflow **has not been run**. No claim of reduced false positives or Windows end-to-end verification.
+- PR #11 merged as commit `188283d099d2db694363606f1769b357d67763cd`. PR CI and main CI **passed** (main run `40373007026`). Official held-out test workflow **passed** (run `40373007093`). Candidate 0.55 vs default 0.50 on 82,332 official test flows: FP **8,400 → 7,135** (−1,265; −15.06%); FN **865 → 1,207** (+342), Attack Precision **84.11% → 86.08%**, Attack Recall **98.09% → 97.34%**, F1 **90.57% → 91.36%**. Reports archived in `reports/official_locked_threshold_metrics.json`. This is a test-set tradeoff, not evidence of production readiness. Threshold not activated in dashboard and Windows end-to-end remains unverified.
 
 ## 2026-10-27: Official held-out comparison completed and verified
 
