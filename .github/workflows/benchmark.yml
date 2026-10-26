@@ -1,0 +1,58 @@
+name: Official UNSW-NB15 benchmark
+
+on:
+  push:
+    paths:
+      - ".github/workflows/benchmark.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements-app.txt
+      - name: Install dependencies
+        run: pip install -r requirements-app.txt
+      - name: Verify official split checksum and labels
+        run: python scripts/download_unsw_nb15.py
+      - name: Train on official training split and evaluate on testing split
+        run: python scripts/train_siem.py
+      - name: Validate measured scores and publish report
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m = json.loads(Path("artifacts/metrics.json").read_text(encoding="utf-8"))
+          assert m["train_size"] == 175341 and m["test_size"] == 82332
+          assert 0 <= m["classification_report"]["1"]["f1-score"] <= 1
+          assert len(m["confusion_matrix_0_1"]) == 2
+          out = Path("reports/official_baseline_metrics.json")
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(m, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+      - name: Store trained model as short-lived Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: da005-unsw-random-forest
+          path: |
+            artifacts/unsw_binary_rf.joblib
+            artifacts/metrics.json
+          retention-days: 7
+      - name: Commit scores only, not pickle model
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/official_baseline_metrics.json
+          if ! git diff --cached --quiet; then
+            git commit -m "research: publish measured UNSW-NB15 baseline metrics"
+            git push origin HEAD:main
+          fi
