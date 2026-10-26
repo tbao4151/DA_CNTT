@@ -17,12 +17,12 @@
 - [x] Script Random Forest train/test không đưa nhãn vào features.
 - [x] CI khởi tạo (trạng thái chạy cần xác minh).
 - [x] CI syntax và unit tests đã chạy thành công (GitHub Actions, bao gồm PR #4); vẫn cần kiểm thử giao diện end-to-end trên Windows.
-- [ ] Kiểm thử Streamlit end-to-end trên Windows, sửa lỗi môi trường và các trường hợp biên.
+- [ ] Kiểm thử Streamlit end-to-end trên Windows, sửa lỗi môi trường và các trường hợp biên (đã bổ sung smoke test AppTest cho chế độ không có model; CI đang chờ xác minh).
 - [x] Huấn luyện Random Forest trên train/test chính thức, lưu metrics thật và artifact (GitHub Actions).
 - [ ] Tái lập benchmark độc lập trên môi trường sạch và xác minh artifact chạy với giao diện.
 - [ ] Bổ sung so sánh Logistic Regression / Random Forest / Gradient Boosting.
 - [ ] Thêm explainability (feature importance hoặc permutation importance trên tập cố định).
-- [ ] Nâng UX demo (lọc đa chiều, case evidence, export báo cáo).
+- [ ] Nâng UX demo (đã bổ sung phân tích ngưỡng ngay trên dashboard; còn lọc đa chiều và xuất báo cáo case).
 - [ ] Kiểm thử an toàn tệp đầu vào và giới hạn tài nguyên (đã bổ sung bảo vệ CSV formula injection ở đường xuất; chưa hoàn tất kiểm thử upload, file lớn và tài nguyên).
 - [ ] Tài liệu kiến trúc, threat model, kịch bản demo và câu hỏi hội đồng.
 - [ ] Đề nghị GVHD xác nhận phạm vi Network Flow Logs và nghiệp vụ SOC.

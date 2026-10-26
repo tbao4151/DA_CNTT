@@ -54,10 +54,16 @@
 - Kiểm thử cục bộ riêng module export: `python -m pytest -q tests/test_export.py` → **3 passed**. GitHub Actions CI (syntax + toàn bộ unit tests) thành công tại runs **40319621687** và **40319638968**; PR #5 squash merge commit `e7ff8297ed2ca20a83748f21cdfba78ddffbfb47`. Chưa xác minh smoke test Streamlit/Windows.
 
 
-## 2026-10-26: Threshold diagnostics (PR pending)
+## 2026-10-26: Threshold diagnostics (PR #6 merged, CI verified)
 
 - Added `threshold_diagnostics` pure evaluator calculating TP/FP/TN/FN, Attack Precision/Recall/F1, false-positive rate and alert count at explicit thresholds.
 - Added input validation and unit regression tests for counts, malformed probabilities, labels and empty inputs.
 - Added `scripts/analyze_thresholds.py` to analyze probabilities from a **trusted locally trained model**, with CSV output under ignored `artifacts/`.
 - Added `docs/THRESHOLD_EVALUATION.md` explaining tradeoffs and avoiding choosing thresholds on the official test set.
-- Verification pending GitHub Actions CI; no new empirical threshold scores are claimed and no model settings were changed.
+- GitHub Actions CI success for PR head e73995a648ca5072c52e506079e32ecb27b79334 (run 40342277345); merged as PR #6, squash commit 40ea3ddf7138666bd37e7b02ece964f276817310. No new empirical threshold scores are claimed and no model settings were changed.
+
+## 2026-10-26: Dashboard threshold analysis and smoke test (PR pending)
+
+- Tab `AI & đánh giá` now includes per-threshold diagnostic table and Precision/Recall/FPR curves when a trusted local model and 0/1 ground-truth labels are available. For unlabeled CSV, only alert counts are shown; invalid labels do not produce fabricated metrics.
+- Explicit warnings distinguish the currently loaded subset from the official full held-out benchmark and prohibit tuning thresholds on the official test set.
+- Added Streamlit AppTest smoke test for startup without a trained model, using repository test data; GitHub Actions validation pending. This is **not** Windows E2E verification.

@@ -25,3 +25,7 @@ nhưng không báo cáo ngưỡng được lựa chọn trên test là kết qu�
 Bảng phân tích dựa trên dự đoán xác suất từ *mô hình thật*; không dùng nhãn
 gốc để tạo score. Mỗi lần chạy cần ghi checksum dữ liệu, phiên bản model và
 thiết lập môi trường nếu đưa vào báo cáo khoa học.
+
+## Dashboard tương tác
+
+Khi có mô hình tin cậy, tab **AI & đánh giá** hiển thị bảng TP/FP/TN/FN và đồ thị Precision/Recall/FPR ở các ngưỡng cố định. Kết quả chỉ tính trên các dòng đang xem, không tương đương số liệu full test trong báo cáo. CSV không có nhãn chỉ hiển thị số lượng cảnh báo. Không chọn ngưỡng từ biểu đồ test để rồi báo cáo chính biểu đồ đó là đánh giá độc lập.
