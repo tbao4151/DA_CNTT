@@ -21,6 +21,7 @@ from siem_ai.model import load_local_model, predict_batch
 from siem_ai.export import safe_csv_bytes
 from siem_ai.thresholds import threshold_diagnostics
 from siem_ai.explain import global_feature_importance
+from siem_ai.official_comparison import load_official_comparison
 
 st.set_page_config(
     page_title="DA005 | Sentinel Lab", page_icon=None,
@@ -45,6 +46,7 @@ DATA = ROOT / "data/raw/unsw_nb15"
 ARTIFACT = ROOT / "artifacts/unsw_binary_rf.joblib"
 METRICS = ROOT / "artifacts/metrics.json"
 OFFICIAL_METRICS = ROOT / "reports/official_baseline_metrics.json"
+OFFICIAL_COMPARISON = ROOT / "reports/official_locked_threshold_comparison.json"
 
 
 @st.cache_data(show_spinner=False)
@@ -174,6 +176,49 @@ with tabs[2]:
     else:
         st.warning("Có mô hình nhưng thiếu số liệu đánh giá đi kèm.")
     st.markdown("**Cơ chế:** Random Forest học từ tập train, kiểm thử trên tập test độc lập. Cột nhãn không được đưa vào đầu vào.")
+
+    st.divider()
+    st.subheader("So sánh ngưỡng đã khóa · official UNSW-NB15 test")
+    st.caption(
+        "Kết quả thực nghiệm trên toàn bộ tập test chính thức, đọc từ báo cáo đã lưu; "
+        "KHÔNG phải phân tích các dòng đang xem và KHÔNG cần tải mô hình cục bộ."
+    )
+    if OFFICIAL_COMPARISON.exists():
+        try:
+            comparison = load_official_comparison(OFFICIAL_COMPARISON)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            st.warning(f"Báo cáo so sánh ngưỡng không hợp lệ: {exc}")
+        else:
+            rows = []
+            for title, result in [("Baseline 0,50", comparison["baseline"]),
+                                  ("Validation-locked 0,55", comparison["candidate"])]:
+                rows.append({
+                    "Ngưỡng": title, "TP": result["true_positive"],
+                    "FP": result["false_positive"], "TN": result["true_negative"],
+                    "FN": result["false_negative"],
+                    "Precision": f'{result["precision_attack"]:.2%}',
+                    "Recall": f'{result["recall_attack"]:.2%}',
+                    "F1": f'{result["f1_attack"]:.2%}',
+                })
+            st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+            fp_col, fn_col = st.columns(2)
+            fp_col.metric("Thay đổi cảnh báo nhầm (FP)", f'{comparison["delta_false_positive_candidate_minus_baseline"]:+,}')
+            fn_col.metric("Thay đổi tấn công bỏ sót (FN)", f'{comparison["delta_false_negative_candidate_minus_baseline"]:+,}')
+            st.caption(
+                f'Nguồn: reports/official_locked_threshold_comparison.json · '
+                f'{comparison["test_rows"]:,} flows · '
+                f'Validation run #{comparison["validation_selection_run_id"]} · '
+                f'Test run #{comparison["evaluation_run_id"]}. '
+                "Dấu âm là giảm; không điều chỉnh ngưỡng theo kết quả test."
+            )
+            st.warning(
+                "Đánh đổi: giảm false positives có thể làm tăng false negatives. "
+                "Đây là kết quả trên dữ liệu nghiên cứu, không phải hiệu năng thực tế. "
+                "Ngưỡng Alert Queue không bị thay đổi tự động."
+            )
+    else:
+        st.info("Chưa có báo cáo so sánh ngưỡng official test trong repository.")
+
 
     st.divider()
     st.subheader("AI Explainability · mức độ quan trọng đặc trưng")
