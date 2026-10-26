@@ -1,0 +1,317 @@
+{
+  "dataset": "UNSW-NB15",
+  "training_partition": "official UNSW_NB15_training-set.csv",
+  "training_rows": 175341,
+  "training_csv_sha256": "bec7dd5ec88dc2a0ccc7a07879d338395ed7421750f675fd0339e07dfe0648fa",
+  "model_file_sha256": "fed02944fe22db574ad1e89cc708d4ed3c19c508a8c3aab42591c116460ebffd",
+  "model": "RandomForestClassifier",
+  "n_estimators": 100,
+  "random_state": 42,
+  "method": "mean decrease in impurity (MDI / Gini importance), grouped over one-hot dimensions",
+  "importance_scope": "global; fitted training model only",
+  "uses_test_labels": false,
+  "note": "Descriptive, potentially biased towards high-cardinality features. Not causal or per-flow explanation.",
+  "feature_count": 42,
+  "encoded_feature_count": 194,
+  "importance_sum": 1,
+  "features": [
+    {
+      "rank": 1,
+      "feature": "sttl",
+      "mdi_importance": 0.10317950779585612,
+      "mdi_percent": 10.317950779585612,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 2,
+      "feature": "ct_state_ttl",
+      "mdi_importance": 0.06862468541568437,
+      "mdi_percent": 6.862468541568437,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 3,
+      "feature": "rate",
+      "mdi_importance": 0.05307618863736863,
+      "mdi_percent": 5.307618863736863,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 4,
+      "feature": "dload",
+      "mdi_importance": 0.05227351054623088,
+      "mdi_percent": 5.227351054623088,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 5,
+      "feature": "sload",
+      "mdi_importance": 0.0449849025721029,
+      "mdi_percent": 4.49849025721029,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 6,
+      "feature": "state",
+      "mdi_importance": 0.0449826570406704,
+      "mdi_percent": 4.49826570406704,
+      "encoded_dimensions": 9
+    },
+    {
+      "rank": 7,
+      "feature": "sbytes",
+      "mdi_importance": 0.0346175904473396,
+      "mdi_percent": 3.46175904473396,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 8,
+      "feature": "tcprtt",
+      "mdi_importance": 0.03448395027059933,
+      "mdi_percent": 3.4483950270599326,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 9,
+      "feature": "dpkts",
+      "mdi_importance": 0.033420831405273105,
+      "mdi_percent": 3.3420831405273104,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 10,
+      "feature": "ct_dst_src_ltm",
+      "mdi_importance": 0.03200376778096568,
+      "mdi_percent": 3.2003767780965684,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 11,
+      "feature": "smean",
+      "mdi_importance": 0.031942654453861026,
+      "mdi_percent": 3.194265445386103,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 12,
+      "feature": "synack",
+      "mdi_importance": 0.030957728948554628,
+      "mdi_percent": 3.095772894855463,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 13,
+      "feature": "dttl",
+      "mdi_importance": 0.030001950491078917,
+      "mdi_percent": 3.0001950491078917,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 14,
+      "feature": "ct_srv_dst",
+      "mdi_importance": 0.02893226442903604,
+      "mdi_percent": 2.893226442903604,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 15,
+      "feature": "dur",
+      "mdi_importance": 0.02859180450549246,
+      "mdi_percent": 2.8591804505492457,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 16,
+      "feature": "dbytes",
+      "mdi_importance": 0.02721456259750861,
+      "mdi_percent": 2.721456259750861,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 17,
+      "feature": "sinpkt",
+      "mdi_importance": 0.02716520408512074,
+      "mdi_percent": 2.716520408512074,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 18,
+      "feature": "dmean",
+      "mdi_importance": 0.02618049919106494,
+      "mdi_percent": 2.618049919106494,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 19,
+      "feature": "sjit",
+      "mdi_importance": 0.024574815323453878,
+      "mdi_percent": 2.457481532345388,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 20,
+      "feature": "ct_srv_src",
+      "mdi_importance": 0.02456422266094792,
+      "mdi_percent": 2.4564222660947923,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 21,
+      "feature": "dinpkt",
+      "mdi_importance": 0.024465354744338832,
+      "mdi_percent": 2.446535474433883,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 22,
+      "feature": "proto",
+      "mdi_importance": 0.01997132000680931,
+      "mdi_percent": 1.997132000680931,
+      "encoded_dimensions": 133
+    },
+    {
+      "rank": 23,
+      "feature": "djit",
+      "mdi_importance": 0.01920922873649002,
+      "mdi_percent": 1.920922873649002,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 24,
+      "feature": "service",
+      "mdi_importance": 0.0163431079589014,
+      "mdi_percent": 1.6343107958901397,
+      "encoded_dimensions": 13
+    },
+    {
+      "rank": 25,
+      "feature": "ackdat",
+      "mdi_importance": 0.014420396911616375,
+      "mdi_percent": 1.4420396911616375,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 26,
+      "feature": "ct_dst_sport_ltm",
+      "mdi_importance": 0.013392887908329548,
+      "mdi_percent": 1.3392887908329547,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 27,
+      "feature": "ct_src_ltm",
+      "mdi_importance": 0.013235736283979758,
+      "mdi_percent": 1.3235736283979758,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 28,
+      "feature": "sloss",
+      "mdi_importance": 0.012356526631124996,
+      "mdi_percent": 1.2356526631124995,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 29,
+      "feature": "swin",
+      "mdi_importance": 0.011770287772064878,
+      "mdi_percent": 1.1770287772064878,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 30,
+      "feature": "dloss",
+      "mdi_importance": 0.011206442619689483,
+      "mdi_percent": 1.1206442619689483,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 31,
+      "feature": "ct_dst_ltm",
+      "mdi_importance": 0.010511664989367491,
+      "mdi_percent": 1.051166498936749,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 32,
+      "feature": "spkts",
+      "mdi_importance": 0.010328544189661022,
+      "mdi_percent": 1.0328544189661022,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 33,
+      "feature": "is_sm_ips_ports",
+      "mdi_importance": 0.008942019811146154,
+      "mdi_percent": 0.8942019811146155,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 34,
+      "feature": "ct_src_dport_ltm",
+      "mdi_importance": 0.00797769376654175,
+      "mdi_percent": 0.7977693766541749,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 35,
+      "feature": "stcpb",
+      "mdi_importance": 0.0073026128722237516,
+      "mdi_percent": 0.7302612872223752,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 36,
+      "feature": "dtcpb",
+      "mdi_importance": 0.00717529656717873,
+      "mdi_percent": 0.7175296567178729,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 37,
+      "feature": "response_body_len",
+      "mdi_importance": 0.002697812318961371,
+      "mdi_percent": 0.2697812318961371,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 38,
+      "feature": "dwin",
+      "mdi_importance": 0.0025412187935766315,
+      "mdi_percent": 0.25412187935766317,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 39,
+      "feature": "ct_flw_http_mthd",
+      "mdi_importance": 0.0022678110314854364,
+      "mdi_percent": 0.22678110314854363,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 40,
+      "feature": "trans_depth",
+      "mdi_importance": 0.0018242245088440027,
+      "mdi_percent": 0.18242245088440026,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 41,
+      "feature": "is_ftp_login",
+      "mdi_importance": 0.00016794783336261304,
+      "mdi_percent": 0.016794783336261304,
+      "encoded_dimensions": 1
+    },
+    {
+      "rank": 42,
+      "feature": "ct_ftp_cmd",
+      "mdi_importance": 0.00011856514609626508,
+      "mdi_percent": 0.011856514609626508,
+      "encoded_dimensions": 1
+    }
+  ],
+  "source_run_id": 40377900643,
+  "source_run_url": "https://github.com/tbao4151/DA_CNTT/actions/runs/40377900643",
+  "source_commit": "3c088136e3bdb3ed3e19babfc8436d64b5ef4814",
+  "source_artifact_id": 12675392104
+}
