@@ -18,6 +18,7 @@ from siem_ai.core import (
     case_evidence, case_history
 )
 from siem_ai.model import load_local_model, predict_batch
+from siem_ai.export import safe_csv_bytes
 
 st.set_page_config(
     page_title="DA005 | Sentinel Lab", page_icon=None,
@@ -149,7 +150,7 @@ with tabs[1]:
     fields = [c for c in ["flow_ref","proto","service","state","dur","sbytes","dbytes","rate",
                            "AI_verdict","AI_attack_probability","label","attack_cat"] if c in filtered]
     st.dataframe(filtered[fields], use_container_width=True, hide_index=True, height=420)
-    st.download_button("Xuất kết quả lọc (CSV)", data=filtered[fields].to_csv(index=False).encode("utf-8"),
+    st.download_button("Xuất kết quả lọc (CSV)", data=safe_csv_bytes(filtered[fields]),
         file_name="da005_hunting_results.csv", mime="text/csv")
 with tabs[2]:
     st.subheader("Kiểm tra mô hình AI")

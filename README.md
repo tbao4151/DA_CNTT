@@ -67,6 +67,8 @@ ROADMAP.md                  Mục tiêu / thứ tự ưu tiên
 - Nếu artifact quá hạn 7 ngày, chạy `python scripts/train_siem.py` trên máy để tạo lại model.
 - Dashboard có thể hiển thị benchmark từ file report GitHub ngay cả khi chưa có model; **chức năng dự đoán và cảnh báo chỉ hoạt động khi có model thực sự**.
 
+**Xuất CSV an toàn:** Kết quả threat hunting được xử lý để chuỗi bắt đầu bằng ký tự công thức không tự thực thi khi mở bằng ứng dụng bảng tính. Giá trị text nguy hiểm được thêm dấu nháy đơn, vì vậy CSV xuất phục vụ xem và không phải bản sao nguyên trạng của dữ liệu gốc.
+
 ## Kiểm thử
 
 ```powershell
