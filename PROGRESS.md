@@ -133,10 +133,11 @@
 - PR #16 passed CI (syntax + pytest/AppTest) in [run 40383061855](https://github.com/tbao4151/DA_CNTT/actions/runs/40383061855), merged via squash commit `50c572e052f384a6c7e2706e14ac821ca45a55d7`; post-merge main CI also passed in [run 40383279860](https://github.com/tbao4151/DA_CNTT/actions/runs/40383279860).
 - No new official model experiment was run; results displayed are the previously verified archived comparison. Windows E2E with the official model remains unverified.
 
-## 2026-10-27: SOC case portable JSON export (PR pending)
+## 2026-10-27: SOC case portable JSON export (PR #17 merged, CI verified)
 
 - Added a read-only, versioned UTF-8 JSON export for one selected SOC case, including metadata, stored flow feature snapshot and chronological audit events from a consistent SQLite read transaction.
 - Ground-truth and UI-derived fields are excluded from exported flow evidence; report explicitly warns that local SQLite history is mutable and not signed forensic evidence.
 - Added regression tests for case lifecycle, Unicode, legacy cases without events, invalid IDs and corrupt evidence, and confirmed that export does not change case records in the test.
 - UI exposes a download button in SOC Investigation Workspace. No external upload or public deployment is performed.
-- At commit creation, GitHub CI and Windows end-to-end validation for this change are **not yet verified**.
+- PR #17 merged as squash commit `2f809cd79b07798000c498be7ec433a48375b68a`. GitHub Actions CI passed on PR head `1c9210df2a239ff169a8d980ff6e36861133684d`: push run `40392002072` and pull_request run `40392025167` (syntax and pytest suite).
+- Post-merge main CI and Windows end-to-end with official model are **not yet verified** at the time of this update.
