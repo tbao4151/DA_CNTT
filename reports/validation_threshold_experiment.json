@@ -1,0 +1,27 @@
+{
+  "purpose": "validation-only preselected candidate (not official test performance)",
+  "source_run_url": "https://github.com/tbao4151/DA_CNTT/actions/runs/40366465257",
+  "source_run_id": 40366465257,
+  "source_commit": "9107e116b8df228db66228f44c919ed89d95abf4",
+  "threshold": 0.55,
+  "validation_metrics": {
+    "threshold": 0.55,
+    "true_positive": 22861,
+    "false_positive": 567,
+    "true_negative": 10633,
+    "false_negative": 1008,
+    "precision_attack": 0.975798190199761,
+    "recall_attack": 0.9577694918094599,
+    "f1_attack": 0.9666997906843986,
+    "false_positive_rate": 0.050625,
+    "alerts": 23428
+  },
+  "min_recall": 0.95,
+  "candidates_evaluated": 10,
+  "selection_source": "UNSW-NB15 official training split only",
+  "training_rows_for_temporary_model": 140272,
+  "validation_rows": 35069,
+  "random_state": 42,
+  "validation_fraction": 0.2,
+  "warning": "Validation score on temporary model only; must not be compared as official test result or used to tune test results."
+}
