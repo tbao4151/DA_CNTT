@@ -71,6 +71,10 @@ ROADMAP.md                  Mục tiêu / thứ tự ưu tiên
 
 **Xuất CSV an toàn:** Kết quả threat hunting được xử lý để chuỗi bắt đầu bằng ký tự công thức không tự thực thi khi mở bằng ứng dụng bảng tính. Giá trị text nguy hiểm được thêm dấu nháy đơn, vì vậy CSV xuất phục vụ xem và không phải bản sao nguyên trạng của dữ liệu gốc.
 
+## Bộ lọc Threat hunting đa chiều
+
+Tab **Threat hunting** lọc theo giao thức (`proto`), dịch vụ (`service`), trạng thái kết nối (`state`), và — khi có mô hình AI thật — chỉ các flow AI dự đoán Attack hoặc xác suất Attack tối thiểu. Chọn nhiều giá trị trong cùng một bộ lọc nghĩa là **OR**; các nhóm lọc kết hợp theo **AND**. Bảng kết quả và CSV xuất chỉ chứa những dòng đã lọc. Số dòng hiển thị được tính trên **mẫu đang tải** (tối đa 10.000 dòng qua thanh trượt), không phải toàn bộ tập test. Không có model vẫn lọc được theo thuộc tính network flow, không giả lập dự đoán.
+
 ## Phân tích ngưỡng ngay trên dashboard
 
 Tab **AI & đánh giá** có bảng và biểu đồ Precision, Recall, False Positive Rate theo ngưỡng khi có mô hình và nhãn ground truth 0/1. Đây là **phân tích trên mẫu đang tải** (mặc định là những dòng đầu của test), không phải kết quả chính thức trên toàn bộ test và không dùng để chọn ngưỡng triển khai. CSV không có nhãn chỉ hiển thị số lượng cảnh báo theo ngưỡng. Xem [docs/THRESHOLD_EVALUATION.md](docs/THRESHOLD_EVALUATION.md).
