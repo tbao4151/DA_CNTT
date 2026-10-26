@@ -132,3 +132,11 @@
 - Added regression tests against the archived report and intentionally corrupted copies, plus an offline Streamlit AppTest assertion; updated README.
 - PR #16 passed CI (syntax + pytest/AppTest) in [run 40383061855](https://github.com/tbao4151/DA_CNTT/actions/runs/40383061855), merged via squash commit `50c572e052f384a6c7e2706e14ac821ca45a55d7`; post-merge main CI also passed in [run 40383279860](https://github.com/tbao4151/DA_CNTT/actions/runs/40383279860).
 - No new official model experiment was run; results displayed are the previously verified archived comparison. Windows E2E with the official model remains unverified.
+
+## 2026-10-27: SOC case portable JSON export (PR pending)
+
+- Added a read-only, versioned UTF-8 JSON export for one selected SOC case, including metadata, stored flow feature snapshot and chronological audit events from a consistent SQLite read transaction.
+- Ground-truth and UI-derived fields are excluded from exported flow evidence; report explicitly warns that local SQLite history is mutable and not signed forensic evidence.
+- Added regression tests for case lifecycle, Unicode, legacy cases without events, invalid IDs and corrupt evidence, and confirmed that export does not change case records in the test.
+- UI exposes a download button in SOC Investigation Workspace. No external upload or public deployment is performed.
+- At commit creation, GitHub CI and Windows end-to-end validation for this change are **not yet verified**.
