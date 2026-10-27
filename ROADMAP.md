@@ -38,5 +38,5 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Đồng bộ môi trường Python (27/10/2026)
 
-- [ ] Ghim **Python 3.12.9** cho toàn bộ 8 GitHub Actions workflows, kiểm chứng lại CI và official-model Windows/Ubuntu E2E. Bước thay đổi cấu hình đã được tạo trên PR; kết quả tương thích và benchmark mới phải xác minh sau khi chạy thực tế.
+- [x] Ghim **Python 3.12.9** cho toàn bộ 8 GitHub Actions workflows trên Ubuntu 24.04 / Windows 2022: PR #40 đã hợp nhất, CI (`158 passed`) và official-model Windows/Ubuntu E2E đã qua kiểm thử trên PR. Chưa khẳng định benchmark cũ bất biến ở môi trường mới; các workflow ghi dữ liệu/benchmark đã chuyển sang chạy thủ công.
 - [ ] Người dùng trực tiếp chạy Python 3.12.x trên Windows, huấn luyện và tạo `artifacts/local_verification.json`; GitHub CI không thay thế minh chứng này.
