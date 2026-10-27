@@ -310,3 +310,10 @@
 - Integrated summaries into `scripts/verify_local_run.py` under `error_breakdown`, generated **only after** trusted model/dataset/metrics verification. Updated `docs/LOCAL_EXPERIMENT.md` and `ROADMAP.md` so students can examine actual FP/FN patterns after training on their own Windows computer.
 - Added six synthetic-only unit tests for grouped TP/FP/TN/FN, missing groups and invalid inputs, plus integration assertions for local verifier output. **Isolated Linux sandbox:** six helper tests passed and helper module compiled. Full repository CI and actual Windows user-machine run are **not yet verified** at commit time.
 - This is descriptive test-set error analysis, **not** a new model, independent replication, threshold optimization, production benchmark or evidence that the group ran anything on its own PC. Never select new thresholds/features from official test breakdowns.
+
+## 2026-10-27: Local FP/FN grouped analysis merged and CI verified (PR #32)
+
+- [PR #32](https://github.com/tbao4151/DA_CNTT/pull/32) squash-merged into `main` at commit `a4fb7e3118ba6711e3be96a99c64f9a6a70ee8a3`.
+- [PR quality gates 40470228083](https://github.com/tbao4151/DA_CNTT/actions/runs/40470228083) **passed**; [post-merge main quality gates 40470349268](https://github.com/tbao4151/DA_CNTT/actions/runs/40470349268) **passed** (repository syntax check and pytest suite). The six synthetic helper tests also passed in an isolated Linux sandbox.
+- The opt-in `scripts/verify_local_run.py` now produces grouped TP/FP/TN/FN summaries only after existing model/dataset/metrics checks. This change does not create a new official UNSW benchmark, tune on held-out test, expose raw flows or establish that students performed local Windows training. No SOC DB, deployment, AI model or threshold changes.
+- Next: group members must train on their own Windows PC, run the verifier, interpret grouped FP/FN counts with denominators, capture real screenshots and revise the advisor progress report with verified local evidence.
