@@ -106,5 +106,5 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — offline probability diagnostics (28/10/2026)
 
-- [ ] Verify and merge report v2 with Brier score, fixed five-bin ECE and reliability counts for validation and held-out test, without fitting/calibrating on test. Synthetic regression tests only; PR/CI status in PROGRESS.md.
+- [x] Report v2 with Brier score, fixed five-bin ECE and reliability counts for validation and held-out test merged in PR #55; PR and post-merge main CI passed (278 passed, 2 skipped). No test-based calibration or threshold tuning; synthetic regression tests only (see PROGRESS.md).
 - [ ] Collect genuine authorized host-disjoint Zeek captures with independently documented ground truth; examine sample size, class prevalence, probability quality, host/scenario shift and false positives before considering any trusted model artifact or automated SOC alert.
