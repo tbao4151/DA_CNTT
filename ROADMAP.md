@@ -45,3 +45,8 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [x] Ghi SHA-256 manifest sau khi thay thế cả model và metrics; local verifier từ chối cặp có manifest không khớp trước khi nạp joblib (PR #41 CI đã thành công (163 passed, 2 skipped)).
 - [ ] Chạy huấn luyện và verifier trên máy Windows của nhóm; giữ JSON và ảnh chụp thực tế làm minh chứng, không thay thế bằng CI.
+
+## Giao diện & khả năng sử dụng (27/10/2026)
+
+- [ ] Hoàn tất PR thiết kế lại dashboard: high-contrast light theme, hướng dẫn 5 tab, bảng số liệu và biểu đồ dễ đọc, nhãn trạng thái mô hình rõ; kiểm tra CI Windows/Ubuntu và screenshot Chromium trước khi coi là verified.
+- [ ] Người dùng thử giao diện mới trên laptop ở các độ phân giải khác nhau; ghi nhận nhận xét thực tế để tinh chỉnh phần SOC workflow và thứ tự thông tin.

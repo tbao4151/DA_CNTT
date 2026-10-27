@@ -1,0 +1,9 @@
+# Sentinel Lab light research console. Keep app and E2E sandbox identical.
+[theme]
+base = "light"
+primaryColor = "#245EEA"
+backgroundColor = "#F3F6FB"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#14253F"
+font = "sans serif"
+

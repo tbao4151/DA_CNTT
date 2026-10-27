@@ -1,0 +1,155 @@
+/* DA005 Sentinel Lab · accessible enterprise SOC dashboard
+   Based on UI UX Pro Max: consistent tokens, AA contrast, responsive typography,
+   visible focus, compact analytics. Visual changes do not modify AI decisions. */
+:root {
+  --soc-bg: #f3f6fb;
+  --soc-panel: #ffffff;
+  --soc-ink: #14253f;
+  --soc-muted: #52637b;
+  --soc-border: #dbe4ee;
+  --soc-primary: #245eea;
+  --soc-sidebar: #111c30;
+  --soc-sidebar-text: #f1f5ff;
+  --soc-soft-blue: #eff5ff;
+  --soc-focus: #65a4ff;
+}
+html {scroll-behavior: smooth;}
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"] {background-color: var(--soc-bg) !important; color: var(--soc-ink) !important;}
+[data-testid="stHeader"] {background: transparent !important; }
+[data-testid="stMainBlockContainer"], .block-container {
+  padding-top: 2.1rem !important;
+  padding-bottom: 3.5rem !important;
+  max-width: 1480px !important;
+}
+[data-testid="stMain"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stMain"] [data-testid="stMarkdownContainer"] li,
+[data-testid="stMain"] [data-testid="stMarkdownContainer"] h1,
+[data-testid="stMain"] [data-testid="stMarkdownContainer"] h2,
+[data-testid="stMain"] [data-testid="stMarkdownContainer"] h3,
+[data-testid="stMain"] [data-testid="stWidgetLabel"] p,
+[data-testid="stMain"] [data-testid="stCaptionContainer"] p {
+  color: var(--soc-ink) !important;
+}
+[data-testid="stMain"] [data-testid="stCaptionContainer"] p { color: var(--soc-muted) !important; }
+[data-testid="stMain"] h1 {font-size: clamp(1.7rem, 3vw, 2.25rem); letter-spacing: -0.045em; font-weight: 750;}
+[data-testid="stMain"] h2 {font-size: 1.28rem; font-weight: 730; letter-spacing: -0.025em;}
+[data-testid="stMain"] h3 {font-size: 1.07rem; font-weight: 700;}
+[data-testid="stMain"] p {line-height: 1.6;}
+[data-testid="stMain"] [data-testid="stVerticalBlock"] {gap: 0.85rem;}
+/* Sidebar has independently legible colors, including controls under light theme. */
+[data-testid="stSidebar"],
+[data-testid="stSidebar"] > div,
+[data-testid="stSidebarContent"] {background-color: var(--soc-sidebar) !important;}
+[data-testid="stSidebar"] {border-right: 1px solid #273a54 !important; min-width: 260px;}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h2,
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p,
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] [role="radiogroup"] p,
+[data-testid="stSidebar"] [data-testid="stExpander"] summary,
+[data-testid="stSidebar"] [data-testid="stExpander"] summary p {
+  color: var(--soc-sidebar-text) !important;
+  opacity: 1 !important;
+}
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {color: #bdcce2 !important;}
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {font-weight: 630 !important;}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] .soc-brand__subtitle {color:#c7d6ec !important;}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] .soc-brand__name {color:#fff !important;}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] .soc-sidebar-flag,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] .soc-sidebar-flag * {color:#f0f7ff !important;}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] .soc-sidebar-flag--ready,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] .soc-sidebar-flag--ready * {color:#dcffec !important;}
+[data-testid="stSidebar"] [role="radiogroup"] label {padding: 3px 0;}
+[data-testid="stSidebar"] [data-baseweb="slider"] * {opacity: 1 !important;}
+[data-testid="stSidebar"] hr {border-color: #31435b;}
+[data-testid="stSidebar"] [data-testid="stFileUploader"] {
+  background: #1d2d46;
+  border: 1px dashed #546986;
+  border-radius: 12px;
+  color: #eaf1ff;
+}
+[data-testid="stSidebar"] [data-testid="stFileUploader"] small {color:#d1dded !important;}
+[data-testid="stSidebar"] [data-testid="stExpander"] {border-color: #374b68; background:#182940;}
+.soc-brand {margin-top: 6px; padding: 18px 17px; border: 1px solid #3c5170; border-radius: 16px; background:linear-gradient(155deg,#1b3454,#142239); }
+.soc-brand__mark {width: 34px; height: 34px; border-radius: 10px; color:#fff; background:#286cf2; display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:750;vertical-align:middle;margin-right:8px;}
+.soc-brand__name {display:inline-block; color:#fff; font-size:1.13rem; font-weight:770; letter-spacing:.01em;}
+.soc-brand__subtitle {color:#c7d6ec;font-size:.81rem;margin: 10px 0 0;line-height:1.5;}
+.soc-sidebar-flag {padding:10px 12px;margin:10px 0;background:#223952;border-radius:9px;border:1px solid #426486;color:#e9f3ff;font-size:.84rem;line-height:1.5;}
+.soc-sidebar-flag--ready {background:#113c33;border-color:#2e8067;color:#dbffeb;}
+.soc-sidebar-flag strong {color:inherit;}
+/* Hero and static helper panels (all values are derived server-side, no user HTML). */
+.soc-hero {background:linear-gradient(115deg,#14243d 0%,#1a3554 72%,#224970 100%);border:1px solid #2d4e75;border-radius:18px;padding:24px 29px 21px;margin:0 0 15px;box-shadow:0 10px 30px rgba(27,49,86,.10);}
+.soc-hero__eyebrow {color:#b9dcff;font-size:.74rem;font-weight:750;letter-spacing:.105em;text-transform:uppercase;margin:0 0 8px;}
+[data-testid="stMain"] .soc-hero h1 {color:#fff !important;font-size:clamp(1.5rem,2.5vw,2.25rem);font-weight:780;letter-spacing:-.045em;margin:0 0 7px;line-height:1.22;}
+[data-testid="stMain"] .soc-hero__description {color:#d8e7f9;font-size:.96rem;line-height:1.55;max-width:850px;}
+.soc-hero__meta {display:flex;gap:9px;flex-wrap:wrap;margin-top:18px;}
+.soc-pill {display:inline-flex;align-items:center;border-radius:99px;padding:6px 11px;font-weight:650;font-size:.76rem;letter-spacing:.01em; background:rgba(255,255,255,.11);color:#fff;border:1px solid rgba(255,255,255,.2);}
+.soc-pill--ready {color:#d7ffe9;background:#155747;border-color:#288469;}
+.soc-pill--pending {color:#ffe9b5;background:#66491f;border-color:#9d753c;}
+.soc-scope {padding:12px 15px;border-radius:12px;background:#edf4ff;border:1px solid #cfdef6;color:#2c476b;font-size:.91rem;line-height:1.6;margin-bottom:9px;}
+.soc-scope strong {color:#17365f;}
+.soc-intro {color:#52637b !important;font-size:.92rem;line-height:1.6;margin-top:-2px;margin-bottom:8px;}
+.soc-panel-tip {background:#eaf4ff;border-left:4px solid #2563eb;color:#22436b; padding:13px 15px;border-radius:0 10px 10px 0;font-size:.9rem;line-height:1.55;margin:8px 0 12px;}
+.soc-panel-tip strong{color:#17365f;}
+/* Compact metric cards; primary values should never be visually dimmed. */
+[data-testid="stMetric"] {
+  background:var(--soc-panel) !important;
+  border:1px solid var(--soc-border) !important;
+  border-radius:14px !important;
+  padding:17px 18px !important;
+  box-shadow:0 3px 14px rgba(22,43,77,.035);
+  min-height:119px;
+}
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] p {
+  font-size:.84rem !important;color:#4a5d77 !important;font-weight:670 !important;
+}
+[data-testid="stMetricValue"],[data-testid="stMetricValue"] div {
+  color:#172b47 !important;font-weight:760 !important;font-size:clamp(1.3rem,2vw,1.95rem) !important; letter-spacing:-.025em !important;
+}
+[data-testid="stMetricDelta"] {font-weight:700;}
+/* Top navigation and tabs */
+[data-testid="stTabs"] [data-baseweb="tab-list"] {gap:8px;border-bottom:1px solid #d6e1ee;overflow-x:auto;padding-bottom:6px;}
+[data-testid="stTabs"] button[role="tab"] {
+  font-size:.9rem;font-weight:660;color:#415571 !important;border-radius:9px !important;
+  padding:11px 15px !important;min-height:43px;white-space:nowrap;
+  background:transparent;
+}
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+  color:#174ab6 !important;background:#e5edff !important;
+}
+[data-testid="stTabs"] button[role="tab"]:hover {color:#174ab6 !important;background:#e9f0fc;}
+[data-testid="stTabs"] [data-baseweb="tab-highlight"] {background-color:#2867ec;}
+[data-testid="stTabs"] [data-baseweb="tab-border"] {background-color:#d9e2ef;}
+/* Charts and tables get consistent surfaces; no light chart canvas on a dark page. */
+[data-testid="stPlotlyChart"] {background:#fff;border:1px solid var(--soc-border);border-radius:14px;padding:9px;overflow:hidden;box-shadow:0 3px 14px rgba(22,43,77,.025);}
+[data-testid="stDataFrame"] {border:1px solid var(--soc-border);border-radius:12px;overflow:hidden;}
+[data-testid="stExpander"] {border-radius:12px !important; border:1px solid var(--soc-border) !important; background:#fff;}
+[data-testid="stAlert"] {border-radius:12px !important;}
+[data-testid="stMain"] button[kind="primary"] {background:#245eea !important; color:#fff !important;border-radius:9px;}
+[data-testid="stMain"] button[kind="secondary"] {border-color:#c4d2e4;border-radius:9px;}
+[data-testid="stMain"] button {min-height:39px;}
+/* Form fields must be legible even if the user's Streamlit theme was dark. */
+[data-testid="stMain"] input, [data-testid="stMain"] textarea,
+[data-testid="stMain"] [data-baseweb="select"] > div,
+[data-testid="stMain"] [data-baseweb="input"] > div {
+  color:#14253f !important;background:#fff !important;
+}
+[data-testid="stMain"] [data-baseweb="select"] span {color:#14253f !important;}
+[data-testid="stMain"] [data-baseweb="select"] input {color:#14253f !important;}
+[data-testid="stMain"] :is(button,input,textarea,[role="tab"],[role="combobox"]):focus-visible,
+[data-testid="stSidebar"] :is(button,input,textarea,[role="radio"]):focus-visible {
+  outline:3px solid var(--soc-focus) !important;outline-offset:2px !important;
+}
+.soc-footer {border-top:1px solid #d8e2ee;margin-top:20px;padding:18px 0 5px;color:#61728a;font-size:.8rem;line-height:1.6;}
+@media(max-width:900px) {
+ [data-testid="stMainBlockContainer"], .block-container {padding:1.2rem 1rem 2.2rem !important;}
+ .soc-hero {padding:19px;border-radius:14px;}
+ .soc-hero__meta {gap:7px;}
+ [data-testid="stMetric"] {min-height:95px;padding:13px !important;}
+ [data-testid="stTabs"] button[role="tab"] {padding:9px 11px !important;}
+}
+@media (prefers-reduced-motion: reduce) {
+ *, *:before, *:after {animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important;}
+}

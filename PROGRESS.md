@@ -445,3 +445,10 @@
 - `persist_model` tạo `artifact_manifest.json` SHA-256 sau khi ghi model và metrics; local verifier kiểm tra checksum trước khi giải tuần tự hóa joblib, từ chối file bị sửa hoặc cặp ghi dở khi manifest cũ tồn tại. Legacy artifacts không có manifest được đánh dấu `missing_legacy`, không giả định có bảo đảm checksum.
 - Không có thay đổi dữ liệu UNSW-NB15, tham số Random Forest, benchmark, ngưỡng cảnh báo, dữ liệu SOC hoặc triển khai công khai. Manifest không phải chữ ký số và không biến ba lần thay thế file thành transaction nguyên tử.
 - Chưa có minh chứng sinh viên trực tiếp huấn luyện và chạy dashboard trên máy Windows cá nhân. Tiếp theo: chạy local training, verifier và chụp màn hình thực nghiệm thật để chuẩn bị báo cáo giảng viên.
+
+## 2026-10-27: SOC UX redesign applying ui-ux-skill (PR pending)
+
+- Read the supplied [UI UX Pro Max skill](https://github.com/tbao4151/ui-ux-skill) and used its accessibility/contrast, visual hierarchy, chart, responsive and focus-state rules. Implemented a light enterprise SOC theme in `.streamlit/config.toml` and `src/siem_ai/ui.css`: navy sidebar, clear white metric cards, compact white Plotly charts, legible form labels and responsive spacing.
+- Refactored `app.py` presentation to include clear hero/offline scope, trained AI status, 5-tab guidance, explainers distinguishing ground-truth labels vs model predictions, and concise descriptions inside the existing tabs. Original tab labels and browser-tested controls retained; no model/threshold/SQLite changes.
+- Added `docs/USING_DASHBOARD.md`, regression tests of theme configuration, and browser E2E checks for computed backgrounds plus a real Chromium screenshot artifact. Updated the isolated tests to copy the same Streamlit configuration they run locally.
+- As of this documentation commit: CI / Windows browser screenshot run **pending**. No statement about verified visual layout or user machine results yet.

@@ -32,18 +32,26 @@ st.set_page_config(
     layout="wide", initial_sidebar_state="expanded"
 )
 
-st.markdown("""
-<style>
-[data-testid="stAppViewContainer"] {background: #080f1d; color: #e4edf8;}
-[data-testid="stSidebar"] {background: #0e192a;}
-[data-testid="stHeader"] {background: transparent;}
-h1,h2,h3 {letter-spacing: -.025em;}
-div[data-testid="stMetric"] {background:#14243a; border:1px solid #27405b; padding:18px; border-radius:12px;}
-div[data-testid="stAlert"] {border-radius:10px;}
-.stButton>button {border-radius:9px;}
-.block-container {padding-top:2.2rem;}
-</style>
-""", unsafe_allow_html=True)
+# Styling is isolated from inference and case-management logic.
+# All injected HTML/CSS is trusted static project code (no uploaded flow values).
+st.markdown("<style>" + (ROOT / "src/siem_ai/ui.css").read_text(encoding="utf-8") + "</style>",
+            unsafe_allow_html=True)
+
+
+def style_chart(fig, *, height: int = 310, legend: bool = False):
+    """Consistent compact, readable plots in the SOC workspace."""
+    fig.update_layout(
+        template="plotly_white", height=height,
+        paper_bgcolor="#ffffff", plot_bgcolor="#ffffff",
+        font=dict(family="Arial, sans-serif", color="#283d5a", size=12),
+        margin=dict(l=18, r=16, t=18, b=38),
+        showlegend=legend,
+        hoverlabel=dict(bgcolor="#14263f", font_color="#ffffff"),
+    )
+    fig.update_xaxes(showgrid=False, linecolor="#e1e9f2", tickfont=dict(color="#586d88"))
+    fig.update_yaxes(gridcolor="#e8eef6", zeroline=False, tickfont=dict(color="#586d88"))
+    return fig
+
 
 DB = ROOT / "runtime" / "soc_cases.sqlite3"
 DATA = ROOT / "data/raw/unsw_nb15"
@@ -65,21 +73,71 @@ def cached_model(path: str, artifact_signature: tuple[int, int]):
     return load_local_model(path)
 
 
-st.sidebar.markdown("## DA005 / SENTINEL LAB")
-st.sidebar.caption("TDTU · Mini-SIEM + AI · SOC workflow")
+st.sidebar.markdown(
+    '<div class="soc-brand">'
+    '<span class="soc-brand__mark" aria-hidden="true">S</span>'
+    '<span class="soc-brand__name">SENTINEL LAB</span>'
+    '<p class="soc-brand__subtitle">DA005 / TDTU<br>Security operations · Research console</p>'
+    '</div>', unsafe_allow_html=True,
+)
+st.sidebar.markdown("### 01 · Dữ liệu đầu vào")
+mode = st.sidebar.radio("Nguồn phân tích", ["UNSW-NB15 test", "Tải lên CSV"], index=0,
+                        help="UNSW-NB15 test là dữ liệu lịch sử để đánh giá; CSV là tệp bạn tự chọn.")
+sample_size = st.sidebar.slider("Số bản ghi phân tích", 100, 10000, 2500, step=100,
+                                help="Chỉ đọc N dòng đầu để dashboard phản hồi nhanh; không phải toàn bộ test.")
+st.sidebar.caption("Phân tích ngoại tuyến · Không thu thập gói tin trực tiếp.")
 st.sidebar.divider()
-mode = st.sidebar.radio("Nguồn phân tích", ["UNSW-NB15 test", "Tải lên CSV"], index=0)
-sample_size = st.sidebar.slider("Số bản ghi phân tích", 100, 10000, 2500, step=100)
-st.sidebar.caption("Chạy trên dữ liệu lịch sử; không thu thập mạng thời gian thực.")
-st.sidebar.divider()
-st.sidebar.markdown("**Trạng thái mô hình**")
+st.sidebar.markdown("### 02 · Trạng thái phân tích")
 trained = ARTIFACT.is_file()
-st.sidebar.write("Đã huấn luyện / có thể dự đoán" if trained else "Chưa có mô hình · chỉ khám phá dữ liệu")
-st.sidebar.caption("Để huấn luyện: python scripts/train_siem.py")
+if trained:
+    st.sidebar.markdown(
+        '<div class="soc-sidebar-flag soc-sidebar-flag--ready">'
+        '<strong>AI sẵn sàng</strong><br>Mô hình đã có trên máy, có thể dự đoán.'
+        '</div>', unsafe_allow_html=True,
+    )
+else:
+    st.sidebar.markdown(
+        '<div class="soc-sidebar-flag"><strong>Chế độ khám phá</strong><br>'
+        'Chưa có mô hình AI cục bộ. Chỉ hiển thị dữ liệu gốc.</div>',
+        unsafe_allow_html=True,
+    )
+    st.sidebar.caption("Huấn luyện: python scripts/train_siem.py")
+with st.sidebar.expander("Hướng dẫn sử dụng nhanh"):
+    st.markdown(
+        "**1. Tổng quan:** xem số lượng và phân bố network flow.\n\n"
+        "**2. Threat hunting:** lọc giao thức, dịch vụ, trạng thái.\n\n"
+        "**3. AI & đánh giá:** xem dự đoán và giới hạn mô hình.\n\n"
+        "**4. Trung tâm cảnh báo:** chọn flow nghi vấn để lập hồ sơ.\n\n"
+        "**5. SOC case:** cập nhật và xuất hồ sơ điều tra."
+    )
 
-st.title("DA005 · Network Security Operations")
-st.caption("Bảng điều khiển Mini-SIEM giáo dục | Dự án CNTT | Dữ liệu UNSW-NB15")
-st.warning("MÔ PHỎNG: Không phải SIEM triển khai thật; không có IP và timestamp gốc trong bản train/test UNSW-NB15.")
+st.markdown(
+    '<section class="soc-hero">'
+    '<div class="soc-hero__eyebrow">TDTU / DA005 · Bảng điều khiển an ninh mạng</div>'
+    '<h1>Security Operations Center</h1>'
+    '<div class="soc-hero__description">Khám phá nhật ký lưu lượng mạng, '
+    'xem kết quả AI và thực hành điều tra cảnh báo trong một giao diện.</div>'
+    '<div class="soc-hero__meta">'
+    '<span class="soc-pill">Dữ liệu: UNSW-NB15 · Ngoại tuyến</span>'
+    '<span class="soc-pill ' + ('soc-pill--ready' if trained else 'soc-pill--pending') + '">'
+    + ('AI đã có mô hình' if trained else 'AI chưa huấn luyện') + '</span>'
+    '<span class="soc-pill">Bản nghiên cứu · Không giám sát trực tiếp</span>'
+    '</div></section>', unsafe_allow_html=True,
+)
+st.markdown(
+    '<div class="soc-scope"><strong>Phạm vi demo:</strong> Dữ liệu lịch sử phục vụ học tập; '
+    'không phải SIEM đang giám sát một mạng thật. Bản train/test UNSW-NB15 '
+    'không cung cấp IP và thời gian sự kiện gốc.</div>',
+    unsafe_allow_html=True,
+)
+with st.expander("Mới bắt đầu? Đọc cách sử dụng và thuật ngữ", expanded=False):
+    st.markdown(
+        "**Flow:** bản ghi tóm tắt một luồng giao tiếp mạng, không phải một gói tin.\n\n"
+        "**Attack (nhãn gốc):** đáp án đã gán sẵn trong bộ dữ liệu; không đồng nghĩa AI dự đoán đúng.\n\n"
+        "**AI dự đoán Attack:** mô hình coi flow có dấu hiệu tấn công; vẫn có thể báo nhầm.\n\n"
+        "**SOC case:** hồ sơ điều tra tạo từ một cảnh báo, có bằng chứng và lịch sử xử lý.\n\n"
+        "**Quy trình đề xuất:** Tổng quan → Threat hunting → AI → Trung tâm cảnh báo → SOC case."
+    )
 
 if mode == "UNSW-NB15 test":
     source = DATA / "UNSW_NB15_testing-set.csv"
@@ -128,6 +186,9 @@ results["flow_ref"] = [flow_id(row) for row in results.to_dict("records")]
 
 tabs = st.tabs(["Tổng quan an ninh", "Threat hunting", "AI & đánh giá", "Trung tâm cảnh báo", "SOC case management"])
 with tabs[0]:
+    st.subheader("Tổng quan lưu lượng mạng")
+    st.markdown('<p class="soc-intro">Các con số dưới đây chỉ phản ánh dữ liệu đang tải; '
+                'không phải số liệu mạng thời gian thực.</p>', unsafe_allow_html=True)
     attack_observed = int((results["label"] == 1).sum()) if "label" in results else None
     ai_attack = int((results["AI_verdict"] == "Attack").sum()) if predictions is not None else None
     col1, col2, col3, col4 = st.columns(4)
@@ -135,22 +196,30 @@ with tabs[0]:
     col2.metric("Attack trong nhãn gốc", f"{attack_observed:,}" if attack_observed is not None else "Không có nhãn")
     col3.metric("AI dự đoán Attack", f"{ai_attack:,}" if ai_attack is not None else "Chưa huấn luyện")
     col4.metric("Hồ sơ SOC", f"{len(list_cases(DB)):,}")
+    st.caption("Nhãn gốc là đáp án trong dataset; AI dự đoán là kết quả mô hình. Hai số không nhất thiết giống nhau.")
     left, right = st.columns(2)
     with left:
         st.subheader("Phân bố giao thức")
-        st.plotly_chart(px.bar(results["proto"].value_counts().head(10).reset_index(),
-            x="proto", y="count", labels={"proto":"Protocol","count":"Flows"}), use_container_width=True)
+        fig = px.bar(
+            results["proto"].value_counts().head(10).reset_index(),
+            x="proto", y="count", labels={"proto": "Giao thức", "count": "Số flow"},
+            color_discrete_sequence=["#3272e8"],
+        )
+        st.plotly_chart(style_chart(fig), use_container_width=True)
     with right:
         st.subheader("Loại tấn công được gán nhãn (ground truth)")
         if "attack_cat" in results:
             counts = results["attack_cat"].fillna("Normal").value_counts().head(10).reset_index()
-            st.plotly_chart(px.bar(counts, x="attack_cat", y="count",
-                labels={"attack_cat":"Nhãn gốc","count":"Flows"}), use_container_width=True)
+            fig = px.bar(counts, x="attack_cat", y="count",
+                         labels={"attack_cat": "Loại tấn công", "count": "Số flow"},
+                         color_discrete_sequence=["#168b91"])
+            st.plotly_chart(style_chart(fig), use_container_width=True)
         else:
             st.info("Không có nhãn, không thể hiển thị ground truth.")
     st.caption("Dữ liệu được hiển thị theo thứ tự gốc của tập kiểm thử, không phải chuỗi thời gian sự kiện.")
 with tabs[1]:
-    st.subheader("Truy vấn và phân tích flow")
+    st.subheader("Threat hunting · Tìm dấu hiệu bất thường")
+    st.caption("Thu hẹp dữ liệu bằng giao thức, dịch vụ và trạng thái kết nối. Lọc không làm thay đổi kết quả AI.")
     filter_proto = st.multiselect("Giao thức", sorted(results["proto"].dropna().astype(str).unique().tolist()))
     filter_service = st.multiselect("Dịch vụ", sorted(results["service"].dropna().astype(str).unique().tolist()))
     filter_state = st.multiselect("Trạng thái kết nối", sorted(results["state"].dropna().astype(str).unique().tolist()))
@@ -172,7 +241,8 @@ with tabs[1]:
     st.download_button("Xuất kết quả lọc (CSV)", data=safe_csv_bytes(filtered[fields]),
         file_name="da005_hunting_results.csv", mime="text/csv")
 with tabs[2]:
-    st.subheader("Kiểm tra mô hình AI")
+    st.subheader("AI & đánh giá · Mô hình có đáng tin không?")
+    st.caption("Precision: cảnh báo Attack đúng bao nhiêu. Recall: phát hiện được bao nhiêu Attack thật. F1: cân bằng cả hai.")
     if not trained:
         st.info("Máy chưa có mô hình để dự đoán. Có thể xem benchmark đã chạy trên GitHub Actions.")
         st.code("pip install -r requirements-app.txt\npython scripts/train_siem.py\nstreamlit run app.py")
@@ -253,10 +323,10 @@ with tabs[2]:
             )
             top_features = importance.head(12).sort_values("importance", ascending=True)
             st.plotly_chart(
-                px.bar(top_features, x="importance_percent", y="feature", orientation="h",
+                style_chart(px.bar(top_features, x="importance_percent", y="feature", orientation="h",
                        labels={"importance_percent": "Mức quan trọng MDI (%)",
                                "feature": "Đặc trưng mạng"},
-                       title="12 đặc trưng có MDI cao nhất"),
+                       color_discrete_sequence=["#3272e8"]), height=405),
                 use_container_width=True,
             )
             st.dataframe(
@@ -312,14 +382,17 @@ with tabs[2]:
             var_name="metric", value_name="value",
         )
         st.plotly_chart(
-            px.line(curves, x="threshold", y="value", color="metric", markers=True,
-                    labels={"threshold": "Ngưỡng", "value": "Tỷ lệ", "metric": "Chỉ số"},
-                    title="Đánh đổi giữa Precision, Recall và False Positive Rate"),
+            style_chart(px.line(
+                curves, x="threshold", y="value", color="metric", markers=True,
+                labels={"threshold": "Ngưỡng", "value": "Tỷ lệ", "metric": "Chỉ số"},
+                color_discrete_sequence=["#245eea", "#0d9488", "#d97706"],
+            ), height=335, legend=True),
             use_container_width=True,
         )
 
 with tabs[3]:
-    st.subheader("Alert Queue · chỉ từ dự đoán mô hình")
+    st.subheader("Trung tâm cảnh báo · Các flow AI nghi vấn")
+    st.caption("Chọn ngưỡng xác suất để xem danh sách flow cần điều tra. Tăng ngưỡng có thể giảm báo nhầm nhưng bỏ sót tấn công.")
     if predictions is None:
         st.info("Không tạo cảnh báo AI khi chưa có mô hình. Hãy huấn luyện trước.")
     else:
@@ -341,7 +414,8 @@ with tabs[3]:
                     confidence=float(row["AI_attack_probability"]))
                 st.success(f"Đã lưu case #{case_id} trong SQLite cục bộ.")
 with tabs[4]:
-    st.subheader("SOC Investigation Workspace")
+    st.subheader("SOC case · Hồ sơ và lịch sử điều tra")
+    st.caption("Mỗi case lưu một flow nghi vấn, kết quả AI, bằng chứng và diễn biến xử lý trong SQLite cục bộ.")
     cases = list_cases(DB)
     if cases.empty:
         st.info("Chưa có hồ sơ điều tra. Tạo case từ tab Trung tâm cảnh báo sau khi có mô hình AI.")
@@ -381,5 +455,9 @@ with tabs[4]:
                 st.rerun()
             except ValueError as exc:
                 st.error(str(exc))
-st.divider()
-st.caption("DA005 · Nguyễn Văn Thiên Bảo / Đặng Triệu Vỹ · GVHD: Trương Đình Tú · Chỉ dùng cho nghiên cứu/học tập.")
+st.markdown(
+    '<footer class="soc-footer">DA005 · Dự án CNTT — Tôn Đức Thắng University<br>'
+    'Nguyễn Văn Thiên Bảo / Đặng Triệu Vỹ · GVHD: Trương Đình Tú · '
+    'Dành cho nghiên cứu/học tập, không sử dụng để giám sát mạng sản xuất.</footer>',
+    unsafe_allow_html=True,
+)

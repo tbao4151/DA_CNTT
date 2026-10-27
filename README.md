@@ -11,6 +11,12 @@ Nhóm lựa chọn **Network Flow Logs**, thiết kế một **bản mô phỏng
 
 **Phân biệt quan trọng:** Đây là prototype nghiên cứu, không phải SIEM/SOC vận hành thật; bản UNSW-NB15 train/test không cung cấp IP nguồn/đích và thời gian sự kiện gốc. Không được diễn giải thứ tự dòng là timeline thời gian. Các nhãn `label` / `attack_cat` chỉ là ground truth, **không phải input AI**.
 
+## Giao diện SOC mới · hướng dẫn người dùng
+
+Dashboard đã được thiết kế lại theo bộ nguyên tắc [UI UX Pro Max](https://github.com/tbao4151/ui-ux-skill): nền sáng có độ tương phản tốt, sidebar navy, KPI dễ đọc, biểu đồ gọn, nhãn trạng thái AI rõ ràng và giải thích ngay trong từng tab. Giao diện Streamlit không làm thay đổi pipeline dự đoán, ngưỡng cảnh báo mặc định hoặc quản lý SQLite.
+
+Đọc **[Hướng dẫn 5 tab và kịch bản thao tác](docs/USING_DASHBOARD.md)** trước khi demo cho GVHD. Trên máy đã chạy server `localhost:8501`, cập nhật mã với `git pull --ff-only` rồi dừng/khởi động lại Streamlit để tải file CSS và cấu hình mới. Với GitHub CI, workflow browser Windows có ảnh chụp giao diện để kiểm tra bố cục dưới artifact `da005-soc-redesign-preview` sau khi chạy thành công.
+
 ## Chạy nhanh trên Windows 10/11
 
 Yêu cầu Git và Python 3.12; GitHub Actions được ghim chính xác **Python 3.12.9** trên runner Ubuntu 24.04/Windows 2022 để bản vá này khả dụng. Trên laptop, dùng `py -3.12 --version` để xem bản 3.12.x đã có (muốn khớp tuyệt đối với CI thì cài 3.12.9). Các phiên bản thư viện vẫn theo dải trong `requirements*.txt`, vì vậy môi trường chưa được khóa toàn bộ:
