@@ -90,3 +90,31 @@ def test_upload_rejects_nul_bytes_in_header_or_data(data):
     # pandas' C parser can silently discard the suffix following a NUL byte.
     with pytest.raises(ValueError, match="NUL bytes"):
         read_uploaded_flows(data, limit=1)
+
+
+def test_upload_accepts_empty_lines_between_preview_flows():
+    # pandas skips physically empty CSV lines; validation must use the same
+    # logical row count, not treat a blank line as a malformed flow.
+    data = (HEADER + "\n" + ROW + "\n\n" + ROW + "\n").encode()
+    frame = read_uploaded_flows(data, limit=2)
+    assert len(frame) == 2
+    assert frame["proto"].tolist() == ["tcp", "tcp"]
+
+
+def test_upload_checks_row_after_blank_line_within_preview():
+    data = (HEADER + "\n" + ROW + "\n\n" + ROW + ",unexpected\n").encode()
+    with pytest.raises(ValueError, match="fields; expected 8"):
+        read_uploaded_flows(data, limit=2)
+
+
+def test_upload_does_not_skip_quoted_empty_field_row():
+    # A quoted empty value is a real CSV record, not a physically blank line.
+    data = (HEADER + "\n" + ROW + "\n\"\"\n").encode()
+    with pytest.raises(ValueError, match="fields; expected 8"):
+        read_uploaded_flows(data, limit=2)
+
+
+def test_upload_ignores_malformed_row_after_logical_preview_with_blank_lines():
+    data = (HEADER + "\n" + ROW + "\n\n" + ROW + "\n" + ROW + ",unexpected\n").encode()
+    frame = read_uploaded_flows(data, limit=2)
+    assert len(frame) == 2
