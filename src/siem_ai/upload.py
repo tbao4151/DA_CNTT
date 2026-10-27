@@ -16,10 +16,11 @@ MAX_PREVIEW_ROWS = 10_000
 
 
 def read_uploaded_flows(content: bytes, *, limit: int, max_bytes: int = MAX_CSV_BYTES) -> pd.DataFrame:
-    """Read at most ``limit`` rows, rejecting oversized or ambiguous CSV input.
+    """Return at most ``limit`` rows after validating the entire bounded CSV.
 
-    Only UTF-8 CSV is supported. The caller must still run ``validate_flows``
-    to check required network-flow columns and row counts.
+    Only UTF-8 CSV is supported. Every logical row is checked for the same
+    field count as the header, including rows outside the displayed preview.
+    The caller must still run ``validate_flows`` for network-flow semantics.
     """
     if not isinstance(content, bytes):
         raise TypeError("Uploaded CSV must be bytes")
@@ -55,14 +56,11 @@ def read_uploaded_flows(content: bytes, *, limit: int, max_bytes: int = MAX_CSV_
                 raise ValueError("CSV header contains blank column names")
             if len(header) != len(set(header)):
                 raise ValueError("Duplicate CSV column names are not allowed")
-            # Pandas can silently reinterpret the first field as an index when
-            # a data row has more fields than its header. Validate the preview
-            # with the CSV dialect parser before allowing AI inference.
-            # pandas.read_csv skips physically empty CSV lines by default.
-            # Count only parsed data rows so our checked preview covers the
-            # same rows that pandas will actually pass to the AI pipeline.
-            # A quoted empty field is [''], not [], and must still be checked.
-            checked = 0
+            # Pandas can silently reinterpret extra fields as an index.
+            # Validate every logical row in the already size-bounded upload,
+            # not just the preview: malformed tails must not be accepted.
+            # pandas.read_csv skips physically empty CSV lines by default;
+            # a quoted empty field (['']) is still a row and must be checked.
             for row in reader:
                 if not row:
                     continue
@@ -71,9 +69,6 @@ def read_uploaded_flows(content: bytes, *, limit: int, max_bytes: int = MAX_CSV_
                         f"CSV row ending at line {reader.line_num} has {len(row)} "
                         f"fields; expected {len(header)}"
                     )
-                checked += 1
-                if checked >= limit:
-                    break
     except UnicodeDecodeError as exc:
         raise ValueError("Invalid UTF-8 CSV content") from exc
     except csv.Error as exc:

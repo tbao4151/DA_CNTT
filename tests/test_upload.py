@@ -76,10 +76,34 @@ def test_upload_rejects_unclosed_quoted_field():
         read_uploaded_flows(data, limit=100)
 
 
-def test_upload_only_checks_preview_rows():
-    data = (HEADER + "\n" + ROW + "\n" + ROW + ",unexpected\n").encode()
+@pytest.mark.parametrize("bad_tail", [
+    ROW + ",unexpected",
+    "1,tcp,http,FIN,120,30,2",
+])
+def test_upload_rejects_ragged_rows_after_preview(bad_tail):
+    # The tail is not displayed, but must not silently bypass validation.
+    data = (HEADER + "\n" + ROW + "\n" + bad_tail + "\n").encode()
+    with pytest.raises(ValueError, match="fields; expected 8"):
+        read_uploaded_flows(data, limit=1)
+
+
+def test_upload_rejects_unclosed_quote_after_preview():
+    data = (HEADER + "\n" + ROW + '\n1,tcp,"unclosed\n').encode()
+    with pytest.raises(ValueError, match="Invalid CSV structure"):
+        read_uploaded_flows(data, limit=1)
+
+
+def test_upload_accepts_valid_quoted_multiline_tail():
+    data = (HEADER + "\n" + ROW + '\n1,tcp,"http,\nproxy",FIN,120,30,2,1\n').encode()
     frame = read_uploaded_flows(data, limit=1)
     assert len(frame) == 1
+    assert frame.iloc[0]["proto"] == "tcp"
+
+
+def test_upload_checks_row_beyond_max_preview_rows():
+    data = (HEADER + "\n" + (ROW + "\n") * 10_000 + ROW + ",unexpected\n").encode()
+    with pytest.raises(ValueError, match="fields; expected 8"):
+        read_uploaded_flows(data, limit=10_000)
 
 @pytest.mark.parametrize("data", [
     (HEADER.replace("proto", "proto\x00hidden") + "\n" + ROW + "\n").encode(),
@@ -114,10 +138,10 @@ def test_upload_does_not_skip_quoted_empty_field_row():
         read_uploaded_flows(data, limit=2)
 
 
-def test_upload_ignores_malformed_row_after_logical_preview_with_blank_lines():
+def test_upload_rejects_malformed_row_after_logical_preview_with_blank_lines():
     data = (HEADER + "\n" + ROW + "\n\n" + ROW + "\n" + ROW + ",unexpected\n").encode()
-    frame = read_uploaded_flows(data, limit=2)
-    assert len(frame) == 2
+    with pytest.raises(ValueError, match="fields; expected 8"):
+        read_uploaded_flows(data, limit=2)
 
 
 @pytest.mark.parametrize("tail", [
