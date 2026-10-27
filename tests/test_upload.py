@@ -118,3 +118,31 @@ def test_upload_ignores_malformed_row_after_logical_preview_with_blank_lines():
     data = (HEADER + "\n" + ROW + "\n\n" + ROW + "\n" + ROW + ",unexpected\n").encode()
     frame = read_uploaded_flows(data, limit=2)
     assert len(frame) == 2
+
+
+@pytest.mark.parametrize("tail", [
+    b"1,tcp,\xff,FIN,120,30,2,1\n",
+    b"1,tcp,\xc3",
+    b"1,tcp,\xe2\x82",
+])
+def test_upload_rejects_invalid_utf8_after_preview(tail):
+    # The pandas nrows limit alone would not decode this unselected tail.
+    data = (HEADER + "\n" + ROW + "\n").encode() + tail
+    with pytest.raises(ValueError, match="Invalid UTF-8 CSV content"):
+        read_uploaded_flows(data, limit=1)
+
+
+def test_upload_accepts_valid_utf8_after_preview():
+    data = (HEADER + "\n" + ROW + "\n" + "1,tcp,café,FIN,120,30,2,1\n").encode("utf-8")
+    frame = read_uploaded_flows(data, limit=1)
+    assert len(frame) == 1
+    assert frame.iloc[0]["proto"] == "tcp"
+
+
+def test_upload_rejects_utf8_sequence_split_across_decoder_chunks():
+    # The invalid continuation crosses the 64-KiB decoder chunk boundary.
+    prefix = (HEADER + "\n" + ROW + "\n").encode()
+    padding = b" " * (65535 - len(prefix))
+    data = prefix + padding + b"\xc3\x28"
+    with pytest.raises(ValueError, match="Invalid UTF-8 CSV content"):
+        read_uploaded_flows(data, limit=1)

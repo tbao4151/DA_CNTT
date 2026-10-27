@@ -378,3 +378,10 @@
 - Newly downloaded UNSW CSVs are verified against pinned SHA-256 while still named `.part`, before promotion to official filename. Interrupted or corrupted downloads cannot create an official-named CSV through the downloader. Existing files remain untouched on checksum failure.
 - This is GitHub-hosted automated testing, not evidence that the students ran the project on their Windows PC. No new model training, benchmark, alert-threshold change, SOC DB mutation or deployment.
 - Next: manually run `scripts/download_unsw_nb15.py`, `scripts/train_siem.py` and `scripts/verify_local_run.py` on a student's Windows computer; capture genuine evidence and analyze false positives/false negatives for the advisor.
+
+## 2026-10-27: Validate UTF-8 across the entire bounded CSV upload (PR CI pending)
+
+- Identified a preview-boundary gap: the strict CSV reader and `pandas.read_csv(nrows=limit)` only decode the selected preview rows, so an invalid UTF-8 byte sequence after the preview could be silently accepted despite the stated UTF-8-only upload policy.
+- Added a streaming strict UTF-8 decoder across the complete **already size-bounded** (maximum 15 MiB) upload, before CSV preview parsing. UTF-8 BOM remains supported. Structural field-count checks still apply **only** to the preview; no claim of full-file CSV structural validation.
+- Added five synthetic regression cases: invalid UTF-8 tail, two truncated multibyte tails, valid UTF-8 tail, and invalid continuation crossing the 64-KiB decoding boundary. The five focused cases passed in an isolated Linux sandbox with pandas 2.2.3 and pytest 9.0.2; Python syntax compilation also passed. Full repository CI and Windows browser tests are **not yet verified at commit time**.
+- No model retraining, official dataset/benchmark modification, threshold tuning, SOC database change, deployment, or student-operated Windows experiment. Next: check PR quality gates and merge only if green; local Windows training and genuine evidence collection remain the highest-priority outstanding task.

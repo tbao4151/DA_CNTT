@@ -5,6 +5,7 @@ so validating DataFrame.columns alone cannot detect ambiguous source headers.
 """
 from __future__ import annotations
 
+import codecs
 import csv
 import io
 
@@ -32,6 +33,17 @@ def read_uploaded_flows(content: bytes, *, limit: int, max_bytes: int = MAX_CSV_
     # than presenting altered network features to the AI model or SOC analyst.
     if b"\x00" in content:
         raise ValueError("CSV contains NUL bytes; refusing ambiguous network-flow fields")
+
+    # pandas.read_csv(nrows=limit) may never decode bytes after the preview.
+    # Check the entire bounded upload with a streaming UTF-8 decoder so an
+    # invalid tail is not accepted merely because it is outside the preview.
+    try:
+        decoder = codecs.getincrementaldecoder("utf-8-sig")(errors="strict")
+        for start in range(0, len(content), 64 * 1024):
+            decoder.decode(content[start:start + 64 * 1024], final=False)
+        decoder.decode(b"", final=True)
+    except UnicodeDecodeError as exc:
+        raise ValueError("Invalid UTF-8 CSV content") from exc
 
     try:
         with io.TextIOWrapper(io.BytesIO(content), encoding="utf-8-sig", newline="") as stream:
