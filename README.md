@@ -96,7 +96,7 @@ Khi máy có mô hình Random Forest đã huấn luyện, tab **AI & đánh giá
 
 Workflow [Official-model dashboard integration smoke](.github/workflows/official-model-smoke.yml) có thêm bài kiểm thử Playwright Chromium trên **Windows**, sau khi xác minh checksum và huấn luyện từ tập train chính thức. Bài kiểm thử mở Streamlit qua **localhost** trong thư mục tạm, dùng 2.500 dòng đầu official test **chỉ để suy luận**, tạo SOC case bằng trình duyệt và tải/xác minh JSON. Không dùng mô hình không tin cậy, không ghi vào SQLite thực tế, không triển khai công khai.
 
-Bài kiểm thử tại `tests/test_browser_soc_e2e.py` chỉ chạy khi `DA005_BROWSER_SOC_E2E=1` trong workflow cài Playwright/Chromium. `pytest` thông thường bỏ qua bài kiểm thử này. **Chưa tuyên bố Windows browser E2E đã pass cho đến khi GitHub Actions xác nhận**; AppTest headless trước đó vẫn là minh chứng riêng.
+Bài kiểm thử tại `tests/test_browser_soc_e2e.py` chỉ chạy khi `DA005_BROWSER_SOC_E2E=1` trong workflow cài Playwright/Chromium. `pytest` thông thường bỏ qua bài kiểm thử này. **Đã xác minh trên Windows Chromium:** [PR #25](https://github.com/tbao4151/DA_CNTT/pull/25), [GitHub Actions run 40442408258](https://github.com/tbao4151/DA_CNTT/actions/runs/40442408258) thành công cho cả Windows browser E2E và AppTest Windows/Ubuntu. Đây là kiểm thử đường đi AI → cảnh báo → tạo case → tải JSON; chưa xác minh mọi trường hợp biên hoặc trải nghiệm thủ công trên máy người dùng.
 
 ## Kiểm thử
 
