@@ -5,6 +5,8 @@ on:
       - "src/**"
       - "scripts/**"
       - "app.py"
+      - "pages/**"
+      - "apps/**"
       - "tests/**"
       - "requirements*.txt"
       - ".github/workflows/ci.yml"
