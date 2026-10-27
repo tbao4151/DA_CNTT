@@ -83,3 +83,16 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Collect **genuine** student-owned VMware Host-only captures and annotation evidence for at least three distinct host groups, reserve an untouched test partition, document Zeek version, physical isolation and session-to-host assignment. The code does not verify the authenticity of user-provided labels.
 - [ ] Train a separate Zeek-schema classifier using train-only preprocessing, choose hyperparameters/thresholds using validation only, evaluate once on held-out test and report Precision/Recall/FPR and model/source provenance. No attack-detection claim until real labeled data and reproducible evaluation exist.
 - [ ] Add an offline annotation workflow and, only after verified model evaluation, connect Cyber Lab AI inference to alert and SOC Case. Active Red Team scenarios and live capture remain disabled until authorized isolation controls exist.
+
+
+## Cyber Lab — offline baseline on independently labeled Zeek (28/10/2026)
+
+- [ ] Verify and merge PR #51: train-only preprocessing and Logistic Regression,
+  validation-only threshold selection and one-time held-out test report;
+  synthetic regression tests and CI are tracked in PROGRESS.
+- [ ] Obtain independently annotated, authorized Zeek logs with at least three
+  host-disjoint groups, pre-register the holdout and retain original log SHA-256,
+  scenario notes and Zeek/VMware versions. No synthetic score is a lab metric.
+- [ ] Build an offline annotation/experiment CLI and assess model calibration,
+  false positives, scenario/host shift and repeatability before any automated
+  AI-to-SOC alert integration; keep live capture and Red Team disabled.
