@@ -96,3 +96,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Build an offline annotation/experiment CLI and assess model calibration,
   false positives, scenario/host shift and repeatability before any automated
   AI-to-SOC alert integration; keep live capture and Red Team disabled.
+
+
+## Cyber Lab — offline experiment CLI (28/10/2026)
+
+- [ ] Verify and merge the bounded private-manifest Zeek experiment CLI (`scripts/evaluate_zeek_lab.py`) and synthetic regression tests; CI and merge evidence in PROGRESS. The CLI only runs the already-existing offline baseline on operator-supplied labels, never live capture or AI alerts.
+- [ ] Run the CLI with genuine independently labeled VMware Host-only logs from at least three host groups; archive Zeek version, isolation proof, original SHA-256, labeling evidence and untouched held-out test. No such local evidence has been verified.
+- [ ] Assess calibration, scenario/host shift, false-positive rates and repeatability before saving a trusted Zeek model or wiring AI alerts into SOC.
