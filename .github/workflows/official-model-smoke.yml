@@ -1,0 +1,35 @@
+name: Official-model dashboard integration smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/official-model-smoke.yml"
+      - "tests/test_official_model_app.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  official-model-smoke:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements-app.txt
+      - name: Install dependencies
+        run: python -m pip install -r requirements-app.txt
+      - name: Verify official UNSW-NB15 dataset checksums
+        run: python scripts/download_unsw_nb15.py
+      - name: Fit model using official training split
+        run: python scripts/train_siem.py
+      - name: Smoke-test trained model in isolated Streamlit SOC app
+        env:
+          DA005_OFFICIAL_MODEL_SMOKE: "1"
+        run: python -m pytest -q tests/test_official_model_app.py
