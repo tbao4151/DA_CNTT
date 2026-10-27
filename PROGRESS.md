@@ -521,3 +521,30 @@
 - Added `src/blue_team_ai/labeled_dataset.py`: accepts only bounded raw Zeek bytes and external per-UID 0/1 labels with explicit session, host, split, labeling method and reference; refuses duplicate source/session/UID, missing/invalid labels, cross-split host leakage and missing classes in any partition. Returns separate Zeek-v1 feature matrices, labels and provenance, without fitting a model or modifying Dataset Mode.
 - Added synthetic regression tests in `tests/test_zeek_labeled_dataset.py` and documented how to collect and preserve independent annotation evidence in `docs/CYBER_LAB_ARCHITECTURE.md`; updated ROADMAP.
 - **At writing:** GitHub PR CI, merge and post-merge CI are not yet verified. No legitimate lab log, independent labels, Zeek-trained classifier, AI attack alert, Red Team AI or Windows E2E has been produced by this slice. The label reference is self-declared metadata and not authentication of the labels. Next: inspect PR CI, fix failures, merge only after success, then design a train-only preprocessing/validation-only tuning pipeline. Students must still capture authorized Host-only Zeek logs and record separate ground-truth evidence.
+
+
+## 2026-10-28: Offline Zeek train/validation/test baseline (PR #51 pending)
+
+- Checked `main` at `0ee44eb005ce7308adde832d6cf16244795ede61`:
+  prior independent-label contract PR #50 is merged; latest main quality gates
+  [40571438304](https://github.com/tbao4151/DA_CNTT/actions/runs/40571438304)
+  completed successfully. No open PRs were returned at the start of this slice.
+- Added `src/blue_team_ai/offline_baseline.py`: strictly separate Zeek-only
+  Logistic Regression pipeline. It validates host/session/source-disjoint
+  labels/features, fits median imputation, scaling, categorical encoding and
+  model on **train only**, selects a threshold on **validation only**, then
+  evaluates held-out test once. Reports confusion counts, Precision/Recall/
+  F1/FPR and bounded source/host/session provenance. No raw log/IP/UID/label
+  references are exported in the report.
+- Added `tests/test_zeek_offline_baseline.py`: synthetic regression for
+  train/test isolation, held-out-label changes, unknown categories, null
+  measurements, provenance/feature leakage and malformed input. Updated
+  architecture and roadmap.
+- **At writing:** PR #51 is open; its final CI result, merge, post-merge
+  quality gates and real Windows/VMware experiments are not verified.
+  Synthetic test metrics are not scientific attack-detection results.
+- No saved/deployed model, AI alert, active capture, Red Team operation,
+  changes to official UNSW benchmark or SOC database. Next: verify PR CI and
+  merge only if green and conflict-free; students must collect authorized
+  Host-only Zeek logs with independent labels and holdout before claiming
+  any Cyber Lab detection performance.
