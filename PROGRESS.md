@@ -345,3 +345,5 @@
 - [PR quality gates 40484898887](https://github.com/tbao4151/DA_CNTT/actions/runs/40484898887) **passed** (repository syntax check and full pytest suite); the two preceding branch push checks also passed. Four isolated representative CSV parsing cases passed in a Linux sandbox, but that smoke is not a full repository run.
 - The CSV preview validator now ignores physically blank lines when counting preview records, matching pandas' default behavior, while continuing to reject malformed rows and quoted empty-field records with incorrect field counts. No model, official UNSW benchmark, threshold, SOC data, deployment, or manual Windows student experiment changed.
 - Post-merge main CI has not yet been verified at the time of this progress entry. Next priority remains student-operated Windows training, verifier output, SOC demo and genuine screenshots for advisor review.
+
+- **Post-merge main quality gate [40485028645](https://github.com/tbao4151/DA_CNTT/actions/runs/40485028645) passed** on squash commit `637227ab830db342e54f4c78bed98f42bbd11fe9` (syntax check and full pytest suite). This verifies CI on GitHub, not a manual Windows run.
