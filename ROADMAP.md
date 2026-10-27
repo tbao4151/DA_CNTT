@@ -17,7 +17,8 @@
 - [x] Script Random Forest train/test không đưa nhãn vào features.
 - [x] CI khởi tạo (trạng thái chạy cần xác minh).
 - [x] CI syntax và unit tests đã chạy thành công (GitHub Actions, bao gồm PR #4); vẫn cần kiểm thử giao diện end-to-end trên Windows.
-- [ ] Kiểm thử Streamlit end-to-end **bằng trình duyệt** trên Windows, sửa lỗi môi trường và các trường hợp biên (đã xác minh AppTest headless qua Actions 40441303872; đã thêm bài kiểm thử Playwright Windows chạy Chromium với mô hình chính thức, **chờ xác minh CI**, chưa xác nhận E2E trình duyệt).
+- [x] Kiểm thử luồng chính Streamlit **bằng Chromium trên Windows** sử dụng mô hình UNSW-NB15 chính thức: tạo case từ cảnh báo AI và tải báo cáo JSON thành công (PR #25, Actions 40442408258).
+- [ ] Kiểm thử mở rộng trên trình duyệt Windows: upload CSV hợp lệ/không hợp lệ, bộ lọc threat hunting, chỉnh sửa case, các trường hợp biên và thao tác thủ công trên máy nhóm.
 - [x] Huấn luyện Random Forest trên train/test chính thức, lưu metrics thật và artifact (GitHub Actions).
 - [ ] Tái lập benchmark độc lập trên môi trường sạch và xác minh artifact chạy với giao diện.
 - [x] Xây dựng và chạy chính sách chọn ngưỡng chỉ trên validation từ tập training: Actions 40366465257 thành công, ứng viên 0,55. Workflow đánh giá ứng viên đã khóa trên official test đã thành công (Actions 40373007093): FP giảm 1.265 nhưng FN tăng 342; chưa tích hợp tự động vào dashboard.
