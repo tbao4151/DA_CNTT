@@ -16,9 +16,10 @@
 - [x] Cấu trúc MVP Mini-SIEM bằng Streamlit, thư viện phân tích, SQLite.
 - [x] Script Random Forest train/test không đưa nhãn vào features.
 - [x] CI khởi tạo (trạng thái chạy cần xác minh).
-- [x] CI syntax và unit tests đã chạy thành công (GitHub Actions, bao gồm PR #4); vẫn cần kiểm thử giao diện end-to-end trên Windows.
+- [x] CI syntax và unit tests đã chạy thành công (GitHub Actions); đã có Chromium E2E cho luồng SOC chính trên Windows, còn thiếu độ bao phủ thao tác và trường hợp biên.
 - [x] Kiểm thử luồng chính Streamlit **bằng Chromium trên Windows** sử dụng mô hình UNSW-NB15 chính thức: tạo case từ cảnh báo AI và tải báo cáo JSON thành công (PR #25, Actions 40442408258).
-- [ ] Kiểm thử mở rộng trên trình duyệt Windows: upload CSV hợp lệ/không hợp lệ, bộ lọc threat hunting, chỉnh sửa case, các trường hợp biên và thao tác thủ công trên máy nhóm.
+- [x] Kiểm thử trình duyệt Windows: cập nhật trạng thái SOC `New` → `Investigating`, lưu ghi chú, tải lại ứng dụng và đối chiếu JSON/audit trail (PR #26, Actions 40443155381).
+- [ ] Kiểm thử mở rộng trên trình duyệt Windows: upload CSV hợp lệ/không hợp lệ, bộ lọc threat hunting, các trường hợp biên và thao tác thủ công trên máy nhóm.
 - [x] Huấn luyện Random Forest trên train/test chính thức, lưu metrics thật và artifact (GitHub Actions).
 - [ ] Tái lập benchmark độc lập trên môi trường sạch và xác minh artifact chạy với giao diện.
 - [x] Xây dựng và chạy chính sách chọn ngưỡng chỉ trên validation từ tập training: Actions 40366465257 thành công, ứng viên 0,55. Workflow đánh giá ứng viên đã khóa trên official test đã thành công (Actions 40373007093): FP giảm 1.265 nhưng FN tăng 342; chưa tích hợp tự động vào dashboard.
