@@ -324,3 +324,10 @@
 - Updated `src/siem_ai/upload.py` to reject any NUL byte in a bounded (max 15 MiB) uploaded CSV, including content after the selected preview rows. This affects only user-uploaded CSV; official UNSW data loading, model, benchmark, threshold and SOC case storage remain unchanged.
 - Added three parameterized regression cases for NUL in a header, a preview-row value, and a value after the preview boundary. **Isolated Linux sandbox:** 20 upload tests passed; syntax compilation passed. Full GitHub Actions PR checks and Windows browser verification are pending at commit time.
 - No new model performance or local Windows student experiment is claimed. Next: verify CI, merge if green, then collect manual Windows training/demo evidence for the advisor.
+
+## 2026-10-27: NUL-byte CSV upload guard verified and merged (PR #33)
+
+- [PR #33](https://github.com/tbao4151/DA_CNTT/pull/33) squash-merged into `main` at commit `865b86ccada7ab01066683f5869edfcf13ea568f`.
+- [PR quality gates run 40477056751](https://github.com/tbao4151/DA_CNTT/actions/runs/40477056751) **passed** (syntax and full pytest suite). In an isolated Linux sandbox, `tests/test_upload.py` passed **20/20** cases, including three new NUL-byte cases.
+- The guard rejects NUL in any uploaded CSV byte to avoid pandas silently truncating flow features. No model, official UNSW benchmark, alert threshold, SOC database, or deployment change. No manual Windows student-machine run claimed.
+- Post-merge CI should be checked separately; this documentation entry alone is not evidence of post-merge verification. Next: student-run Windows training, artifact verification and SIEM/SOC screenshots for the advisor.
