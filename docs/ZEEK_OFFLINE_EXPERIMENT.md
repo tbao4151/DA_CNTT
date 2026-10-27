@@ -65,17 +65,17 @@ Manifest v1 (illustrative placeholders, not a runnable lab result):
 ## Prepare private UID annotation templates (offline helper)
 
 Instead of manually transcribing Zeek UIDs, use the non-network helper on **each**
-original, authorized \`conn.log\`. From the repository root on Windows:
+original, authorized `conn.log`. From the repository root on Windows:
 
 ~~~powershell
 py -3.12 scripts/prepare_zeek_annotations.py --log "C:/DA005-private/zeek-experiment/train/conn.log" --output "C:/DA005-private/zeek-experiment/train/labels.json"
 ~~~
 
 The output is a **new** annotation-v1 JSON containing the exact source SHA-256
-and every UID mapped to \`null\` (not 0 or 1). No labels are guessed from
+and every UID mapped to `null` (not 0 or 1). No labels are guessed from
 protocol, port, timestamp, IP or AI predictions. Use independent, documented
-lab scenario records or analyst review to replace **every** \`null\` with an
-integer \`0\` (Normal) or \`1\` (Attack). Do not convert uncertain flows to
+lab scenario records or analyst review to replace **every** `null` with an
+integer `0` (Normal) or `1` (Attack). Do not convert uncertain flows to
 Normal merely to fill the template; investigate or exclude/recollect the
 capture before research. The tool refuses duplicate UIDs, invalid Zeek logs,
 oversized annotation templates, pre-existing outputs and output paths inside
@@ -88,7 +88,7 @@ the **same unchanged** raw log:
 py -3.12 scripts/prepare_zeek_annotations.py --log "C:/DA005-private/zeek-experiment/train/conn.log" --verify-labels "C:/DA005-private/zeek-experiment/train/labels.json"
 ~~~
 
-Verification rejects missing/extra UIDs, \`null\`, booleans, strings,
+Verification rejects missing/extra UIDs, `null`, booleans, strings,
 non-binary labels, duplicate JSON keys, malformed JSON, oversized inputs
 and mismatched raw-source SHA-256. It does **not** authenticate the labeler's
 independence, scenario authorization or whether an Attack actually occurred.
