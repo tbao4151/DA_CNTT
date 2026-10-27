@@ -6,6 +6,10 @@ on:
     paths:
       - ".github/workflows/official-model-smoke.yml"
       - "tests/test_official_model_app.py"
+  pull_request:
+    paths:
+      - ".github/workflows/official-model-smoke.yml"
+      - "tests/test_official_model_app.py"
   workflow_dispatch:
 
 permissions:
@@ -13,8 +17,13 @@ permissions:
 
 jobs:
   official-model-smoke:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    # Check the actual official model and SOC AppTest on both platforms.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
