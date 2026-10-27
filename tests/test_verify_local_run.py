@@ -41,10 +41,22 @@ def make_synthetic_run(tmp_path):
     return expected
 
 
+def write_synthetic_manifest(root):
+    artifacts = root / "artifacts"
+    (artifacts / "artifact_manifest.json").write_text(json.dumps({
+        "schema_version": 1,
+        "sha256": {
+            name: hashlib.sha256((artifacts / name).read_bytes()).hexdigest()
+            for name in ("unsw_binary_rf.joblib", "metrics.json")
+        },
+    }), encoding="utf-8")
+
+
 def test_synthetic_run_creates_truthful_verification_report(tmp_path):
     expected = make_synthetic_run(tmp_path)
     report = verify_local_run(tmp_path, expected_files=expected)
     assert report["verification_status"] == "passed"
+    assert report["artifact_manifest_status"] == "missing_legacy"
     assert report["train_rows"] == 16 and report["test_rows"] == 8
     assert report["feature_count"] == 2
     assert len(report["model_sha256"]) == 64
@@ -86,4 +98,42 @@ def test_synthetic_run_rejects_ground_truth_as_feature(tmp_path):
     metrics["features"].append("label")
     path.write_text(json.dumps(metrics))
     with pytest.raises(ValueError, match="ground-truth features"):
+        verify_local_run(tmp_path, expected_files=expected)
+
+
+def test_manifest_verifies_complete_synthetic_pair(tmp_path):
+    expected = make_synthetic_run(tmp_path)
+    write_synthetic_manifest(tmp_path)
+    report = verify_local_run(tmp_path, expected_files=expected)
+    assert report["artifact_manifest_status"] == "verified"
+
+
+def test_manifest_rejects_changed_model_before_joblib_load(tmp_path, monkeypatch):
+    expected = make_synthetic_run(tmp_path)
+    write_synthetic_manifest(tmp_path)
+    model_path = tmp_path / "artifacts/unsw_binary_rf.joblib"
+    model_path.write_bytes(model_path.read_bytes() + b"altered")
+
+    def fail_if_loaded(*args, **kwargs):
+        raise AssertionError("joblib.load must not run on a mismatched pair")
+
+    monkeypatch.setattr("scripts.verify_local_run.joblib.load", fail_if_loaded)
+    with pytest.raises(ValueError, match="artifact manifest SHA-256 mismatch"):
+        verify_local_run(tmp_path, expected_files=expected)
+
+
+def test_manifest_rejects_changed_metrics(tmp_path):
+    expected = make_synthetic_run(tmp_path)
+    write_synthetic_manifest(tmp_path)
+    path = tmp_path / "artifacts/metrics.json"
+    path.write_bytes(path.read_bytes() + b" ")
+    with pytest.raises(ValueError, match="artifact manifest SHA-256 mismatch"):
+        verify_local_run(tmp_path, expected_files=expected)
+
+
+def test_manifest_rejects_invalid_schema(tmp_path):
+    expected = make_synthetic_run(tmp_path)
+    path = tmp_path / "artifacts/artifact_manifest.json"
+    path.write_text('{"schema_version": 2, "sha256": {}}', encoding="utf-8")
+    with pytest.raises(ValueError, match="Invalid artifact manifest schema"):
         verify_local_run(tmp_path, expected_files=expected)

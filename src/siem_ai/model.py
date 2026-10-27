@@ -1,6 +1,7 @@
 """Leakage-safe binary ML model for UNSW-NB15, with honest held-out metrics."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -72,11 +73,20 @@ def fit_and_evaluate(train: pd.DataFrame, test: pd.DataFrame):
     return model, metrics
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def persist_model(model, metrics: dict, directory: str | Path) -> None:
     """Stage both artifacts before replacing existing local model/metrics files.
 
-    Failed serialization leaves any prior artifacts untouched. The two final
-    os.replace calls are individually atomic, not a two-file transaction.
+    Failed serialization leaves any prior artifacts untouched. A SHA-256
+    manifest is published last so the local verifier can reject a mixed pair
+    after an interrupted replacement. The files are not a single transaction.
     """
     output = Path(directory)
     output.mkdir(parents=True, exist_ok=True)
@@ -88,8 +98,20 @@ def persist_model(model, metrics: dict, directory: str | Path) -> None:
         metrics_file.write_text(
             json.dumps(metrics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
         )
+        manifest_file = staged / "artifact_manifest.json"
+        manifest_file.write_text(
+            json.dumps({
+                "schema_version": 1,
+                "sha256": {
+                    model_file.name: _sha256_file(model_file),
+                    metrics_file.name: _sha256_file(metrics_file),
+                },
+            }, indent=2) + "\n", encoding="utf-8"
+        )
         os.replace(model_file, output / model_file.name)
         os.replace(metrics_file, output / metrics_file.name)
+        # Publish the pair's checksums only after both files are in place.
+        os.replace(manifest_file, output / manifest_file.name)
 
 
 def predict_batch(model, rows: pd.DataFrame) -> pd.DataFrame:
