@@ -16,6 +16,16 @@ FILES = {
 }
 REQUIRED = {"id", "proto", "service", "state", "dur", "sbytes", "dbytes", "attack_cat", "label"}
 
+
+def sha256_file(path: Path) -> str:
+    """Hash CSV files incrementally instead of loading them into RAM."""
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     metadata = {"dataset": "UNSW-NB15", "variant": "official train/test partition", "official_source": "https://research.unsw.edu.au/projects/unsw-nb15-dataset", "mirror": BASE, "files": {}}
@@ -25,10 +35,18 @@ def main():
             temporary = OUT / (name + ".part")
             try:
                 urllib.request.urlretrieve(BASE + name, temporary)
+                # Never promote a failed or tampered download to the official
+                # filename. The existing target is not touched on failure.
+                downloaded_hash = sha256_file(temporary)
+                if downloaded_hash != expected_hash:
+                    raise ValueError(
+                        f"{name}: downloaded SHA256 mismatch ({downloaded_hash}); "
+                        "refusing to install unverified data"
+                    )
                 temporary.replace(target)
             finally:
                 temporary.unlink(missing_ok=True)
-        actual_hash = hashlib.sha256(target.read_bytes()).hexdigest()
+        actual_hash = sha256_file(target)
         if actual_hash != expected_hash:
             raise ValueError(f"{name}: SHA256 mismatch ({actual_hash}); do not use this copy")
         with target.open(encoding="utf-8-sig", newline="") as handle:

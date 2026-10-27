@@ -13,6 +13,7 @@
 ## Ưu tiên triển khai (đề xuất nhóm, không phải phân công của GVHD)
 
 - [x] Dữ liệu UNSW-NB15, metadata và script tải.
+- [x] Script tải kiểm tra SHA-256 trên tệp tạm trước khi đưa vào tên CSV chính thức; không ghi đè dữ liệu hiện có khi checksum sai (kiểm thử hồi quy synthetic, trạng thái CI xem PROGRESS).
 - [x] Cấu trúc MVP Mini-SIEM bằng Streamlit, thư viện phân tích, SQLite.
 - [x] Script Random Forest train/test không đưa nhãn vào features.
 - [x] CLI huấn luyện kiểm tra checksum SHA-256 và số dòng của cả hai tệp UNSW-NB15 trước khi fit; sáu kiểm thử hồi quy tổng hợp đã qua CI trên PR #35.

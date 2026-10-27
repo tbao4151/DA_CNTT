@@ -26,7 +26,7 @@ streamlit run app.py
 
 Truy cập URL cục bộ Streamlit hiển thị trong terminal (thường là http://localhost:8501). Giao diện mặc định cho phép **khám phá ground truth ngay cả khi chưa có mô hình**; hệ thống không giả lập dự đoán khi chưa train.
 
-Dataset đã có ở `data/raw/unsw_nb15/`. Nếu thiếu:
+Dataset đã có ở `data/raw/unsw_nb15/`. Script tải xác minh SHA-256 **trên tệp `.part` trước khi đổi tên thành CSV chính thức**; tệp tải sai checksum hoặc bị gián đoạn không được giữ dưới tên chính thức. Nếu CSV đích đã tồn tại nhưng sai checksum, script báo lỗi và giữ nguyên tệp để kiểm tra thủ công (không tự xóa/ghi đè). Nếu thiếu:
 
 ```powershell
 python scripts/download_unsw_nb15.py

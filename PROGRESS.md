@@ -362,3 +362,10 @@
 - `scripts/train_siem.py` now refuses altered or missing official train/test CSVs before fitting or saving a model, and checks their row counts against pinned constants. It does not trust local metadata.json. No model or benchmark numbers changed; no manual Windows student experiment claimed.
 
 - **Post-merge main quality gates [40492595694](https://github.com/tbao4151/DA_CNTT/actions/runs/40492595694) passed** on squash commit `d0f1fbd81f26c3590af3eba8ebcd5a6af4f6081c` (Python syntax and full repository pytest). This is CI-hosted Linux verification, not a student-run Windows training experiment.
+
+## 2026-10-27: Validate downloaded UNSW CSV before promotion (PR/CI pending)
+
+- Found that `scripts/download_unsw_nb15.py` previously renamed a newly downloaded `.part` file to the official CSV filename **before** verifying SHA-256. A corrupted download could therefore leave an invalid official-named file, blocking subsequent setup and confusing local users.
+- Changed the downloader to stream-hash the temporary download and require the pinned official SHA-256 before renaming it; failures remove only the temporary `.part` file. Existing CSVs are still verified but **never silently overwritten or deleted**.
+- Added four synthetic, offline pytest cases: valid promotion, tampered download rejection, interrupted transfer cleanup and preservation of a pre-existing invalid CSV. Updated README and ROADMAP. **CI is pending at commit time**; no claim of Windows student-machine execution.
+- No change to model, official dataset bytes/checksums, benchmark metrics, alert threshold, SOC database or public deployment. Next: verify PR CI and merge if green; then student-run Windows training and evidence collection.
