@@ -54,7 +54,7 @@ The manual case still stores a bounded **string** snapshot in the existing SQLit
 
 This is **source-consistency verification**, not proof that the source file was genuinely captured from a VMware lab or that the SQLite database is immutable. The original log must still be available in the active upload session for typed export. Historical exports from `siem_ai.case_report` remain schema v1 and unchanged. No AI classification or automated alert is introduced. Run `py -3.12 -m pytest -q tests/test_zeek_verified_report.py tests/test_zeek_manual_triage.py` and test the new button manually on Windows. CI status and merge are tracked in PROGRESS.
 
-## Zeek-only lab feature contract v1 (PR pending, 28/10/2026)
+## Zeek-only lab feature contract v1 (PR #48 merged, 28/10/2026)
 
 `src/blue_team_ai/features.py` defines `LAB_FEATURE_SCHEMA_VERSION = 1` and a **strict projection**, not an AI model. `extract_zeek_feature_rows` accepts a nonempty ordered batch of already parsed offline Zeek events from exactly one SHA-256 source; the output preserves row order and excludes UID, IP addresses, event timestamps, provenance, labels and AI/UI columns. Unexpected fields (including `label` and `attack_cat`) fail closed instead of being silently used as model inputs. The nine permitted features are `proto`, `service`, `src_port`, `dst_port`, `duration_s`, `orig_bytes`, `resp_bytes`, `orig_pkts`, and `resp_pkts`.
 
@@ -62,4 +62,4 @@ Missing duration/counts/service remain Python `None`; measured zeros remain nume
 
 The extractor validates the event shape and source digest format but **does not authenticate the original capture or independently recompute its SHA-256**. The upstream parser/verified export handles bytes; the researcher must preserve the original log and authorized VMware Host-only collection context. Synthetic unit tests do not establish real-world performance.
 
-Run `py -3.12 -m pytest -q tests/test_zeek_features.py` for this feature contract. See PROGRESS for CI and merge status.
+Run `py -3.12 -m pytest -q tests/test_zeek_features.py` for this feature contract. PR #48 quality gates passed (`223 passed, 2 skipped`); see PROGRESS for post-merge CI and local acceptance limitations.
