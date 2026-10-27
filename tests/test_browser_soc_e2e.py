@@ -160,7 +160,11 @@ def test_windows_browser_ai_alert_to_soc_json(tmp_path):
                     ).drop(columns=["id", "label", "attack_cat"], errors="ignore")
                     assert len(uploaded_flows) == 8
 
-                    page.get_by_role("radio", name="Tải lên CSV").check()
+                    # The styled radio input is covered by its visible label
+                    # in Streamlit/BaseWeb; click the label, not the input.
+                    page.locator('[data-testid="stSidebar"]').get_by_text(
+                        "Tải lên CSV", exact=True
+                    ).click()
                     uploader = page.locator(
                         '[data-testid="stFileUploader"] input[type="file"]'
                     )
