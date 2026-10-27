@@ -414,3 +414,11 @@
 - Added three synthetic-only tests for successful output and cleanup, interrupted joblib serialization, and invalid metrics JSON. A small isolated Python smoke check of the staging logic passed, but **repository CI and Windows verification are not yet confirmed at this entry**.
 - Limitation: the two final `os.replace` operations are **not an atomic pair**. A crash or I/O error between replacements can still leave model/metrics inconsistent; the existing local verifier is required before using the pair as research evidence. No official UNSW training, benchmark, SOC data, threshold, or deployment was changed.
 - Next: verify PR CI and merge only if green; student-run Windows training, verifier output and genuine SOC demo screenshots remain outstanding.
+
+## 2026-10-27: Staged local artifact persistence merged and CI verified (PR #39)
+
+- [PR #39](https://github.com/tbao4151/DA_CNTT/pull/39) squash-merged into `main` at commit `3774212cea0dd862d47d64fa74761667cc3ea49f`.
+- [PR quality gates 40525521073](https://github.com/tbao4151/DA_CNTT/actions/runs/40525521073) **passed** (Python syntax + full pytest: 158 passed, 2 skipped, 2 warnings). [Post-merge main quality gates 40525727397](https://github.com/tbao4151/DA_CNTT/actions/runs/40525727397) **passed** on the merge commit.
+- Model and metrics are now fully staged before replacing existing local artifact files, so serialization errors (including a partially written staged joblib file or non-JSON-serializable metrics) preserve the last existing artifacts. Three new synthetic regression tests cover success, interrupted dump and metrics serialization failure. An isolated staging smoke also passed.
+- **Remaining risk:** replacing two final files is not an atomic pair; a crash between `os.replace` calls may still leave a mismatched model/metrics pair. Re-run training and `scripts/verify_local_run.py` after interrupted writes. No official benchmark/model hyperparameter change, SOC DB mutation, deployment or student-operated Windows experiment claimed.
+- Next: collect real Windows training/verifier output and SOC UI screenshots; consider an explicit artifact manifest if stronger pair-consistency guarantees are required.
