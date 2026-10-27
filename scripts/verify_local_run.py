@@ -40,6 +40,36 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def verify_artifact_manifest(artifact_dir: Path) -> str:
+    """Validate a completed model/metrics pair before unpickling the model.
+
+    Older local artifacts without a manifest remain readable, but their pair
+    consistency is not cryptographically checked by this additional guard.
+    """
+    path = artifact_dir / "artifact_manifest.json"
+    if not path.exists():
+        return "missing_legacy"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    if (
+        not isinstance(manifest, dict)
+        or type(manifest.get("schema_version")) is not int
+        or manifest["schema_version"] != 1
+        or not isinstance(manifest.get("sha256"), dict)
+        or set(manifest["sha256"]) != {"unsw_binary_rf.joblib", "metrics.json"}
+    ):
+        raise ValueError("Invalid artifact manifest schema")
+    for name, expected in manifest["sha256"].items():
+        if (
+            not isinstance(expected, str)
+            or len(expected) != 64
+            or any(char not in "0123456789abcdef" for char in expected)
+        ):
+            raise ValueError(f"{name}: invalid artifact manifest hash")
+        if sha256_file(artifact_dir / name) != expected:
+            raise ValueError(f"{name}: artifact manifest SHA-256 mismatch")
+    return "verified"
+
+
 def git_commit(root: Path) -> str | None:
     try:
         result = subprocess.run(
@@ -70,6 +100,7 @@ def verify_local_run(root: Path, *, expected_files: dict[str, tuple[int, str]] =
             raise ValueError(f"{filename}: SHA-256 mismatch; refusing unverified dataset")
         dataset_hashes[filename] = actual_hash
 
+    manifest_status = verify_artifact_manifest(artifact_dir)
     metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
     if (metrics.get("train_size"), metrics.get("test_size")) != (
         expected_files["UNSW_NB15_training-set.csv"][0],
@@ -142,6 +173,7 @@ def verify_local_run(root: Path, *, expected_files: dict[str, tuple[int, str]] =
     return {
         "schema_version": 1,
         "verification_status": "passed",
+        "artifact_manifest_status": manifest_status,
         "verified_at_utc": datetime.now(timezone.utc).isoformat(),
         "execution_environment": {
             "os": platform.system(),
@@ -167,7 +199,8 @@ def verify_local_run(root: Path, *, expected_files: dict[str, tuple[int, str]] =
         "scope_note": (
             "Local artifact and held-out dataset consistency check only; "
             "not a new benchmark, independent replication, live capture, or proof "
-            "that a human completed the demonstration. The report is not signed."
+            "that a human completed the demonstration. Manifest checks are "
+            "pair-consistency checks, not authenticity guarantees. The report is not signed."
         ),
     }
 
