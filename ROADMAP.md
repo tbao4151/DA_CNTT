@@ -69,3 +69,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [ ] Add a versioned, type-preserving Zeek case JSON export, revalidated against original offline log bytes and the existing SOC snapshot (PR/CI status in PROGRESS). This does **not** yet make SQLite typed, immutable, or forensic-grade.
 - [ ] Verify real Windows/VMware capture and manually test the export against an authorized original `conn.log`.
+
+## Cyber Lab — Zeek-only lab feature contract (28/10/2026)
+
+- [ ] Validate and merge a versioned v1 projection of offline Zeek records to nine typed, explicitly allowed feature columns; reject extra/leaky fields, preserve nulls, and keep IP/UID/timestamps/digests out of model inputs (PR/CI status in PROGRESS).
+- [ ] Design independent labels, collection-session/host-aware train/validation/test separation, imputation fit only on training data, and baseline classifier on Zeek schema; report held-out precision/recall/FPR and provenance before any AI attack alert.
+- [ ] Validate extraction and later model on a genuine authorized Windows VMware Host-only capture; keep raw log and SHA-256 separately.
