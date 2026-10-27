@@ -1,9 +1,6 @@
 name: Fetch UNSW-NB15 and validate
 
 on:
-  push:
-    paths:
-      - ".github/workflows/fetch-unsw-nb15.yml"
   workflow_dispatch:
 
 permissions:
