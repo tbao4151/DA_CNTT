@@ -20,6 +20,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION
 from .labeled_dataset import LabeledLabDataset, SPLITS
+from .probability_diagnostics import summarize_probability_quality
 
 CATEGORICAL = ("proto", "service")
 NUMERIC = tuple(name for name in LAB_FEATURE_COLUMNS if name not in CATEGORICAL)
@@ -150,6 +151,9 @@ def evaluate_offline_zeek_baseline(dataset: LabeledLabDataset) -> dict[str, obje
     # The test set is first consulted after model fitting and threshold selection.
     test_probs = model.predict_proba(_frame(dataset.features["test"]))[:, classes.index(1)]
     test_metrics = _scores(dataset.labels["test"], test_probs, selected)
+    # Descriptive only: never calibrate, refit or tune using held-out test.
+    validation_quality = summarize_probability_quality(dataset.labels["validation"], validation_probs)
+    test_quality = summarize_probability_quality(dataset.labels["test"], test_probs)
     sources = {
         split: {
             "flows": len(dataset.labels[split]),
@@ -160,7 +164,7 @@ def evaluate_offline_zeek_baseline(dataset: LabeledLabDataset) -> dict[str, obje
         for split in SPLITS
     }
     return {
-        "report_version": 1,
+        "report_version": 2,
         "mode": "offline_labeled_zeek_research_only",
         "label_authenticity": "operator_supplied_not_verified",
         "feature_schema_version": LAB_FEATURE_SCHEMA_VERSION,
@@ -171,6 +175,8 @@ def evaluate_offline_zeek_baseline(dataset: LabeledLabDataset) -> dict[str, obje
         "selected_threshold": selected,
         "validation_metrics": candidates[selected],
         "test_metrics": test_metrics,
+        "validation_probability_diagnostics": validation_quality,
+        "test_probability_diagnostics": test_quality,
         "provenance": sources,
         "live_capture": False,
         "automated_alerts": False,
