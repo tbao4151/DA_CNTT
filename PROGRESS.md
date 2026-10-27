@@ -482,3 +482,10 @@
 - Added `tests/test_zeek_manual_triage.py` using synthetic Zeek records to check provenance, Unclassified verdict, no Dataset DB mutation, export/audit and invalid selections. Updated Cyber Lab architecture and roadmap.
 - **At creation of this entry:** full GitHub PR CI, merge, post-merge CI and real student Windows/VMware capture are not yet verified. The JSON is a mutable, unsigned snapshot; the shared SOC store stringifies evidence values (not lossless), and explicit repeated clicks can create duplicate manual cases. No Red Team activity, lab traffic, Zeek AI model, automated alert or official benchmark change is claimed.
 - Next: inspect PR CI; merge only if green and conflict-free. Student should validate the page on Windows with an authorized Host-only Zeek log, retain original log + checksum and export one manual case as evidence. Separately design typed Cyber Lab evidence and lab-schema model.
+
+## 2026-10-28: Manual Zeek SOC triage PR #45 merged and verified
+
+- [PR #45](https://github.com/tbao4151/DA_CNTT/pull/45) squash-merged into `main` as commit `cb472a788a004e8fe692f734057ccf50de404093`.
+- [PR quality gates 40558137956](https://github.com/tbao4151/DA_CNTT/actions/runs/40558137956) **passed** on Ubuntu Python 3.12.9: syntax + full pytest (`190 passed, 2 skipped, 2 warnings`). [Post-merge main quality gates 40558352334](https://github.com/tbao4151/DA_CNTT/actions/runs/40558352334) also **passed** (`190 passed, 2 skipped, 2 warnings`).
+- The implementation adds only an operator-initiated, **Unclassified** manual Zeek case with original source digest and JSON evidence; it does not run an AI model or identify attacks. Dataset Mode and official UNSW metrics remain unchanged.
+- No real Zeek capture, Windows laptop test, browser E2E for manual case creation, immutable evidence, or Red Team scenario has been verified. Next: manual Windows Host-only validation with a real authorized `conn.log`, then typed Cyber Lab evidence and independently labeled model training.
