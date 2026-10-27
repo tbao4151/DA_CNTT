@@ -80,3 +80,13 @@ def test_upload_only_checks_preview_rows():
     data = (HEADER + "\n" + ROW + "\n" + ROW + ",unexpected\n").encode()
     frame = read_uploaded_flows(data, limit=1)
     assert len(frame) == 1
+
+@pytest.mark.parametrize("data", [
+    (HEADER.replace("proto", "proto\x00hidden") + "\n" + ROW + "\n").encode(),
+    (HEADER + "\n" + ROW.replace("tcp", "tcp\x00hidden") + "\n").encode(),
+    (HEADER + "\n" + ROW + "\n" + ROW.replace("tcp", "tcp\x00hidden") + "\n").encode(),
+])
+def test_upload_rejects_nul_bytes_in_header_or_data(data):
+    # pandas' C parser can silently discard the suffix following a NUL byte.
+    with pytest.raises(ValueError, match="NUL bytes"):
+        read_uploaded_flows(data, limit=1)

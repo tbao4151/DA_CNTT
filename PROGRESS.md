@@ -317,3 +317,10 @@
 - [PR quality gates 40470228083](https://github.com/tbao4151/DA_CNTT/actions/runs/40470228083) **passed**; [post-merge main quality gates 40470349268](https://github.com/tbao4151/DA_CNTT/actions/runs/40470349268) **passed** (repository syntax check and pytest suite). The six synthetic helper tests also passed in an isolated Linux sandbox.
 - The opt-in `scripts/verify_local_run.py` now produces grouped TP/FP/TN/FN summaries only after existing model/dataset/metrics checks. This change does not create a new official UNSW benchmark, tune on held-out test, expose raw flows or establish that students performed local Windows training. No SOC DB, deployment, AI model or threshold changes.
 - Next: group members must train on their own Windows PC, run the verifier, interpret grouped FP/FN counts with denominators, capture real screenshots and revise the advisor progress report with verified local evidence.
+
+## 2026-10-27: Reject NUL-byte CSV uploads before AI inference (PR verification pending)
+
+- Found a parser inconsistency: Python `csv.reader` preserves NUL characters but pandas' C CSV parser can silently truncate the same header or field at a NUL byte. This could alter a network-flow feature without a visible parsing error.
+- Updated `src/siem_ai/upload.py` to reject any NUL byte in a bounded (max 15 MiB) uploaded CSV, including content after the selected preview rows. This affects only user-uploaded CSV; official UNSW data loading, model, benchmark, threshold and SOC case storage remain unchanged.
+- Added three parameterized regression cases for NUL in a header, a preview-row value, and a value after the preview boundary. **Isolated Linux sandbox:** 20 upload tests passed; syntax compilation passed. Full GitHub Actions PR checks and Windows browser verification are pending at commit time.
+- No new model performance or local Windows student experiment is claimed. Next: verify CI, merge if green, then collect manual Windows training/demo evidence for the advisor.
