@@ -354,3 +354,9 @@
 - Added `load_verified_split` to hash both CSVs against the fixed checksums in `scripts/download_unsw_nb15.py` and validate row counts before `fit_and_evaluate` or `persist_model`. A missing or modified file fails closed; it does not overwrite an existing model/metrics artifact. Local metadata.json is not trusted as the checksum source.
 - Added six synthetic-only regression cases covering valid inputs, altered train/test, missing train/test, and row-count mismatch. Updated README and ROADMAP. CI status and independent local test execution are **not yet verified at commit time**.
 - This is a training-input integrity guard, not a new AI benchmark or evidence that students ran the project on their Windows machine. No model hyperparameters, test labels, alert thresholds, SOC DB, or deployment changed.
+
+## 2026-10-27: Official training split checksum gate merged (PR #35)
+
+- [PR #35](https://github.com/tbao4151/DA_CNTT/pull/35) was squash-merged into `main` at `d0f1fbd81f26c3590af3eba8ebcd5a6af4f6081c`.
+- [PR quality gates 40492434317](https://github.com/tbao4151/DA_CNTT/actions/runs/40492434317) **passed**, including repository Python syntax check and full pytest suite with six new synthetic split-integrity cases. Post-merge `main` CI is pending verification at the time of this entry.
+- `scripts/train_siem.py` now refuses altered or missing official train/test CSVs before fitting or saving a model, and checks their row counts against pinned constants. It does not trust local metadata.json. No model or benchmark numbers changed; no manual Windows student experiment claimed.
