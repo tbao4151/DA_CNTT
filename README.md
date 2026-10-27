@@ -92,6 +92,12 @@ Tab **AI & đánh giá** có bảng và biểu đồ Precision, Recall, False Po
 
 Khi máy có mô hình Random Forest đã huấn luyện, tab **AI & đánh giá** hiển thị 12 đặc trưng network flow có MDI (Gini importance) cao nhất, gộp các chiều one-hot về tên cột nguồn; có bảng tất cả đặc trưng và xuất CSV an toàn. Đây là **mức quan trọng toàn cục**, không phải giải thích cho từng cảnh báo, và có thể thiên lệch với biến nhiều giá trị. Không có mô hình sẽ không hiển thị kết quả giả. Xem [docs/EXPLAINABILITY.md](docs/EXPLAINABILITY.md). Để tạo bảng xếp hạng **thực nghiệm** từ full-training UNSW, chạy `python scripts/train_siem.py` rồi `python scripts/report_feature_importance.py`; xuất `artifacts/official_feature_importance.json` gồm 42 đặc trưng, checksum dataset và model. Có workflow **Official UNSW-NB15 global AI explainability** trên GitHub Actions để kiểm chứng; chỉ dùng bảng ranking sau khi run thành công. **Đã xác minh:** [Actions #40377900643](https://github.com/tbao4151/DA_CNTT/actions/runs/40377900643) chạy thành công; báo cáo đủ 42 cột lưu tại [reports/official_global_feature_importance.json](reports/official_global_feature_importance.json). Top 3 MDI của Random Forest: `sttl` 10,32%, `ct_state_ttl` 6,86%, `rate` 5,31%. Đây không phải giải thích nhân quả hoặc cho từng flow.
 
+## Kiểm thử giao diện bằng trình duyệt Windows (opt-in)
+
+Workflow [Official-model dashboard integration smoke](.github/workflows/official-model-smoke.yml) có thêm bài kiểm thử Playwright Chromium trên **Windows**, sau khi xác minh checksum và huấn luyện từ tập train chính thức. Bài kiểm thử mở Streamlit qua **localhost** trong thư mục tạm, dùng 2.500 dòng đầu official test **chỉ để suy luận**, tạo SOC case bằng trình duyệt và tải/xác minh JSON. Không dùng mô hình không tin cậy, không ghi vào SQLite thực tế, không triển khai công khai.
+
+Bài kiểm thử tại `tests/test_browser_soc_e2e.py` chỉ chạy khi `DA005_BROWSER_SOC_E2E=1` trong workflow cài Playwright/Chromium. `pytest` thông thường bỏ qua bài kiểm thử này. **Chưa tuyên bố Windows browser E2E đã pass cho đến khi GitHub Actions xác nhận**; AppTest headless trước đó vẫn là minh chứng riêng.
+
 ## Kiểm thử
 
 Bộ kiểm thử còn có `tests/test_soc_integration.py`: huấn luyện mô hình nhỏ trên dữ liệu **tổng hợp** để xác minh luồng dự đoán AI → tạo SOC case → lưu bằng chứng → cập nhật và truy xuất audit trail. Đây là integration regression test, không phải benchmark UNSW-NB15 hay kiểm thử giao diện Windows.
