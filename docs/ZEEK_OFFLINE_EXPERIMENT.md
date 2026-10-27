@@ -118,6 +118,27 @@ the model. Report v2 preserves the previous `validation_metrics`,
 label-reference strings, but **aggregated bins can still reveal information
 about very small groups**; keep experiment reports private.
 
+## Flow-level rate uncertainty (report v3)
+
+Report v3 retains all v2 fields and adds `validation_detection_uncertainty`
+and `test_detection_uncertainty`. Each contains **95% Wilson score
+intervals** for Attack Precision (TP / (TP + FP)), Attack Recall
+(TP / (TP + FN)) and False Positive Rate (FP / (FP + TN)), with explicit
+numerator/denominator counts. If the denominator is zero, the estimate
+and bounds are JSON `null` (not a fabricated zero). A small-denominator
+warning is raised if any of the three denominators is below 30.
+
+**Scientific limitation:** These are *descriptive flow-level* binomial
+intervals that assume independent flows. Multiple flows from the same
+machine, session or scenario are often correlated, so these intervals can
+be **too narrow** and are not host-cluster-adjusted confidence intervals.
+Host-disjoint train/validation/test prevents some leakage but does not
+make flows within a split independent. Do not claim statistically reliable
+real-world detection from these bounds alone. With genuine multi-host
+captures, report host/scenario-level variability separately. Held-out
+test intervals are computed only after model and threshold selection,
+never used for tuning. Synthetic CI results remain non-scientific.
+
 The report includes SHA-256 source hashes, train/validation/test support,
 confusion counts, Precision/Recall/F1/FPR and validation-selected threshold.
 It intentionally excludes raw IPs, UIDs and label-reference strings. The

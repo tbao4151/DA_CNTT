@@ -44,7 +44,7 @@ def test_baseline_reports_real_synthetic_fit_without_identity_or_labels():
     assert report["feature_columns"] == list(dataset.feature_columns)
     assert report["selected_threshold"] in (0.25, 0.40, 0.50, 0.60, 0.75)
     assert report["validation_metrics"]["support"] == 2
-    assert report["report_version"] == 2
+    assert report["report_version"] == 3
     assert report["validation_probability_diagnostics"]["sample_size"] == 2
     assert report["test_probability_diagnostics"]["sample_size"] == 2
     for split in ("validation", "test"):
@@ -54,6 +54,12 @@ def test_baseline_reports_real_synthetic_fit_without_identity_or_labels():
         assert sum(b["count"] for b in quality["reliability_bins"]) == 2
         assert quality["small_sample_warning"] is True
     assert report["test_metrics"]["support"] == 2
+    for split in ("validation", "test"):
+        uncertainty = report[f"{split}_detection_uncertainty"]
+        assert uncertainty["attack_recall"]["trials"] == 1
+        assert uncertainty["false_positive_rate"]["trials"] == 1
+        assert uncertainty["small_denominator_warning"] is True
+        assert "no_host_cluster_adjustment" in uncertainty["interpretation"]
     assert sum(report["test_metrics"][key] for key in ("tp", "fp", "tn", "fn")) == 2
     assert report["provenance"]["test"]["flows"] == 2
     assert len(report["provenance"]["train"]["source_sha256"]) == 1
@@ -75,6 +81,7 @@ def test_test_labels_do_not_change_fit_validation_or_selected_threshold():
     assert baseline["validation_metrics"] == result["validation_metrics"]
     assert baseline["validation_probability_diagnostics"] == result["validation_probability_diagnostics"]
     assert baseline["test_probability_diagnostics"] != result["test_probability_diagnostics"]
+    assert baseline["validation_detection_uncertainty"] == result["validation_detection_uncertainty"]
     assert baseline["test_metrics"] != result["test_metrics"]
 
 
