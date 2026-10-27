@@ -2,6 +2,7 @@
 import os
 import sys
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -86,3 +87,74 @@ def test_model_cache_signature_changes_when_artifact_replaced(tmp_path):
 def test_model_cache_signature_missing_artifact(tmp_path):
     with pytest.raises(FileNotFoundError):
         model_artifact_signature(tmp_path / "missing.joblib")
+
+
+def test_training_requires_both_classes():
+    df = fixtures()
+    only_normal = df.loc[df["label"] == 0]
+    with pytest.raises(ValueError, match="both Normal.*Attack"):
+        fit_and_evaluate(only_normal, df.iloc[16:])
+
+
+def test_predict_batch_uses_attack_label_not_fixed_column_position():
+    df = fixtures()
+    model, _ = fit_and_evaluate(df.iloc[:16], df.iloc[16:])
+    sample = df.iloc[16:]
+    expected = predict_batch(model, sample)
+
+    class ReorderedClassModel:
+        classes_ = np.array([1, 0])
+        feature_names_in_ = model.named_steps["preprocess"].feature_names_in_
+
+        def predict_proba(self, rows):
+            return model.predict_proba(rows)[:, ::-1]
+
+    actual = predict_batch(ReorderedClassModel(), sample)
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+@pytest.mark.parametrize("classes", [[1], [0, 2], ["0", "1"]])
+def test_predict_batch_rejects_incompatible_model_classes(classes):
+    df = fixtures()
+    model, _ = fit_and_evaluate(df.iloc[:16], df.iloc[16:])
+
+    class IncompatibleModel:
+        classes_ = np.array(classes)
+        feature_names_in_ = model.named_steps["preprocess"].feature_names_in_
+
+        def predict_proba(self, rows):
+            return np.ones((len(rows), len(classes)))
+
+    with pytest.raises(ValueError, match="binary classes"):
+        predict_batch(IncompatibleModel(), df.iloc[16:])
+
+
+@pytest.mark.parametrize("invalid_score", [float("nan"), float("inf"), -0.1, 1.1])
+def test_predict_batch_rejects_invalid_attack_probabilities(invalid_score):
+    df = fixtures()
+    model, _ = fit_and_evaluate(df.iloc[:16], df.iloc[16:])
+
+    class InvalidProbabilityModel:
+        classes_ = np.array([0, 1])
+        feature_names_in_ = model.named_steps["preprocess"].feature_names_in_
+
+        def predict_proba(self, rows):
+            return np.tile([0.5, invalid_score], (len(rows), 1))
+
+    with pytest.raises(ValueError, match="invalid Attack probabilities"):
+        predict_batch(InvalidProbabilityModel(), df.iloc[16:])
+
+
+def test_predict_batch_rejects_wrong_probability_matrix_shape():
+    df = fixtures()
+    model, _ = fit_and_evaluate(df.iloc[:16], df.iloc[16:])
+
+    class WrongShapeModel:
+        classes_ = np.array([0, 1])
+        feature_names_in_ = model.named_steps["preprocess"].feature_names_in_
+
+        def predict_proba(self, rows):
+            return np.ones((len(rows), 1))
+
+    with pytest.raises(ValueError, match="invalid probability matrix"):
+        predict_batch(WrongShapeModel(), df.iloc[16:])
