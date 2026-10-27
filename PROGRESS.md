@@ -297,3 +297,9 @@
 - The Windows Chromium test verified an eight-row uploaded UNSW feature CSV (without ground-truth labels), a protocol Threat Hunting filter narrowing to 4/8 rows, and duplicate CSV header rejection. It also retained the existing AI alert -> SOC case -> state update -> JSON audit checks.
 - The initial browser run [40463809314](https://github.com/tbao4151/DA_CNTT/actions/runs/40463809314) failed because Playwright clicked a radio input obscured by Streamlit's styled label. Clicking the visible sidebar label fixed the interaction in the later successful run; intermittent UI issues remain possible.
 - This is a CI-hosted Windows browser regression test, **not** evidence of manual operation on a student's Windows PC. It is not a new benchmark, does not assess every upload edge case, and does not alter the official model, threshold, data or local SOC records.
+
+## 2026-10-27: PR #31 merged; post-merge Windows browser regression confirmed
+
+- PR [#31](https://github.com/tbao4151/DA_CNTT/pull/31) squash-merged into `main` at `fc27f4b96c907c1cd7a0a03f24d03d81a2aede71`.
+- Final PR checks [quality gates 40464731858](https://github.com/tbao4151/DA_CNTT/actions/runs/40464731858) and [official-model smoke 40464732093](https://github.com/tbao4151/DA_CNTT/actions/runs/40464732093) both **passed**. Post-merge `main` checks [quality gates 40465141845](https://github.com/tbao4151/DA_CNTT/actions/runs/40465141845) and [official-model smoke 40465141765](https://github.com/tbao4151/DA_CNTT/actions/runs/40465141765) also **passed**, including Windows Chromium and Ubuntu/Windows AppTest.
+- Browser coverage now includes valid/invalid CSV upload and protocol Threat Hunting filtering in addition to SOC case lifecycle. The earlier failed radio-input interaction remains documented; no manual Windows user-machine run or production-security certification is claimed.
