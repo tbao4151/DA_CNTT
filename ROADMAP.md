@@ -87,9 +87,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — offline baseline on independently labeled Zeek (28/10/2026)
 
-- [ ] Verify and merge PR #51: train-only preprocessing and Logistic Regression,
+- [x] PR #51 merged; final PR and post-merge main quality gates passed: train-only preprocessing and Logistic Regression,
   validation-only threshold selection and one-time held-out test report;
-  synthetic regression tests and CI are tracked in PROGRESS.
+  synthetic regression tests and CI are verified in PROGRESS. This is not a genuine lab evaluation.
 - [ ] Obtain independently annotated, authorized Zeek logs with at least three
   host-disjoint groups, pre-register the holdout and retain original log SHA-256,
   scenario notes and Zeek/VMware versions. No synthetic score is a lab metric.
