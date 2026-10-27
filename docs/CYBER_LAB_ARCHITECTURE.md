@@ -63,3 +63,35 @@ Missing duration/counts/service remain Python `None`; measured zeros remain nume
 The extractor validates the event shape and source digest format but **does not authenticate the original capture or independently recompute its SHA-256**. The upstream parser/verified export handles bytes; the researcher must preserve the original log and authorized VMware Host-only collection context. Synthetic unit tests do not establish real-world performance.
 
 Run `py -3.12 -m pytest -q tests/test_zeek_features.py` for this feature contract. PR #48 quality gates passed (`223 passed, 2 skipped`); see PROGRESS for post-merge CI and local acceptance limitations.
+
+
+## Independently labeled Zeek dataset contract (feature PR pending, 28/10/2026)
+
+`src/blue_team_ai/labeled_dataset.py` adds an **offline research input contract**, not a trained classifier. The caller supplies an ordered sequence of 3–30 capture descriptors, each with the **original Zeek ASCII log bytes**, a unique `session_id`, a `host_group` identifying the originating machine/environment, an explicitly assigned `split` (`train`, `validation`, `test`), `label_method` (`controlled_scenario_record` or `manual_analyst_review`), a nonempty `label_reference` to independently retained operator evidence, and a `labels_by_uid` map containing a separately determined binary 0/1 label for every Zeek UID. This contract has **no mechanism to verify the truthfulness** of the labels, operator claims or physical host isolation; the lab notebook and signed-off scenario records remain necessary.
+
+`build_labeled_lab_dataset(captures)` parses the **original bytes** with the existing bounded Zeek parser, computes the source SHA-256, rejects duplicate source files, duplicate sessions, duplicate UIDs within a capture, missing/extra labels, booleans, nonbinary labels, unknown metadata, unsupported label methods, cross-split host reuse and any split lacking either class. It caps aggregate flows at 30,000. It uses the existing nine-column v1 feature projection, returning `features`, `labels` and `provenance` in **separate dictionaries by split**. No IP, UID, timestamp, ground-truth label, source hash or host identity is included in the feature matrix; these are retained only in provenance. No imputation or model fitting occurs, and **nothing is automatically inferred from attack category, timestamps, port numbers or an existing model prediction**.
+
+Host-disjoint splitting is stricter than random flow splitting. Each `host_group` must belong to exactly one split, although multiple sessions from the same host may be grouped in that split. Operators must assign these partitions **before inspecting test performance**, reserve the test set for a single final evaluation, and ensure scenario/host diversity rather than only label balance. For small labs with one physical/virtual host, the function deliberately refuses to pretend host-disjoint generalization has been established. `label_reference` is only an identifier; keep the actual human/scenario annotation evidence outside the public repo and validate timestamps and experiment notes manually.
+
+Example integration (on Windows, in an authorized isolated lab after capturing three distinct host groups):
+
+```python
+from pathlib import Path
+from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
+
+captures = [
+    {
+        "log_bytes": Path("private/train-host/conn.log").read_bytes(),
+        "session_id": "train-run-001", "host_group": "vm-host-train",
+        "split": "train", "label_method": "controlled_scenario_record",
+        "label_reference": "private-notes/train-run-001",
+        "labels_by_uid": {"ZeekUID_A": 0, "ZeekUID_B": 1},
+    },
+    # Supply independently annotated validation and test captures as well.
+]
+# The example is intentionally incomplete and will be rejected until
+# all three partitions, full UID maps and both labels per split exist.
+dataset = build_labeled_lab_dataset(captures)
+```
+
+Use `py -3.12 -m pytest -q tests/test_zeek_labeled_dataset.py` to validate the synthetic contract tests. There is no UI/CLI for labeling yet, no lab-trained model, no AI alert, no real attack-detection metric, and no Windows/VMware acceptance evidence. The next research slice is an **offline** training/evaluation pipeline that fits preprocessing only on train, tunes thresholds on validation and reports untouched test Precision/Recall/FPR and provenance. Do not publish raw private logs, annotation notes or sensitive IP addresses.
