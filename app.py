@@ -25,6 +25,7 @@ from siem_ai.explain import global_feature_importance
 from siem_ai.official_comparison import load_official_comparison
 from siem_ai.case_report import export_case_report
 from siem_ai.hunting import filter_hunting_flows
+from siem_ai.upload import read_uploaded_flows
 
 st.set_page_config(
     page_title="DA005 | Sentinel Lab", page_icon=None,
@@ -95,9 +96,9 @@ else:
         st.error("Giới hạn mỗi tệp 15 MB cho bản demo.")
         st.stop()
     try:
-        frame = pd.read_csv(uploaded, nrows=sample_size)
-    except (ValueError, UnicodeDecodeError, pd.errors.ParserError) as exc:
-        st.error(f"Tệp không đọc được: {exc}")
+        frame = read_uploaded_flows(uploaded.getvalue(), limit=sample_size)
+    except (ValueError, TypeError) as exc:
+        st.error(f"Tệp CSV không hợp lệ: {exc}")
         st.stop()
 
 try:

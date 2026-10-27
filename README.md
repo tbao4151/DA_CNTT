@@ -71,6 +71,8 @@ ROADMAP.md                  Mục tiêu / thứ tự ưu tiên
 - Nếu artifact quá hạn 7 ngày, chạy `python scripts/train_siem.py` trên máy để tạo lại model.
 - Dashboard có thể hiển thị benchmark từ file report GitHub ngay cả khi chưa có model; **chức năng dự đoán và cảnh báo chỉ hoạt động khi có model thực sự**.
 
+**Nhập CSV kiểm soát:** Chế độ tải CSV chỉ đọc tối đa 10.000 flow trong bản xem trước và giới hạn tệp 15 MiB. Parser kiểm tra header CSV gốc trước khi pandas tự đổi tên cột trùng (`proto,proto` thành `proto,proto.1`), từ chối cột rỗng, tệp rỗng và mã hóa không phải UTF-8 (có hỗ trợ BOM). Sau đó hệ thống tiếp tục kiểm tra các cột network flow bắt buộc. Đây là biện pháp giảm lỗi nhập liệu cho prototype, không phải sandbox bảo mật cho dữ liệu không tin cậy.
+
 **Xuất CSV an toàn:** Kết quả threat hunting được xử lý để chuỗi bắt đầu bằng ký tự công thức không tự thực thi khi mở bằng ứng dụng bảng tính. Giá trị text nguy hiểm được thêm dấu nháy đơn, vì vậy CSV xuất phục vụ xem và không phải bản sao nguyên trạng của dữ liệu gốc.
 
 ## Bộ lọc Threat hunting đa chiều
