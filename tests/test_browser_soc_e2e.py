@@ -144,6 +144,55 @@ def test_windows_browser_ai_alert_to_soc_json(tmp_path):
                     report = json.loads(
                         Path(updated_download.path()).read_text(encoding="utf-8")
                     )
+
+                    # CSV import and Threat Hunting are exercised through a
+                    # real browser, using only a few held-out flow features.
+                    # Test labels are deliberately absent from the upload.
+                    groups = [
+                        (protocol, group.head(4))
+                        for protocol, group in sample.groupby("proto", sort=False)
+                        if len(group) >= 4
+                    ]
+                    assert len(groups) >= 2, "Need two protocols for a meaningful filter check"
+                    selected_protocol = str(groups[0][0])
+                    uploaded_flows = pd.concat(
+                        [groups[0][1], groups[1][1]], ignore_index=True
+                    ).drop(columns=["id", "label", "attack_cat"], errors="ignore")
+                    assert len(uploaded_flows) == 8
+
+                    page.get_by_role("radio", name="Tải lên CSV").check()
+                    uploader = page.locator(
+                        '[data-testid="stFileUploader"] input[type="file"]'
+                    )
+                    uploader.set_input_files({
+                        "name": "valid_network_flows.csv",
+                        "mimeType": "text/csv",
+                        "buffer": uploaded_flows.to_csv(index=False).encode("utf-8"),
+                    })
+                    page.get_by_role("tab", name="Threat hunting").click()
+                    page.get_by_text("Đang hiển thị 8/8 flow", exact=False).wait_for()
+
+                    # One protocol occurs in exactly four of the eight rows.
+                    # Drive the searchable multiselect by keyboard to avoid
+                    # relying on a transient BaseWeb option DOM node.
+                    protocol_input = page.get_by_role("combobox", name="Giao thức")
+                    protocol_input.fill(selected_protocol)
+                    protocol_input.press("Enter")
+                    page.get_by_text("Đang hiển thị 4/8 flow", exact=False).wait_for()
+
+                    # A malformed header must be rejected before any inference.
+                    lines = uploaded_flows.to_csv(index=False).splitlines()
+                    duplicate_header_csv = (
+                        lines[0] + ",proto\\n" + lines[1] + ",tcp\\n"
+                    ).replace("\\n", "\n").encode("utf-8")
+                    uploader.set_input_files({
+                        "name": "duplicate_header.csv",
+                        "mimeType": "text/csv",
+                        "buffer": duplicate_header_csv,
+                    })
+                    page.get_by_text(
+                        "Duplicate CSV column names are not allowed", exact=False
+                    ).wait_for()
                 finally:
                     browser.close()
 
