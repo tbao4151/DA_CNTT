@@ -176,3 +176,9 @@
 - Updated `predict_batch` to map Attack probability by the model's actual `classes_` ordering and reject incompatible class labels, malformed probability shapes and non-finite/out-of-range scores.
 - Added regression cases for reversed class order, missing/wrong classes, invalid scores, and single-class training. These tests use synthetic fixtures, not the official UNSW benchmark.
 - PR #22 passed GitHub Actions PR CI (syntax and pytest) in run `40429640323`; squash-merged into `main` as commit `48788f9281110eb33267011caae1f0313ed47708`. Post-merge main CI also passed in run `40429747524` (syntax and pytest). No benchmark, threshold, or Windows E2E result is claimed.
+
+## 2026-10-27: Official-model Streamlit/SOC integration smoke (PR pending)
+
+- Added an **opt-in** AppTest that uses the model trained from the official 175,341-row UNSW training split to infer on 2,500 original held-out test rows, checks the UI alert count against direct model inference, creates one SOC case, and validates its JSON evidence and audit event.
+- Added a dedicated GitHub Actions workflow to verify dataset checksums, train a trusted model, and execute this test. The application and SQLite writes are isolated in a temporary directory; the workflow has read-only repository permissions and does not publish the model or change benchmark reports.
+- **At this point no workflow result is claimed**. This is a Linux headless integration check, not Windows/browser E2E and not a new model benchmark. The test is skipped by the ordinary fast CI unless explicitly enabled.
