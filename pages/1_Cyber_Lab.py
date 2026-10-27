@@ -17,7 +17,7 @@ import streamlit as st
 
 from blue_team_ai.preview import summarize_offline_flows
 from blue_team_ai.triage import create_offline_review_case
-from siem_ai.case_report import export_case_report
+from blue_team_ai.verified_report import export_verified_offline_case
 from blue_team_ai.zeek import MAX_LOG_BYTES, parse_zeek_conn_log
 
 st.set_page_config(page_title="DA005 | Cyber Lab", page_icon=None, layout="wide")
@@ -130,24 +130,30 @@ else:
                 st.session_state["cyber_last_manual_case"] = {
                     "source_sha256": summary["source_sha256"],
                     "case_id": case_id,
+                    "record_index": selected_index,
                 }
                 st.success(f"Đã tạo hồ sơ điều tra thủ công #{case_id} (Unclassified).")
 
         last_case = st.session_state.get("cyber_last_manual_case")
         if last_case and last_case["source_sha256"] == summary["source_sha256"]:
             try:
-                report_bytes = export_case_report(cyber_db, last_case["case_id"])
+                report_bytes = export_verified_offline_case(
+                    cyber_db,
+                    case_id=last_case["case_id"],
+                    source_data=uploaded.getvalue(),
+                    record_index=last_case["record_index"],
+                )
             except (ValueError, OSError, sqlite3.Error) as exc:
                 st.warning(f"Chưa thể xuất hồ sơ đã tạo: {exc}")
             else:
                 st.download_button(
-                    "Tải hồ sơ điều tra JSON (có provenance và audit trail)",
+                    "Tải JSON đã đối chiếu log gốc (typed Zeek + audit)",
                     data=report_bytes,
                     file_name=f"cyber_lab_case_{last_case['case_id']}.json",
                     mime="application/json",
                     key=f"cyber_export_{last_case['case_id']}",
                 )
                 st.caption(
-                    "JSON là snapshot SQLite có thể bị sửa, không phải chứng cứ "
-                    "pháp lý hoặc kết quả AI. Giữ riêng tệp conn.log gốc để đối chiếu SHA-256."
+                    "JSON chứa trường Zeek đúng kiểu số/null, được đối chiếu với bytes log đang nạp. "
+                    "Không phải bằng chứng chống sửa đổi hoặc kết quả AI; lưu riêng conn.log gốc."
                 )
