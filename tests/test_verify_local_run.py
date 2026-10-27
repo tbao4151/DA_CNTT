@@ -50,6 +50,15 @@ def test_synthetic_run_creates_truthful_verification_report(tmp_path):
     assert len(report["model_sha256"]) == 64
     assert report["dataset_sha256"] == {k: value[1] for k, value in expected.items()}
     assert "live capture" in report["scope_note"]
+    categories = report["error_breakdown"]["by_attack_category"]
+    assert categories is not None
+    assert {row["group"] for row in categories} == {"Normal", "Exploits"}
+    assert report["error_breakdown"]["by_protocol"] is None
+    matrix = report["confusion_matrix_0_1"]
+    assert sum(row["tp"] for row in categories) == matrix[1][1]
+    assert sum(row["fp"] for row in categories) == matrix[0][1]
+    assert sum(row["tn"] for row in categories) == matrix[0][0]
+    assert sum(row["fn"] for row in categories) == matrix[1][0]
 
 
 def test_synthetic_run_rejects_modified_test_data(tmp_path):
