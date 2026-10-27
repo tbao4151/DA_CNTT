@@ -24,7 +24,7 @@ st.markdown(
 )
 
 st.sidebar.markdown("### SENTINEL LAB / BLUE TEAM")
-st.sidebar.page_link("app.py", label="Dataset Mode · SOC")
+st.sidebar.caption("Chuyển sang Dataset Mode bằng điều hướng trang Streamlit.")
 st.sidebar.caption("Cyber Lab Mode · Offline preview")
 st.sidebar.warning("Không thu thập mạng, không chạy kịch bản tấn công.")
 
