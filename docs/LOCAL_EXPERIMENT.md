@@ -28,6 +28,7 @@ Nếu đã có repository, kiểm tra thay đổi chưa commit trước khi ch�
 - Lệnh thứ ba **không huấn luyện lại**: kiểm tra SHA-256 train/test, đọc model joblib tin cậy do chính nhóm tạo, dự đoán lại trên 82.332 flow test, so sánh confusion matrix, classification report và average precision với artifacts/metrics.json. Nếu bất nhất, lệnh báo lỗi và **không xuất kết quả thành công mới**.
 - Kết quả được lưu tại artifacts/local_verification.json (đã gitignore), gồm thời điểm UTC, OS/Python/pandas/scikit-learn, commit, checksum dataset/model/metrics và chỉ số tính lại. Không tự tải file này lên GitHub.
 - Trường dashboard_vs_model_predict_disagreements_at_0_5 ghi nhận khác biệt nếu quy tắc ngưỡng >=0.5 trên dashboard không trùng hoàn toàn với model.predict (ví dụ xác suất hòa 0,5). Nếu khác 0, phải phân tích trước khi khẳng định hai cách đánh giá tương đương.
+- Khi verification thành công, trường `error_breakdown` trong `artifacts/local_verification.json` tổng hợp TP/FP/TN/FN theo `attack_cat` và `proto` của **tập test đã khóa**. Mỗi nhóm có `flows`, `attack_recall` (nếu có mẫu Attack) và `normal_false_positive_rate` (nếu có mẫu Normal). Giá trị `null` nghĩa là mẫu số bằng 0 hoặc thiếu cột phân nhóm. Các nhóm cộng lại đúng confusion matrix; không xuất từng flow hay địa chỉ mạng. Đây chỉ là phân tích mô tả lỗi, **không được chọn lại mô hình, đặc trưng hoặc ngưỡng bằng tập test**.
 
 **An toàn:** joblib dùng pickle, có thể thực thi mã khi load. Chỉ chạy verifier với model do chính nhóm huấn luyện hoặc nguồn thực sự tin cậy. Không đưa log/mẫu mạng nhạy cảm lên repository.
 
@@ -44,6 +45,8 @@ Trên trình duyệt localhost: kiểm tra 5 tab, dùng Threat hunting lọc pro
 Lưu riêng tại máy cá nhân: ảnh terminal hiện phiên bản Python/Git và lệnh đã chạy, ảnh kết quả train, ảnh JSON verification và checksum, ảnh từng bước UI/SOC, ảnh case JSON xuất được, ghi chú lỗi gặp phải và cách khắc phục. Ghi rõ ngày giờ, commit, tên máy/OS nếu nhóm đồng ý chia sẻ. **Không tạo ảnh giả, không gắn nhãn 'đã chạy local' cho kết quả CI.**
 
 Ghi lại nhận xét độc lập của nhóm: giải thích TP/FP/TN/FN; tại sao 8.400 FP ở baseline là hạn chế; đánh đổi Recall/FP của ngưỡng 0,55; lý do không dùng label và attack_cat làm đầu vào; giới hạn thiếu IP/timestamp của official train/test. Không chọn lại ngưỡng dựa trên test.
+
+Đề xuất nhóm tự đọc `error_breakdown.by_attack_category` để xác định nhóm tấn công có nhiều false negatives và `error_breakdown.by_protocol` để xác định giao thức có nhiều false positives. Ghi nhận cả **số lượng mẫu** của từng nhóm; không kết luận từ nhóm quá nhỏ hoặc suy rộng ra mạng thực. Lưu bảng nhận xét và ảnh terminal thật trong hồ sơ thực nghiệm local, không sử dụng kết quả CI như bằng chứng thao tác trên máy cá nhân.
 
 ## 5. Trạng thái và giới hạn
 
