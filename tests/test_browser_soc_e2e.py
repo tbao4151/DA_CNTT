@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sqlite3
 import socket
 import subprocess
 import sys
@@ -102,18 +103,59 @@ def test_windows_browser_ai_alert_to_soc_json(tmp_path):
                         page.get_by_role("button", name="Xuất hồ sơ điều tra (JSON)").click()
                     download = download_info.value
                     assert download.suggested_filename == "da005_soc_case_1.json"
-                    report = json.loads(Path(download.path()).read_text(encoding="utf-8"))
+                    initial_report = json.loads(Path(download.path()).read_text(encoding="utf-8"))
+                    assert initial_report["case"]["state"] == "New"
+
+                    # Exercise a real analyst transition using browser widgets.
+                    note = "Verified flow evidence; investigate suspicious activity."
+                    page.get_by_role("combobox", name="Trạng thái xử lý").click()
+                    page.get_by_role("option", name="Investigating", exact=True).click()
+                    page.get_by_role("textbox", name="Ghi chú điều tra (bắt buộc)").fill(note)
+                    page.get_by_role("button", name="Lưu diễn biến điều tra").click()
+
+                    # Wait for the SQLite transaction before reloading. Reloading
+                    # verifies that the transition survives a fresh UI session.
+                    db = sandbox / "runtime/soc_cases.sqlite3"
+                    deadline = time.monotonic() + 30
+                    while time.monotonic() < deadline:
+                        with sqlite3.connect(db) as conn:
+                            state_row = conn.execute(
+                                "SELECT state, analyst_note FROM cases WHERE case_id=1"
+                            ).fetchone()
+                        if state_row == ("Investigating", note):
+                            break
+                        time.sleep(0.25)
+                    else:
+                        pytest.fail("Browser SOC state update was not persisted")
+
+                    page.reload(wait_until="domcontentloaded")
+                    page.get_by_role("tab", name="SOC case management").click()
+                    with page.expect_download(timeout=90000) as updated_download_info:
+                        page.get_by_role("button", name="Xuất hồ sơ điều tra (JSON)").click()
+                    updated_download = updated_download_info.value
+                    assert updated_download.suggested_filename == "da005_soc_case_1.json"
+                    report = json.loads(
+                        Path(updated_download.path()).read_text(encoding="utf-8")
+                    )
                 finally:
                     browser.close()
 
             assert report["case"]["case_id"] == 1
             assert report["case"]["verdict"] == "Attack"
-            assert report["case"]["state"] == "New"
+            assert report["case"]["state"] == "Investigating"
+            assert report["case"]["analyst_note"] == note
+            assert report["case"]["flow_id"] == initial_report["case"]["flow_id"]
+            assert report["case"]["verdict"] == initial_report["case"]["verdict"]
             assert 0.8 <= report["case"]["confidence"] <= 1
             assert report["flow_evidence"]
             assert not {"label", "attack_cat", "id", "AI_verdict", "AI_attack_probability", "flow_ref"} & set(report["flow_evidence"])
-            assert [event["new_state"] for event in report["case_events"]] == ["New"]
-            # A real browser created only a sandboxed SQLite case.
+            assert report["flow_evidence"] == initial_report["flow_evidence"]
+            assert [event["new_state"] for event in report["case_events"]] == [
+                "New", "Investigating"
+            ]
+            assert report["case_events"][1]["old_state"] == "New"
+            assert report["case_events"][1]["note"] == note
+            # A real browser changed only the sandboxed SQLite case.
             assert (sandbox / "runtime/soc_cases.sqlite3").is_file()
         finally:
             server.terminate()
