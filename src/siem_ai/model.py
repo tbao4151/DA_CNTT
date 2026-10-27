@@ -26,6 +26,8 @@ def fit_and_evaluate(train: pd.DataFrame, test: pd.DataFrame):
         raise ValueError("Expected complete binary 0/1 labels in train")
     if test["label"].isna().any() or not test["label"].isin([0, 1]).all():
         raise ValueError("Expected complete binary 0/1 labels in test")
+    if set(train["label"].unique()) != {0, 1}:
+        raise ValueError("Training requires both Normal (0) and Attack (1) classes")
     if not REQUIRED_FEATURES.issubset(train.columns) or not REQUIRED_FEATURES.issubset(test.columns):
         raise ValueError("Required UNSW features missing")
     # Also exclude predictions and view-only fields when reusing a dashboard
@@ -84,11 +86,23 @@ def predict_batch(model, rows: pd.DataFrame) -> pd.DataFrame:
         columns = list(model.named_steps["preprocess"].feature_names_in_)
     if not set(columns).issubset(rows.columns):
         raise ValueError("Input is missing required trained features")
+    # Never assume that predict_proba column 1 represents the Attack class.
+    # Reject incompatible or single-class artifacts rather than silently
+    # reporting Normal probabilities as Attack probabilities.
+    classes = getattr(model, "classes_", None)
+    if classes is None or len(classes) != 2 or set(classes) != {0, 1}:
+        raise ValueError("Model must have exactly the binary classes 0 (Normal) and 1 (Attack)")
+    attack_index = list(classes).index(1)
     safe = rows[columns].copy()
-    probabilities = model.predict_proba(safe)[:, 1]
+    probabilities = np.asarray(model.predict_proba(safe))
+    if probabilities.shape != (len(rows), 2):
+        raise ValueError("Model returned an invalid probability matrix")
+    attack_probabilities = probabilities[:, attack_index]
+    if not np.isfinite(attack_probabilities).all() or not ((attack_probabilities >= 0) & (attack_probabilities <= 1)).all():
+        raise ValueError("Model returned invalid Attack probabilities")
     return pd.DataFrame({
-        "verdict": np.where(probabilities >= 0.5, "Attack", "Normal"),
-        "attack_probability": probabilities,
+        "verdict": np.where(attack_probabilities >= 0.5, "Attack", "Normal"),
+        "attack_probability": attack_probabilities,
     }, index=rows.index)
 
 
