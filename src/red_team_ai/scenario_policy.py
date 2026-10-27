@@ -91,7 +91,7 @@ def choose_scenario(
         counts[scenario_id] += 1
         rewards[scenario_id] += int(not flagged)
     if strategy == "random":
-        selected = random.Random(seed).choice(SCENARIOS)
+        selected = random.Random(f"{seed}:{len(rows)}").choice(SCENARIOS)
         rationale = "Seeded random baseline (not an attack or network operation)."
     else:
         untried = [s for s in SCENARIOS if counts[s.scenario_id] == 0]
