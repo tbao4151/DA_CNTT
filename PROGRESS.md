@@ -580,3 +580,10 @@
 - Added `tests/test_zeek_lab_cli.py` with synthetic end-to-end CLI and fail-closed input regressions; added `docs/ZEEK_OFFLINE_EXPERIMENT.md` with a Windows usage and evidence protocol.
 - **At writing:** feature PR CI, merge and post-merge CI have not yet been verified. No student-operated VMware capture, independently authenticated labels, real Zeek attack-detection performance, model deployment or Red Team operation is claimed.
 - Next: verify PR CI, fix failures, merge only when green; on Windows collect authorized Host-only logs, assign independent labels and run a pre-registered host-disjoint experiment in a private folder outside Git.
+
+## 2026-10-28: Offline Zeek experiment CLI verified and merged (#53)
+
+- [PR #53](https://github.com/tbao4151/DA_CNTT/pull/53) squash-merged as `3e440050227e5971ef217ab313bc0d1e25b857b4`.
+- Final PR-head [quality gates #40580782727](https://github.com/tbao4151/DA_CNTT/actions/runs/40580782727) **passed** on Ubuntu Python 3.12.9: syntax and full pytest (`260 passed, 2 skipped, 2 warnings`). Post-merge main [quality gates #40581017701](https://github.com/tbao4151/DA_CNTT/actions/runs/40581017701) **passed** at the merge commit.
+- Verified functionality is a bounded local CLI + synthetic regression, not actual student Windows/VMware evidence. It accepts preassigned independent labels; the code cannot authenticate those labels or Host-only isolation. No real Zeek detection score, model deployment, automatic alert or Red Team AI has been demonstrated.
+- Next: student-owned Host-only captures, genuine per-UID ground truth, reserved host-disjoint test and Windows run using `docs/ZEEK_OFFLINE_EXPERIMENT.md`. Preserve raw logs privately; do not publish IPs or notebook references.
