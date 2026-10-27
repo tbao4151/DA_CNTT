@@ -39,6 +39,8 @@ python scripts/train_siem.py
 streamlit run app.py
 ```
 
+Trước khi huấn luyện, `scripts/train_siem.py` xác minh **SHA-256 và số bản ghi** của cả hai tệp UNSW-NB15 theo giá trị cố định trong `scripts/download_unsw_nb15.py`. Nếu dữ liệu bị thay đổi hoặc thiếu, lệnh dừng **trước khi ghi đè mô hình/metrics**. Không sử dụng `metadata.json` có thể sửa tại máy làm nguồn tin cậy cho checksum. Với bộ dữ liệu khác, cần xây dựng quy trình riêng thay vì sửa checksum để ép huấn luyện.
+
 Lệnh huấn luyện tạo `artifacts/unsw_binary_rf.joblib` và `artifacts/metrics.json` **trên máy của bạn**. Những file này được gitignore; chạy train có thể tốn thời gian/bộ nhớ. Chỉ tải model joblib do chính bạn tạo và tin cậy (pickle có thể thực thi mã). Khi thay thế artifact mô hình tại cùng đường dẫn, dashboard dùng thời gian sửa đổi và kích thước tệp để làm mới cache mô hình ở lần chạy lại; nếu sao chép tệp mà giữ nguyên cả hai metadata này, hãy khởi động lại Streamlit để chắc chắn tải đúng mô hình.
 
 Pipeline huấn luyện yêu cầu nhãn `label` đầy đủ, chỉ nhận giá trị 0/1 ở cả train và test; từ chối nhãn thiếu hoặc sai định dạng trước khi fit. Các trường ground truth (`id`, `label`, `attack_cat`) và trường phát sinh từ giao diện/dự đoán (`AI_verdict`, `AI_attack_probability`, `flow_ref`) đều bị loại khỏi đặc trưng học để tránh rò rỉ thông tin khi tái sử dụng bảng đã phân tích.
