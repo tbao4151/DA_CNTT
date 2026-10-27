@@ -437,3 +437,11 @@
 - Bổ sung kiểm thử synthetic cho checksum, thay thế bị lỗi ở file thứ hai, phát hiện model/metrics bị sửa và schema manifest không hợp lệ. [PR #41 quality gates run 40536864231](https://github.com/tbao4151/DA_CNTT/actions/runs/40536864231) **passed**: Python 3.12.9, syntax và full pytest (`163 passed, 2 skipped, 2 warnings`). Đây là CI trên PR head, chưa phải CI sau merge; không tuyên bố đã thực nghiệm Windows hay thay đổi kết quả UNSW.
 - Giới hạn: manifest không ký số; người có quyền sửa tất cả artifact có thể sửa cả manifest. Các lần `os.replace` vẫn không phải một transaction; verifier sẽ từ chối mismatch khi có manifest trước đó. Cần chạy lại train sau gián đoạn.
 - Bước tiếp theo: merge PR khi CI đã xanh, xác minh main CI; nhóm vẫn cần chạy thật trên Windows và lưu minh chứng thực nghiệm.
+
+## 2026-10-27: Artifact pair manifest merged and CI verified (PR #41)
+
+- [PR #41](https://github.com/tbao4151/DA_CNTT/pull/41) squash-merged vào `main` tại commit `8cec768ff6eada343fbc425719dc41bf6d9fd414`.
+- [PR quality gates run 40537122750](https://github.com/tbao4151/DA_CNTT/actions/runs/40537122750) và [post-merge main quality gates run 40537387088](https://github.com/tbao4151/DA_CNTT/actions/runs/40537387088) đều **success**. PR run trước đó 40536864231 ghi nhận `163 passed, 2 skipped, 2 warnings` trên Python 3.12.9, cùng kiểm tra syntax thành công. Các lần CI lỗi ở commit trung gian chưa hoàn thiện không được coi là kết quả cuối.
+- `persist_model` tạo `artifact_manifest.json` SHA-256 sau khi ghi model và metrics; local verifier kiểm tra checksum trước khi giải tuần tự hóa joblib, từ chối file bị sửa hoặc cặp ghi dở khi manifest cũ tồn tại. Legacy artifacts không có manifest được đánh dấu `missing_legacy`, không giả định có bảo đảm checksum.
+- Không có thay đổi dữ liệu UNSW-NB15, tham số Random Forest, benchmark, ngưỡng cảnh báo, dữ liệu SOC hoặc triển khai công khai. Manifest không phải chữ ký số và không biến ba lần thay thế file thành transaction nguyên tử.
+- Chưa có minh chứng sinh viên trực tiếp huấn luyện và chạy dashboard trên máy Windows cá nhân. Tiếp theo: chạy local training, verifier và chụp màn hình thực nghiệm thật để chuẩn bị báo cáo giảng viên.
