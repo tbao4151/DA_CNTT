@@ -347,3 +347,10 @@
 - Post-merge main CI has not yet been verified at the time of this progress entry. Next priority remains student-operated Windows training, verifier output, SOC demo and genuine screenshots for advisor review.
 
 - **Post-merge main quality gate [40485028645](https://github.com/tbao4151/DA_CNTT/actions/runs/40485028645) passed** on squash commit `637227ab830db342e54f4c78bed98f42bbd11fe9` (syntax check and full pytest suite). This verifies CI on GitHub, not a manual Windows run.
+
+## 2026-10-27: Reject altered official UNSW CSV before training (PR/CI pending)
+
+- Found a reproducibility gap: `scripts/train_siem.py` previously read whichever CSV files existed under the official train/test names, without checking their pinned SHA-256. A modified local copy could be trained and its metrics presented as an official UNSW-NB15 benchmark.
+- Added `load_verified_split` to hash both CSVs against the fixed checksums in `scripts/download_unsw_nb15.py` and validate row counts before `fit_and_evaluate` or `persist_model`. A missing or modified file fails closed; it does not overwrite an existing model/metrics artifact. Local metadata.json is not trusted as the checksum source.
+- Added six synthetic-only regression cases covering valid inputs, altered train/test, missing train/test, and row-count mismatch. Updated README and ROADMAP. CI status and independent local test execution are **not yet verified at commit time**.
+- This is a training-input integrity guard, not a new AI benchmark or evidence that students ran the project on their Windows machine. No model hyperparameters, test labels, alert thresholds, SOC DB, or deployment changed.

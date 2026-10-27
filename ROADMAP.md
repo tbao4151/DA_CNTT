@@ -15,6 +15,7 @@
 - [x] Dữ liệu UNSW-NB15, metadata và script tải.
 - [x] Cấu trúc MVP Mini-SIEM bằng Streamlit, thư viện phân tích, SQLite.
 - [x] Script Random Forest train/test không đưa nhãn vào features.
+- [x] CLI huấn luyện kiểm tra checksum SHA-256 và số dòng của cả hai tệp UNSW-NB15 trước khi fit; kiểm thử hồi quy với dữ liệu tổng hợp. Cần xác nhận CI trên PR.
 - [x] CI khởi tạo (trạng thái chạy cần xác minh).
 - [x] CI syntax và unit tests đã chạy thành công (GitHub Actions); đã có Chromium E2E cho luồng SOC chính trên Windows, còn thiếu độ bao phủ thao tác và trường hợp biên.
 - [x] Kiểm thử luồng chính Streamlit **bằng Chromium trên Windows** sử dụng mô hình UNSW-NB15 chính thức: tạo case từ cảnh báo AI và tải báo cáo JSON thành công (PR #25, Actions 40442408258).
