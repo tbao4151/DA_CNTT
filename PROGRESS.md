@@ -399,3 +399,10 @@
 - Changed `src/siem_ai/upload.py` to validate the CSV header and **every logical data record** with `csv.reader(strict=True)`, while `pandas.read_csv(nrows=limit)` still loads at most 10,000 rows into the dashboard. Physically blank lines remain skipped; quoted commas and multiline quoted fields remain valid. The whole-file UTF-8 and NUL checks are unchanged.
 - Updated upload regression tests for extra/missing fields after preview, unclosed quote after preview, a valid multiline quoted tail, malformed row beyond 10,000 preview records, and blank-line boundaries. Updated README and ROADMAP.
 - **At branch commit time:** GitHub CI and local pytest are not yet verified. No claim of AI model improvement, UNSW benchmark change, SOC DB mutation, deployment or student-operated Windows experiment. Next: inspect PR CI and merge only if green; collect genuine Windows training/demo evidence separately.
+
+## 2026-10-27: Full-file CSV row validation merged and PR CI passed (PR #38)
+
+- [PR #38](https://github.com/tbao4151/DA_CNTT/pull/38) squash-merged into `main` as commit `51c8ad39d995964b94f37dad1dd331c833a05710`.
+- [PR quality gates run 40516373608](https://github.com/tbao4151/DA_CNTT/actions/runs/40516373608) **passed**: Python syntax and full repository pytest (`155 passed, 2 skipped, 2 warnings`). The two pandas-related warnings are not test failures; one originates in `tests/test_model.py:46` and should be addressed separately. Post-merge `main` CI has not yet been independently verified at the time of this entry.
+- Uploaded CSV structure is now validated across every row within the 15 MiB size limit, including rows outside the 10,000-row display preview. The parser rejects extra/missing fields and unclosed quotes in the tail, while supporting blank lines and quoted multiline fields. The UI still reads at most the selected preview count.
+- No official dataset, model, benchmark, threshold, SOC case database, public deployment or student-operated Windows experiment changed. Next: check post-merge CI, profile large-upload performance, and obtain genuine Windows local training/demo evidence.
