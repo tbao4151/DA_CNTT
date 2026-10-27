@@ -16,8 +16,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.9"
+      - name: Assert Python 3.12.9
+        run: python -c "import sys; print(sys.version); assert sys.version_info[:3] == (3, 12, 9)"
       - name: Download and validate UNSW-NB15
-        run: python3 scripts/download_unsw_nb15.py
+        run: python scripts/download_unsw_nb15.py
       - name: Commit validated data
         run: |
           git config user.name "github-actions[bot]"
