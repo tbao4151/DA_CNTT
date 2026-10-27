@@ -37,8 +37,8 @@ def wilson_interval(successes: int, trials: int) -> dict[str, object]:
     return {
         "successes": successes, "trials": trials,
         "estimate": p,
-        "lower": max(0.0, center - radius),
-        "upper": min(1.0, center + radius),
+        "lower": 0.0 if successes == 0 else max(0.0, center - radius),
+        "upper": 1.0 if successes == trials else min(1.0, center + radius),
         "method": "wilson_score_95_percent",
     }
 
