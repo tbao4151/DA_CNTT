@@ -98,7 +98,7 @@ Workflow [Official-model dashboard integration smoke](.github/workflows/official
 
 Bài kiểm thử tại `tests/test_browser_soc_e2e.py` chỉ chạy khi `DA005_BROWSER_SOC_E2E=1` trong workflow cài Playwright/Chromium. `pytest` thông thường bỏ qua bài kiểm thử này. **Đã xác minh trên Windows Chromium:** [PR #25](https://github.com/tbao4151/DA_CNTT/pull/25), [GitHub Actions run 40442408258](https://github.com/tbao4151/DA_CNTT/actions/runs/40442408258) thành công cho cả Windows browser E2E và AppTest Windows/Ubuntu. Đây là kiểm thử đường đi AI → cảnh báo → tạo case → tải JSON; chưa xác minh mọi trường hợp biên hoặc trải nghiệm thủ công trên máy người dùng.
 
-Bài kiểm thử Chromium được mở rộng để thay đổi trạng thái SOC từ `New` sang `Investigating`, lưu ghi chú, tải lại trang và kiểm tra JSON xuất sau cập nhật (cả trạng thái, sự kiện audit trail và bằng chứng gốc không đổi). **Kết quả mở rộng chờ xác minh trên GitHub Actions**; không đồng nhất với lần CI thành công trước đó.
+Bài kiểm thử Chromium được mở rộng để thay đổi trạng thái SOC từ `New` sang `Investigating`, lưu ghi chú, tải lại trang và kiểm tra JSON xuất sau cập nhật (cả trạng thái, sự kiện audit trail và bằng chứng gốc không đổi). **Đã kiểm chứng** trong [PR #26](https://github.com/tbao4151/DA_CNTT/pull/26), [GitHub Actions run 40443155381](https://github.com/tbao4151/DA_CNTT/actions/runs/40443155381): Chromium E2E Windows thành công với mô hình UNSW-NB15 huấn luyện chính thức. Vẫn chưa thay thế việc kiểm thử thủ công và bao phủ trường hợp biên.
 
 ## Kiểm thử
 
