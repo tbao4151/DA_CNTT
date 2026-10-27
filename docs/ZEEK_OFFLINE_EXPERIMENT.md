@@ -155,3 +155,31 @@ py -3.12 -m pytest -q tests/test_zeek_lab_cli.py
 
 Next: collect genuine independently labeled captures, assess calibration,
 false positives and host/scenario shift before AI-to-SOC alert integration.
+
+## Host-group variability (report v4)
+
+Report v4 retains the v3 Wilson flow-level diagnostics and adds
+`validation_host_variability` and `test_host_variability` at the
+**fixed, validation-selected threshold**. Each section contains per-group
+TP/FP/TN/FN, support, Attack Precision/Recall/FPR and unweighted
+across-group min/max/mean of each defined rate. Undefined denominators are
+JSON `null`, not zero. A single host group or a group with fewer than
+30 flows triggers an explicit warning. The anonymous group numbers are
+local to each report and do not identify machines across reports; raw
+host-group names, UIDs, IP addresses and label references are omitted.
+
+The `host_group` field is **declared by the operator**, not authenticated.
+The report does not verify that host groups are genuinely independent or
+that scenario labels are correct. Group means and ranges are descriptive,
+not cluster-adjusted confidence intervals; they may be unstable when
+groups have different attack prevalence, tiny supports or missing classes.
+With only one host group in a split, there is no within-split host
+variation to estimate. Do not interpret synthetic CI fixtures as lab
+measurements. The test section is computed once after fitting and
+validation-only threshold selection; never use test group variability to
+choose thresholds, model parameters or collection scenarios.
+
+Keep reports in the private experiment directory. Even aggregated
+small-group counts may reveal sensitive details when combined with
+external lab notebooks. Record genuine host/scenario provenance and
+isolation evidence separately on the student Windows/VMware environment.
