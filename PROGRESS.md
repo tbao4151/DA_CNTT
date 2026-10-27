@@ -250,3 +250,10 @@
 - Added `src/siem_ai/upload.py` and integrated it into the Streamlit CSV upload path. The parser checks original UTF-8/UTF-8-BOM headers, rejects duplicate/blank columns and empty/oversized files, and bounds the preview to 10,000 rows; existing `validate_flows` still checks required UNSW network features. No change to the official dataset loader, training pipeline, model, thresholds or SOC database.
 - Added `tests/test_upload.py` covering valid BOM input, duplicate headers, invalid/blank headers, invalid encoding, file-size and preview-row limits. **Local isolated result:** 12 tests passed with pandas 2.2.3 and pytest 9.0.2. Full repository CI and Windows browser coverage for uploaded files are **not yet verified** at commit time.
 - Remaining: confirm PR CI, then add browser-level valid/invalid CSV upload and Threat Hunting filtering coverage. No new UNSW benchmark, attack-detection improvement or production-security guarantee claimed.
+
+## 2026-10-27: CSV upload header validation verified (PR #28 merged)
+
+- PR [#28](https://github.com/tbao4151/DA_CNTT/pull/28) squash-merged into `main` as `ef0e284f3cca163d239bb0445e3ae14893f7537e`.
+- [PR quality gates 40447168973](https://github.com/tbao4151/DA_CNTT/actions/runs/40447168973) **passed** (syntax and full pytest suite); [post-merge main quality gates 40447262148](https://github.com/tbao4151/DA_CNTT/actions/runs/40447262148) **passed**. Isolated local `tests/test_upload.py`: 12 passed.
+- The raw-header parser now rejects duplicate/blank CSV headers, oversized/empty uploads and invalid UTF-8 before displaying uploaded flows. The official model, benchmark, threshold policy and stored SOC cases are unchanged.
+- Remaining: browser-level CSV upload/Threat Hunting coverage and a manual Windows demo. This validation does not establish production-grade CSV parser security.
