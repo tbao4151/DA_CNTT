@@ -243,3 +243,10 @@
 - `main` quality gate [40444580183](https://github.com/tbao4151/DA_CNTT/actions/runs/40444580183) **passed**; official-model workflow [40444580258](https://github.com/tbao4151/DA_CNTT/actions/runs/40444580258) **passed** after PR #27 merge on both Windows and Ubuntu, including the expanded browser E2E SOC state transition.
 - This confirms the corrected keyboard interaction at the PR and main CI checkpoints, not a guarantee against future intermittent failures; prior failed main run 40443531393 remains documented.
 - Next: browser smoke for CSV upload (valid/invalid) and Threat Hunting filters, plus local Windows manual demonstration. No new benchmark or model change.
+
+## 2026-10-27: Validate original CSV headers before dashboard import (PR verification pending)
+
+- Found a correctness gap: pandas silently renames duplicate CSV header fields (e.g. `proto,proto` becomes `proto,proto.1`), so the existing DataFrame duplicate-column check did not reject ambiguous uploaded files.
+- Added `src/siem_ai/upload.py` and integrated it into the Streamlit CSV upload path. The parser checks original UTF-8/UTF-8-BOM headers, rejects duplicate/blank columns and empty/oversized files, and bounds the preview to 10,000 rows; existing `validate_flows` still checks required UNSW network features. No change to the official dataset loader, training pipeline, model, thresholds or SOC database.
+- Added `tests/test_upload.py` covering valid BOM input, duplicate headers, invalid/blank headers, invalid encoding, file-size and preview-row limits. **Local isolated result:** 12 tests passed with pandas 2.2.3 and pytest 9.0.2. Full repository CI and Windows browser coverage for uploaded files are **not yet verified** at commit time.
+- Remaining: confirm PR CI, then add browser-level valid/invalid CSV upload and Threat Hunting filtering coverage. No new UNSW benchmark, attack-detection improvement or production-security guarantee claimed.
