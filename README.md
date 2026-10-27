@@ -154,8 +154,8 @@ Lệnh chỉ **đọc** train/test, model và metrics cục bộ, xác minh SHA-
 
 **Tệp CSV chứa byte NUL (`0x00`) bị từ chối toàn bộ**, kể cả khi byte đó nằm ngoài số dòng đang xem trước. Lý do: bộ đọc CSV của pandas có thể âm thầm cắt phần giá trị sau byte NUL, làm sai đặc trưng network flow trước khi AI suy luận. Kiểm tra này không thay thế việc kiểm tra chất lượng dữ liệu, bảo mật upload hoặc kiểm thử trên máy Windows của nhóm.
 
-## Cyber Lab Mode — Blue Team offline preview (đang chờ CI)
+## Cyber Lab Mode — Blue Team offline preview (PR CI đã kiểm chứng)
 
 Ngoài Dataset Mode ở `app.py`, Streamlit tự phát hiện trang **Cyber Lab** trong thư mục `pages/` khi chạy `streamlit run app.py`. Trang này cho phép tải tệp Zeek ASCII `conn.log` do nhóm sở hữu và đọc ngoại tuyến (tối đa 15 MiB, 10.000 flow, bảng xem trước 500 flow). Giao diện hiển thị số flow, IP nguồn/đích duy nhất, phân bố giao thức, khoảng thời gian **theo timestamp Zeek** và SHA-256 nguồn. Không thu thập live, không chạy tấn công, không gọi Random Forest UNSW, không tạo alert hoặc SOC Case.
 
-Tệp Zeek có thể chứa IP/metadata nhạy cảm: chỉ chạy Streamlit trên máy tin cậy và không tải log thật lên GitHub công khai. Tính năng đang được kiểm thử ở PR mới; xem `docs/CYBER_LAB_ARCHITECTURE.md` để phân biệt mức độ đã làm với mục tiêu tương lai.
+Tệp Zeek có thể chứa IP/metadata nhạy cảm: chỉ chạy Streamlit trên máy tin cậy và không tải log thật lên GitHub công khai. Tính năng đã qua PR CI với dữ liệu synthetic; chưa kiểm chứng trên Windows/VMware của nhóm. Xem `docs/CYBER_LAB_ARCHITECTURE.md` để phân biệt mức độ đã làm với mục tiêu tương lai.
