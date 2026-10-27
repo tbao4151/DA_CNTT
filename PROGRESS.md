@@ -392,3 +392,10 @@
 - [PR quality gates run 40507892802](https://github.com/tbao4151/DA_CNTT/actions/runs/40507892802) **passed**, including Python syntax and repository pytest. An isolated Linux sandbox also passed 29/29 upload regression cases using a reconstructed test copy; this is not a complete repository run.
 - The bounded CSV uploader now rejects invalid UTF-8 anywhere in the uploaded bytes, even after the selected preview. The full-file encoding check does **not** extend structural row validation beyond the preview.
 - Post-merge `main` CI is not independently confirmed at the time of this entry. No student-operated Windows local experiment, model retraining, benchmark change, SOC data change, or deployment is claimed. Next priority: real Windows training, verification JSON, FP/FN analysis, and manual SIEM/SOC screenshots for advisor review.
+
+## 2026-10-27: Check CSV structure beyond the selected preview (PR CI pending)
+
+- Found an import integrity gap: the upload parser checked CSV field counts and balanced quotes only for the first `limit` logical records. An otherwise UTF-8-valid malformed tail was accepted, despite the entire upload already being capped at 15 MiB.
+- Changed `src/siem_ai/upload.py` to validate the CSV header and **every logical data record** with `csv.reader(strict=True)`, while `pandas.read_csv(nrows=limit)` still loads at most 10,000 rows into the dashboard. Physically blank lines remain skipped; quoted commas and multiline quoted fields remain valid. The whole-file UTF-8 and NUL checks are unchanged.
+- Updated upload regression tests for extra/missing fields after preview, unclosed quote after preview, a valid multiline quoted tail, malformed row beyond 10,000 preview records, and blank-line boundaries. Updated README and ROADMAP.
+- **At branch commit time:** GitHub CI and local pytest are not yet verified. No claim of AI model improvement, UNSW benchmark change, SOC DB mutation, deployment or student-operated Windows experiment. Next: inspect PR CI and merge only if green; collect genuine Windows training/demo evidence separately.
