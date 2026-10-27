@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import csv
 import io
-from itertools import islice
 
 import pandas as pd
 
@@ -47,12 +46,22 @@ def read_uploaded_flows(content: bytes, *, limit: int, max_bytes: int = MAX_CSV_
             # Pandas can silently reinterpret the first field as an index when
             # a data row has more fields than its header. Validate the preview
             # with the CSV dialect parser before allowing AI inference.
-            for row in islice(reader, limit):
+            # pandas.read_csv skips physically empty CSV lines by default.
+            # Count only parsed data rows so our checked preview covers the
+            # same rows that pandas will actually pass to the AI pipeline.
+            # A quoted empty field is [''], not [], and must still be checked.
+            checked = 0
+            for row in reader:
+                if not row:
+                    continue
                 if len(row) != len(header):
                     raise ValueError(
                         f"CSV row ending at line {reader.line_num} has {len(row)} "
                         f"fields; expected {len(header)}"
                     )
+                checked += 1
+                if checked >= limit:
+                    break
     except UnicodeDecodeError as exc:
         raise ValueError("Invalid UTF-8 CSV content") from exc
     except csv.Error as exc:
