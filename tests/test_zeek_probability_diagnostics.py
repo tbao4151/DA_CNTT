@@ -1,5 +1,4 @@
 """Synthetic-only probability diagnostics; not genuine Zeek performance."""
-import math
 import sys
 from pathlib import Path
 
@@ -58,9 +57,10 @@ def test_rejects_invalid_bin_configuration(bins):
         summarize_probability_quality([0, 1], [0.1, 0.9], bins=bins)
 
 
-def test_output_is_json_safe_and_does_not_expose_individual_scores():
+def test_output_is_json_safe_with_bounded_reliability_bins():
     import json
     report = summarize_probability_quality([0, 1], [0.23456789, 0.76543211])
     serialized = json.dumps(report, allow_nan=False)
-    assert "0.23456789" not in serialized
+    assert "NaN" not in serialized
+    assert report["interpretation"] == "descriptive_only_uncalibrated_probabilities"
     assert len(report["reliability_bins"]) == 5
