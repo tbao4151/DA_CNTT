@@ -27,6 +27,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 from scripts.download_unsw_nb15 import FILES  # official expected rows and SHA-256
 from siem_ai.model import predict_batch
+from siem_ai.error_analysis import summarize_group_errors
 
 FORBIDDEN_FEATURES = {"id", "label", "attack_cat", "AI_verdict", "AI_attack_probability", "flow_ref"}
 
@@ -117,6 +118,26 @@ def verify_local_run(root: Path, *, expected_files: dict[str, tuple[int, str]] =
     if not isclose(ap, metrics.get("average_precision_attack", float("nan")), rel_tol=1e-8, abs_tol=1e-10):
         raise ValueError("Recomputed average precision differs from local metrics")
 
+    # Descriptive error breakdown for the student's local analysis. Ground-truth
+    # categories are used ONLY after prediction; never as model input or for tuning.
+    error_breakdown = {}
+    for source_column, report_key in (
+        ("attack_cat", "by_attack_category"),
+        ("proto", "by_protocol"),
+    ):
+        if source_column not in test:
+            error_breakdown[report_key] = None
+            continue
+        rows = summarize_group_errors(labels, predicted, test[source_column])
+        if (
+            sum(item["tp"] for item in rows) != matrix[1][1]
+            or sum(item["fp"] for item in rows) != matrix[0][1]
+            or sum(item["tn"] for item in rows) != matrix[0][0]
+            or sum(item["fn"] for item in rows) != matrix[1][0]
+        ):
+            raise ValueError("Grouped error counts differ from the verified confusion matrix")
+        error_breakdown[report_key] = rows
+
     ui_verdicts = np.where(scored["attack_probability"].to_numpy() >= 0.5, 1, 0)
     return {
         "schema_version": 1,
@@ -141,6 +162,7 @@ def verify_local_run(root: Path, *, expected_files: dict[str, tuple[int, str]] =
         "attack_recall": computed["1"]["recall"],
         "attack_f1": computed["1"]["f1-score"],
         "average_precision_attack": ap,
+        "error_breakdown": error_breakdown,
         "dashboard_vs_model_predict_disagreements_at_0_5": int(np.count_nonzero(ui_verdicts != predicted)),
         "scope_note": (
             "Local artifact and held-out dataset consistency check only; "
