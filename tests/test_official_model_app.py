@@ -3,7 +3,7 @@
 This test is run only after training the official model in a dedicated workflow.
 It uses the official test CSV for inference, never for fitting or tuning. All
 application writes are confined to a temporary directory. This is headless
-Linux integration, not a Windows/browser end-to-end certification.
+integration on CI runners, not a browser end-to-end certification.
 """
 from __future__ import annotations
 
