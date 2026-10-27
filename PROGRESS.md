@@ -471,3 +471,5 @@
 - No live network capture, attack traffic, AI detection, alert, SOC Case, Red Team UI or production SIEM claim. Next: inspect PR CI, fix failures, merge only if green, then collect an authorized Zeek conn.log and verify the UI on Windows.
 
 - PR #44 first CI [40552410646](https://github.com/tbao4151/DA_CNTT/actions/runs/40552410646) **failed** with `181 passed, 1 failed, 2 skipped`: Streamlit AppTest executed the page in isolation and could not resolve `st.sidebar.page_link("app.py")`. Replaced this redundant explicit link with guidance to use Streamlit's built-in multipage navigation. A new CI run is required; no success claimed yet.
+
+- After navigation fix, PR #44 quality gates [40552641827](https://github.com/tbao4151/DA_CNTT/actions/runs/40552641827) **passed** on Python 3.12.9: syntax check and full pytest (`182 passed, 2 skipped, 2 warnings`). This verifies the new offline page empty state in Streamlit AppTest and synthetic aggregation tests, **not** real Windows/VMware capture or browser E2E with a user log. Merge and post-merge CI remain to be checked.
