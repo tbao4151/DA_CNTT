@@ -130,3 +130,14 @@ python -m pytest -q tests
 ## Trạng thái
 
 Xem **[PROGRESS.md](PROGRESS.md)** (đã làm, đã kiểm chứng) và **[ROADMAP.md](ROADMAP.md)** (chưa làm). Tài liệu này không tuyên bố có kết quả huấn luyện hay kiểm thử đã hoàn thành nếu chưa có bằng chứng.
+
+
+## Minh chứng thực nghiệm trên máy cá nhân (chưa được nhóm xác nhận đã chạy)
+
+Để tránh nhầm lẫn giữa kết quả GitHub Actions và thao tác thật trên Windows của nhóm, hãy làm theo [docs/LOCAL_EXPERIMENT.md](docs/LOCAL_EXPERIMENT.md). Sau khi huấn luyện model **do chính bạn tạo** trên máy cục bộ, chạy:
+
+~~~powershell
+.\.venv\Scripts\python.exe scripts/verify_local_run.py
+~~~
+
+Lệnh chỉ **đọc** train/test, model và metrics cục bộ, xác minh SHA-256 của bộ UNSW-NB15, tính lại confusion matrix và các chỉ số AI trên official test, rồi lưu bằng chứng vào artifacts/local_verification.json (đã gitignore). Nếu kiểm tra thất bại, không ghi báo cáo thành công mới. Chỉ tải model joblib do bạn tạo hoặc tin cậy; không tải pickle không rõ nguồn. Báo cáo JSON **không** chứng minh người dùng đã thao tác thủ công hoặc thực hiện thí nghiệm độc lập. Chưa có kết quả thực nghiệm Windows cá nhân nào được xác nhận chỉ bằng việc bổ sung công cụ này.

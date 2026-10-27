@@ -257,3 +257,12 @@
 - [PR quality gates 40447168973](https://github.com/tbao4151/DA_CNTT/actions/runs/40447168973) **passed** (syntax and full pytest suite); [post-merge main quality gates 40447262148](https://github.com/tbao4151/DA_CNTT/actions/runs/40447262148) **passed**. Isolated local `tests/test_upload.py`: 12 passed.
 - The raw-header parser now rejects duplicate/blank CSV headers, oversized/empty uploads and invalid UTF-8 before displaying uploaded flows. The official model, benchmark, threshold policy and stored SOC cases are unchanged.
 - Remaining: browser-level CSV upload/Threat Hunting coverage and a manual Windows demo. This validation does not establish production-grade CSV parser security.
+
+
+## 2026-10-27: Local reproducibility evidence checker (PR verification pending)
+
+- Added scripts/verify_local_run.py for **opt-in** verification after a user trains a trusted UNSW-NB15 model locally. It checks pinned SHA-256 of both official partitions, expected train/test sizes, model feature order, recomputed confusion matrix/classification report/average precision and dashboard-versus-model threshold disagreements. It writes a local-only JSON manifest with UTC time, software versions, Git SHA and artifact hashes to artifacts/local_verification.json (gitignored).
+- Added tests/test_verify_local_run.py with four synthetic-only regression cases: successful report, tampered test data, tampered confusion matrix and leaked ground-truth feature. **Isolated local test run:** 4 passed (pytest with a minimal local model adapter). Full repository CI is **pending** and must be verified before claiming this PR stable.
+- Added docs/LOCAL_EXPERIMENT.md and README instructions for Windows setup, local training, SOC demonstration, screenshots and honest evidence collection.
+- **Not performed:** no actual Windows user-machine execution, no new official UNSW benchmark, no model tuning or threshold change, no claim that a student performed the demonstration. CI results, once available, do not substitute for a human local run.
+- Next: verify PR quality gates, then have the group perform a Windows local run and archive screenshots/JSON before revising the advisor progress report.
