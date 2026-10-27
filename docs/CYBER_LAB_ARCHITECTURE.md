@@ -4,7 +4,7 @@
 
 Dataset Mode is the existing `app.py` + `src/siem_ai/` UNSW-NB15 prototype. It has an offline trained Random Forest, held-out benchmark reports, alert views and SQLite SOC cases. The official UNSW train/test CSVs do not contain original IPs or event timestamps.
 
-Cyber Lab Mode is **not yet a working end-to-end application**. This increment adds only `src/blue_team_ai/zeek.py`, a bounded **offline** reader for Zeek ASCII `conn.log`, plus synthetic regression tests. It does not capture packets, replay traffic, execute Red Team scenarios, classify Zeek flows, create alerts or cases, or expose a Cyber Lab UI. No existing Dataset Mode entry point or model is modified.
+Cyber Lab Mode is **not yet a working end-to-end application**. This increment has an **offline** Zeek reader (`src/blue_team_ai/zeek.py`) and a separate Streamlit Blue Team preview (`pages/1_Cyber_Lab.py` with `src/blue_team_ai/preview.py`). The preview accepts a user-selected `conn.log` and displays validated telemetry summaries and provenance. It does not capture packets, replay traffic, execute Red Team scenarios, classify Zeek flows, create alerts or cases. The existing Dataset Mode entry point and model are unchanged. Preview PR CI is tracked separately in `PROGRESS.md`.
 
 Planned boundary: `Host-only VMware lab (student-owned, isolated) -> Zeek conn.log / offline PCAP -> validated telemetry -> separately trained lab-compatible AI -> alert -> SOC evidence/case -> Blue Team UI`. A separate Red Team UI may later select only pre-approved, non-destructive offline replays under explicit operator control, with an allowlist, rate limits and kill switch. None of those active controls is implemented in this increment; lab operation must remain off.
 
@@ -29,7 +29,13 @@ Use only a `conn.log` collected within a network the group owns or has permissio
 
 ## Next verified milestones
 
-1. Integrate the offline reader into a separately labeled Cyber Lab preview without changing the Dataset Mode benchmark.
+1. Validate the separate offline Cyber Lab preview with GitHub CI and a real student-owned Zeek log on Windows, without changing the Dataset Mode benchmark.
 2. Build a typed event/evidence store and parser fixtures for real student-owned Zeek logs; confirm schema and timestamps.
 3. Train and evaluate a lab-schema model on independently labeled data; report precision/recall/FPR and detection latency with provenance.
 4. Only after operator validation of Host-only isolation, add controlled replay orchestration, safety policy and distinct Red/Blue UIs.
+
+## Offline Blue Team preview interface
+
+Start with `streamlit run app.py`, then open the Cyber Lab page in Streamlit's page navigation. Upload only an authorized Zeek ASCII `conn.log` of up to 15 MiB. The page displays the first 500 validated events, flow counts, unique IPs, protocol distribution, Zeek event timestamp bounds and the exact input SHA-256. The upload is read only by the locally running Streamlit server; do not expose that server publicly or upload sensitive logs to GitHub. A missing file shows an empty-state explanation rather than fabricated results.
+
+The preview uses no attack labels, no model scores, and no SOC case mutation. The displayed timestamps and addresses are claims from the uploaded file, not independently authenticated network observations. For real lab evaluation, preserve capture context, Zeek version, Host-only configuration, source integrity and independent labels.

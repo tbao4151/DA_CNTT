@@ -460,3 +460,16 @@
 - Added `tests/test_zeek_telemetry.py` with 14 synthetic offline test cases. Focused tests passed in an isolated Linux Python 3.13.5 sandbox (`14 passed`); this is **not** repository-wide GitHub CI or a student-run Windows experiment. PR CI and Python 3.12.9 results must be verified separately.
 - Added `docs/CYBER_LAB_ARCHITECTURE.md` describing the separation between Dataset Mode and the future Cyber Lab Mode, scientific feature-parity barrier and Windows validation steps.
 - No live capture, replay, Red Team operation, Cyber Lab AI inference, alerts or UI are claimed. Existing UNSW model, benchmark, Streamlit entry point and SOC database are untouched. Next: verify PR CI and merge only if green; student should capture an authorized Zeek log on an isolated VMware Host-only network and document local evidence.
+
+## 2026-10-28: Cyber Lab Blue Team offline preview (PR/CI pending)
+
+- Verified previous Zeek parser PR #43 is merged as `a34dcf21af830a085a322f19cc29061b7965d5fa`; PR-head quality gates [40549021768](https://github.com/tbao4151/DA_CNTT/actions/runs/40549021768) completed successfully with Python 3.12.9, syntax check and unit tests. This is not a student-operated Windows test.
+- Added `src/blue_team_ai/preview.py`: pure aggregation of validated offline Zeek events with source SHA-256 consistency, true Zeek timestamp bounds, unique endpoints and protocol counts; refuses mixed/non-offline provenance. Does not assign attack labels.
+- Added a separately navigable `pages/1_Cyber_Lab.py` Streamlit Blue Team preview, bounded upload, empty/error states, protocol chart and 500-flow preview; existing `app.py` Dataset Mode, Random Forest, official metrics and SQLite remain untouched.
+- Added `tests/test_cyber_lab_preview.py` synthetic provenance/timestamp tests and headless Streamlit empty-state smoke. Updated CI path filter for `pages/**` and architecture/README/ROADMAP.
+- A standalone syntax compilation and pure summary smoke were run on an isolated local draft. **Full repository pytest, new-page Streamlit AppTest, GitHub PR CI, merge and student-operated Windows/VMware checks remain unverified at the time of this entry.**
+- No live network capture, attack traffic, AI detection, alert, SOC Case, Red Team UI or production SIEM claim. Next: inspect PR CI, fix failures, merge only if green, then collect an authorized Zeek conn.log and verify the UI on Windows.
+
+- PR #44 first CI [40552410646](https://github.com/tbao4151/DA_CNTT/actions/runs/40552410646) **failed** with `181 passed, 1 failed, 2 skipped`: Streamlit AppTest executed the page in isolation and could not resolve `st.sidebar.page_link("app.py")`. Replaced this redundant explicit link with guidance to use Streamlit's built-in multipage navigation. A new CI run is required; no success claimed yet.
+
+- After navigation fix, PR #44 quality gates [40552641827](https://github.com/tbao4151/DA_CNTT/actions/runs/40552641827) **passed** on Python 3.12.9: syntax check and full pytest (`182 passed, 2 skipped, 2 warnings`). This verifies the new offline page empty state in Streamlit AppTest and synthetic aggregation tests, **not** real Windows/VMware capture or browser E2E with a user log. Merge and post-merge CI remain to be checked.
