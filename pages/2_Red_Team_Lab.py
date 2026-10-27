@@ -12,6 +12,7 @@ import pandas as pd
 import streamlit as st
 
 from red_team_ai.scenario_policy import MAX_FEEDBACK, SCENARIOS, choose_scenario, summarize_feedback
+from red_team_ai.synthetic_benchmark import compare_synthetic_policies
 
 st.set_page_config(page_title="DA005 | Red Team Lab", page_icon=None, layout="wide")
 st.markdown(
@@ -99,3 +100,47 @@ if st.button("Dừng phiên lập kế hoạch và xóa phản hồi", type="sec
     st.rerun()
 
 st.info("Không có tiến trình tấn công để dừng. Tính năng kill switch cho traffic thật chưa được triển khai.")
+
+st.divider()
+st.markdown("### So sánh UCB1 và Random trên dữ liệu TỔNG HỢP")
+st.warning(
+    "Đây là thí nghiệm mô phỏng Bernoulli có xác suất được đặt trước, KHÔNG có "
+    "Blue Team AI thật, log VMware hay hoạt động tấn công. Kết quả KHÔNG phải "
+    "tỷ lệ phát hiện hoặc thành công ngoài thực tế."
+)
+with st.form("synthetic_policy_comparison"):
+    sim_col1, sim_col2, sim_col3 = st.columns(3)
+    sim_rounds = sim_col1.number_input("Lượt chọn / lần thử", min_value=3, max_value=500, value=120, step=1)
+    sim_trials = sim_col2.number_input("Số lần thử độc lập", min_value=2, max_value=40, value=12, step=1)
+    sim_seed = sim_col3.number_input("Seed mô phỏng", min_value=0, max_value=1_000_000, value=42, step=1)
+    simulate = st.form_submit_button("Chạy so sánh mô phỏng (không thực thi mạng)")
+if simulate:
+    st.session_state["red_team_synthetic_comparison"] = compare_synthetic_policies(
+        rounds=int(sim_rounds), trials=int(sim_trials), seed=int(sim_seed)
+    )
+simulation = st.session_state.get("red_team_synthetic_comparison")
+if simulation:
+    comparison_rows = [
+        {
+            "Chiến lược": strategy.upper(),
+            "Tỷ lệ unflagged mô phỏng (trung bình)": round(
+                details["mean_synthetic_unflagged_fraction"], 4
+            ),
+            "Expected pseudo-regret (trung bình)": round(
+                details["mean_expected_pseudo_regret"], 4
+            ),
+            "Tổng lượt chọn": sum(details["selection_counts"].values()),
+        }
+        for strategy, details in simulation["policies"].items()
+    ]
+    st.dataframe(pd.DataFrame(comparison_rows), hide_index=True, use_container_width=True)
+    st.caption(
+        "Hai thuật toán dùng cùng các kết quả Bernoulli tiềm năng cho mỗi kịch bản/lượt. "
+        "Pseudo-regret dựa trên xác suất giả định, không phải độ trễ phát hiện hay số lần tấn công thật."
+    )
+    st.download_button(
+        "Xuất báo cáo mô phỏng JSON",
+        data=json.dumps(simulation, ensure_ascii=False, indent=2, allow_nan=False),
+        file_name="red_team_synthetic_policy_comparison.json",
+        mime="application/json",
+    )
