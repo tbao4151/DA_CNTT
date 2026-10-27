@@ -369,3 +369,12 @@
 - Changed the downloader to stream-hash the temporary download and require the pinned official SHA-256 before renaming it; failures remove only the temporary `.part` file. Existing CSVs are still verified but **never silently overwritten or deleted**.
 - Added four synthetic, offline pytest cases: valid promotion, tampered download rejection, interrupted transfer cleanup and preservation of a pre-existing invalid CSV. Updated README and ROADMAP. **CI is pending at commit time**; no claim of Windows student-machine execution.
 - No change to model, official dataset bytes/checksums, benchmark metrics, alert threshold, SOC database or public deployment. Next: verify PR CI and merge if green; then student-run Windows training and evidence collection.
+
+## 2026-10-27: Verified downloader integrity fix merged (PR #36)
+
+- [PR #36](https://github.com/tbao4151/DA_CNTT/pull/36) squash-merged into `main` at commit `ed6b15e377c8387253efb51c8849894577d6c563`.
+- [PR quality gates run 40500609154](https://github.com/tbao4151/DA_CNTT/actions/runs/40500609154) **passed**, including Python syntax and full repository pytest with four new synthetic downloader cases. [Additional branch run 40500641271](https://github.com/tbao4151/DA_CNTT/actions/runs/40500641271) **passed**.
+- [Post-merge main quality gates run 40500764818](https://github.com/tbao4151/DA_CNTT/actions/runs/40500764818) **passed** on the squash-merge commit.
+- Newly downloaded UNSW CSVs are verified against pinned SHA-256 while still named `.part`, before promotion to official filename. Interrupted or corrupted downloads cannot create an official-named CSV through the downloader. Existing files remain untouched on checksum failure.
+- This is GitHub-hosted automated testing, not evidence that the students ran the project on their Windows PC. No new model training, benchmark, alert-threshold change, SOC DB mutation or deployment.
+- Next: manually run `scripts/download_unsw_nb15.py`, `scripts/train_siem.py` and `scripts/verify_local_run.py` on a student's Windows computer; capture genuine evidence and analyze false positives/false negatives for the advisor.
