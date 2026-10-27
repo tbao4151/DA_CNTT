@@ -469,3 +469,5 @@
 - Added `tests/test_cyber_lab_preview.py` synthetic provenance/timestamp tests and headless Streamlit empty-state smoke. Updated CI path filter for `pages/**` and architecture/README/ROADMAP.
 - A standalone syntax compilation and pure summary smoke were run on an isolated local draft. **Full repository pytest, new-page Streamlit AppTest, GitHub PR CI, merge and student-operated Windows/VMware checks remain unverified at the time of this entry.**
 - No live network capture, attack traffic, AI detection, alert, SOC Case, Red Team UI or production SIEM claim. Next: inspect PR CI, fix failures, merge only if green, then collect an authorized Zeek conn.log and verify the UI on Windows.
+
+- PR #44 first CI [40552410646](https://github.com/tbao4151/DA_CNTT/actions/runs/40552410646) **failed** with `181 passed, 1 failed, 2 skipped`: Streamlit AppTest executed the page in isolation and could not resolve `st.sidebar.page_link("app.py")`. Replaced this redundant explicit link with guidance to use Streamlit's built-in multipage navigation. A new CI run is required; no success claimed yet.
