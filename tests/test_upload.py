@@ -52,3 +52,31 @@ def test_upload_rejects_invalid_utf8_in_body():
     data = (HEADER + "\n").encode() + b"1,tcp,\xff,FIN,120,30,2,1\n"
     with pytest.raises(ValueError, match="Invalid UTF-8 CSV content"):
         read_uploaded_flows(data, limit=100)
+
+
+@pytest.mark.parametrize("bad_row", [
+    ROW + ",unexpected",  # Pandas may silently treat the first field as an index.
+    "1,tcp,http,FIN,120,30,2",  # Missing one field.
+])
+def test_upload_rejects_ragged_preview_rows(bad_row):
+    data = (HEADER + "\n" + bad_row + "\n").encode()
+    with pytest.raises(ValueError, match="fields; expected 8"):
+        read_uploaded_flows(data, limit=100)
+
+
+def test_upload_accepts_quoted_comma_without_false_field_mismatch():
+    data = (HEADER + "\n" + '1,tcp,"http,proxy",FIN,120,30,2,1\n').encode()
+    frame = read_uploaded_flows(data, limit=100)
+    assert frame.iloc[0]["service"] == "http,proxy"
+
+
+def test_upload_rejects_unclosed_quoted_field():
+    data = (HEADER + "\n" + '1,tcp,"http,FIN,120,30,2,1\n').encode()
+    with pytest.raises(ValueError, match="Invalid CSV structure"):
+        read_uploaded_flows(data, limit=100)
+
+
+def test_upload_only_checks_preview_rows():
+    data = (HEADER + "\n" + ROW + "\n" + ROW + ",unexpected\n").encode()
+    frame = read_uploaded_flows(data, limit=1)
+    assert len(frame) == 1

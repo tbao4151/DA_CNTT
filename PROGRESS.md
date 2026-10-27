@@ -274,3 +274,11 @@
 - [PR quality gates 40452298446](https://github.com/tbao4151/DA_CNTT/actions/runs/40452298446) **passed**; [post-merge main quality gates 40452375343](https://github.com/tbao4151/DA_CNTT/actions/runs/40452375343) **passed** (syntax and full pytest suite). Four new synthetic verifier tests also passed in isolated local testing.
 - The new verification command can generate artifacts/local_verification.json **only after the user has trained a trusted model and run the command**; this file is not committed. Neither GitHub CI nor development of the script proves the group ran the project on its own Windows machine.
 - Next: group-run Windows training, independent examination of FP/FN and screenshots/JSON for the advisor; extend browser upload/filter test coverage. No new official benchmark, model change, production deployment or manual Windows verification claimed.
+
+## 2026-10-27: Reject ragged CSV rows before AI inference (PR pending CI)
+
+- Found an input-integrity gap: pandas may silently reinterpret a leading data field as a DataFrame index when a CSV row has more fields than its header, shifting network features without an obvious parse error.
+- Updated `src/siem_ai/upload.py` to validate the raw CSV header **and field counts of each preview row** using strict Python CSV parsing before passing content to pandas. Quoted commas remain valid; missing/extra fields and unterminated quoted fields are rejected. Validation is bounded to the requested preview (max 10,000 rows) and 15 MiB upload size; rows outside the preview are not inspected.
+- Added 5 new parameterized/regression test cases to `tests/test_upload.py` (two ragged-row cases, quoted comma, unclosed quote, preview boundary). Existing upload tests remain.
+- Ran isolated upload regression suite in the automation's Linux sandbox: **17 passed**, Python syntax compilation passed. This is not a Windows manual test and does not verify browser upload behavior.
+- At commit time, GitHub Actions PR CI is **not yet verified**. No AI model, dataset, official benchmark, SOC database, or deployment changes.
