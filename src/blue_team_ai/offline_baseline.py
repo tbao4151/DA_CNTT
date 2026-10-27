@@ -62,6 +62,13 @@ def _validate_dataset(dataset: LabeledLabDataset) -> None:
                     or not math.isfinite(value) or value < 0 or value > 1e12
                 ):
                     raise ValueError("Invalid numeric Zeek feature")
+            for field in _PROVENANCE_FIELDS:
+                value = meta[field]
+                if not isinstance(value, str) or not value or len(value) > 256:
+                    raise ValueError("Missing Zeek provenance field value")
+            digest = meta["source_sha256"]
+            if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+                raise ValueError("Invalid Zeek provenance SHA-256")
             for field, registry in (
                 ("source_sha256", seen_sources),
                 ("host_group", seen_hosts),
