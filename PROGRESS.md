@@ -571,3 +571,12 @@
   annotation evidence, model calibration, actual lab held-out evaluation,
   model persistence/trust, UI inference, SOC alerts and safe Red Team controls.
   Dataset Mode's UNSW model and benchmark remain unchanged.
+
+
+## 2026-10-28: Private-manifest offline Zeek experiment CLI (feature PR pending)
+
+- Checked latest `main` at `22ef4398d3606532cc5904896860f1cfc7274d65`: PR #52 merged, previous #51 baseline PR/main CI green, and no open PRs returned at the start of this slice. This work is isolated on `feature/zeek-offline-experiment-cli-20261028`.
+- Added `scripts/evaluate_zeek_lab.py`: explicit private manifest v1 with three host-disjoint partitions; reads bounded local original Zeek logs and separate per-UID label JSON, checks exact source SHA-256 in both manifest and annotation, rejects duplicate JSON keys and path escapes, then runs the existing train-only Logistic Regression/validation-threshold/held-out test pipeline. Writes a new private report without overwriting an existing one. Does not persist a model, create AI alerts, capture traffic or change UNSW/SOC.
+- Added `tests/test_zeek_lab_cli.py` with synthetic end-to-end CLI and fail-closed input regressions; added `docs/ZEEK_OFFLINE_EXPERIMENT.md` with a Windows usage and evidence protocol.
+- **At writing:** feature PR CI, merge and post-merge CI have not yet been verified. No student-operated VMware capture, independently authenticated labels, real Zeek attack-detection performance, model deployment or Red Team operation is claimed.
+- Next: verify PR CI, fix failures, merge only when green; on Windows collect authorized Host-only logs, assign independent labels and run a pre-registered host-disjoint experiment in a private folder outside Git.
