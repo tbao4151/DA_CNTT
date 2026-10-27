@@ -446,9 +446,10 @@
 - Không có thay đổi dữ liệu UNSW-NB15, tham số Random Forest, benchmark, ngưỡng cảnh báo, dữ liệu SOC hoặc triển khai công khai. Manifest không phải chữ ký số và không biến ba lần thay thế file thành transaction nguyên tử.
 - Chưa có minh chứng sinh viên trực tiếp huấn luyện và chạy dashboard trên máy Windows cá nhân. Tiếp theo: chạy local training, verifier và chụp màn hình thực nghiệm thật để chuẩn bị báo cáo giảng viên.
 
-## 2026-10-27: SOC UX redesign applying ui-ux-skill (PR pending)
+## 2026-10-27: SOC UX redesign applying ui-ux-skill (PR #42 merged; PR CI verified)
 
 - Read the supplied [UI UX Pro Max skill](https://github.com/tbao4151/ui-ux-skill) and used its accessibility/contrast, visual hierarchy, chart, responsive and focus-state rules. Implemented a light enterprise SOC theme in `.streamlit/config.toml` and `src/siem_ai/ui.css`: navy sidebar, clear white metric cards, compact white Plotly charts, legible form labels and responsive spacing.
 - Refactored `app.py` presentation to include clear hero/offline scope, trained AI status, 5-tab guidance, explainers distinguishing ground-truth labels vs model predictions, and concise descriptions inside the existing tabs. Original tab labels and browser-tested controls retained; no model/threshold/SQLite changes.
 - Added `docs/USING_DASHBOARD.md`, regression tests of theme configuration, and browser E2E checks for computed backgrounds plus a real Chromium screenshot artifact. Updated the isolated tests to copy the same Streamlit configuration they run locally.
-- As of this documentation commit: CI / Windows browser screenshot run **pending**. No statement about verified visual layout or user machine results yet.
+- [PR #42](https://github.com/tbao4151/DA_CNTT/pull/42) squash-merged into main at `be3f29871b378472d8c03bda0824201dff4ea032`. [PR quality CI #40538948085](https://github.com/tbao4151/DA_CNTT/actions/runs/40538948085) **passed**; [official-model smoke #40538948167](https://github.com/tbao4151/DA_CNTT/actions/runs/40538948167) **passed on Ubuntu and Windows**, including Chromium verification of white KPI background/light canvas, AI → Alert → SOC case, state update and JSON export. Screenshot artifact `da005-soc-redesign-preview` (7-day retention) uploaded successfully, artifact ID 12750200788. Post-merge main CI / browser run were started but not yet confirmed here.
+- No student-operated laptop screenshot or acceptance testing has been observed. UI still needs user review at desktop/mobile breakpoints; scientific metrics unchanged.
