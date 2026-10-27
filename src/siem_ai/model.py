@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
@@ -71,12 +73,23 @@ def fit_and_evaluate(train: pd.DataFrame, test: pd.DataFrame):
 
 
 def persist_model(model, metrics: dict, directory: str | Path) -> None:
+    """Stage both artifacts before replacing existing local model/metrics files.
+
+    Failed serialization leaves any prior artifacts untouched. The two final
+    os.replace calls are individually atomic, not a two-file transaction.
+    """
     output = Path(directory)
     output.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, output / "unsw_binary_rf.joblib", compress=3)
-    (output / "metrics.json").write_text(
-        json.dumps(metrics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-    )
+    with TemporaryDirectory(prefix=".da005-artifacts-", dir=output) as temp_dir:
+        staged = Path(temp_dir)
+        model_file = staged / "unsw_binary_rf.joblib"
+        metrics_file = staged / "metrics.json"
+        joblib.dump(model, model_file, compress=3)
+        metrics_file.write_text(
+            json.dumps(metrics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        os.replace(model_file, output / model_file.name)
+        os.replace(metrics_file, output / metrics_file.name)
 
 
 def predict_batch(model, rows: pd.DataFrame) -> pd.DataFrame:
