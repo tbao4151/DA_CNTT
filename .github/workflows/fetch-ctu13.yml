@@ -1,9 +1,6 @@
 name: Fetch CTU-13 Scenario 7 dataset
 
 on:
-  push:
-    paths:
-      - ".github/workflows/fetch-ctu13.yml"
   workflow_dispatch:
 
 permissions:
