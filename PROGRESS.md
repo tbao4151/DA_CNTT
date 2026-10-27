@@ -489,3 +489,11 @@
 - [PR quality gates 40558137956](https://github.com/tbao4151/DA_CNTT/actions/runs/40558137956) **passed** on Ubuntu Python 3.12.9: syntax + full pytest (`190 passed, 2 skipped, 2 warnings`). [Post-merge main quality gates 40558352334](https://github.com/tbao4151/DA_CNTT/actions/runs/40558352334) also **passed** (`190 passed, 2 skipped, 2 warnings`).
 - The implementation adds only an operator-initiated, **Unclassified** manual Zeek case with original source digest and JSON evidence; it does not run an AI model or identify attacks. Dataset Mode and official UNSW metrics remain unchanged.
 - No real Zeek capture, Windows laptop test, browser E2E for manual case creation, immutable evidence, or Red Team scenario has been verified. Next: manual Windows Host-only validation with a real authorized `conn.log`, then typed Cyber Lab evidence and independently labeled model training.
+
+
+## 2026-10-28: Source-verified typed Zeek case export (PR pending)
+
+- Checked `main` after PR #45: existing Cyber Lab only stores human-readable, stringified Zeek evidence; post-merge main CI for #45 was green (run 40558352334). No open PRs were returned by GitHub issue search at the start of this slice.
+- Added `src/blue_team_ai/verified_report.py` and `tests/test_zeek_verified_report.py`: original log bytes are re-parsed at export, SHA-256 and selected record index are checked against the SOC snapshot and flow digest, and a v2 JSON export retains numeric/null Zeek types while preserving legacy case/audit fields.
+- Updated Cyber Lab page to export only after verifying original bytes; current upload/session must retain the source and selected index. Existing Dataset Mode, model, metrics, SQLite schema and legacy v1 export are unchanged.
+- **At writing:** changes are on feature branch; full GitHub PR CI, merge, post-merge checks, browser E2E and student Windows/VMware verification are NOT yet established. No new AI detection, lab attack or true network capture is claimed. This verifies internal source consistency, not authenticity or tamper-proof evidence.
