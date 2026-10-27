@@ -44,6 +44,7 @@ def test_windows_browser_ai_alert_to_soc_json(tmp_path):
     sandbox.mkdir()
     shutil.copy2(ROOT / "app.py", sandbox / "app.py")
     shutil.copytree(ROOT / "src", sandbox / "src")
+    shutil.copytree(ROOT / ".streamlit", sandbox / ".streamlit")
     data_dir = sandbox / "data/raw/unsw_nb15"
     data_dir.mkdir(parents=True)
     sample = pd.read_csv(TEST_CSV, nrows=2500)
@@ -95,6 +96,22 @@ def test_windows_browser_ai_alert_to_soc_json(tmp_path):
                     page = context.new_page()
                     page.set_default_timeout(90000)
                     page.goto(address, wait_until="domcontentloaded", timeout=90000)
+                    page.get_by_role("heading", name="Security Operations Center").wait_for()
+                    # Verify the redesign is actually applied (not merely
+                    # passing server-side tests while unreadable CSS is absent).
+                    app_bg = page.locator('[data-testid="stAppViewContainer"]').evaluate(
+                        "(element) => getComputedStyle(element).backgroundColor"
+                    )
+                    assert app_bg == "rgb(243, 246, 251)"
+                    page.locator('[data-testid="stMetric"]').first.wait_for()
+                    metric_bg = page.locator('[data-testid="stMetric"]').first.evaluate(
+                        "(element) => getComputedStyle(element).backgroundColor"
+                    )
+                    assert metric_bg == "rgb(255, 255, 255)"
+                    # Artifact for visual inspection; no user data or live network capture.
+                    shot = ROOT / "artifacts/ui/soc_overview.png"
+                    shot.parent.mkdir(parents=True, exist_ok=True)
+                    page.screenshot(path=str(shot), full_page=True)
                     page.get_by_role("tab", name="Trung tâm cảnh báo").click()
                     page.get_by_role("button", name="Tạo SOC case từ flow đã chọn").click()
                     page.get_by_text("Đã lưu case #1 trong SQLite cục bộ.").wait_for()

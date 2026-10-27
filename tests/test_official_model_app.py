@@ -52,6 +52,7 @@ def test_official_model_dashboard_creates_exportable_case(tmp_path):
     sandbox.mkdir()
     shutil.copy2(ROOT / "app.py", sandbox / "app.py")
     shutil.copytree(ROOT / "src", sandbox / "src")
+    shutil.copytree(ROOT / ".streamlit", sandbox / ".streamlit")
     data_dir = sandbox / "data" / "raw" / "unsw_nb15"
     data_dir.mkdir(parents=True)
     sample.to_csv(data_dir / TEST_CSV.name, index=False)
