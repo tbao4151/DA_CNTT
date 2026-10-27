@@ -1,7 +1,11 @@
 """Synthetic-only tests for aggregated held-out error analysis."""
+import sys
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from siem_ai.error_analysis import summarize_group_errors
 
 
