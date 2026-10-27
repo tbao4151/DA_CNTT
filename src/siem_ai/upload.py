@@ -28,6 +28,12 @@ def read_uploaded_flows(content: bytes, *, limit: int, max_bytes: int = MAX_CSV_
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= MAX_PREVIEW_ROWS:
         raise ValueError(f"Preview row limit must be 1..{MAX_PREVIEW_ROWS:,}")
 
+    # Python's csv.reader retains NUL characters while pandas' C CSV parser
+    # silently truncates affected field values. Refuse ambiguous inputs rather
+    # than presenting altered network features to the AI model or SOC analyst.
+    if b"\x00" in content:
+        raise ValueError("CSV contains NUL bytes; refusing ambiguous network-flow fields")
+
     try:
         with io.TextIOWrapper(io.BytesIO(content), encoding="utf-8-sig", newline="") as stream:
             reader = csv.reader(stream, strict=True)
