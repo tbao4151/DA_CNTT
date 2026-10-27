@@ -331,3 +331,10 @@
 - [PR quality gates run 40477056751](https://github.com/tbao4151/DA_CNTT/actions/runs/40477056751) **passed** (syntax and full pytest suite). In an isolated Linux sandbox, `tests/test_upload.py` passed **20/20** cases, including three new NUL-byte cases.
 - The guard rejects NUL in any uploaded CSV byte to avoid pandas silently truncating flow features. No model, official UNSW benchmark, alert threshold, SOC database, or deployment change. No manual Windows student-machine run claimed.
 - [Post-merge main quality gates 40477206216](https://github.com/tbao4151/DA_CNTT/actions/runs/40477206216) **passed** on the squash-merge commit (syntax and full pytest suite). Next: student-run Windows training, artifact verification and SIEM/SOC screenshots for the advisor.
+
+## 2026-10-27: Align CSV preview validation with pandas blank-line handling (CI pending)
+
+- Identified an import consistency bug: `csv.reader` yields an empty list for physically blank lines, while `pandas.read_csv` skips those lines. The strict validator previously rejected otherwise valid uploads containing blank lines between flows.
+- Changed `src/siem_ai/upload.py` to skip only truly empty CSV records, counting logical data rows up to the preview limit. Quoted empty fields are still validated and rejected if they have the wrong number of columns; rows beyond the logical preview remain outside the validation scope.
+- Added four regression cases: valid blank line, malformed row after a blank line, quoted empty-field row, and a malformed row after the logical preview. Updated README to document the behavior.
+- **At commit time:** CI for this branch has not been checked. No model, official UNSW dataset, benchmark, alert threshold, SOC database or public deployment changes. This is not evidence of a manual Windows experiment by the students.
