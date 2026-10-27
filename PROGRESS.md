@@ -385,3 +385,10 @@
 - Added a streaming strict UTF-8 decoder across the complete **already size-bounded** (maximum 15 MiB) upload, before CSV preview parsing. UTF-8 BOM remains supported. Structural field-count checks still apply **only** to the preview; no claim of full-file CSV structural validation.
 - Added five synthetic regression cases: invalid UTF-8 tail, two truncated multibyte tails, valid UTF-8 tail, and invalid continuation crossing the 64-KiB decoding boundary. The five focused cases passed in an isolated Linux sandbox with pandas 2.2.3 and pytest 9.0.2; Python syntax compilation also passed. Full repository CI and Windows browser tests are **not yet verified at commit time**.
 - No model retraining, official dataset/benchmark modification, threshold tuning, SOC database change, deployment, or student-operated Windows experiment. Next: check PR quality gates and merge only if green; local Windows training and genuine evidence collection remain the highest-priority outstanding task.
+
+## 2026-10-27: Whole-file UTF-8 upload guard merged and PR CI verified (PR #37)
+
+- [PR #37](https://github.com/tbao4151/DA_CNTT/pull/37) squash-merged into `main` at `0943dbbdebdbc6ca67e52e79f7dc6949bba7410a`.
+- [PR quality gates run 40507892802](https://github.com/tbao4151/DA_CNTT/actions/runs/40507892802) **passed**, including Python syntax and repository pytest. An isolated Linux sandbox also passed 29/29 upload regression cases using a reconstructed test copy; this is not a complete repository run.
+- The bounded CSV uploader now rejects invalid UTF-8 anywhere in the uploaded bytes, even after the selected preview. The full-file encoding check does **not** extend structural row validation beyond the preview.
+- Post-merge `main` CI is not independently confirmed at the time of this entry. No student-operated Windows local experiment, model retraining, benchmark change, SOC data change, or deployment is claimed. Next priority: real Windows training, verification JSON, FP/FN analysis, and manual SIEM/SOC screenshots for advisor review.
