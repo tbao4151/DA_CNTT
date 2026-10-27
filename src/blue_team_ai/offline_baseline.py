@@ -20,6 +20,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION
 from .labeled_dataset import LabeledLabDataset, SPLITS
+from .host_variability import summarize_host_variability
 from .probability_diagnostics import summarize_probability_quality
 from .uncertainty import summarize_detection_uncertainty
 
@@ -165,7 +166,7 @@ def evaluate_offline_zeek_baseline(dataset: LabeledLabDataset) -> dict[str, obje
         for split in SPLITS
     }
     return {
-        "report_version": 3,
+        "report_version": 4,
         "mode": "offline_labeled_zeek_research_only",
         "label_authenticity": "operator_supplied_not_verified",
         "feature_schema_version": LAB_FEATURE_SCHEMA_VERSION,
@@ -180,6 +181,16 @@ def evaluate_offline_zeek_baseline(dataset: LabeledLabDataset) -> dict[str, obje
         "test_probability_diagnostics": test_quality,
         "validation_detection_uncertainty": summarize_detection_uncertainty(candidates[selected]),
         "test_detection_uncertainty": summarize_detection_uncertainty(test_metrics),
+        "validation_host_variability": summarize_host_variability(
+            dataset.labels["validation"], validation_probs,
+            [meta["host_group"] for meta in dataset.provenance["validation"]],
+            selected,
+        ),
+        "test_host_variability": summarize_host_variability(
+            dataset.labels["test"], test_probs,
+            [meta["host_group"] for meta in dataset.provenance["test"]],
+            selected,
+        ),
         "provenance": sources,
         "live_capture": False,
         "automated_alerts": False,
