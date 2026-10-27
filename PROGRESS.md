@@ -177,8 +177,9 @@
 - Added regression cases for reversed class order, missing/wrong classes, invalid scores, and single-class training. These tests use synthetic fixtures, not the official UNSW benchmark.
 - PR #22 passed GitHub Actions PR CI (syntax and pytest) in run `40429640323`; squash-merged into `main` as commit `48788f9281110eb33267011caae1f0313ed47708`. Post-merge main CI also passed in run `40429747524` (syntax and pytest). No benchmark, threshold, or Windows E2E result is claimed.
 
-## 2026-10-27: Official-model Streamlit/SOC integration smoke (PR pending)
+## 2026-10-27: Official-model Streamlit/SOC integration smoke (PR #23 merged, verified)
 
-- Added an **opt-in** AppTest that uses the model trained from the official 175,341-row UNSW training split to infer on 2,500 original held-out test rows, checks the UI alert count against direct model inference, creates one SOC case, and validates its JSON evidence and audit event.
-- Added a dedicated GitHub Actions workflow to verify dataset checksums, train a trusted model, and execute this test. The application and SQLite writes are isolated in a temporary directory; the workflow has read-only repository permissions and does not publish the model or change benchmark reports.
-- **At this point no workflow result is claimed**. This is a Linux headless integration check, not Windows/browser E2E and not a new model benchmark. The test is skipped by the ordinary fast CI unless explicitly enabled.
+- Added an **opt-in** AppTest using a model trained on the official 175,341-row UNSW training split to infer on the first 2,500 held-out test flows. It checks the UI alert count against direct model inference, creates one SOC case, and validates the exported JSON evidence and audit event.
+- Dedicated workflow verifies the official dataset checksums, trains a trusted model and runs the AppTest in a temporary isolated application/SQLite directory with read-only repository permissions. The model is not published, and benchmark reports are not changed.
+- PR #23 squash-merged into `main` as commit `71b9d50173f68749f2508295230b39cbc7feb4c2`. PR CI passed in Actions run `40435134602`; post-merge main CI passed in run `40435254835`.
+- Dedicated official-model smoke run `40435254982` **passed**: checksum verification, official training, and **1 headless AppTest passed** (3.54 seconds for test). Training logged Attack Recall 0.98091856 and Attack F1 0.90565077, consistent with the archived baseline. This is **not** a new independent benchmark or Windows/browser E2E certification. Ordinary fast CI skips this expensive opt-in test.
