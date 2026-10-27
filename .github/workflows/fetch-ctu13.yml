@@ -1,9 +1,6 @@
 name: Fetch CTU-13 Scenario 7 dataset
 
 on:
-  push:
-    paths:
-      - ".github/workflows/fetch-ctu13.yml"
   workflow_dispatch:
 
 permissions:
@@ -11,15 +8,20 @@ permissions:
 
 jobs:
   download:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.9"
+      - name: Assert Python 3.12.9
+        run: python -c "import sys; print(sys.version); assert sys.version_info[:3] == (3, 12, 9)"
       - name: Download and validate original dataset
-        run: python3 scripts/download_ctu13.py
+        run: python scripts/download_ctu13.py
       - name: Commit verified dataset
         run: |
           git config user.name "github-actions[bot]"

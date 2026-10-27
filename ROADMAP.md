@@ -35,3 +35,8 @@
 - [ ] Đề nghị GVHD xác nhận phạm vi Network Flow Logs và nghiệp vụ SOC.
 
 Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; chức năng correlation theo IP/thời gian chỉ triển khai khi có dữ liệu nguồn phù hợp.
+
+## Đồng bộ môi trường Python (27/10/2026)
+
+- [ ] Ghim **Python 3.12.9** cho toàn bộ 8 GitHub Actions workflows, kiểm chứng lại CI và official-model Windows/Ubuntu E2E. Bước thay đổi cấu hình đã được tạo trên PR; kết quả tương thích và benchmark mới phải xác minh sau khi chạy thực tế.
+- [ ] Người dùng trực tiếp chạy Python 3.12.x trên Windows, huấn luyện và tạo `artifacts/local_verification.json`; GitHub CI không thay thế minh chứng này.

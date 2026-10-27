@@ -13,16 +13,18 @@ Nhóm lựa chọn **Network Flow Logs**, thiết kế một **bản mô phỏng
 
 ## Chạy nhanh trên Windows 10/11
 
-Yêu cầu Python 3.11 và Git:
+Yêu cầu Git và Python 3.12; GitHub Actions được ghim chính xác **Python 3.12.9** trên runner Ubuntu 24.04/Windows 2022 để bản vá này khả dụng. Trên laptop, dùng `py -3.12 --version` để xem bản 3.12.x đã có (muốn khớp tuyệt đối với CI thì cài 3.12.9). Các phiên bản thư viện vẫn theo dải trong `requirements*.txt`, vì vậy môi trường chưa được khóa toàn bộ:
 
 ```powershell
 git clone https://github.com/tbao4151/DA_CNTT.git
 cd DA_CNTT
-py -3.11 -m venv .venv
+py -3.12 -m venv .venv
 .venv\Scripts\activate
 python -m pip install -r requirements-app.txt
 streamlit run app.py
 ```
+
+Nếu đang dùng CMD tại `E:\DA_CNTT`, có thể chạy trực tiếp `.venv\Scripts\python.exe -m pip install -r requirements-app.txt` và `.venv\Scripts\python.exe -m streamlit run app.py` mà không cần activate. Nếu `.venv` chưa tạo được, kiểm tra `py -3.12 --version` trước khi cài pip.
 
 Truy cập URL cục bộ Streamlit hiển thị trong terminal (thường là http://localhost:8501). Giao diện mặc định cho phép **khám phá ground truth ngay cả khi chưa có mô hình**; hệ thống không giả lập dự đoán khi chưa train.
 

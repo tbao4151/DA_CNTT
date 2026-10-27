@@ -422,3 +422,9 @@
 - Model and metrics are now fully staged before replacing existing local artifact files, so serialization errors (including a partially written staged joblib file or non-JSON-serializable metrics) preserve the last existing artifacts. Three new synthetic regression tests cover success, interrupted dump and metrics serialization failure. An isolated staging smoke also passed.
 - **Remaining risk:** replacing two final files is not an atomic pair; a crash between `os.replace` calls may still leave a mismatched model/metrics pair. Re-run training and `scripts/verify_local_run.py` after interrupted writes. No official benchmark/model hyperparameter change, SOC DB mutation, deployment or student-operated Windows experiment claimed.
 - Next: collect real Windows training/verifier output and SOC UI screenshots; consider an explicit artifact manifest if stronger pair-consistency guarantees are required.
+
+## 2026-10-27: GitHub Actions Python 3.12.9 alignment (PR pending)
+
+- Replaced Python 3.11 with an exact Python **3.12.9** `setup-python` pin in 8 GitHub Actions workflows, including official-model smoke on Ubuntu + Windows. Download-only workflows now also explicitly select Python 3.12.9 instead of relying on runner-default `python3`.
+- Added a runtime Python patch-version assertion to each workflow; updated README and local Windows instructions to `py -3.12` / CMD-friendly `.venv\\Scripts\\python.exe`.
+- **No compatibility claim yet** at authoring time: PR checks and Windows official-model smoke must pass before merging. Historical UNSW-NB15 metrics were measured in the prior environment; changes in dependency resolution may affect model outputs. No user-operated local training or Windows screenshots claimed.
