@@ -330,4 +330,4 @@
 - [PR #33](https://github.com/tbao4151/DA_CNTT/pull/33) squash-merged into `main` at commit `865b86ccada7ab01066683f5869edfcf13ea568f`.
 - [PR quality gates run 40477056751](https://github.com/tbao4151/DA_CNTT/actions/runs/40477056751) **passed** (syntax and full pytest suite). In an isolated Linux sandbox, `tests/test_upload.py` passed **20/20** cases, including three new NUL-byte cases.
 - The guard rejects NUL in any uploaded CSV byte to avoid pandas silently truncating flow features. No model, official UNSW benchmark, alert threshold, SOC database, or deployment change. No manual Windows student-machine run claimed.
-- Post-merge CI should be checked separately; this documentation entry alone is not evidence of post-merge verification. Next: student-run Windows training, artifact verification and SIEM/SOC screenshots for the advisor.
+- [Post-merge main quality gates 40477206216](https://github.com/tbao4151/DA_CNTT/actions/runs/40477206216) **passed** on the squash-merge commit (syntax and full pytest suite). Next: student-run Windows training, artifact verification and SIEM/SOC screenshots for the advisor.
