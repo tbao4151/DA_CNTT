@@ -48,5 +48,5 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Giao diện & khả năng sử dụng (27/10/2026)
 
-- [ ] Hoàn tất PR thiết kế lại dashboard: high-contrast light theme, hướng dẫn 5 tab, bảng số liệu và biểu đồ dễ đọc, nhãn trạng thái mô hình rõ; kiểm tra CI Windows/Ubuntu và screenshot Chromium trước khi coi là verified.
+- [x] Thiết kế lại dashboard hoàn tất và hợp nhất (PR #42): high-contrast light theme, hướng dẫn 5 tab, KPI/biểu đồ đọc rõ, trạng thái AI; CI PR + kiểm thử Chromium trên Windows/Ubuntu thành công, artifact ảnh giao diện có thể tải từ Actions run 40538948167. Cần tiếp tục đánh giá thực tế trên laptop.
 - [ ] Người dùng thử giao diện mới trên laptop ở các độ phân giải khác nhau; ghi nhận nhận xét thực tế để tinh chỉnh phần SOC workflow và thứ tự thông tin.
