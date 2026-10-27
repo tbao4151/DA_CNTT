@@ -1,10 +1,8 @@
 name: Official UNSW-NB15 benchmark
 
+# Explicit opt-in: a Python/runtime-only upgrade must not silently rewrite
+# the previously measured baseline JSON in main.
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/benchmark.yml"
   workflow_dispatch:
 
 permissions:
