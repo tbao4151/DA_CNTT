@@ -95,3 +95,49 @@ dataset = build_labeled_lab_dataset(captures)
 ```
 
 Use `py -3.12 -m pytest -q tests/test_zeek_labeled_dataset.py` to validate the synthetic contract tests. There is no UI/CLI for labeling yet, no lab-trained model, no AI alert, no real attack-detection metric, and no Windows/VMware acceptance evidence. The next research slice is an **offline** training/evaluation pipeline that fits preprocessing only on train, tunes thresholds on validation and reports untouched test Precision/Recall/FPR and provenance. Do not publish raw private logs, annotation notes or sensitive IP addresses.
+
+
+## Offline Zeek research baseline (PR #51 pending, 28/10/2026)
+
+`src/blue_team_ai/offline_baseline.py` introduces a **separate, offline-only**
+Logistic Regression research baseline for `LabeledLabDataset` built from
+original Zeek logs and independent operator-supplied UID labels. It does not
+load the UNSW-NB15 Random Forest, create an alert, persist a model, touch the
+SOC database, capture network traffic or activate Red Team.
+
+The pipeline validates nine feature columns, binary labels, alignment and
+host/session/source-disjoint partitions. It fits category vocabulary (capped
+at 32 categories per field), numeric median imputation, standardization and
+the classifier **only on train**. Missing categorical values are an explicit
+marker; unseen validation/test categories are ignored by the encoder.
+A fixed grid of thresholds (0.25, 0.40, 0.50, 0.60, 0.75) is compared using
+validation F1, then fewest validation false positives, then higher threshold.
+Only after choosing the threshold does it score the held-out test once.
+The JSON-compatible returned report includes test confusion counts,
+Precision/Recall/F1/FPR and SHA-256 source digests and host/session counts.
+It intentionally excludes raw IP addresses, Zeek UIDs and label-reference
+strings; researchers must preserve those original records separately.
+
+Example **only after collecting independently annotated authorized captures**:
+
+```python
+from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
+from blue_team_ai.offline_baseline import evaluate_offline_zeek_baseline
+
+# captures: 3+ real source files with explicit disjoint train/validation/test
+# host groups, complete UID labels and independently retained evidence.
+dataset = build_labeled_lab_dataset(captures)
+report = evaluate_offline_zeek_baseline(dataset)
+# Do not interpret metrics as live detection or publish sensitive logs.
+```
+
+Synthetic tests verify the code contract, not attack-detection performance.
+The program cannot authenticate claimed ground truth, isolation, host identity
+or capture provenance. A two-flow-per-split toy fixture cannot establish
+generalization or calibration. There is no CLI/UI for labeling or training,
+no saved trusted model, no inference or SOC alert integration. Real evaluation
+requires a pre-registered holdout plan, sufficient independent host/scenario
+diversity and student-operated Windows/VMware capture evidence. The baseline
+selects a validation threshold but **does not calibrate probabilities**.
+Do not repeatedly inspect test results and retune. CI and merge evidence are
+tracked in PROGRESS.md.
