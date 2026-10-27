@@ -266,3 +266,11 @@
 - Added docs/LOCAL_EXPERIMENT.md and README instructions for Windows setup, local training, SOC demonstration, screenshots and honest evidence collection.
 - **Not performed:** no actual Windows user-machine execution, no new official UNSW benchmark, no model tuning or threshold change, no claim that a student performed the demonstration. CI results, once available, do not substitute for a human local run.
 - Next: verify PR quality gates, then have the group perform a Windows local run and archive screenshots/JSON before revising the advisor progress report.
+
+
+## 2026-10-27: Local verification evidence tool merged and CI verified (PR #29)
+
+- [PR #29](https://github.com/tbao4151/DA_CNTT/pull/29) squash-merged into main at commit 036a2d248d0dfae822bcc969c5229a11cc97a9d8.
+- [PR quality gates 40452298446](https://github.com/tbao4151/DA_CNTT/actions/runs/40452298446) **passed**; [post-merge main quality gates 40452375343](https://github.com/tbao4151/DA_CNTT/actions/runs/40452375343) **passed** (syntax and full pytest suite). Four new synthetic verifier tests also passed in isolated local testing.
+- The new verification command can generate artifacts/local_verification.json **only after the user has trained a trusted model and run the command**; this file is not committed. Neither GitHub CI nor development of the script proves the group ran the project on its own Windows machine.
+- Next: group-run Windows training, independent examination of FP/FN and screenshots/JSON for the advisor; extend browser upload/filter test coverage. No new official benchmark, model change, production deployment or manual Windows verification claimed.
