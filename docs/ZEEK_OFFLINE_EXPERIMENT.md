@@ -95,6 +95,29 @@ and 30,000 total flows. It rejects duplicate JSON keys, mismatched hashes,
 missing/extra UID labels and cross-split host reuse. Invalid inputs do not
 create reports. It does not infer labels or auto-select train/test splits.
 
+## Descriptive probability quality (report v2)
+
+The offline report also includes `validation_probability_diagnostics` and
+`test_probability_diagnostics`, calculated from the corresponding split's
+predicted Attack probabilities and independently supplied labels. Each contains
+the **Brier score** (mean squared probabilistic error, lower is better), a
+five-bin **Expected Calibration Error** (ECE, lower is better), prevalence,
+sample size and fixed-width reliability bins (counts, mean predicted Attack
+probability, observed Attack frequency). Empty bins have `null` averages;
+the rightmost bin includes probability 1.0. A `small_sample_warning` is raised
+for fewer than 100 flows or any occupied bin containing fewer than 20 flows.
+
+These are **descriptive diagnostics, not probability calibration**. ECE depends
+on binning and sample size; good Brier/ECE on a tiny or shifted dataset does not
+establish reliable deployment probabilities. The validation threshold is still
+chosen exclusively by validation F1 and false-positive tie-breaking, without
+using these diagnostics. The held-out test diagnostics are computed **once,
+after model/threshold selection** and must not be used to retune or recalibrate
+the model. Report v2 preserves the previous `validation_metrics`,
+`test_metrics` and provenance fields. It contains no raw IP/UID or
+label-reference strings, but **aggregated bins can still reveal information
+about very small groups**; keep experiment reports private.
+
 The report includes SHA-256 source hashes, train/validation/test support,
 confusion counts, Precision/Recall/F1/FPR and validation-selected threshold.
 It intentionally excludes raw IPs, UIDs and label-reference strings. The
