@@ -338,3 +338,10 @@
 - Changed `src/siem_ai/upload.py` to skip only truly empty CSV records, counting logical data rows up to the preview limit. Quoted empty fields are still validated and rejected if they have the wrong number of columns; rows beyond the logical preview remain outside the validation scope.
 - Added four regression cases: valid blank line, malformed row after a blank line, quoted empty-field row, and a malformed row after the logical preview. Updated README to document the behavior.
 - **At commit time:** CI for this branch has not been checked. No model, official UNSW dataset, benchmark, alert threshold, SOC database or public deployment changes. This is not evidence of a manual Windows experiment by the students.
+
+## 2026-10-27: CSV blank-line preview fix verified and merged (PR #34)
+
+- [PR #34](https://github.com/tbao4151/DA_CNTT/pull/34) squash-merged into `main` as `637227ab830db342e54f4c78bed98f42bbd11fe9`.
+- [PR quality gates 40484898887](https://github.com/tbao4151/DA_CNTT/actions/runs/40484898887) **passed** (repository syntax check and full pytest suite); the two preceding branch push checks also passed. Four isolated representative CSV parsing cases passed in a Linux sandbox, but that smoke is not a full repository run.
+- The CSV preview validator now ignores physically blank lines when counting preview records, matching pandas' default behavior, while continuing to reject malformed rows and quoted empty-field records with incorrect field counts. No model, official UNSW benchmark, threshold, SOC data, deployment, or manual Windows student experiment changed.
+- Post-merge main CI has not yet been verified at the time of this progress entry. Next priority remains student-operated Windows training, verifier output, SOC demo and genuine screenshots for advisor review.
