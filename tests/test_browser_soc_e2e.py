@@ -108,8 +108,15 @@ def test_windows_browser_ai_alert_to_soc_json(tmp_path):
 
                     # Exercise a real analyst transition using browser widgets.
                     note = "Verified flow evidence; investigate suspicious activity."
-                    page.get_by_role("combobox", name="Trạng thái xử lý").click()
-                    page.get_by_role("option", name="Investigating", exact=True).click()
+                    # Streamlit's BaseWeb selectbox may re-render its popup
+                    # while Chromium is waiting for an ARIA option. Drive the
+                    # focused selectbox by keyboard instead of targeting the
+                    # transient popup node (regression: main CI 40443531393).
+                    state_picker = page.get_by_role("combobox", name="Trạng thái xử lý")
+                    state_picker.click()
+                    state_picker.press("Home")
+                    state_picker.press("ArrowDown")
+                    state_picker.press("Enter")
                     page.get_by_role("textbox", name="Ghi chú điều tra (bắt buộc)").fill(note)
                     page.get_by_role("button", name="Lưu diễn biến điều tra").click()
 
