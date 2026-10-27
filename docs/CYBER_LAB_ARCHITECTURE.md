@@ -134,10 +134,22 @@ report = evaluate_offline_zeek_baseline(dataset)
 Synthetic tests verify the code contract, not attack-detection performance.
 The program cannot authenticate claimed ground truth, isolation, host identity
 or capture provenance. A two-flow-per-split toy fixture cannot establish
-generalization or calibration. There is no CLI/UI for labeling or training,
-no saved trusted model, no inference or SOC alert integration. Real evaluation
+generalization or calibration. There is no interactive labeling UI, no saved trusted model, no inference or SOC alert integration. An offline research experiment CLI is documented in docs/ZEEK_OFFLINE_EXPERIMENT.md. Real evaluation
 requires a pre-registered holdout plan, sufficient independent host/scenario
 diversity and student-operated Windows/VMware capture evidence. The baseline
 selects a validation threshold but **does not calibrate probabilities**.
 Do not repeatedly inspect test results and retune. CI and merge evidence are
 tracked in PROGRESS.md.
+
+## Offline experiment CLI verified (#53, 28/10/2026)
+
+The command `scripts/evaluate_zeek_lab.py` accepts a private manifest v1
+containing local Zeek logs, complete independently supplied UID labels and
+preassigned host-disjoint splits. It validates per-file source SHA-256 in both
+manifest and annotation JSON, bounds file sizes, rejects duplicate JSON keys
+and path escapes, runs the existing Zeek-only baseline and writes a new private
+JSON report without overwriting previous evidence. It does not persist a model,
+produce an alert or authenticate ground truth. See
+[docs/ZEEK_OFFLINE_EXPERIMENT.md](ZEEK_OFFLINE_EXPERIMENT.md) for Windows setup,
+manifest schema and evidence protocol. PR and post-merge CI are recorded in
+PROGRESS.md; only synthetic fixtures have been exercised in CI.
