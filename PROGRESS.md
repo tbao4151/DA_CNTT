@@ -548,3 +548,26 @@
   merge only if green and conflict-free; students must collect authorized
   Host-only Zeek logs with independent labels and holdout before claiming
   any Cyber Lab detection performance.
+
+
+## 2026-10-28: Offline Zeek research baseline merged and CI verified (#51)
+
+- [PR #51](https://github.com/tbao4151/DA_CNTT/pull/51) squash-merged into
+  `main` as commit `f25cacd1e605345bee0fd5bcb7c5f6aa701dc6f3`.
+  Final PR-head [quality gates 40575163730](https://github.com/tbao4151/DA_CNTT/actions/runs/40575163730)
+  **passed** on Ubuntu Python 3.12.9: syntax + full pytest
+  (`251 passed, 2 skipped, 2 warnings`). Post-merge main
+  [quality gates 40575309335](https://github.com/tbao4151/DA_CNTT/actions/runs/40575309335)
+  **passed** at the same merge commit.
+- An earlier intermediate branch run 40575051745 **failed** one new
+  provenance-validation regression; the feature branch was fixed and the
+  final PR-head run passed. Do not interpret the intermediate failure as a
+  failure of the merged commit.
+- This is an **offline code path** for independently labeled Zeek features:
+  train-only preprocessing/Logistic Regression, validation-only threshold
+  selection and one-time test evaluation. No real Zeek-lab dataset or measured
+  attack-detection score is available. Synthetic fixtures only.
+- Still outstanding: student-run Windows/VMware Host-only captures, independent
+  annotation evidence, model calibration, actual lab held-out evaluation,
+  model persistence/trust, UI inference, SOC alerts and safe Red Team controls.
+  Dataset Mode's UNSW model and benchmark remain unchanged.
