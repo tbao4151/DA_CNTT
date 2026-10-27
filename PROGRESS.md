@@ -290,3 +290,10 @@
 - **At commit time:** this new browser path has not yet been verified by Windows GitHub Actions. A successful run must be recorded before treating it as complete. The user's own Windows machine has still not been tested.
 
 - Initial PR browser attempt [Actions 40463809314](https://github.com/tbao4151/DA_CNTT/actions/runs/40463809314) **failed** on Windows: Playwright `get_by_role("radio").check()` timed out because the styled input was covered by the visible Streamlit radio label. Ubuntu official-model AppTest and the PR quality gate passed. Updated the browser test to click the visible sidebar label; the new Windows run is pending, not yet confirmed.
+
+## 2026-10-27: Windows CSV upload and Threat Hunting browser smoke verified on PR #31
+
+- [PR #31](https://github.com/tbao4151/DA_CNTT/pull/31) quality gates [40464307180](https://github.com/tbao4151/DA_CNTT/actions/runs/40464307180) **passed**; official-model smoke [40464307137](https://github.com/tbao4151/DA_CNTT/actions/runs/40464307137) **passed** on both Ubuntu (AppTest) and Windows (AppTest + Chromium browser E2E).
+- The Windows Chromium test verified an eight-row uploaded UNSW feature CSV (without ground-truth labels), a protocol Threat Hunting filter narrowing to 4/8 rows, and duplicate CSV header rejection. It also retained the existing AI alert -> SOC case -> state update -> JSON audit checks.
+- The initial browser run [40463809314](https://github.com/tbao4151/DA_CNTT/actions/runs/40463809314) failed because Playwright clicked a radio input obscured by Streamlit's styled label. Clicking the visible sidebar label fixed the interaction in the later successful run; intermittent UI issues remain possible.
+- This is a CI-hosted Windows browser regression test, **not** evidence of manual operation on a student's Windows PC. It is not a new benchmark, does not assess every upload edge case, and does not alter the official model, threshold, data or local SOC records.
