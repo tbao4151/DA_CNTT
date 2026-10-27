@@ -230,3 +230,10 @@
 - The post-merge official-model smoke on `main` at [Actions 40443531393](https://github.com/tbao4151/DA_CNTT/actions/runs/40443531393) **failed** on Windows Playwright: `get_by_role('option', name='Investigating')` timed out after 90 seconds. Windows training/headless AppTest and Ubuntu workflow still passed; the equivalent E2E test had passed on PR #26 (40443155381). This is a browser-test reliability defect; no AI metric regression was observed.
 - Changed the state-selection step in `tests/test_browser_soc_e2e.py` to keyboard navigation (`Home`, `ArrowDown`, `Enter`) on the focused selectbox instead of querying a transient popup option. Existing SQLite and downloaded-JSON assertions remain unchanged.
 - **Verification pending:** do not claim the browser test is stable or the fix successful until subsequent PR CI and post-merge CI pass. CSV-upload browser coverage remains to be done. No model/threshold changes.
+
+## 2026-10-27: Windows SOC selectbox regression fix verified on PR #27
+
+- PR [#27](https://github.com/tbao4151/DA_CNTT/pull/27) squash-merged into `main` as `77f67a031a2d173104a92e60fef700a00aeb064e`.
+- [CI quality gates 40444171096](https://github.com/tbao4151/DA_CNTT/actions/runs/40444171096) **passed** and [official-model smoke 40444171121](https://github.com/tbao4151/DA_CNTT/actions/runs/40444171121) **passed** on Ubuntu and Windows, including Chromium browser E2E after switching to keyboard-based selection.
+- Prior failure at main Actions 40443531393 is retained in the history; a single green rerun does not prove zero flakiness. Post-merge `main` workflow result needs separate verification.
+- No AI pipeline, UNSW dataset, thresholds, benchmark, runtime database or application deployment changed. CSV-upload/Threat Hunting browser coverage remains pending.
