@@ -4,7 +4,7 @@ Tài liệu này dành cho **thành viên nhóm trực tiếp chạy và phân t
 
 ## 1. Chuẩn bị
 
-Yêu cầu: Windows 10/11, Git, Python 3.12 (GitHub CI ghim **3.12.9**), dung lượng đĩa/RAM đủ để huấn luyện Random Forest. Kiểm tra `py -3.12 --version`; bản local 3.12.x có thể chạy nhưng muốn đối chiếu chính xác thì nên dùng 3.12.9. Có thể dùng cả CMD lẫn PowerShell:
+Yêu cầu: Windows 10/11, Git, Python 3.12 (GitHub CI ghim **3.12.9** trên Ubuntu 24.04/Windows 2022), dung lượng đĩa/RAM đủ để huấn luyện Random Forest. Kiểm tra `py -3.12 --version`; bản local 3.12.x có thể chạy nhưng muốn đối chiếu chính xác thì nên dùng 3.12.9. Có thể dùng cả CMD lẫn PowerShell:
 
 ~~~powershell
 git clone https://github.com/tbao4151/DA_CNTT.git
@@ -13,7 +13,9 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-app.txt
 ~~~
 
-Nếu đã clone vào `E:\\DA_CNTT`, **không clone lại**. Mở CMD, chạy `cd /d E:\\DA_CNTT` rồi các lệnh từ `py -3.12 -m venv .venv` trở đi. Kiểm tra thay đổi chưa commit trước khi chạy `git pull --ff-only`; **không ghi đè mã hoặc dữ liệu local**.\n\nNếu `py -3.12 -m venv .venv` báo *No suitable Python runtime found*, máy chưa có Python 3.12 mà Python Launcher tìm được: kiểm tra `py -0p`, cài/khắc phục Python trước, **đừng chạy pip trong `.venv` khi bước tạo venv thất bại**.
+Nếu đã clone vào `E:\DA_CNTT`, **không clone lại**. Mở CMD, chạy `cd /d E:\DA_CNTT` rồi các lệnh từ `py -3.12 -m venv .venv` trở đi. Kiểm tra thay đổi chưa commit trước khi chạy `git pull --ff-only`; **không ghi đè mã hoặc dữ liệu local**.
+
+Nếu `py -3.12 -m venv .venv` báo *No suitable Python runtime found*, máy chưa có Python 3.12 mà Python Launcher tìm được: kiểm tra `py -0p`, cài/khắc phục Python trước, **đừng chạy pip trong `.venv` khi bước tạo venv thất bại**.
 
 ## 2. Thực nghiệm có thể tái lập
 
