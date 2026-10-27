@@ -360,3 +360,5 @@
 - [PR #35](https://github.com/tbao4151/DA_CNTT/pull/35) was squash-merged into `main` at `d0f1fbd81f26c3590af3eba8ebcd5a6af4f6081c`.
 - [PR quality gates 40492434317](https://github.com/tbao4151/DA_CNTT/actions/runs/40492434317) **passed**, including repository Python syntax check and full pytest suite with six new synthetic split-integrity cases. Post-merge `main` CI is pending verification at the time of this entry.
 - `scripts/train_siem.py` now refuses altered or missing official train/test CSVs before fitting or saving a model, and checks their row counts against pinned constants. It does not trust local metadata.json. No model or benchmark numbers changed; no manual Windows student experiment claimed.
+
+- **Post-merge main quality gates [40492595694](https://github.com/tbao4151/DA_CNTT/actions/runs/40492595694) passed** on squash commit `d0f1fbd81f26c3590af3eba8ebcd5a6af4f6081c` (Python syntax and full repository pytest). This is CI-hosted Linux verification, not a student-run Windows training experiment.
