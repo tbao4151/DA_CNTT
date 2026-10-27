@@ -183,8 +183,8 @@ def test_windows_browser_ai_alert_to_soc_json(tmp_path):
                     # A malformed header must be rejected before any inference.
                     lines = uploaded_flows.to_csv(index=False).splitlines()
                     duplicate_header_csv = (
-                        lines[0] + ",proto\\n" + lines[1] + ",tcp\\n"
-                    ).replace("\\n", "\n").encode("utf-8")
+                        "\n".join([lines[0] + ",proto", lines[1] + ",tcp"]) + "\n"
+                    ).encode("utf-8")
                     uploader.set_input_files({
                         "name": "duplicate_header.csv",
                         "mimeType": "text/csv",
