@@ -69,3 +69,15 @@ a separately authorized private PCAP with capture/session/host notes, use
 report SHA-256 independently and run the existing provenance/scoring/review
 pipeline. Keep synthetic smoke outputs out of any TRAIN/VALIDATION/TEST
 experiment and never report them as detected attacks.
+
+
+## Dedicated GitHub Actions real-binary check (separate from laptop acceptance)
+
+The workflow `.github/workflows/real-zeek-offline-smoke.yml` is designed to run the **official Zeek 9.0.1 Docker image** against the same deterministic benign PCAP on an Ubuntu runner. The container is launched with `--network none`, dropped Linux capabilities, a read-only root filesystem and a writable temporary evidence directory. The host Python verifier checks the **actual Zeek-generated** ASCII `conn.log` against the expected single flow, protocol, addresses, ports, timestamp and private CIDR. It uploads only synthetic fixture evidence with seven-day retention.
+
+This check is distinct from the standard `tests/test_zeek_real_smoke.py` unit tests, which mock Zeek. **Do not claim real-binary CI success before its workflow actually succeeds.** Even if successful, it establishes only Zeek decoding of a benign synthetic fixture on a GitHub-hosted Linux runner, not Windows/VMware acceptance, authentic capture, Host-only isolation, attack labels, model accuracy or SOC latency. The image uses a fixed version tag rather than an immutable digest; the workflow logs the resolved local image ID. Student local execution remains necessary.
+
+
+### First verified runner result (not student-machine acceptance)
+
+The dedicated workflow [#40765032431](https://github.com/tbao4151/DA_CNTT/actions/runs/40765032431) succeeded with actual **Zeek 9.0.1** in a network-disabled Docker container. Its `conn.log` passed the one-flow fixture identity/timestamp check. The artifact is synthetic-only and retained for seven days. This result does not replace the Linux VMware local acceptance procedure above; no genuine capture or attack detection is established.

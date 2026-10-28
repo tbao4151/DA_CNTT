@@ -1,0 +1,111 @@
+name: Real Zeek offline synthetic smoke
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/real-zeek-offline-smoke.yml"
+      - "src/blue_team_ai/zeek_smoke.py"
+      - "src/blue_team_ai/offline_pcap.py"
+      - "src/blue_team_ai/zeek.py"
+      - "src/blue_team_ai/lab_scope.py"
+      - "tests/test_zeek_real_smoke.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-zeek-offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Configure temporary evidence directory
+        run: echo "SMOKE_DIR=$RUNNER_TEMP/da005-real-zeek-smoke" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.9"
+      - name: Generate deterministic benign PCAP (no sockets)
+        run: |
+          mkdir -p "$SMOKE_DIR"
+          PYTHONPATH=src python - <<'PY'
+          import os
+          from pathlib import Path
+          from blue_team_ai.zeek_smoke import build_benign_udp_pcap
+          target = Path(os.environ["SMOKE_DIR"]) / "benign_synthetic.pcap"
+          with target.open("xb") as stream:
+              stream.write(build_benign_udp_pcap())
+          print("Synthetic offline PCAP generated; no capture or attack.")
+          PY
+      - name: Run actual Zeek binary on offline fixture in network-disabled container
+        run: |
+          docker pull zeek/zeek:9.0.1
+          docker image inspect zeek/zeek:9.0.1 --format '{{.Id}}'
+          docker run --rm \
+            --network none \
+            --read-only \
+            --user "$(id -u):$(id -g)" \
+            --env HOME=/tmp \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --tmpfs /tmp:rw,nosuid,noexec,size=16m \
+            --mount "type=bind,src=$SMOKE_DIR,dst=/work" \
+            --workdir /work \
+            zeek/zeek:9.0.1 \
+            /bin/sh -c 'zeek --version > /work/zeek_version.txt 2>&1 && zeek -r /work/benign_synthetic.pcap'
+      - name: Validate genuine Zeek output against exact fixture contract
+        run: |
+          PYTHONPATH=src python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from blue_team_ai.lab_scope import inspect_zeek_lab_scope
+          from blue_team_ai.zeek_smoke import _verify_fixture_flow, build_benign_udp_pcap
+
+          root = Path(os.environ["SMOKE_DIR"])
+          pcap = root / "benign_synthetic.pcap"
+          conn = root / "conn.log"
+          assert pcap.read_bytes() == build_benign_udp_pcap()
+          _verify_fixture_flow(conn)
+          scope = inspect_zeek_lab_scope(conn.read_bytes(), ["192.168.56.0/24"])
+          assert scope["flow_count"] == 1
+          version = (root / "zeek_version.txt").read_text(encoding="utf-8").strip()
+          assert version.startswith("zeek version ")
+          result = {
+              "report_version": 1,
+              "source_kind": "synthetic_benign_udp_fixture",
+              "execution": "github_actions_real_zeek_offline_container",
+              "zeek_image_tag": "zeek/zeek:9.0.1",
+              "zeek_version_reported": version,
+              "pcap_sha256": hashlib.sha256(pcap.read_bytes()).hexdigest(),
+              "zeek_conn_sha256": hashlib.sha256(conn.read_bytes()).hexdigest(),
+              "flow_count": scope["flow_count"],
+              "fixture_flow_identity_verified": True,
+              "fixture_event_time_verified": True,
+              "zeek_container_network_disabled": True,
+              "vmware_capture_performed": False,
+              "host_only_isolation_verified": False,
+              "attack_ground_truth_verified": False,
+              "ai_scoring_performed": False,
+              "soc_case_created": False,
+              "interpretation": "Actual Zeek decoded a synthetic benign PCAP in CI; not a VMware capture, attack detection, or Windows acceptance.",
+          }
+          (root / "ci_smoke_report.json").write_text(
+              json.dumps(result, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(result, indent=2))
+          PY
+      - name: Upload synthetic-only reproducibility evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: da005-real-zeek-synthetic-smoke
+          path: |
+            ${{ env.SMOKE_DIR }}/benign_synthetic.pcap
+            ${{ env.SMOKE_DIR }}/conn.log
+            ${{ env.SMOKE_DIR }}/zeek_version.txt
+            ${{ env.SMOKE_DIR }}/ci_smoke_report.json
+          if-no-files-found: error
+          retention-days: 7
