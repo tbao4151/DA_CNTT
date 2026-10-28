@@ -234,3 +234,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #93](https://github.com/tbao4151/DA_CNTT/pull/93) merged the read-only `check_zeek_partition_exclusion.py` gate; final-head and post-merge main Python 3.12.9 CI passed (**508 passed, 2 skipped**). It compares independently pinned new capture bytes with **all** declared TRAIN/VALIDATION/TEST source digests, checks model/manifest linkage and refuses mismatches. Synthetic regressions are not a student lab result.
 - [ ] Student runs this tool on Windows with a genuinely pre-registered private experiment manifest, all original annotated captures, separately recorded SHA-256 references, actual VMware Host-only CIDR and an independently captured NEW log. Preserve screenshots, Zeek version and scenario/label evidence outside GitHub.
 - [ ] Do not claim this exact-byte screen proves semantic flow non-reuse, authentic partition history, physical isolation or detection accuracy. Existing new-log inference reports remain research-only and do not gain an automatic alert or operational confidence claim.
+
+
+## Cyber Lab — optional pinned partition gate for manual NEW-log SOC triage (28/10/2026)
+
+- [ ] Verify feature PR CI and merge only if green: optional independently pinned manifest check on NEW-log candidate listing and manual Unclassified case creation; fail closed on declared TEST exact-byte reuse and recheck inside the case-write boundary. Legacy CLI remains compatible and must not claim a TEST exclusion check when the manifest is omitted.
+- [ ] Student Windows/VMware Host-only acceptance: preserve the original preregistered manifest, all original capture/annotation files, independently recorded model/manifest/new-log SHA-256, physical isolation screenshots and scenario evidence; exercise both valid and refusal paths with private data.
+- [ ] Exact-byte partition exclusion cannot prove semantic non-reuse, honest experiment history, authentic ground truth or model generalization. Do not activate operational alerts or Red Team traffic on the strength of this gate.
