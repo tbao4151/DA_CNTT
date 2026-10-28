@@ -7,13 +7,14 @@ No socket, active Red Team, operational alert, SOC write, or benchmark change.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import subprocess
 import sys
 from pathlib import Path
 
-from blue_team_ai.model_artifact import build_zeek_research_artifact
+from blue_team_ai.model_artifact import build_zeek_research_artifact, validate_zeek_research_artifact
 from blue_team_ai.zeek_smoke import verify_fixture_feature_projection
 from siem_ai.case_report import export_case_report
 from siem_ai.core import list_cases
@@ -117,9 +118,6 @@ def run(root: Path) -> dict[str, object]:
     artifact = build_zeek_research_artifact(
         _dataset(), input_manifest_sha256="a" * 64,
     )
-    # Force one fixture candidate for exercising the MANUAL SOC write boundary.
-    # This is NOT a validated threshold or an empirical attack-detection result.
-    artifact["selected_threshold"] = 0.000001
     model = root / "ci_synthetic_model_not_for_use.json"
     model_bytes = (json.dumps(artifact, sort_keys=True, allow_nan=False) + "\n").encode()
     with model.open("xb") as stream:
@@ -142,8 +140,6 @@ def run(root: Path) -> dict[str, object]:
     ], should_succeed=True)
     report = json.loads(prediction.read_text(encoding="utf-8"))
     validate_research_only_report(report, log_sha=log_sha, model_sha=model_sha)
-    if report["research_candidate_count"] != 1:
-        raise ValueError("Forced synthetic-only threshold must produce one candidate")
     verify = [
         str(ROOT / "scripts" / "verify_zeek_new_log_report.py"),
         *common, "--report", str(prediction),
@@ -170,13 +166,48 @@ def run(root: Path) -> dict[str, object]:
     if blocked.exists():
         raise ValueError("Scorer wrote an output despite invalid model pin")
 
-    # The genuine Zeek importer/scorer output now reaches the production manual
-    # triage CLI. All confirmations refer ONLY to this owned synthetic fixture,
-    # which is distinct from the CI model's training rows. They do NOT verify
-    # physical isolation, an attack, or independent holdout provenance.
+    # Preserve the original FITTED synthetic-model scoring above. A separate,
+    # deliberately neutralized fixture-only data artifact guarantees one
+    # candidate so the explicit manual SOC write boundary can be exercised.
+    # Neutral coefficients and a 0.49 threshold are NOT trained attack detection.
+    neutral = copy.deepcopy(artifact)
+    neutral["intercept"] = 0.0
+    neutral["selected_threshold"] = 0.49
+    for entries in neutral["categorical_adjustments"].values():
+        for key in entries:
+            entries[key] = 0.0
+    for params in neutral["numeric_parameters"].values():
+        params["weight"] = 0.0
+    validate_zeek_research_artifact(neutral)
+    manual_model = root / "ci_neutral_model_not_for_research.json"
+    manual_model_bytes = (json.dumps(neutral, sort_keys=True, allow_nan=False) + "\n").encode()
+    with manual_model.open("xb") as stream:
+        stream.write(manual_model_bytes)
+    manual_model_sha = _sha(manual_model_bytes)
+    manual_prediction = imported / "ci_neutral_model_predictions.json"
+    manual_common = common.copy()
+    manual_common[manual_common.index("--model") + 1] = str(manual_model)
+    manual_common[manual_common.index("--expected-model-sha256") + 1] = manual_model_sha
+    _command([
+        str(ROOT / "scripts" / "score_zeek_new_log.py"),
+        *manual_common, "--output", str(manual_prediction),
+    ], should_succeed=True)
+    manual_report = json.loads(manual_prediction.read_text(encoding="utf-8"))
+    validate_research_only_report(
+        manual_report, log_sha=log_sha, model_sha=manual_model_sha,
+    )
+    if manual_report["research_candidate_count"] != 1:
+        raise ValueError("Neutral CI-only fixture did not produce one candidate")
+    _command([
+        str(ROOT / "scripts" / "verify_zeek_new_log_report.py"),
+        *manual_common, "--report", str(manual_prediction),
+    ], should_succeed=True)
+
+    # Confirmations refer ONLY to the owned synthetic fixture, not a real
+    # VMware capture, attack, independent ground truth or holdout evidence.
     triage = [
         str(ROOT / "scripts" / "triage_zeek_new_log.py"),
-        *common, "--report", str(prediction),
+        *manual_common, "--report", str(manual_prediction),
     ]
     db = root / "ci_synthetic_manual_soc.sqlite3"
     _command([*triage, "--list-candidates"], should_succeed=True)
@@ -193,7 +224,7 @@ def run(root: Path) -> dict[str, object]:
     case_id = int(cases.iloc[0]["case_id"])
     case_export = json.loads(export_case_report(db, case_id))
     validate_ci_synthetic_case(
-        case_export, log_sha=log_sha, model_sha=model_sha, import_sha=import_sha,
+        case_export, log_sha=log_sha, model_sha=manual_model_sha, import_sha=import_sha,
     )
     _command(manual, should_succeed=True)
     if len(list_cases(db)) != 1:
@@ -226,6 +257,8 @@ def run(root: Path) -> dict[str, object]:
         "independent_prediction_recomputation_passed": True,
         "tampered_probability_rejected": True,
         "wrong_model_pin_rejected": True,
+        "synthetic_manual_model_sha256": manual_model_sha,
+        "synthetic_manual_model_origin": "CI-only neutralized coefficients and 0.49 threshold; not a trained detector",
         "synthetic_manual_soc_case_created": True,
         "synthetic_manual_case_unclassified_verified": True,
         "synthetic_manual_case_idempotency_verified": True,
