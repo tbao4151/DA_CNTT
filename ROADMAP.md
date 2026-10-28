@@ -185,3 +185,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #79](https://github.com/tbao4151/DA_CNTT/pull/79) merged the narrowly scoped source-SHA/Zeek-UID idempotency change for **manual research** candidates. Concurrent clicks reuse one original Unclassified case and initial audit event; ordinary manual and Dataset Mode case creation remain unchanged. Final PR and post-merge Ubuntu Python 3.12.9 CI passed (421 passed, 2 skipped); synthetic tests only. See PROGRESS.
 - [ ] Validate on Windows with genuine authorized Host-only evidence; an idempotent case is not proof of model provenance, attack authenticity or network isolation.
 - [ ] Do not use held-out research traces as live alerts. Trusted Zeek model deployment, new-log inference and operational AI-to-SOC alerts remain future work.
+
+
+## Cyber Lab — private research trace provenance consistency (28/10/2026)
+
+- [ ] Verify CI and merge the fail-closed held-out source-set/flow-count check for private research trace review; source SHA-256 and UID are still validated against the one uploaded original Zeek log. See `PROGRESS.md` for actual PR/CI status.
+- [ ] Student runs an authorized VMware Host-only experiment with preserved original logs, independently documented labels, isolation screenshots and preregistered splits; verify the trace review on Windows without tuning on test.
+- [ ] Build trusted Zeek model persistence and new-log inference only after authentic lab evaluation; internal JSON consistency does not establish model provenance or real-world detection.
