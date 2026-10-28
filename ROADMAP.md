@@ -377,3 +377,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #123](https://github.com/tbao4151/DA_CNTT/pull/123) merged after final-head [CI #40703014325](https://github.com/tbao4151/DA_CNTT/actions/runs/40703014325) and post-merge main [CI #40703530003](https://github.com/tbao4151/DA_CNTT/actions/runs/40703530003) passed (646 passed, 2 skipped, 2 existing warnings). The earlier pending checkbox is superseded by this verified entry. The separate UID-bearing worksheet is opt-in and private, never a consensus or model-training annotation.
 - [ ] Student runs the aggregate and private disagreement tools on independently labeled authorized VMware Host-only captures using Windows Python 3.12.9, then manually documents evidence and adjudicates unresolved UIDs without inferring labels from AI. Keep all sensitive data outside Git.
 - [ ] Freeze separately versioned complete annotation-v1 inputs and host/session-disjoint TEST; evaluate genuine Zeek detection and event-to-alert latency before any operational alerts or active Red Team scenario runner.
+
+
+## Cyber Lab — manually finalized private Zeek labels (28/10/2026)
+
+- [ ] Verify final-head PR CI before merging the private adjudication finalizer; see PROGRESS for feature status. It accepts only a separately SHA-pinned, fully manually decided worksheet, rejects changed original reviewer labels and writes a new annotation-v1 beside the private log without touching existing labels.
+- [ ] Student must complete genuine Host-only capture and independent annotations, document scenario evidence for each disputed UID, record worksheet/output hashes outside Git and run finalization plus annotation verifier on Windows Python 3.12.9. Agreement and evidence references are not proof of ground truth.
+- [ ] Freeze host/session-disjoint TRAIN/VALIDATION/TEST, evaluate the separate Zeek model on actual labeled captures, measure event-to-alert latency, and connect approved AI candidates to SOC. Keep Dataset Mode benchmark unchanged and active Red Team traffic disabled.
