@@ -196,6 +196,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — non-executable private Zeek model artifact (28/10/2026)
 
-- [ ] Feature PR under verification: share TRAIN-only Zeek Logistic Regression pipeline and export a private, versioned JSON-only research artifact with validation-locked threshold, fitted numeric/categorical parameters, explicit CIDR gate and SHA-256 output. Synthetic equivalence tests must pass before marking complete; see `docs/ZEEK_PRIVATE_MODEL_EXPORT.md`.
+- [x] [PR #83](https://github.com/tbao4151/DA_CNTT/pull/83) merged: TRAIN-only Zeek Logistic Regression JSON research export with validation-locked threshold, fitted numeric/categorical parameters, explicit CIDR gate and SHA-256 output. Final PR-head [CI #40630943857](https://github.com/tbao4151/DA_CNTT/actions/runs/40630943857) and post-merge [CI #40631126434](https://github.com/tbao4151/DA_CNTT/actions/runs/40631126434) passed (442 passed, 2 skipped). Synthetic tests only; see `docs/ZEEK_PRIVATE_MODEL_EXPORT.md`.
 - [ ] Student Windows/VMware Host-only acceptance: collect authorized raw logs, independently document labels and isolation, run export outside Git, preserve artifact SHA-256 and private evidence. GitHub synthetic CI is not proof of genuine attack detection.
 - [ ] Later add independently pinned SHA-256 loader and bounded inference on **new** Zeek logs, then SOC alert controls and latency measurement. Do not treat held-out TEST predictions or this research artifact as a trusted operational detector.
