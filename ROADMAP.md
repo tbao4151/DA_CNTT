@@ -310,3 +310,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #111](https://github.com/tbao4151/DA_CNTT/pull/111) merged after final-head [CI #40677916507](https://github.com/tbao4151/DA_CNTT/actions/runs/40677916507) passed (579 passed, 2 skipped, 2 existing warnings). Private bounded SQLite Zeek Unclassified case list/evidence/audit viewer and JSON snapshot download are implemented; post-merge main CI is tracked separately in PROGRESS.
 - [ ] Student runs Windows 3.12.9 acceptance with authorized Host-only Zeek capture and private SOC DB: verify original UID/source digest, history, JSON export, missing-file refusal and no DB mutation. Retain private screenshots, captures and independent hashes.
 - [ ] Independently label host/session-disjoint captures and measure genuine event-to-alert latency before claiming operational attack detection. Keep official UNSW Dataset Mode and Red Team traffic unchanged.
+
+
+## Cyber Lab — Windows host-only read-only network preflight (28/10/2026)
+
+- [ ] Verify final-head CI and merge the read-only Windows host network evidence helper; code and synthetic mocked tests are on a feature branch. Do not claim Windows/VMware acceptance from Ubuntu CI.
+- [ ] Student runs `scripts/record_windows_host_network.py` on Windows 3.12.9 with explicit confirmation, privately archives host diagnostics and checks every VMware guest adapter/route against approved Host-only configuration. Record authorization and original Zeek capture evidence separately.
+- [ ] Independently label genuine host/session-disjoint captures and measure actual event-to-alert latency before operational AI alerting. Dataset Mode benchmark and Red Team active traffic remain unchanged.
