@@ -323,3 +323,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [x] [PR #113](https://github.com/tbao4151/DA_CNTT/pull/113) merged after final-head [CI #40682056972](https://github.com/tbao4151/DA_CNTT/actions/runs/40682056972) passed (586 passed, 2 skipped, 2 warnings). Post-merge main CI #40682389167 was queued at documentation time; track it separately. This is only read-only host network evidence, not isolation proof.
 - [ ] Student performs Windows 3.12.9 acceptance, inspects all VMware guest adapters and routes, and archives private original outputs and SHA-256 independently. Keep Red Team active traffic off and Dataset Mode benchmark unchanged.
+
+## Cyber Lab — pinned host network preflight integrity verification (28/10/2026)
+
+- [ ] Verify final-head CI and merge the offline private host-preflight verifier; see PROGRESS for pending feature PR status. It checks a separately recorded SHA-256 of the host inventory plus the three original command outputs and fails closed on modified/missing evidence; synthetic tests only.
+- [ ] Student runs the verifier on Windows Python 3.12.9 using an independently recorded hash from the private lab notebook. Inspect VMware guest adapters, routes and authorization separately; hashes cannot prove Host-only isolation.
+- [ ] Obtain genuine authorized Host-only Zeek logs with independent scenario labels and host/session-disjoint evaluation before operational detection or Red Team active traffic. Preserve official Dataset Mode benchmark.
