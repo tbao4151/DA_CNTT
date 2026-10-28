@@ -61,6 +61,8 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
         raise ValueError("Unsupported offline Zeek research report")
     if not _digest(report.get("input_manifest_sha256")):
         raise ValueError("Missing private manifest provenance digest")
+    if type(report.get("feature_schema_version")) is not int or report["feature_schema_version"] != LAB_FEATURE_SCHEMA_VERSION:
+        raise ValueError("Private report feature schema mismatch")
     trace = report.get("private_test_trace")
     if not isinstance(trace, dict) or (
         trace.get("trace_version") != 1
@@ -88,6 +90,28 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
     ) or metrics["support"] != len(flows):
         raise ValueError("Private trace/test report support mismatch")
 
+    # A trace may be internally consistent yet refer to a different held-out
+    # capture than the one declared in the experiment's aggregate provenance.
+    # Check the full TEST source set and count before exposing any candidates.
+    provenance = report.get("provenance")
+    test_provenance = provenance.get("test") if isinstance(provenance, dict) else None
+    if not isinstance(test_provenance, dict) or set(test_provenance) != {
+        "flows", "source_sha256", "host_groups", "sessions",
+    }:
+        raise ValueError("Missing exact held-out test provenance")
+    declared_sources = test_provenance["source_sha256"]
+    if (
+        type(test_provenance["flows"]) is not int
+        or test_provenance["flows"] != len(flows)
+        or any(type(test_provenance[key]) is not int or not 1 <= test_provenance[key] <= 30
+               for key in ("host_groups", "sessions"))
+        or not isinstance(declared_sources, list)
+        or not 1 <= len(declared_sources) <= 30
+        or any(not _digest(source) for source in declared_sources)
+        or declared_sources != sorted(set(declared_sources))
+    ):
+        raise ValueError("Invalid held-out test provenance")
+
     seen: set[tuple[str, str]] = set()
     counts = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
     rows_by_source: dict[str, dict[str, dict[str, object]]] = {}
@@ -114,6 +138,8 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
         rows_by_source.setdefault(digest, {})[uid] = flow
     if any(counts[key] != metrics[key] for key in counts):
         raise ValueError("Private trace confusion counts mismatch")
+    if set(rows_by_source) != set(declared_sources):
+        raise ValueError("Private trace sources differ from held-out test provenance")
 
     events = parse_zeek_conn_log(source_data)
     source_digest = hashlib.sha256(source_data).hexdigest()
