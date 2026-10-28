@@ -159,3 +159,22 @@ Lệnh chỉ **đọc** train/test, model và metrics cục bộ, xác minh SHA-
 Ngoài Dataset Mode ở `app.py`, Streamlit tự phát hiện trang **Cyber Lab** trong thư mục `pages/` khi chạy `streamlit run app.py`. Trang này cho phép tải tệp Zeek ASCII `conn.log` do nhóm sở hữu và đọc ngoại tuyến (tối đa 15 MiB, 10.000 flow, bảng xem trước 500 flow). Giao diện hiển thị số flow, IP nguồn/đích duy nhất, phân bố giao thức, khoảng thời gian **theo timestamp Zeek** và SHA-256 nguồn. Không thu thập live, không chạy tấn công, không gọi Random Forest UNSW, không tạo alert hoặc SOC Case.
 
 Tệp Zeek có thể chứa IP/metadata nhạy cảm: chỉ chạy Streamlit trên máy tin cậy và không tải log thật lên GitHub công khai. Tính năng đã qua PR CI với dữ liệu synthetic; chưa kiểm chứng trên Windows/VMware của nhóm. Xem `docs/CYBER_LAB_ARCHITECTURE.md` để phân biệt mức độ đã làm với mục tiêu tương lai.
+
+
+## Cyber Lab — private held-out Zeek prediction trace (research only)
+
+The offline Zeek experiment now supports an **optional private per-flow test prediction trace**
+for analyst review, separate from the existing aggregate report and from Dataset Mode.
+After preparing an independently annotated, host-disjoint manifest in an authorized
+VMware Host-only lab, run:
+
+~~~powershell
+py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --cidr "192.168.56.0/24" --trace-output "C:/DA005-private/zeek-experiment/private-heldout-trace.json"
+~~~
+
+Use the **actual** lab CIDR. The trace contains source SHA-256, Zeek UID, predicted
+Attack probability, validation-selected verdict, operator-supplied test label and
+TP/FP/TN/FN outcome. It must remain **outside the Git repository**, never be
+uploaded publicly, and must not be used to tune against the held-out test.
+This is **not live detection, a deployed Zeek model or an automated SOC alert**.
+See `docs/ZEEK_OFFLINE_EXPERIMENT.md` for protocol and privacy limits.
