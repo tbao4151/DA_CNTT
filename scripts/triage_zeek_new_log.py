@@ -69,6 +69,9 @@ def create_ui_candidate_case(
     lab_cidrs: list[str], record_index: int,
     analyst_confirmed: bool, operator_confirmed_authorized: bool,
     operator_confirmed_new_capture: bool,
+    offline_import_report_path: str | Path | None = None,
+    offline_import_report_sha256: str | None = None,
+    offline_import_pcap_path: str | Path | None = None,
 ) -> int:
     """UI write boundary: reload pinned private evidence, then manual SOC triage.
 
@@ -96,7 +99,24 @@ def create_ui_candidate_case(
     manifest_file = _private_file(Path(manifest_path))
     if model_file == manifest_file:
         raise ValueError("Model and manifest must be distinct private files")
-    database = _private_db(Path(db_path), {model_file, manifest_file})
+    provenance = (
+        offline_import_report_path, offline_import_report_sha256,
+        offline_import_pcap_path,
+    )
+    if any(value is not None for value in provenance) and not all(
+        value is not None for value in provenance
+    ):
+        raise ValueError("All three pinned offline PCAP inputs are required")
+    report_file = pcap_file = conn_file = None
+    inputs = {model_file, manifest_file}
+    if all(value is not None for value in provenance):
+        report_file = _private_file(Path(offline_import_report_path))
+        pcap_file = _private_file(Path(offline_import_pcap_path))
+        conn_file = _private_file(report_file.parent / "conn.log")
+        inputs.update((report_file, pcap_file, conn_file))
+        if len(inputs) != 5:
+            raise ValueError("PCAP, Zeek log, report, model and manifest must be distinct")
+    database = _private_db(Path(db_path), inputs)
     manifest_bytes = _read_bounded(manifest_file, MAX_MANIFEST_BYTES)
     if (
         not 0 < len(manifest_bytes) <= MAX_MANIFEST_BYTES
@@ -124,6 +144,10 @@ def create_ui_candidate_case(
         operator_confirmed_new_capture=operator_confirmed_new_capture,
         declared_dataset=dataset, declared_manifest_sha256=manifest_sha,
         declared_captures=captures,
+        offline_import_report_path=report_file,
+        offline_import_report_sha256=offline_import_report_sha256,
+        offline_import_pcap_path=pcap_file,
+        offline_import_log_path=conn_file,
     )
 
 

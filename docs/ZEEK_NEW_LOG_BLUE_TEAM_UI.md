@@ -118,3 +118,37 @@ check source SHA-256/UID and audit history, download the JSON to a private
 directory, then repeat after a manual case state change via the existing SOC
 workflow. Verify a missing database is refused **without creating it**.
 GitHub CI is not proof that this procedure was performed on the student's laptop.
+
+## Optional original-PCAP evidence in Blue Team UI (29/10/2026)
+
+When the uploaded NEW `conn.log` originated from an operator-owned classic PCAP
+converted by `scripts/import_offline_pcap.py`, the first verification form
+now accepts three **optional, all-or-none** private inputs:
+
+1. Absolute path to the original `offline_import_report.json`.
+2. Independently recorded lowercase SHA-256 of that exact report.
+3. Absolute path to the original classic PCAP.
+
+The original `conn.log` must still exist beside the import report in its
+private Zeek output directory. The UI recomputes PCAP, original Zeek log,
+import-report hash, flow count and declared CIDR scope, and checks the uploaded
+`conn.log` bytes against the original. A partial triple or changed PCAP
+blocks the candidate preview; no candidate or success state is shown.
+The **manual SOC write boundary** independently reloads and verifies these
+files again, even after a successful preview, before opening/reusing an
+`Unclassified` SQLite case. All three empty fields preserve the legacy
+workflow but clearly mark PCAP provenance as **not software-checked**.
+
+Keep the original PCAP, import report, `conn.log`, model, manifest, pins,
+SQLite and authorization/adapter/route evidence **outside public Git**.
+A passing byte-integrity check does not prove physical Host-only isolation,
+capture authenticity, independent attack ground truth or real detection.
+No live traffic or automatic SOC alert is produced.
+
+Synthetic regression (mocked Zeek import; not a Windows/VMware acceptance):
+`py -3.12 -m pytest -q tests/test_zeek_new_log_ui_pcap.py`.
+On the student's Windows machine, run the original offline import, record the
+independent report SHA-256, upload the exact `conn.log` and prediction JSON,
+verify with all three optional fields, and manually create one case. Alter a
+**copy** of the PCAP after preview and confirm SOC write is refused; never
+modify the only original capture.
