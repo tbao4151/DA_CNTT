@@ -189,6 +189,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — private research trace provenance consistency (28/10/2026)
 
-- [ ] Verify CI and merge the fail-closed held-out source-set/flow-count check for private research trace review; source SHA-256 and UID are still validated against the one uploaded original Zeek log. See `PROGRESS.md` for actual PR/CI status.
+- [x] Verified and merged the fail-closed held-out source-set/flow-count check in PR #81; final PR and post-merge main CI passed (428 passed, 2 skipped, 2 warnings). Original source SHA-256 and UID coverage remain checked; this is internal consistency only, not genuine lab detection. See `PROGRESS.md`.
 - [ ] Student runs an authorized VMware Host-only experiment with preserved original logs, independently documented labels, isolation screenshots and preregistered splits; verify the trace review on Windows without tuning on test.
 - [ ] Build trusted Zeek model persistence and new-log inference only after authentic lab evaluation; internal JSON consistency does not establish model provenance or real-world detection.
