@@ -210,6 +210,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — pinned NEW-log offline inference (28/10/2026)
 
-- [ ] Verify feature PR CI for bounded, separately pinned new Zeek capture inference (`src/blue_team_ai/new_log_inference.py`, `scripts/score_zeek_new_log.py`, `tests/test_zeek_new_log_inference.py`), then merge only when green; PR/CI details are in PROGRESS.
+- [x] PR #87 merged; final PR and post-merge main CI passed (464 passed, 2 skipped, 2 warnings on PR). Bounded, separately pinned new Zeek capture inference (`src/blue_team_ai/new_log_inference.py`, `scripts/score_zeek_new_log.py`, `tests/test_zeek_new_log_inference.py`), then merge only when green; PR/CI details are in PROGRESS.
 - [ ] Student runs private Windows Python 3.12.9 acceptance on a **new** authorized VMware Host-only `conn.log` not used for TRAIN, VALIDATION or held-out TEST; independently preserve capture/model SHA-256, physical isolation and scenario evidence. CI synthetic fixtures do not satisfy this.
 - [ ] Only after real independent holdout evaluation, add an explicit analyst-reviewed AI-to-SOC research alert pipeline with model provenance and detection latency; do not silently treat research candidates as confirmed attacks. Keep Red Team active traffic disabled until isolation and safety controls are validated.
