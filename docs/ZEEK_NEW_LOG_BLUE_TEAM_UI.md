@@ -87,3 +87,34 @@ Synthetic tests and GitHub CI do not prove a student-owned Host-only
 capture, independent labels, model authorship, physical isolation, real
 attack detection, operational latency, or generalization. Preserve original
 UNSW-NB15 Dataset Mode and historical benchmark unchanged.
+
+
+## Read-only SOC case history in the Blue Team page
+
+The **New Log Review** page also has a separate section **Hồ sơ SOC nghiên cứu
+đã lưu (chỉ đọc)**. This section can be used without uploading a model or
+NEW Zeek log again. Enter the **absolute path** of an existing private
+`.sqlite3` file outside the repository, click **Đọc danh sách**, select an
+`Unclassified` Zeek case, and inspect its stored flow snapshot, source digest,
+UID and chronological audit entries. Export the displayed snapshot as JSON
+for a private review notebook. This is a read-only SQLite connection
+(`mode=ro`, `query_only=ON`), not an update or a second case-creation path.
+
+For resource safety the viewer rejects missing, symlinked, non-SQLite, Git-local,
+empty or >128 MiB databases, scans at most 500 recent Unclassified cases,
+displays at most 100 matching Zeek cases, and reads at most the latest 200
+audit events per case. If the history is truncated, the UI and exported JSON
+explicitly say so. Do not treat the bounded JSON as a complete forensic export.
+The database and its contents remain private; never expose Streamlit publicly
+or commit a case database, export or source capture. Database owners can edit
+SQLite; this viewer does not authenticate the original capture, model, labels,
+operator, or isolation.
+
+Synthetic-only regression:
+`py -3.12 -m pytest -q tests/test_zeek_case_workspace.py`.
+Student Windows acceptance: create a private Unclassified case via the
+existing verified manual UI, open the viewer using that same private database,
+check source SHA-256/UID and audit history, download the JSON to a private
+directory, then repeat after a manual case state change via the existing SOC
+workflow. Verify a missing database is refused **without creating it**.
+GitHub CI is not proof that this procedure was performed on the student's laptop.

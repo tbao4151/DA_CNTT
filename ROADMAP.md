@@ -296,3 +296,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] Verified and merged the offline private evidence inventory (`src/blue_team_ai/capture_evidence.py`, `scripts/record_zeek_lab_capture.py`, synthetic regression tests and `docs/WINDOWS_VMWARE_CAPTURE_EVIDENCE.md`); PR #109 merged after green final-head CI #40674392574 (575 passed, 2 skipped); post-merge main CI tracked separately in PROGRESS. The tool only records independently pinned log checksum, supporting-file digests, declared CIDR and aggregate Zeek timestamps; it does **not** prove Host-only isolation or attack detection.
 - [ ] Student gathers real authorized VMware Host-only original `conn.log`, VMware network and host adapter screenshots, actual Zeek version output and independent scenario notebook in a private directory; runs the inventory CLI on Windows Python 3.12.9, archives the JSON and original files outside Git, and verifies guest adapters/routes manually.
 - [ ] Collect host/session-disjoint independently labeled captures and evaluate the separate Zeek Blue Team model on an untouched partition. Do not treat synthetic CI, inventory hashes, manual Unclassified SOC cases or batch runtime as verified operational attack detection. Keep Dataset Mode benchmark and Red Team active traffic unchanged.
+
+
+## Cyber Lab — private SOC read-only evidence browser (28/10/2026)
+
+- [ ] Verify final-head Python 3.12.9 CI and merge the bounded private SQLite read-only Zeek Unclassified case/evidence/audit viewer. Synthetic-only regression and local Python 3.13.5 helper tests are not student Windows acceptance. PR and CI state recorded in PROGRESS.
+- [ ] Student tests a genuine authorized Host-only Zeek case on Windows 3.12.9, checks original UID/SHA-256, audit events, JSON export and missing-DB refusal, storing screenshots and source evidence privately. Do not claim operational detection from an editable SOC case.
+- [ ] Evaluate independently labeled host/session-disjoint captures and genuine event-to-alert latency before operational AI alerting; leave Dataset Mode benchmark and Red Team active traffic unchanged.

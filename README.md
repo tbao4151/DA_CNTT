@@ -222,3 +222,13 @@ Windows/VMware Host-only evidence remains a separate requirement.
 Trang Streamlit **New Log Review** (`pages/3_New_Log_Review.py`) cho phép nạp `conn.log` mới và JSON dự đoán, nhập đường dẫn model Zeek riêng tư, SHA-256 được ghi độc lập và CIDR Host-only được phép. Hệ thống tính lại toàn bộ dự đoán từ model/log gốc và chỉ hiển thị ứng viên nghiên cứu trong 500 dòng đầu. Trang **không** tự tạo SOC case, không phát alert và không chạy kiểm thử mạng. Đây không phải bằng chứng phát hiện tấn công thực tế.
 
 Trước khi xem kết quả, chạy kiểm tra phân vùng TRAIN/VALIDATION/TEST bằng CLI độc lập. Hướng dẫn và giới hạn Windows: [docs/ZEEK_NEW_LOG_BLUE_TEAM_UI.md](docs/ZEEK_NEW_LOG_BLUE_TEAM_UI.md). Chức năng tạo hồ sơ `Unclassified` có xác nhận thủ công vẫn nằm ở [docs/ZEEK_NEW_LOG_MANUAL_SOC_TRIAGE.md](docs/ZEEK_NEW_LOG_MANUAL_SOC_TRIAGE.md).
+
+
+## Cyber Lab — đọc hồ sơ SOC Zeek riêng tư (chỉ đọc)
+
+Trang **New Log Review** có mục đọc hồ sơ Zeek `Unclassified` từ SQLite riêng
+ngoài Git: danh sách giới hạn, bằng chứng flow, UID/SHA-256 nguồn, audit history
+và tải JSON snapshot cục bộ. Không cần nạp lại model/log để đọc hồ sơ đã lưu;
+không tạo case, sửa trạng thái, xác nhận tấn công hoặc phát lưu lượng. Xem
+[quy trình Windows và giới hạn](docs/ZEEK_NEW_LOG_BLUE_TEAM_UI.md).
+Kết quả CI synthetic không thay thế thí nghiệm VMware Host-only của nhóm.
