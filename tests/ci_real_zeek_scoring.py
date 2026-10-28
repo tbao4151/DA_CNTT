@@ -89,7 +89,35 @@ def validate_ci_synthetic_case(
         or events[0].get("new_state") != "New"
         or events[0].get("case_id") != case["case_id"]
     ):
-        raise ValueError("Synthetic SOC case must remain unclassified and auditable")
+        failed = {
+            "type": export.get("report_type") != "DA005 educational SOC case",
+            "notice": "not signed" not in str(export.get("integrity_notice", "")),
+            "case_id": type(case.get("case_id")) is not int or case.get("case_id", 0) < 1,
+            "verdict": case.get("verdict") != "Unclassified",
+            "confidence": case.get("confidence") is not None,
+            "state": case.get("state") != "New",
+            "note": not isinstance(note, str) or any(
+                phrase not in note for phrase in (
+                    "NOT a verified attack or operational AI alert",
+                    "ground truth are unverified",
+                    f"source_sha256={log_sha}",
+                    f"model_sha256={model_sha}",
+                    f"import_report_sha256={import_sha}",
+                )
+            ),
+            "evidence_sha": evidence.get("source_sha256") != log_sha,
+            "derived_fields": any(
+                key in evidence for key in ("label", "attack_cat", "AI_verdict", "AI_attack_probability")
+            ),
+            "audit_count": len(events) != 1,
+            "audit_event": not events or not isinstance(events[0], dict)
+                or events[0].get("new_state") != "New"
+                or events[0].get("case_id") != case.get("case_id"),
+        }
+        raise ValueError(
+            "Synthetic SOC case must remain unclassified and auditable; invalid fields: "
+            + ",".join(name for name, bad in failed.items() if bad)
+        )
 
 
 def _command(argv: list[str], *, should_succeed: bool) -> None:
