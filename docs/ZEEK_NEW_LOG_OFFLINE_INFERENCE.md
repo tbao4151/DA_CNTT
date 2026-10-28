@@ -62,3 +62,51 @@ CI tests use synthetic Zeek fixtures only. Windows laptop execution and
 physical Host-only isolation have not been verified by CI. If output writing
 is interrupted, inspect the partial file privately; a rerun must use a new
 output filename rather than overwrite evidence.
+
+
+## Optional pinned PCAP provenance gate (29/10/2026)
+
+When a new `conn.log` was generated with `scripts/import_offline_pcap.py`,
+the scorer can **first** verify the original classic PCAP, Zeek output and
+import report against a separately recorded report SHA-256. This is an
+opt-in extension of the existing offline CLI; all three new options must
+be present together, otherwise scoring refuses to run. It does not run
+Zeek, create network traffic or modify existing reports.
+
+After independently recording the SHA-256 of
+`offline_import_report.json`, add the following arguments to the existing
+`score_zeek_new_log.py` command (retain all the required model, log, CIDR
+and output arguments above):
+
+```powershell
+  --offline-import-report "C:/DA005-private/capture-001/zeek-run-001/offline_import_report.json" `
+  --expected-offline-import-report-sha256 "<64 lowercase hex digits from independent notebook>" `
+  --offline-import-pcap "C:/DA005-private/capture-001/input.pcap"
+```
+
+The `--log` must point to the original `conn.log` in the same directory
+as that import report. The `--cidr` declaration must be identical to the
+scope used at import; the scorer checks that its independently pinned log
+SHA-256 matches the verified import's Zeek digest. Invalid pins, changed
+PCAP/log, missing flags, out-of-scope endpoints or mismatched source bytes
+block prediction output. Keep all input files and the resulting prediction
+JSON outside the public repository. The existing CLI without these optional
+flags remains compatible for new Zeek logs not produced by the PCAP importer.
+
+The prediction JSON schema is **unchanged** so that existing review/triage
+tools remain compatible. The PCAP report and independently pinned digest
+must be retained separately; the prediction's `source_sha256` links it
+to the verified `conn.log`. This is a byte-integrity and scope check,
+not proof of PCAP origin, authorized isolation, trusted Zeek execution,
+independent attack labels, exclusion from the reserved TEST partition or
+real attack detection. No SOC case or operational alert is created.
+
+Synthetic integration regression (the PCAP import fixture mocks Zeek):
+
+```powershell
+py -3.12 -m pytest -q tests/test_offline_pcap_scoring_gate.py
+```
+
+A student must still execute **real** `zeek -r` on an authorized PCAP
+inside a Linux VM, inspect Host-only adapters/routes and retain a signed-off
+scenario notebook before interpreting any result as lab evidence.

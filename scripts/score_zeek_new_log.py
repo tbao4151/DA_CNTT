@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
 from blue_team_ai.new_log_inference import score_new_zeek_log
 from blue_team_ai.trusted_model import load_pinned_zeek_research_model
 from blue_team_ai.zeek import MAX_LOG_BYTES
@@ -51,6 +52,12 @@ def main(argv: list[str] | None = None) -> int:
                         help="Capture digest independently recorded before this run")
     parser.add_argument("--cidr", action="append", required=True,
                         help="Actual owned RFC1918 Host-only CIDR (repeat up to four)")
+    parser.add_argument("--offline-import-report", type=Path,
+                        help="Optional pinned PCAP -> Zeek import report")
+    parser.add_argument("--expected-offline-import-report-sha256",
+                        help="Independent SHA-256 of the original import report")
+    parser.add_argument("--offline-import-pcap", type=Path,
+                        help="Original private classic PCAP for provenance verification")
     parser.add_argument("--output", required=True, type=Path,
                         help="NEW private prediction JSON alongside the capture")
     args = parser.parse_args(argv)
@@ -67,6 +74,23 @@ def main(argv: list[str] | None = None) -> int:
             or output.exists() or output.is_symlink()
         ):
             raise ValueError("Output must be a new private JSON alongside the capture")
+        import_options = (
+            args.offline_import_report,
+            args.expected_offline_import_report_sha256,
+            args.offline_import_pcap,
+        )
+        if any(option is not None for option in import_options):
+            if not all(option is not None for option in import_options):
+                raise ValueError("All offline PCAP provenance options must be supplied")
+            verified_import = verify_offline_pcap_import(
+                args.offline_import_report,
+                expected_report_sha256=args.expected_offline_import_report_sha256,
+                pcap_path=args.offline_import_pcap,
+                log_path=log_path,
+                lab_cidrs=args.cidr,
+            )
+            if verified_import["zeek_conn_sha256"] != args.expected_log_sha256:
+                raise ValueError("Pinned log does not match the verified PCAP import")
         model = load_pinned_zeek_research_model(
             model_path, expected_sha256=args.expected_model_sha256,
         )

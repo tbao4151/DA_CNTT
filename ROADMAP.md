@@ -438,3 +438,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #133](https://github.com/tbao4151/DA_CNTT/pull/133) merged after final-head [CI #40734466006](https://github.com/tbao4151/DA_CNTT/actions/runs/40734466006) and [CI #40734456078](https://github.com/tbao4151/DA_CNTT/actions/runs/40734456078) succeeded (716 passed, 2 skipped, 2 warnings). This supersedes the pending CI checkbox above; no live capture or real Zeek execution is claimed.
 - [ ] Student uses an authorized classic PCAP, runs actual Zeek `-r` inside Linux VMware Host-only, separately pins `offline_import_report.json`, verifies all original files and scope, and archives Zeek version, routes, adapter screenshots and scenario notes outside Git.
 - [ ] Build evidence-backed host/session-disjoint Zeek evaluation and measure actual detection latency. No operational alert or Red Team active traffic until independent lab evidence is available. Preserve UNSW-NB15 official benchmark.
+
+
+## Cyber Lab — optional PCAP evidence gate before research inference (29/10/2026)
+
+- [ ] Verify final-head CI and merge the opt-in all-or-none pinned PCAP provenance gate in `scripts/score_zeek_new_log.py`; see PROGRESS for current feature status. The unchanged prediction report remains **research candidates only**, not operational alerts.
+- [ ] Student runs actual Zeek `-r` on a genuinely authorized Host-only PCAP in Linux VMware, separately records the import report/model/log hashes, then exercises the optional gate and scoring CLI on Windows Python 3.12.9 or Linux. Preserve original PCAP, Zeek output, VMware adapter/routes, Zeek version, operator authorization and scenario notebook outside Git.
+- [ ] Independently verify source/session/host-disjoint partitions and attack labels, then measure held-out Zeek Precision/Recall/FPR and event-to-alert latency; only after that consider analyst-approved SOC integration. Never infer physical isolation, capture authenticity or attack detection from checksum/CIDR verification. Keep active Red Team traffic disabled and official UNSW-NB15 benchmark unchanged.
