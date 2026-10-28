@@ -192,3 +192,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] Verified and merged the fail-closed held-out source-set/flow-count check in PR #81; final PR and post-merge main CI passed (428 passed, 2 skipped, 2 warnings). Original source SHA-256 and UID coverage remain checked; this is internal consistency only, not genuine lab detection. See `PROGRESS.md`.
 - [ ] Student runs an authorized VMware Host-only experiment with preserved original logs, independently documented labels, isolation screenshots and preregistered splits; verify the trace review on Windows without tuning on test.
 - [ ] Build trusted Zeek model persistence and new-log inference only after authentic lab evaluation; internal JSON consistency does not establish model provenance or real-world detection.
+
+
+## Cyber Lab — non-executable private Zeek model artifact (28/10/2026)
+
+- [ ] Feature PR under verification: share TRAIN-only Zeek Logistic Regression pipeline and export a private, versioned JSON-only research artifact with validation-locked threshold, fitted numeric/categorical parameters, explicit CIDR gate and SHA-256 output. Synthetic equivalence tests must pass before marking complete; see `docs/ZEEK_PRIVATE_MODEL_EXPORT.md`.
+- [ ] Student Windows/VMware Host-only acceptance: collect authorized raw logs, independently document labels and isolation, run export outside Git, preserve artifact SHA-256 and private evidence. GitHub synthetic CI is not proof of genuine attack detection.
+- [ ] Later add independently pinned SHA-256 loader and bounded inference on **new** Zeek logs, then SOC alert controls and latency measurement. Do not treat held-out TEST predictions or this research artifact as a trusted operational detector.

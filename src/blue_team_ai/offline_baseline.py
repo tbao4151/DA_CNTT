@@ -118,6 +118,24 @@ def _scores(labels: list[int], probabilities: np.ndarray, threshold: float) -> d
     }
 
 
+def make_zeek_research_pipeline() -> Pipeline:
+    """One shared train-only pipeline for evaluation and private JSON export."""
+    preprocessing = ColumnTransformer(
+        transformers=[
+            ("categorical", OneHotEncoder(handle_unknown="ignore", max_categories=32), list(CATEGORICAL)),
+            ("numeric", Pipeline([
+                ("imputer", SimpleImputer(strategy="median")),
+                ("scale", StandardScaler()),
+            ]), list(NUMERIC)),
+        ],
+        sparse_threshold=1.0,
+    )
+    return Pipeline([
+        ("preprocessing", preprocessing),
+        ("classifier", LogisticRegression(class_weight="balanced", max_iter=2000, random_state=42)),
+    ])
+
+
 def evaluate_offline_zeek_baseline(
     dataset: LabeledLabDataset, *, include_private_test_trace: bool = False,
 ) -> dict[str, object]:
@@ -132,20 +150,7 @@ def evaluate_offline_zeek_baseline(
     train = _frame(dataset.features["train"])
     # The imputer's medians, scaler statistics and category vocabulary are fitted
     # only on TRAIN; unknown validation/test categories are safely ignored.
-    preprocessing = ColumnTransformer(
-        transformers=[
-            ("categorical", OneHotEncoder(handle_unknown="ignore", max_categories=32), list(CATEGORICAL)),
-            ("numeric", Pipeline([
-                ("imputer", SimpleImputer(strategy="median")),
-                ("scale", StandardScaler()),
-            ]), list(NUMERIC)),
-        ],
-        sparse_threshold=1.0,
-    )
-    model = Pipeline([
-        ("preprocessing", preprocessing),
-        ("classifier", LogisticRegression(class_weight="balanced", max_iter=2000, random_state=42)),
-    ])
+    model = make_zeek_research_pipeline()
     model.fit(train, dataset.labels["train"])
     classes = list(model.named_steps["classifier"].classes_)
     if classes != [0, 1]:

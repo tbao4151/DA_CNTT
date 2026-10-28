@@ -182,3 +182,21 @@ See `docs/ZEEK_OFFLINE_EXPERIMENT.md` for protocol and privacy limits.
 ## Cyber Lab: đối chiếu dự đoán AI nghiên cứu ngoại tuyến (PR #75)
 
 Trang **Cyber Lab · Blue Team** có thể nạp thêm JSON private từ `scripts/evaluate_zeek_lab.py --trace-output` cùng một tệp `conn.log` gốc của tập held-out test. Giao diện kiểm tra SHA-256, UID, ngưỡng và tính nhất quán của trace rồi hiển thị tối đa 500 ứng viên Attack **chỉ đọc**; không hiển thị nhãn gán, không tự tạo case/alert, không tải model hoặc kết nối mạng. Đây là kết quả nghiên cứu ngoại tuyến do người vận hành cung cấp, **không xác thực nguồn gốc mô hình hoặc nhãn thực**, và không phải phát hiện trực tiếp. Xem `docs/ZEEK_OFFLINE_EXPERIMENT.md` để thực hiện trên Windows và giữ dữ liệu riêng tư ngoài GitHub.
+
+
+## Cyber Lab — private research model export (offline only)
+
+After collecting **authorized** VMware Host-only Zeek captures, documenting
+independent labels and pre-registering host-disjoint splits, a separate CLI
+can export a **data-only JSON** Zeek Logistic Regression research model:
+
+```powershell
+py -3.12 scripts/export_zeek_model.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --cidr "192.168.56.0/24" --output "C:/DA005-private/zeek-experiment/zeek-research-model.json"
+```
+
+Use the **actual verified** Host-only CIDR, not the example. TRAIN fits the
+model, VALIDATION selects the threshold, and TEST is **not scored** during
+export. No pickle, model file loader, new-log inference CLI, automatic SOC
+alert, network traffic or genuine detection claim is included. Record the
+printed artifact SHA-256 separately; a hash does not authenticate its author
+or independently verify labels. See [private Zeek model export](docs/ZEEK_PRIVATE_MODEL_EXPORT.md).
