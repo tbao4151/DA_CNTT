@@ -397,3 +397,52 @@ time is not automatically rejected. It cannot authenticate host/session
 provenance, ground-truth annotations, physical VMware isolation or the
 completeness of the declared capture history. Keep independently pinned
 original captures and labels, and never tune using held-out TEST results.
+
+
+## Optional strict annotation byte pinning before preflight and fitting (28/10/2026)
+
+The legacy manifest v1 checks each `conn.log` against its `source_sha256`
+and checks that each annotation declares the same source hash. This does **not**
+detect a subsequently edited `labels_by_uid` map when its source hash stays
+unchanged. For an independently frozen experiment, add `labels_sha256`
+(lowercase, 64 hex characters) to **each** capture object. Its value is the
+SHA-256 of the **complete raw labels.json bytes**, not of `conn.log`, a
+canonicalized JSON object, or the source hash stored inside labels.json.
+
+On Windows, calculate each digest before running the experiment:
+
+~~~powershell
+(Get-FileHash -Algorithm SHA256 "C:/DA005-private/zeek-experiment/train/labels.json").Hash.ToLowerInvariant()
+~~~
+
+Repeat for validation and test; record these digests in a separate private
+research notebook before any model evaluation. Then add each digest to its
+corresponding manifest entry, for example:
+
+~~~json
+"labels_sha256": "<independently recorded lowercase SHA-256 of labels.json>"
+~~~
+
+Run the same opt-in gate for both the read-only preflight and the final
+offline experiment:
+
+~~~powershell
+py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --require-label-sha256 --preflight
+py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --require-label-sha256 --output "C:/DA005-private/zeek-experiment/pinned-report.json"
+~~~
+
+With `--require-label-sha256`, **every** capture must have a valid
+`labels_sha256` and every annotation must match its exact bytes before
+fitting, scoring or writing a report. A supplied pin is always checked, even
+without the flag; the flag prevents a partially pinned manifest from being
+accepted. Existing v1 manifests and CLI commands remain compatible without
+the flag. Aggregate reports expose `all_annotation_sha256_pins_required`
+and `annotation_chain_verified=false`; preflight also retains
+`label_truth_verified=false`. The pin flag is an integrity control only.
+An operator can alter labels and re-pin the digest; it **does not** prove
+blind reviewer independence, adjudication-chain consistency, authentic
+attack ground truth, Host-only isolation, or freedom from test leakage.
+For independently adjudicated labels, run
+`scripts/verify_zeek_final_labels.py` with five independently recorded
+hashes before constructing the frozen experiment manifest. Never commit
+private annotations, hashes linked to sensitive captures, or reports.
