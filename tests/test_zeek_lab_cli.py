@@ -307,3 +307,39 @@ def test_private_trace_mode_is_mutually_exclusive_with_aggregate_and_preflight(t
         ], capture_output=True, text=True, check=False)
         assert proc.returncode != 0
         assert not output.exists()
+
+
+def test_preflight_and_fit_refuse_reencoded_cross_split_flow_reuse(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    train = (manifest.parent / "host-0.log").read_bytes()
+    test_entry = spec["captures"][2]
+    test_path = manifest.parent / test_entry["log_path"]
+    test_raw = train.replace(
+        b"#fields\t", b"# alternate Zeek header\n#fields\t", 1
+    )
+    test_path.write_bytes(test_raw)
+    test_entry["source_sha256"] = hashlib.sha256(test_raw).hexdigest()
+    annotation_path = manifest.parent / test_entry["labels_path"]
+    annotation_path.write_text(json.dumps({
+        "source_sha256": test_entry["source_sha256"],
+        "labels_by_uid": {"N0": 0, "A0": 1},
+    }), encoding="utf-8")
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    base = [
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest),
+    ]
+    preflight = subprocess.run(
+        base + ["--preflight"], capture_output=True, text=True, check=False
+    )
+    assert preflight.returncode == 1
+    assert not preflight.stdout
+    output = manifest.parent / "must-not-create.json"
+    evaluated = subprocess.run(
+        base + ["--output", str(output)], capture_output=True, text=True, check=False
+    )
+    assert evaluated.returncode == 1
+    assert not output.exists()
+    assert "192.168.56" not in evaluated.stderr
+    assert str(manifest) not in evaluated.stderr

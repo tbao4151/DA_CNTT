@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION, extract_zeek_feature_rows
 from .zeek import parse_zeek_conn_log
+from .flow_identity import flow_identity
 
 SPLITS = ("train", "validation", "test")
 LABEL_METHODS = frozenset({"controlled_scenario_record", "manual_analyst_review"})
@@ -63,6 +64,7 @@ def build_labeled_lab_dataset(captures: Sequence[Mapping[str, object]]) -> Label
     provenance: dict[str, list[dict[str, str]]] = {split: [] for split in SPLITS}
     seen_sessions: set[str] = set()
     seen_digests: set[str] = set()
+    seen_flow_identities: set[tuple[object, ...]] = set()
     host_splits: dict[str, str] = {}
     total_flows = 0
 
@@ -92,6 +94,14 @@ def build_labeled_lab_dataset(captures: Sequence[Mapping[str, object]]) -> Label
         uids = [event["uid"] for event in events]
         if len(uids) != len(set(uids)):
             raise ValueError("Duplicate Zeek UID within capture")
+        # A differently encoded capture can have a new SHA-256 while reusing
+        # the same normalized UID/time/five-tuple. Reject it before training.
+        # This is a narrow overlap screen, not proof of independent sessions.
+        identities = [flow_identity(event) for event in events]
+        if len(set(identities)) != len(identities) or any(
+            identity in seen_flow_identities for identity in identities
+        ):
+            raise ValueError("Normalized Zeek flow identity reused across captures")
         supplied = capture["labels_by_uid"]
         if (
             not isinstance(supplied, Mapping)
@@ -115,6 +125,7 @@ def build_labeled_lab_dataset(captures: Sequence[Mapping[str, object]]) -> Label
         } for uid in uids)
         seen_sessions.add(session)
         seen_digests.add(digest)
+        seen_flow_identities.update(identities)
         host_splits[host] = split
 
     for split in SPLITS:

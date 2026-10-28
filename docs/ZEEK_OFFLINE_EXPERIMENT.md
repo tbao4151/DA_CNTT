@@ -378,3 +378,22 @@ source collection context and physical Host-only isolation are not
 cryptographically authenticated. The reviewer still checks original bytes and
 UIDs for only the supplied log, not other test captures. Do not infer real
 attack detection or operational alerts from this check.
+
+
+## Cross-capture normalized flow overlap guard (28/10/2026)
+
+The offline experiment's dataset builder now rejects reuse of the exact
+normalized Zeek identity `(uid, event_time_utc, src_ip, src_port, dst_ip,
+dst_port, proto)` **between any two declared captures**, even when their
+raw log bytes have different SHA-256 values (for example, due to an extra
+header comment). The same identity contract is shared with the existing
+NEW-log TRAIN/VALIDATION/TEST partition-exclusion screen. The check happens
+before model fitting and applies to preflight, evaluation, and private model
+export. Failed validation must not create an experiment report.
+
+This is a conservative exact-identity screen only. Rewritten UIDs, times or
+endpoints can evade it, and a legitimate repeated UID at a different event
+time is not automatically rejected. It cannot authenticate host/session
+provenance, ground-truth annotations, physical VMware isolation or the
+completeness of the declared capture history. Keep independently pinned
+original captures and labels, and never tune using held-out TEST results.

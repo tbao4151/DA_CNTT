@@ -342,3 +342,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #117](https://github.com/tbao4151/DA_CNTT/pull/117) merged after final-head [CI #40689613894](https://github.com/tbao4151/DA_CNTT/actions/runs/40689613894) and post-merge main [CI #40689948085](https://github.com/tbao4151/DA_CNTT/actions/runs/40689948085) passed (620 passed, 2 skipped, 2 existing warnings). The offline verifier re-reads all five private originals and recomputes declared Zeek scope; synthetic regression is not student Windows acceptance.
 - [ ] Student runs the verifier on an authorized Host-only Zeek capture, with an independently recorded inventory SHA-256 and original evidence; inspect all VMware guest adapters/routes and approval manually. Do not publish private logs, screenshots or notebook entries.
 - [ ] Collect independently labeled, host/session-disjoint real captures and evaluate model generalization and event-to-alert latency before claiming attack detection. No automatic alerts or active Red Team traffic.
+
+
+## Cyber Lab — conservative cross-capture flow identity exclusion (28/10/2026)
+
+- [ ] Verify feature PR CI and merge the shared normalized Zeek UID/time/five-tuple overlap screen used by the offline labeled dataset builder and NEW-log partition guard. Synthetic tests only; check PR/CI in PROGRESS.
+- [ ] Student records independently pinned original Host-only captures, separate annotations, sessions and hosts, then runs `evaluate_zeek_lab.py --preflight` on Windows 3.12.9 before any fit. A passing exact-identity screen does not prove semantic non-reuse, authorization, label truth or physical isolation.
+- [ ] Evaluate on genuinely independent, host/session-disjoint captures and report FPR, recall and event-to-alert latency only with independently documented experimental evidence. Red Team active traffic remains disabled.
