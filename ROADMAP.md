@@ -602,3 +602,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature PR-head Python 3.12.9 quality gates and merge only when green and conflict-free. New read-only quality CLI must reject altered SHA-256, malformed/out-of-scope logs and duplicate UIDs, while preserving private identifiers and original data.
 - [ ] Student runs `scripts/inspect_zeek_telemetry_quality.py` against genuine authorized Zeek `conn.log` in a private Windows folder and archives original PCAP/log, separately recorded hashes, Zeek version, Host-only adapter/routes evidence and quality JSON. Synthetic CI tests are not student lab evidence.
 - [ ] Independently annotate multiple host/session-disjoint captures and evaluate held-out Zeek-specific Precision/Recall/FPR and event-to-SOC latency; do not infer attack labels or physical isolation from aggregate quality checks. Keep UNSW-NB15 official benchmark and Red Team network-disabled.
+
+
+## Cyber Lab — private Zeek telemetry quality CLI verified (29/10/2026)
+
+- [x] [PR #157](https://github.com/tbao4151/DA_CNTT/pull/157) merged after final-head [CI #40785698571](https://github.com/tbao4151/DA_CNTT/actions/runs/40785698571) and post-merge [main CI #40786278275](https://github.com/tbao4151/DA_CNTT/actions/runs/40786278275) passed (**782 passed, 2 skipped, 2 warnings**). Earlier pending CI/merge checklist is superseded; regression fixtures are synthetic only.
+- [ ] Student runs real authorized Zeek `conn.log` through the private quality CLI on Windows Python 3.12.9, retaining original PCAP/log, separate hashes, Zeek version, VMware Host-only adapter/routes and authorization evidence outside Git.
+- [ ] Independently label multiple host/session-disjoint genuine captures, evaluate Precision/Recall/FPR and event-to-SOC latency with measured boundaries. Aggregate data-quality checks cannot prove capture authenticity, ground truth or attack detection; Red Team network execution stays disabled.
