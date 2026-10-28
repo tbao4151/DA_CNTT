@@ -303,3 +303,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Python 3.12.9 CI and merge the bounded private SQLite read-only Zeek Unclassified case/evidence/audit viewer. Synthetic-only regression and local Python 3.13.5 helper tests are not student Windows acceptance. PR and CI state recorded in PROGRESS.
 - [ ] Student tests a genuine authorized Host-only Zeek case on Windows 3.12.9, checks original UID/SHA-256, audit events, JSON export and missing-DB refusal, storing screenshots and source evidence privately. Do not claim operational detection from an editable SOC case.
 - [ ] Evaluate independently labeled host/session-disjoint captures and genuine event-to-alert latency before operational AI alerting; leave Dataset Mode benchmark and Red Team active traffic unchanged.
+
+
+## Cyber Lab — read-only SOC case browser merged (28/10/2026)
+
+- [x] [PR #111](https://github.com/tbao4151/DA_CNTT/pull/111) merged after final-head [CI #40677916507](https://github.com/tbao4151/DA_CNTT/actions/runs/40677916507) passed (579 passed, 2 skipped, 2 existing warnings). Private bounded SQLite Zeek Unclassified case list/evidence/audit viewer and JSON snapshot download are implemented; post-merge main CI is tracked separately in PROGRESS.
+- [ ] Student runs Windows 3.12.9 acceptance with authorized Host-only Zeek capture and private SOC DB: verify original UID/source digest, history, JSON export, missing-file refusal and no DB mutation. Retain private screenshots, captures and independent hashes.
+- [ ] Independently label host/session-disjoint captures and measure genuine event-to-alert latency before claiming operational attack detection. Keep official UNSW Dataset Mode and Red Team traffic unchanged.
