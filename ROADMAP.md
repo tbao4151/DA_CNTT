@@ -363,3 +363,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #121](https://github.com/tbao4151/DA_CNTT/pull/121) merged after final-head [CI #40698075993](https://github.com/tbao4151/DA_CNTT/actions/runs/40698075993) and post-merge main [CI #40698595946](https://github.com/tbao4151/DA_CNTT/actions/runs/40698595946) succeeded. The earlier pending checkbox above reflects feature authoring and is superseded by this verified record. No operational alert, model or consensus label is produced.
 - [ ] Student completes blind independent annotations of a genuine authorized Host-only capture, independently pins original log and both annotation hashes, runs the private agreement CLI on Windows Python 3.12.9 and records adjudication evidence. Software cannot prove annotator independence, attack ground truth or isolation.
 - [ ] Run preregistered host/session-disjoint evaluation and measure actual event-to-alert latency after independent lab evidence; do not tune the reserved test set. Keep Dataset Mode baseline and active Red Team unchanged.
+
+
+## Cyber Lab — private disagreement adjudication worksheet (28/10/2026)
+
+- [ ] Verify final-head CI and merge the optional offline UID-level disagreement worksheet. The existing aggregate two-reviewer agreement report remains UID-free. This new opt-in private file contains only disagreements with null adjudication/evidence fields; it does not infer consensus, prove ground truth or modify reviewer annotations. Track verified PR/CI in PROGRESS.
+- [ ] Student independently labels a genuine authorized Host-only Zeek capture twice, pins original and reviewer hashes, runs the aggregate check and private worksheet on Windows Python 3.12.9, and documents independent scenario evidence for every disagreement. Keep UIDs, labels and evidence outside Git.
+- [ ] Create a separately versioned complete annotation-v1 after manual adjudication; pre-register host/session-disjoint splits, keep TEST untouched and measure model generalization and event-to-alert latency only on genuine verified lab evidence. Do not enable active Red Team or alter official UNSW-NB15 benchmark.
