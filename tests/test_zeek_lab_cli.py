@@ -145,3 +145,79 @@ def test_report_output_outside_private_manifest_folder_is_refused(tmp_path):
     ], capture_output=True, text=True, check=False)
     assert proc.returncode == 1
     assert not output.exists()
+
+
+def test_declared_cidr_gate_applies_to_all_captures_and_hides_private_endpoints(tmp_path):
+    """A passing screen means only declared address membership, not isolation."""
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    result = inspect_offline_experiment(manifest, lab_cidrs=["192.168.56.0/24"])
+    assert result["declared_scope_screened"] is True
+    assert result["all_endpoints_within_declared_scope"] is True
+    assert result["host_only_isolation_verified"] is False
+    assert result["label_truth_verified"] is False
+    assert result["model_fitted"] is False
+    assert "192.168.56." not in json.dumps(result)
+    assert "private-operator-note" not in json.dumps(result)
+    # Backwards-compatible: no opt-in means no scope claim.
+    without = inspect_offline_experiment(manifest)
+    assert without["declared_scope_screened"] is False
+    assert without["all_endpoints_within_declared_scope"] is None
+
+
+def test_scope_gate_refuses_out_of_scope_capture_even_with_valid_hash_and_labels(tmp_path):
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    entry = spec["captures"][-1]
+    log = manifest.parent / entry["log_path"]
+    raw = log.read_bytes().replace(b"192.168.56.20", b"8.8.8.8")
+    log.write_bytes(raw)
+    digest = hashlib.sha256(raw).hexdigest()
+    entry["source_sha256"] = digest
+    labels = manifest.parent / entry["labels_path"]
+    annotation = json.loads(labels.read_text(encoding="utf-8"))
+    annotation["source_sha256"] = digest
+    labels.write_text(json.dumps(annotation), encoding="utf-8")
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    # A fully consistent manifest is NOT sufficient to pass a declared scope.
+    assert inspect_offline_experiment(manifest)["structural_validation_passed"] is True
+    with pytest.raises(ValueError, match="outside the declared lab scope"):
+        inspect_offline_experiment(manifest, lab_cidrs=["192.168.56.0/24"])
+    output = manifest.parent / "blocked-report.json"
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--output", str(output),
+        "--cidr", "192.168.56.0/24",
+    ], capture_output=True, text=True, check=False)
+    assert proc.returncode == 1
+    assert not output.exists()
+    assert "8.8.8.8" not in proc.stderr
+    assert str(manifest) not in proc.stderr
+
+
+@pytest.mark.parametrize("cidr", ["10.0.0.0/8", "0.0.0.0/0", "192.168.56.1/24", "8.8.8.0/24"])
+def test_scope_gate_rejects_invalid_or_overbroad_cidr(tmp_path, cidr):
+    manifest = _lab_files(tmp_path / "private")
+    with pytest.raises(ValueError):
+        load_experiment_manifest(manifest, lab_cidrs=[cidr])
+
+
+def test_scoped_cli_preflight_and_research_report_remain_offline(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    base = [
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--cidr", "192.168.56.0/24",
+    ]
+    preflight = subprocess.run(base + ["--preflight"], capture_output=True, text=True, check=False)
+    assert preflight.returncode == 0, preflight.stderr
+    assert json.loads(preflight.stdout)["declared_scope_screened"] is True
+    output = manifest.parent / "scoped-research.json"
+    experiment = subprocess.run(base + ["--output", str(output)], capture_output=True, text=True, check=False)
+    assert experiment.returncode == 0, experiment.stderr
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["declared_scope_screened"] is True
+    assert report["all_endpoints_within_declared_scope"] is True
+    assert report["automated_alerts"] is False
+    assert report["live_capture"] is False
+    assert "192.168.56." not in json.dumps(report)
