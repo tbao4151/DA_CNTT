@@ -95,3 +95,37 @@ recorded reference, not model authorship or accuracy. CIDR checks cannot prove
 physical Host-only isolation. No genuine independently labeled VMware
 evaluation, detection latency, FPR/Recall, or operational AI alert is claimed.
 Do not upload private log/model/report/database to GitHub or tune on TEST.
+
+## Optional pinned TRAIN/VALIDATION/TEST partition gate
+
+For a stronger **software-enforced exact-byte non-reuse check**, append the
+following pair to **both** the listing and manual case commands above:
+
+```powershell
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" `
+  --expected-manifest-sha256 "<INDEPENDENTLY_RECORDED_MANIFEST_SHA256>"
+```
+
+The manifest must be the **unchanged original**, kept with every original
+TRAIN, VALIDATION and TEST capture and annotation referenced by relative path.
+The CLI checks its independently pinned SHA-256, loads and validates all
+source bytes/UID labels, checks the declared CIDR on each capture, verifies
+host-disjoint partitions and model-manifest TRAIN/VALIDATION linkage, then
+refuses the new capture if its bytes equal any declared split (including TEST).
+The same check is repeated **inside the manual case write path**. Either
+missing flag, invalid input or mismatch fails closed before any SQLite write.
+The legacy commands without this optional pair remain compatible and explicitly
+report that declared TEST exclusion is **not** software-checked. An existing
+idempotent case may be reused without rewriting its original audit note.
+
+This is not proof of preregistration, true independent labels, flow-level
+non-reuse after re-encoding, physical isolation, or detection accuracy. Keep
+the explicit `--confirm-new-capture` attestation even with a passing gate;
+its historical/semantic meaning is not established by a digest comparison.
+No raw model, log, labels, manifest or SQLite files should be committed.
+
+Synthetic regressions (not student Windows acceptance):
+
+```powershell
+py -3.12 -m pytest -q tests/test_zeek_new_log_partition_triage.py
+```

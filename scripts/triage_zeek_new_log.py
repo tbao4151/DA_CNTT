@@ -7,6 +7,7 @@ Neither mode emits operational alerts, generates traffic, or verifies attacks.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import stat
@@ -20,6 +21,9 @@ from blue_team_ai.new_log_review import (
     MAX_NEW_LOG_REPORT_BYTES, review_pinned_new_log_report,
 )
 from blue_team_ai.new_log_triage import create_new_log_candidate_case
+from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
+from blue_team_ai.partition_guard import verify_declared_partition_exclusion
+from evaluate_zeek_lab import MAX_MANIFEST_BYTES, load_experiment_manifest
 from blue_team_ai.trusted_model import load_pinned_zeek_research_model
 from blue_team_ai.zeek import MAX_LOG_BYTES
 
@@ -62,6 +66,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--log", type=Path, required=True)
     parser.add_argument("--expected-log-sha256", required=True)
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--manifest", type=Path,
+                        help="Optional private preregistered TRAIN/VALIDATION/TEST manifest")
+    parser.add_argument("--expected-manifest-sha256",
+                        help="Independent SHA-256 pin required when --manifest is supplied")
     parser.add_argument("--cidr", action="append", required=True)
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument("--list-candidates", action="store_true")
@@ -77,7 +85,14 @@ def main(argv: list[str] | None = None) -> int:
         log_path = _private_file(args.log)
         report_path = _private_file(args.report)
         inputs = {model_path, log_path, report_path}
-        if len(inputs) != 3 or report_path.parent != log_path.parent or report_path.suffix.lower() != ".json":
+        if (args.manifest is None) != (args.expected_manifest_sha256 is None):
+            raise ValueError("Manifest and independent digest must be provided together")
+        manifest_path = _private_file(args.manifest) if args.manifest is not None else None
+        if manifest_path is not None:
+            if manifest_path in inputs:
+                raise ValueError("Manifest must be distinct from model/log/report")
+            inputs.add(manifest_path)
+        if len(inputs) != (4 if manifest_path is not None else 3) or report_path.parent != log_path.parent or report_path.suffix.lower() != ".json":
             raise ValueError("Model, log and report must be separate; report alongside log")
         if args.list_candidates:
             if args.db is not None or any((
@@ -94,6 +109,26 @@ def main(argv: list[str] | None = None) -> int:
         )
         source_data = _read_bounded(log_path, MAX_LOG_BYTES)
         report_data = _read_bounded(report_path, MAX_NEW_LOG_REPORT_BYTES)
+        declared_dataset = None
+        if manifest_path is not None:
+            manifest_bytes = _read_bounded(manifest_path, MAX_MANIFEST_BYTES)
+            expected_manifest_sha = args.expected_manifest_sha256
+            if (
+                len(expected_manifest_sha) != 64
+                or any(ch not in "0123456789abcdef" for ch in expected_manifest_sha)
+                or hashlib.sha256(manifest_bytes).hexdigest() != expected_manifest_sha
+            ):
+                raise ValueError("Independently pinned manifest SHA-256 mismatch")
+            captures, manifest_sha = load_experiment_manifest(
+                manifest_path, lab_cidrs=args.cidr,
+            )
+            if manifest_sha != expected_manifest_sha:
+                raise ValueError("Manifest changed during validation")
+            declared_dataset = build_labeled_lab_dataset(captures)
+            verify_declared_partition_exclusion(
+                model, declared_dataset, manifest_sha256=manifest_sha,
+                new_capture_sha256=args.expected_log_sha256,
+            )
         review = review_pinned_new_log_report(
             source_data, model, report_data,
             expected_log_sha256=args.expected_log_sha256,
@@ -107,6 +142,11 @@ def main(argv: list[str] | None = None) -> int:
                 if row["research_candidate"] is True:
                     print(f"record_index={index} probability={row['attack_probability']:.8f}")
             print("research_candidate_count_total=" + str(review["research_candidate_count"]))
+            if declared_dataset is not None:
+                print("Pinned declared-partition exact-byte non-reuse checked; "
+                      "historical/semantic independence NOT verified.")
+            else:
+                print("Declared TEST exclusion NOT checked; operator attestation only.")
             print("No SOC write, operational alert, or real detection verified.")
             return 0
 
@@ -120,6 +160,8 @@ def main(argv: list[str] | None = None) -> int:
             analyst_confirmed=args.confirm_reviewed,
             operator_confirmed_authorized=args.confirm_authorized,
             operator_confirmed_new_capture=args.confirm_new_capture,
+            declared_dataset=declared_dataset,
+            declared_manifest_sha256=args.expected_manifest_sha256,
         )
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError, RecursionError):
         # Never print private IPs, UIDs, paths, model contents or raw evidence.

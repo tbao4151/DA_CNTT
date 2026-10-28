@@ -10,7 +10,9 @@ import hashlib
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+from .labeled_dataset import LabeledLabDataset
 from .new_log_inference import score_new_zeek_log
+from .partition_guard import verify_declared_partition_exclusion
 from .new_log_review import review_pinned_new_log_report
 from .triage import create_offline_review_case
 from .zeek import parse_zeek_conn_log
@@ -30,6 +32,8 @@ def create_new_log_candidate_case(
     analyst_confirmed: bool,
     operator_confirmed_authorized: bool,
     operator_confirmed_new_capture: bool,
+    declared_dataset: LabeledLabDataset | None = None,
+    declared_manifest_sha256: str | None = None,
 ) -> int:
     """Create/reuse one manual Unclassified case for a verified candidate.
 
@@ -45,6 +49,17 @@ def create_new_log_candidate_case(
         raise ValueError("Explicit analyst, authorization and partition confirmations required")
     if type(record_index) is not int or not 0 <= record_index < MAX_VISIBLE_NEW_LOG_FLOWS:
         raise ValueError("Select a valid visible record index (0..499)")
+
+    if (declared_dataset is None) != (declared_manifest_sha256 is None):
+        raise ValueError("Declared dataset and pinned manifest SHA must be supplied together")
+    if declared_dataset is not None:
+        # Verify again inside the write boundary: caller-provided preflight
+        # success cannot be substituted for checked partition evidence.
+        verify_declared_partition_exclusion(
+            model, declared_dataset,
+            manifest_sha256=declared_manifest_sha256,
+            new_capture_sha256=expected_log_sha256,
+        )
 
     review = review_pinned_new_log_report(
         source_data, model, report_data,
@@ -78,8 +93,14 @@ def create_new_log_candidate_case(
         f"zeek_uid={prediction['uid']}; "
         f"research_attack_probability={prediction['attack_probability']:.8f}; "
         f"validation_threshold={recomputed['selected_validation_threshold']:.8f}. "
-        "Authorization and exclusion from TRAIN/VALIDATION/TEST are operator "
-        "attestations only; Host-only isolation and ground truth are unverified."
+        + (
+            "Declared exact-byte TRAIN/VALIDATION/TEST exclusion checked against "
+            f"pinned manifest_sha256={declared_manifest_sha256}; "
+            "historical completeness and semantic flow non-reuse unverified. "
+            if declared_dataset is not None else
+            "TRAIN/VALIDATION/TEST exclusion is an operator attestation only. "
+        )
+        + "Authorization, Host-only isolation and ground truth are unverified."
     )
     # Share the existing research idempotency namespace: one source+UID should
     # never produce two research cases, even across held-out/new-log workflows.
