@@ -98,7 +98,7 @@ def test_reencoded_flow_reuse_across_splits_is_rejected_before_training():
     original = rows[0]
     # Re-encoding changes file SHA-256, not the normalized UID/time/5-tuple.
     rows[2]["log_bytes"] = original["log_bytes"].replace(
-        b"#fields\\t", b"# innocuous header comment\\n#fields\\t", 1
+        b"#fields\t", b"# innocuous header comment\n#fields\t", 1
     )
     rows[2]["labels_by_uid"] = original["labels_by_uid"].copy()
     assert hashlib.sha256(rows[2]["log_bytes"]).hexdigest() != hashlib.sha256(
@@ -112,7 +112,7 @@ def test_reencoded_flow_reuse_within_one_split_is_also_rejected():
     rows = samples()
     duplicate = capture("train", 99)
     duplicate["log_bytes"] = rows[0]["log_bytes"].replace(
-        b"#fields\\t", b"# other comment\\n#fields\\t", 1
+        b"#fields\t", b"# other comment\n#fields\t", 1
     )
     duplicate["labels_by_uid"] = rows[0]["labels_by_uid"].copy()
     rows.append(duplicate)
