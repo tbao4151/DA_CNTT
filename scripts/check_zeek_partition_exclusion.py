@@ -86,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
         result = verify_declared_partition_exclusion(
             model, dataset, manifest_sha256=manifest_sha,
             new_capture_sha256=args.expected_log_sha256,
+            declared_captures=captures, new_source_data=raw,
         )
     except (ValueError, OSError, TypeError, UnicodeError, KeyError, OverflowError):
         print("Private Zeek partition non-reuse check refused; inspect local evidence.",

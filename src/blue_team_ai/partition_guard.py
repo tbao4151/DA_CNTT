@@ -5,9 +5,11 @@ independent lab provenance or actual attack detection.
 """
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+import hashlib
 
-from .labeled_dataset import LabeledLabDataset, SPLITS
+from .labeled_dataset import LabeledLabDataset, MAX_CAPTURES, SPLITS
+from .zeek import parse_zeek_conn_log
 from .model_artifact import validate_zeek_research_artifact
 
 _HEX = frozenset("0123456789abcdef")
@@ -17,9 +19,68 @@ def _digest(value: object) -> bool:
     return isinstance(value, str) and len(value) == 64 and all(c in _HEX for c in value)
 
 
+_FLOW_IDENTITY_FIELDS = (
+    "uid", "event_time_utc", "src_ip", "src_port",
+    "dst_ip", "dst_port", "proto",
+)
+
+
+def _flow_identity(event: Mapping[str, object]) -> tuple[object, ...]:
+    """Conservative exact normalized identity; not a semantic duplicate detector."""
+    return tuple(event[field] for field in _FLOW_IDENTITY_FIELDS)
+
+
+def _check_declared_flow_identity_nonreuse(
+    declared_captures: Sequence[Mapping[str, object]],
+    new_source_data: bytes,
+    *,
+    new_capture_sha256: str,
+    sources: Mapping[str, set[str]],
+) -> None:
+    """Reject reused normalized UID/time/five-tuple despite changed log bytes.
+
+    Check every original capture against the already validated dataset source
+    sets. A changed UID, timestamp, or endpoint can evade this narrow screen.
+    """
+    if (
+        not isinstance(declared_captures, Sequence)
+        or isinstance(declared_captures, (str, bytes, bytearray))
+        or not 3 <= len(declared_captures) <= MAX_CAPTURES
+        or not isinstance(new_source_data, bytes)
+        or hashlib.sha256(new_source_data).hexdigest() != new_capture_sha256
+    ):
+        raise ValueError("Invalid pinned flow identity screening inputs")
+
+    observed: dict[str, set[str]] = {split: set() for split in SPLITS}
+    identities: set[tuple[object, ...]] = set()
+    for capture in declared_captures:
+        if not isinstance(capture, Mapping):
+            raise ValueError("Invalid declared flow identity capture")
+        split = capture.get("split")
+        raw = capture.get("log_bytes")
+        if not isinstance(split, str) or split not in SPLITS or not isinstance(raw, bytes):
+            raise ValueError("Invalid declared flow identity capture")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest not in sources[split] or digest in observed[split]:
+            raise ValueError("Declared flow identity source differs from validated dataset")
+        observed[split].add(digest)
+        for event in parse_zeek_conn_log(raw):
+            identity = _flow_identity(event)
+            if identity in identities:
+                raise ValueError("Flow identity reused across declared captures")
+            identities.add(identity)
+    if observed != sources:
+        raise ValueError("Declared flow identity sources do not cover validated dataset")
+    for event in parse_zeek_conn_log(new_source_data):
+        if _flow_identity(event) in identities:
+            raise ValueError("New capture has a declared flow identity overlap")
+
+
 def verify_declared_partition_exclusion(
     model: Mapping[str, object], dataset: LabeledLabDataset, *,
     manifest_sha256: str, new_capture_sha256: str,
+    declared_captures: Sequence[Mapping[str, object]] | None = None,
+    new_source_data: bytes | None = None,
 ) -> dict[str, object]:
     """Reject exact-byte reuse across declared TRAIN, VALIDATION and TEST.
 
@@ -53,6 +114,13 @@ def verify_declared_partition_exclusion(
         raise ValueError("Model VALIDATION sources differ from pinned experiment")
     if new_capture_sha256 in set.union(*sources.values()):
         raise ValueError("New capture is an exact-byte reuse of an experiment partition")
+    if (declared_captures is None) != (new_source_data is None):
+        raise ValueError("Original captures and new bytes must be provided together")
+    if declared_captures is not None:
+        _check_declared_flow_identity_nonreuse(
+            declared_captures, new_source_data,
+            new_capture_sha256=new_capture_sha256, sources=sources,
+        )
     return {
         "mode": "offline_zeek_declared_partition_nonreuse_check_only",
         "manifest_sha256": manifest_sha256,
@@ -62,6 +130,7 @@ def verify_declared_partition_exclusion(
         "new_capture_not_in_declared_train_validation_test": True,
         "declared_capture_counts": {split: len(sources[split]) for split in SPLITS},
         "independent_partition_history_verified": False,
+        "declared_flow_identity_nonreuse_checked": declared_captures is not None,
         "semantic_flow_nonreuse_verified": False,
         "host_only_isolation_verified": False,
         "label_truth_verified": False,
@@ -69,7 +138,9 @@ def verify_declared_partition_exclusion(
         "operational_attack_detection_verified": False,
         "interpretation": (
             "Exact-byte non-reuse against operator-declared pinned experiment "
-            "sources only. This cannot prove capture history, flow-level "
-            "independence, physical isolation, label truth or detection quality."
+            "sources only. When original bytes are supplied, a conservative "
+            "UID/time/five-tuple overlap screen also runs. This cannot prove "
+            "capture history, semantic flow independence, physical isolation, "
+            "label truth or detection quality."
         ),
     }

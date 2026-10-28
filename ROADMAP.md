@@ -241,3 +241,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #95](https://github.com/tbao4151/DA_CNTT/pull/95) merged after green final-head [CI #40649157211](https://github.com/tbao4151/DA_CNTT/actions/runs/40649157211) and green post-merge main [CI #40649354908](https://github.com/tbao4151/DA_CNTT/actions/runs/40649354908) (514 passed, 2 skipped on PR): optional independently pinned manifest check on NEW-log candidate listing and manual Unclassified case creation; fail closed on declared TEST exact-byte reuse and recheck inside the case-write boundary. Legacy CLI remains compatible and must not claim a TEST exclusion check when the manifest is omitted.
 - [ ] Student Windows/VMware Host-only acceptance: preserve the original preregistered manifest, all original capture/annotation files, independently recorded model/manifest/new-log SHA-256, physical isolation screenshots and scenario evidence; exercise both valid and refusal paths with private data.
 - [ ] Exact-byte partition exclusion cannot prove semantic non-reuse, honest experiment history, authentic ground truth or model generalization. Do not activate operational alerts or Red Team traffic on the strength of this gate.
+
+
+## Cyber Lab — normalized flow identity non-reuse preflight (28/10/2026)
+
+- [ ] Validate and merge the conservative UID/UTC timestamp/five-tuple overlap screen against original pinned TRAIN/VALIDATION/TEST captures in the read-only preflight and manual SOC case write path; synthetic regressions added, CI pending. No claim of semantic flow non-reuse or detection accuracy; see PROGRESS.
+- [ ] Student verifies on Windows with real authorized Host-only Zeek captures, original private annotated manifest, independently pinned hashes, physical isolation evidence and manual SOC audit. Synthetic CI is not an experiment on the student laptop.
+- [ ] Continue independent labeled holdout evaluation and measured latency before considering explicitly gated operational AI alerts. Do not activate Red Team traffic on the strength of a digest or identity match check.

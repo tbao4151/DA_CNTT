@@ -34,6 +34,7 @@ def create_new_log_candidate_case(
     operator_confirmed_new_capture: bool,
     declared_dataset: LabeledLabDataset | None = None,
     declared_manifest_sha256: str | None = None,
+    declared_captures: Sequence[Mapping[str, object]] | None = None,
 ) -> int:
     """Create/reuse one manual Unclassified case for a verified candidate.
 
@@ -52,6 +53,8 @@ def create_new_log_candidate_case(
 
     if (declared_dataset is None) != (declared_manifest_sha256 is None):
         raise ValueError("Declared dataset and pinned manifest SHA must be supplied together")
+    if declared_captures is not None and declared_dataset is None:
+        raise ValueError("Declared flow captures require pinned partition evidence")
     if declared_dataset is not None:
         # Verify again inside the write boundary: caller-provided preflight
         # success cannot be substituted for checked partition evidence.
@@ -59,6 +62,8 @@ def create_new_log_candidate_case(
             model, declared_dataset,
             manifest_sha256=declared_manifest_sha256,
             new_capture_sha256=expected_log_sha256,
+            declared_captures=declared_captures,
+            new_source_data=source_data if declared_captures is not None else None,
         )
 
     review = review_pinned_new_log_report(
@@ -96,7 +101,10 @@ def create_new_log_candidate_case(
         + (
             "Declared exact-byte TRAIN/VALIDATION/TEST exclusion checked against "
             f"pinned manifest_sha256={declared_manifest_sha256}; "
-            "historical completeness and semantic flow non-reuse unverified. "
+            + ("Normalized UID/time/five-tuple identity overlap also checked; "
+               if declared_captures is not None else
+               "Normalized flow identity overlap NOT checked; ")
+            + "historical completeness and semantic flow non-reuse unverified. "
             if declared_dataset is not None else
             "TRAIN/VALIDATION/TEST exclusion is an operator attestation only. "
         )

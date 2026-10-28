@@ -110,6 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         source_data = _read_bounded(log_path, MAX_LOG_BYTES)
         report_data = _read_bounded(report_path, MAX_NEW_LOG_REPORT_BYTES)
         declared_dataset = None
+        declared_captures = None
         if manifest_path is not None:
             manifest_bytes = _read_bounded(manifest_path, MAX_MANIFEST_BYTES)
             expected_manifest_sha = args.expected_manifest_sha256
@@ -125,9 +126,11 @@ def main(argv: list[str] | None = None) -> int:
             if manifest_sha != expected_manifest_sha:
                 raise ValueError("Manifest changed during validation")
             declared_dataset = build_labeled_lab_dataset(captures)
+            declared_captures = captures
             verify_declared_partition_exclusion(
                 model, declared_dataset, manifest_sha256=manifest_sha,
                 new_capture_sha256=args.expected_log_sha256,
+                declared_captures=captures, new_source_data=source_data,
             )
         review = review_pinned_new_log_report(
             source_data, model, report_data,
@@ -144,6 +147,7 @@ def main(argv: list[str] | None = None) -> int:
             print("research_candidate_count_total=" + str(review["research_candidate_count"]))
             if declared_dataset is not None:
                 print("Pinned declared-partition exact-byte non-reuse checked; "
+                      "normalized UID/time/five-tuple identity overlap checked; "
                       "historical/semantic independence NOT verified.")
             else:
                 print("Declared TEST exclusion NOT checked; operator attestation only.")
@@ -162,6 +166,7 @@ def main(argv: list[str] | None = None) -> int:
             operator_confirmed_new_capture=args.confirm_new_capture,
             declared_dataset=declared_dataset,
             declared_manifest_sha256=args.expected_manifest_sha256,
+            declared_captures=declared_captures,
         )
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError, RecursionError):
         # Never print private IPs, UIDs, paths, model contents or raw evidence.
