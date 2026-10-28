@@ -269,3 +269,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Validate and merge the NEW-log UI change requiring a private SHA-256-pinned original TRAIN/VALIDATION/TEST manifest, all original captures and annotation files, and conservative flow-identity non-reuse check before showing research candidates. Synthetic-only tests; feature PR/CI/merge status is tracked in PROGRESS.
 - [ ] Student tests both accepted and refused paths on Windows Python 3.12.9 using genuine authorized VMware Host-only capture, preregistered private manifest, original annotated split captures and independently recorded hashes. Preserve screenshots and source evidence outside Git.
 - [ ] Add an explicitly analyst-confirmed SOC case action to the Blue Team UI only after rechecking the same pinned manifest at the SQLite write boundary; no operational alert or automatic attack confirmation.
+
+
+## Cyber Lab — verified mandatory NEW-log UI partition gate (28/10/2026)
+
+- [x] [PR #103](https://github.com/tbao4151/DA_CNTT/pull/103) merged: read-only NEW-log UI now requires a SHA-256-pinned private manifest and all original TRAIN/VALIDATION/TEST captures/annotations, rejecting exact-byte or normalized flow identity overlap before displaying AI research candidates. Final-head [CI #40661904366](https://github.com/tbao4151/DA_CNTT/actions/runs/40661904366) and post-merge main [CI #40662219929](https://github.com/tbao4151/DA_CNTT/actions/runs/40662219929) passed (545 passed, 2 skipped, 2 existing warnings on PR).
+- [ ] Student verifies the UI and refusal paths on Windows Python 3.12.9 with genuine authorized VMware Host-only captures, independent hashes, preserved original manifest/annotations and isolation screenshots outside Git. CI synthetic fixtures do not establish attack detection.
+- [ ] Add optional explicitly analyst-confirmed `Unclassified` SOC case creation in UI with a fresh pinned-manifest check at the SQLite write boundary. No operational auto-alert or Red Team traffic.
