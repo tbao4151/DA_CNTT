@@ -153,3 +153,8 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #69](https://github.com/tbao4151/DA_CNTT/pull/69) merged the offline-only `check_zeek_lab_scope.py` CLI: strict RFC1918 IPv4 membership for both endpoints of every parsed Zeek flow, bounded source input, exclusive private aggregate/hash report and synthetic regression tests. Final PR and post-merge Python 3.12.9 CI passed (377 passed, 2 skipped); see `PROGRESS.md`.
 - [ ] On the student Windows/VMware Host-only lab, record physical/virtual isolation configuration and Zeek version separately; run scope screening on genuine authorized `conn.log` using the **actual** configured lab CIDR, preserving original bytes and SHA-256 outside GitHub. Passing membership is not proof of isolation.
 - [ ] Independently annotate the captured UIDs, pre-register host-disjoint partitions and run private structural preflight/evaluation before interpreting AI results. No automatic Zeek alert or Red Team traffic until evidence and safety gates are satisfied.
+
+## Cyber Lab — declared CIDR screening in experiment CLI (28/10/2026)
+
+- [ ] Verify/merge the optional all-capture `--cidr` gate for both Zeek `--preflight` and `--output` after final Python 3.12.9 CI passes. Scope screening checks only operator-declared IPv4 endpoint membership; no network activity, model deployment or automatic SOC alert. See PROGRESS for PR/CI status.
+- [ ] Student-run Windows/VMware Host-only experiment: verify actual virtual network isolation separately, preserve private source hashes and scenario/label evidence, and pass the explicit scope gate on every pre-registered train/validation/test capture. Never claim a passing CIDR screen proves isolation or detection.
