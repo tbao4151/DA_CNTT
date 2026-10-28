@@ -23,7 +23,7 @@ from test_zeek_partition_guard import _inputs
 def _reencoded_reserved_test(manifest: Path) -> bytes:
     original = (manifest.parent / "host-2.log").read_bytes()
     # Different SHA-256, identical parsed UID/time/5-tuple identities.
-    changed = original.replace(b"#fields\\t", b"# harmless encoding comment\\n#fields\\t", 1)
+    changed = original.replace(b"#fields\t", b"# harmless encoding comment\n#fields\t", 1)
     assert changed != original
     return changed
 
