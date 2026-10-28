@@ -532,3 +532,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [Real-Zeek CI #40765032431](https://github.com/tbao4151/DA_CNTT/actions/runs/40765032431) passed with **Zeek 9.0.1 actually executing offline** on a deterministic benign synthetic PCAP and producing one correctly matched UDP flow. Synthetic-only artifact uploaded. This is distinct from mocked unit tests.
 - [ ] Confirm the full quality gate on the **final PR #147 head**, ensure no merge conflicts or competing PRs, then merge; check post-merge CI separately. This item remains pending until verified.
 - [ ] Student runs real installed Zeek in Linux VMware and archives local output, then separately captures authorized Host-only traffic with independent labels and measures held-out model Precision/Recall/FPR and event-to-SOC latency. Runner CI does not establish laptop/VMware acceptance, authentic capture or attack detection.
+
+
+## Cyber Lab — real Zeek CI merged, local VMware acceptance remains (29/10/2026)
+
+- [x] [PR #147](https://github.com/tbao4151/DA_CNTT/pull/147) merged at `6ae0cca55bb515386eb222dbfee445117ce39b1f` after final-head [real-binary Zeek CI #40765257813](https://github.com/tbao4151/DA_CNTT/actions/runs/40765257813) and [full quality gate #40765257770](https://github.com/tbao4151/DA_CNTT/actions/runs/40765257770) passed (750 passed, 2 skipped, 2 existing warnings). This supersedes the pending merge checkbox above.
+- [ ] Student executes actual installed Zeek on Linux VMware, saves the benign synthetic smoke output and independently verifies Host-only adapters/routes before collecting genuine authorized PCAP. Keep synthetic CI evidence separate from research captures.
+- [ ] Evaluate an independently labeled, host/session-disjoint Zeek holdout and event-to-SOC latency before claiming real attack detection. No active Red Team network actions, automatic operational alerts or changes to UNSW official benchmark.
