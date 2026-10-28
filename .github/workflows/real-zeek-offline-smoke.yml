@@ -44,6 +44,8 @@ jobs:
           docker run --rm \
             --network none \
             --read-only \
+            --user "$(id -u):$(id -g)" \
+            --env HOME=/tmp \
             --cap-drop ALL \
             --security-opt no-new-privileges \
             --tmpfs /tmp:rw,nosuid,noexec,size=16m \
