@@ -252,6 +252,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — pinned NEW-log Blue Team read-only UI (28/10/2026)
 
-- [ ] Verify PR/main CI for the separate `pages/3_New_Log_Review.py` interface: strict independently SHA-pinned model, source/report recomputation, authorized CIDR, bounded candidate table, synthetic regression and no automatic case write. See PROGRESS for status.
+- [x] PR #99 merged, final-head CI #40655024380 and post-merge main CI #40655340663 passed (525 passed, 2 skipped, 2 existing warnings on PR) for the separate `pages/3_New_Log_Review.py` interface: strict independently SHA-pinned model, source/report recomputation, authorized CIDR, bounded candidate table, synthetic regression and no automatic case write. See PROGRESS for status.
 - [ ] Student tests the page on Windows Python 3.12.9 using genuine authorized Host-only Zeek capture, original private model/report, separately recorded hashes and independently pinned TRAIN/VALIDATION/TEST partition preflight. Save screenshots and negative-test evidence outside Git.
 - [ ] After verified independent lab evaluation, integrate optional explicit analyst-confirmed SOC triage into UI with full pinned manifest guard and evidence; no operational auto-alert or Red Team active traffic is authorized by this read-only page.
