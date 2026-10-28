@@ -471,3 +471,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head CI and merge the optional original-PCAP provenance recheck at `triage_zeek_new_log.py` and the core `create_new_log_candidate_case` write boundary. Preserve existing legacy commands and SQLite records. See PROGRESS for feature verification status.
 - [ ] Student runs actual authorized Zeek `-r` on private Host-only PCAP in Linux VMware; separately pins PCAP/import report/log/model, then runs gated scoring, independent review, candidate listing and manual SOC case creation. Preserve adapter/routes, Zeek version, scenario authorization and independently reviewed labels outside Git.
 - [ ] Validate held-out host/session-disjoint labels and measure real Precision/Recall/FPR and event-to-alert latency before any operational alert claims. Synthetic CI cannot prove capture authenticity, Host-only isolation, attack ground truth or live detection; Red Team network actions remain disabled.
+
+
+## Cyber Lab — verified optional PCAP recheck at manual SOC write merged (29/10/2026)
+
+- [x] [PR #139](https://github.com/tbao4151/DA_CNTT/pull/139) merged after final-head [CI #40748542366](https://github.com/tbao4151/DA_CNTT/actions/runs/40748542366) passed (**728 passed, 2 skipped, 2 warnings**). Earlier pending feature checklist is superseded; original PCAP/import/Zeek integrity is now optionally rechecked at manual SOC write, with legacy mode preserved.
+- [ ] Student runs actual authorized Zeek `-r` on a private Host-only PCAP in Linux VMware, separately records SHA-256 pins, and runs gated scoring, review, listing and explicit SOC case creation on Windows Python 3.12.9. Preserve VMware adapter/routes, Zeek version, authorization, scenario notebook and original private evidence.
+- [ ] Independently label and evaluate host/session-disjoint Zeek holdout, measure Precision/Recall/FPR and event-to-alert latency, then decide whether operational alerting is scientifically justified. Synthetic CI does not establish genuine capture, isolation, ground truth or detection performance; active Red Team network actions remain disabled.
