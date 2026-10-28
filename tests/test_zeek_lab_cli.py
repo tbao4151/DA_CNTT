@@ -221,3 +221,89 @@ def test_scoped_cli_preflight_and_research_report_remain_offline(tmp_path):
     assert report["automated_alerts"] is False
     assert report["live_capture"] is False
     assert "192.168.56." not in json.dumps(report)
+
+
+def test_private_heldout_trace_is_opt_in_and_joinable_to_verified_log(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    private_output = manifest.parent / "private-heldout-trace.json"
+    base = [
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--cidr", "192.168.56.0/24",
+    ]
+    proc = subprocess.run(
+        base + ["--trace-output", str(private_output)],
+        capture_output=True, text=True, check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    result = json.loads(private_output.read_text(encoding="utf-8"))
+    trace = result["private_test_trace"]
+    assert result["report_version"] == 4
+    assert trace["mode"] == "offline_zeek_heldout_test_predictions_only"
+    assert trace["selected_threshold"] == result["selected_threshold"]
+    assert trace["automated_alerts"] is False
+    assert len(trace["flows"]) == result["test_metrics"]["support"] == 2
+    test_log = manifest.parent / "host-2.log"
+    for row in trace["flows"]:
+        assert row["source_sha256"] == hashlib.sha256(test_log.read_bytes()).hexdigest()
+        assert row["uid"] in ("N2", "A2")
+        assert 0 <= row["attack_probability"] <= 1
+        assert row["predicted_attack"] == (row["attack_probability"] >= trace["selected_threshold"])
+        assert row["operator_supplied_label"] in (0, 1)
+        assert row["outcome_against_supplied_label"] in (
+            "true_positive", "false_positive", "true_negative", "false_negative",
+        )
+    # Aggregate mode must never leak the private UID/label trace.
+    aggregate = run_offline_experiment(manifest)
+    assert "private_test_trace" not in aggregate
+    assert "N2" not in json.dumps(aggregate)
+    assert "A2" not in json.dumps(aggregate)
+    assert "192.168.56." not in json.dumps(result)
+    assert "private-operator-note" not in json.dumps(result)
+    again = subprocess.run(
+        base + ["--trace-output", str(private_output)],
+        capture_output=True, text=True, check=False,
+    )
+    assert again.returncode == 1
+    assert json.loads(private_output.read_text(encoding="utf-8")) == result
+
+
+def test_private_trace_never_tunes_model_with_test_labels(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    first = run_offline_experiment(manifest, include_private_test_trace=True)
+    annotation_path = manifest.parent / "host-2-labels.json"
+    annotation = json.loads(annotation_path.read_text(encoding="utf-8"))
+    annotation["labels_by_uid"] = {"N2": 1, "A2": 0}
+    annotation_path.write_text(json.dumps(annotation), encoding="utf-8")
+    second = run_offline_experiment(manifest, include_private_test_trace=True)
+    assert first["selected_threshold"] == second["selected_threshold"]
+    assert first["validation_metrics"] == second["validation_metrics"]
+    a, b = first["private_test_trace"]["flows"], second["private_test_trace"]["flows"]
+    assert [(x["uid"], x["attack_probability"], x["predicted_attack"]) for x in a] == [
+        (x["uid"], x["attack_probability"], x["predicted_attack"]) for x in b
+    ]
+    assert [x["operator_supplied_label"] for x in a] != [x["operator_supplied_label"] for x in b]
+
+
+def test_private_trace_fails_closed_before_writing_on_invalid_scope(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    output = manifest.parent / "should-not-exist.json"
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--trace-output", str(output),
+        "--cidr", "10.42.0.0/16",
+    ], capture_output=True, text=True, check=False)
+    assert proc.returncode == 1
+    assert not output.exists()
+    assert "192.168.56." not in proc.stderr
+
+
+def test_private_trace_mode_is_mutually_exclusive_with_aggregate_and_preflight(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    output = manifest.parent / "trace.json"
+    for extra in (["--output", str(manifest.parent / "aggregate.json")], ["--preflight"]):
+        proc = subprocess.run([
+            sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+            "--manifest", str(manifest), "--trace-output", str(output), *extra,
+        ], capture_output=True, text=True, check=False)
+        assert proc.returncode != 0
+        assert not output.exists()
