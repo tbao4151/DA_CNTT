@@ -490,3 +490,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #141](https://github.com/tbao4151/DA_CNTT/pull/141) merged after final-head [CI #40752707725](https://github.com/tbao4151/DA_CNTT/actions/runs/40752707725) passed (**736 passed, 2 skipped, 2 existing warnings**). This supersedes the pending feature checklist. Preview and manual SOC write now optionally recheck original PCAP/import/Zeek bytes while preserving legacy behavior.
 - [ ] Student runs real authorized Zeek `-r` on a private VMware Host-only PCAP, independently pins the import report and completes Blue Team UI candidate review/manual SOC case creation on Windows Python 3.12.9. Preserve original evidence, adapter/routes, Zeek version and permissions outside Git; only tamper with copies.
 - [ ] Independently evaluate host/session-disjoint labeled captures and event-to-alert latency before operational attack claims or active Red Team network execution. Synthetic CI and byte integrity do not prove capture authenticity or Host-only isolation.
+
+
+## Cyber Lab — local real-Zeek benign offline acceptance (29/10/2026)
+
+- [ ] Verify PR-head CI and merge the opt-in `scripts/smoke_zeek_offline.py` slice; it generates a deterministic **benign synthetic** classic PCAP, invokes an installed Zeek binary in offline `-r` mode, and verifies private import bytes. CI regression tests mock Zeek and cannot be counted as real-binary acceptance; see PROGRESS.
+- [ ] Student runs the new CLI in the Linux VMware VM with real Zeek installed, preserves `benign_synthetic.pcap`, `conn.log`, importer report, smoke report and Zeek version privately; document actual result. This tests only the local offline toolchain and is not attack evidence or isolation proof.
+- [ ] Separately capture **genuine authorized** Host-only traffic after checking adapters/routes and isolation; pin source/session hashes independently, prepare independent labels, and evaluate held-out Zeek AI Precision/Recall/FPR and end-to-end latency before operational alerts. Keep synthetic smoke fixtures out of the research dataset, preserve UNSW-NB15 official benchmark, and keep active Red Team disabled.
