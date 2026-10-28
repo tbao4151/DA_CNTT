@@ -370,3 +370,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head CI and merge the optional offline UID-level disagreement worksheet. The existing aggregate two-reviewer agreement report remains UID-free. This new opt-in private file contains only disagreements with null adjudication/evidence fields; it does not infer consensus, prove ground truth or modify reviewer annotations. Track verified PR/CI in PROGRESS.
 - [ ] Student independently labels a genuine authorized Host-only Zeek capture twice, pins original and reviewer hashes, runs the aggregate check and private worksheet on Windows Python 3.12.9, and documents independent scenario evidence for every disagreement. Keep UIDs, labels and evidence outside Git.
 - [ ] Create a separately versioned complete annotation-v1 after manual adjudication; pre-register host/session-disjoint splits, keep TEST untouched and measure model generalization and event-to-alert latency only on genuine verified lab evidence. Do not enable active Red Team or alter official UNSW-NB15 benchmark.
+
+
+## Cyber Lab — private disagreement worksheet merged (28/10/2026)
+
+- [x] [PR #123](https://github.com/tbao4151/DA_CNTT/pull/123) merged after final-head [CI #40703014325](https://github.com/tbao4151/DA_CNTT/actions/runs/40703014325) and post-merge main [CI #40703530003](https://github.com/tbao4151/DA_CNTT/actions/runs/40703530003) passed (646 passed, 2 skipped, 2 existing warnings). The earlier pending checkbox is superseded by this verified entry. The separate UID-bearing worksheet is opt-in and private, never a consensus or model-training annotation.
+- [ ] Student runs the aggregate and private disagreement tools on independently labeled authorized VMware Host-only captures using Windows Python 3.12.9, then manually documents evidence and adjudicates unresolved UIDs without inferring labels from AI. Keep all sensitive data outside Git.
+- [ ] Freeze separately versioned complete annotation-v1 inputs and host/session-disjoint TEST; evaluate genuine Zeek detection and event-to-alert latency before any operational alerts or active Red Team scenario runner.
