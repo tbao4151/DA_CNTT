@@ -18,9 +18,9 @@ jobs:
   real-zeek-offline:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    env:
-      SMOKE_DIR: ${{ runner.temp }}/da005-real-zeek-smoke
     steps:
+      - name: Configure temporary evidence directory
+        run: echo "SMOKE_DIR=$RUNNER_TEMP/da005-real-zeek-smoke" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
