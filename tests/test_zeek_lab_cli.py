@@ -316,7 +316,7 @@ def test_preflight_and_fit_refuse_reencoded_cross_split_flow_reuse(tmp_path):
     test_entry = spec["captures"][2]
     test_path = manifest.parent / test_entry["log_path"]
     test_raw = train.replace(
-        b"#fields\\t", b"# alternate Zeek header\\n#fields\\t", 1
+        b"#fields\t", b"# alternate Zeek header\n#fields\t", 1
     )
     test_path.write_bytes(test_raw)
     test_entry["source_sha256"] = hashlib.sha256(test_raw).hexdigest()
