@@ -262,3 +262,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #101](https://github.com/tbao4151/DA_CNTT/pull/101) merged after green final-head [CI #40658718042](https://github.com/tbao4151/DA_CNTT/actions/runs/40658718042) and post-merge [CI #40659083844](https://github.com/tbao4151/DA_CNTT/actions/runs/40659083844) (537 passed, 2 skipped on PR): read-only pinned model/log/report/annotation evaluation, original manifest and declared split non-reuse gate, fixed validation threshold, aggregate TP/FP/TN/FN, Precision/Recall/F1/FPR and flow-level Wilson intervals. Synthetic tests are not genuine lab measurements; see docs/ZEEK_NEW_LOG_LABELED_EVALUATION.md.
 - [ ] Student captures a genuinely new authorized VMware Host-only Zeek conn.log, independently annotates every UID with documented evidence, retains all pinned original partition captures and hashes, runs the Windows CLI and archives the aggregate output privately.
 - [ ] Establish label reliability, independent capture history, host/session-aware uncertainty and measured inference latency before claiming validated AI detection or adding gated operational alerts. Keep Dataset Mode UNSW benchmark and Red Team traffic unchanged.
+
+
+## Cyber Lab — mandatory declared-partition gate in read-only NEW-log UI (28/10/2026)
+
+- [ ] Validate and merge the NEW-log UI change requiring a private SHA-256-pinned original TRAIN/VALIDATION/TEST manifest, all original captures and annotation files, and conservative flow-identity non-reuse check before showing research candidates. Synthetic-only tests; feature PR/CI/merge status is tracked in PROGRESS.
+- [ ] Student tests both accepted and refused paths on Windows Python 3.12.9 using genuine authorized VMware Host-only capture, preregistered private manifest, original annotated split captures and independently recorded hashes. Preserve screenshots and source evidence outside Git.
+- [ ] Add an explicitly analyst-confirmed SOC case action to the Blue Team UI only after rechecking the same pinned manifest at the SQLite write boundary; no operational alert or automatic attack confirmation.

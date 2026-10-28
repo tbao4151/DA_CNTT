@@ -6,8 +6,10 @@ trains models, opens sockets, or labels a candidate as a confirmed attack.
 from __future__ import annotations
 
 from pathlib import Path
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
+from .labeled_dataset import LabeledLabDataset
+from .partition_guard import verify_declared_partition_exclusion
 from .new_log_inference import score_new_zeek_log
 from .new_log_review import review_pinned_new_log_report
 from .trusted_model import load_pinned_zeek_research_model
@@ -23,6 +25,9 @@ def prepare_new_log_review(
     expected_log_sha256: str,
     expected_model_sha256: str,
     lab_cidrs: Sequence[str],
+    declared_dataset: LabeledLabDataset | None = None,
+    declared_manifest_sha256: str | None = None,
+    declared_captures: Sequence[Mapping[str, object]] | None = None,
 ) -> dict[str, object]:
     """Return only verified research candidates from the first 500 rows.
 
@@ -30,9 +35,26 @@ def prepare_new_log_review(
     model JSON or uploaded report. This does not prove model authorship,
     reserved TEST exclusion, capture authenticity, or Host-only isolation.
     """
+    if any(value is not None for value in (
+        declared_dataset, declared_manifest_sha256, declared_captures,
+    )) and not all(value is not None for value in (
+        declared_dataset, declared_manifest_sha256, declared_captures,
+    )):
+        raise ValueError("Pinned partition check requires dataset, digest and original captures")
     model = load_pinned_zeek_research_model(
         model_path, expected_sha256=expected_model_sha256,
     )
+    partition_check = None
+    if declared_dataset is not None:
+        # Fail closed before returning candidates: check exact-byte AND
+        # normalized flow identity against original declared captures.
+        partition_check = verify_declared_partition_exclusion(
+            model, declared_dataset,
+            manifest_sha256=declared_manifest_sha256,
+            new_capture_sha256=expected_log_sha256,
+            declared_captures=declared_captures,
+            new_source_data=source_data,
+        )
     review = review_pinned_new_log_report(
         source_data, model, report_data,
         expected_log_sha256=expected_log_sha256,
@@ -60,6 +82,7 @@ def prepare_new_log_review(
     candidates.sort(key=lambda row: (-row["P(Attack) research"], row["Zeek row"]))
     return {
         "review": review,
+        "declared_partition_check": partition_check,
         "candidate_rows": candidates,
         "visible_flow_count": min(MAX_UI_ROWS, result["flow_count"]),
         "validation_threshold": result["selected_validation_threshold"],
