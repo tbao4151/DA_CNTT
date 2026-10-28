@@ -45,7 +45,9 @@ def test_ui_pcap_changed_after_candidate_preview_blocks_write(imported, tmp_path
     # Preview can succeed on verified model/log/manifest while original PCAP
     # is still intact. Write must independently recheck the original bytes.
     from test_zeek_new_log_ui_partition import _prepared
-    values, _ = _prepared(tmp_path / "preview", source_data=imported["log"].read_bytes())
+    preview_dir = tmp_path / "preview"
+    preview_dir.mkdir()
+    values, _ = _prepared(preview_dir, source_data=imported["log"].read_bytes())
     assert prepare_new_log_review(**values)["candidate_rows"]
     imported["pcap"].write_bytes(imported["pcap"].read_bytes() + b"changed")
     with pytest.raises(ValueError):
