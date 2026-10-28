@@ -162,6 +162,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — private held-out Zeek prediction trace (28/10/2026)
 
-- [ ] Verify feature PR CI before merge: opt-in `--trace-output` provides per-test-flow SHA/UID, probability, validation-selected prediction and operator-supplied reference label in a **private, non-deployable** JSON; aggregate reports remain unchanged. Synthetic regression tests are not evidence of attacks or AI detection in VMware.
+- [x] [PR #73](https://github.com/tbao4151/DA_CNTT/pull/73) merged; final PR-head [CI #40616820490](https://github.com/tbao4151/DA_CNTT/actions/runs/40616820490) and post-merge [CI #40616997285](https://github.com/tbao4151/DA_CNTT/actions/runs/40616997285) passed (388 passed, 2 skipped). Optional private, non-deployable `--trace-output` provides per-test-flow SHA/UID, probability, validation-selected prediction and operator-supplied label; aggregate reports unchanged. Synthetic tests are not evidence of genuine detection.
 - [ ] On student Windows/VMware Host-only: preserve independent capture/label/isolation evidence, preregister test split, then inspect the private trace **once** without reusing held-out test for tuning. Keep UIDs and per-flow labels outside GitHub.
 - [ ] Only after genuine validated detection results: design separately audited AI inference → alert → SOC Case, without treating private test labels or synthetic policy rewards as live observations.
