@@ -9,6 +9,7 @@ from collections.abc import Mapping, Sequence
 import hashlib
 
 from .labeled_dataset import LabeledLabDataset, MAX_CAPTURES, SPLITS
+from .flow_identity import flow_identity as _flow_identity
 from .zeek import parse_zeek_conn_log
 from .model_artifact import validate_zeek_research_artifact
 
@@ -17,17 +18,6 @@ _HEX = frozenset("0123456789abcdef")
 
 def _digest(value: object) -> bool:
     return isinstance(value, str) and len(value) == 64 and all(c in _HEX for c in value)
-
-
-_FLOW_IDENTITY_FIELDS = (
-    "uid", "event_time_utc", "src_ip", "src_port",
-    "dst_ip", "dst_port", "proto",
-)
-
-
-def _flow_identity(event: Mapping[str, object]) -> tuple[object, ...]:
-    """Conservative exact normalized identity; not a semantic duplicate detector."""
-    return tuple(event[field] for field in _FLOW_IDENTITY_FIELDS)
 
 
 def _check_declared_flow_identity_nonreuse(
