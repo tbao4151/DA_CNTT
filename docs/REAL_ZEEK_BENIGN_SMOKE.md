@@ -152,3 +152,32 @@ passed the offline import verifier plus nine-feature contract.
 This is **GitHub Linux CI only**: no student Windows/VMware run, actual
 Host-only capture, attack detection, independently labeled evaluation,
 AI alert, or SOC case is established.
+
+
+## Verified real Zeek → pinned research scoring/review CI (29 October 2026)
+
+[PR #153](https://github.com/tbao4151/DA_CNTT/pull/153) extended the
+network-disabled real-Zeek workflow with the **existing production**
+`score_zeek_new_log.py` and `verify_zeek_new_log_report.py` CLIs.
+The final PR head passed [real Zeek CI #40778318436](https://github.com/tbao4151/DA_CNTT/actions/runs/40778318436)
+and [Python quality gates #40778318423](https://github.com/tbao4151/DA_CNTT/actions/runs/40778318423)
+(764 passed, 2 skipped, 2 existing warnings); post-merge
+[main CI #40778687801](https://github.com/tbao4151/DA_CNTT/actions/runs/40778687801)
+also passed. The actual Zeek 9.0.1 binary decoded a deterministic benign
+synthetic PCAP and the production offline importer generated `conn.log`.
+A **CI-only** Logistic Regression fitted on arbitrary synthetic labels was
+serialized as a data-only JSON model. The scorer checked SHA-256 pins and
+the original PCAP import report, and the independent verifier recomputed
+every prediction. Modified probabilities and an invalid model hash were
+deliberately rejected. The uploaded CI artifact contains a synthetic-only
+summary, not the synthetic model or prediction JSON.
+
+This is a **software integration acceptance**, not evidence of attack
+detection. The model was trained on synthetic fixture labels without
+independent ground truth; model/report pins were generated in the same CI
+run, not independently preregistered. Candidate counts are not accuracy,
+and no SOC case or operational alert was generated. Student Windows/VMware
+execution, actual Host-only isolation, authorized real capture, independent
+labels, held-out evaluation, and event-to-SOC latency remain unverified.
+Run the documented local Zeek smoke separately and **never use the CI-only
+synthetic model for a research claim or deployment**.
