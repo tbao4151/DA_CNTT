@@ -1,4 +1,5 @@
 name: Real Zeek offline synthetic smoke
+# The second acceptance stage exercises the production offline importer via real Zeek.
 
 on:
   pull_request:
