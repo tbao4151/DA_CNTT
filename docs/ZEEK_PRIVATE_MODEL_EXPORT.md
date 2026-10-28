@@ -83,3 +83,13 @@ where a filesystem race or parent-directory junction is not fully prevented
 by the direct-symlink check. The independent label provenance, actual Host-only
 isolation, authorization, held-out evaluation and Windows acceptance are still
 required. Synthetic CI tests are not genuine attack-detection evidence.
+
+## New-log scoring follow-up (28/10/2026)
+
+The previously planned private, bounded new-log inference CLI is now implemented
+in [score_zeek_new_log.py](../scripts/score_zeek_new_log.py) and documented in
+[ZEEK_NEW_LOG_OFFLINE_INFERENCE.md](ZEEK_NEW_LOG_OFFLINE_INFERENCE.md).
+[PR #87](https://github.com/tbao4151/DA_CNTT/pull/87) passed its final-head
+and post-merge main CI. This does **not** validate actual student Host-only
+capture, independent labels, exclusion of the reserved TEST set, or
+operational detection; no automated SOC alert is produced.

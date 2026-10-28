@@ -205,11 +205,11 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [x] [PR #85](https://github.com/tbao4151/DA_CNTT/pull/85) merged: independently SHA-256-pinned, bounded, strict JSON-only loader and read-only verification CLI. Final PR-head [CI #40633769315](https://github.com/tbao4151/DA_CNTT/actions/runs/40633769315) and post-merge [CI #40633974947](https://github.com/tbao4151/DA_CNTT/actions/runs/40633974947) passed (461 passed, 2 skipped, 2 warnings on PR). Synthetic software tests only; see `docs/ZEEK_PRIVATE_MODEL_EXPORT.md`.
 - [ ] Student Windows/VMware Host-only verification: preserve independent model SHA-256, original authorized Zeek logs, label records and isolation screenshots; run the verifier locally. Passing a digest does not authenticate model authorship or detection quality.
-- [ ] Future: bounded inference on **new** privately collected Zeek logs with scope check, explicit research-only output and no automatic SOC alerts until genuine independent evaluation.
+- [x] Bounded offline inference on **new** privately collected Zeek logs with scope checks and research-only output was merged in PR #87 (synthetic CI passed); no automatic SOC alerts, independent lab evaluation or Windows acceptance is claimed.
 
 
 ## Cyber Lab — pinned NEW-log offline inference (28/10/2026)
 
-- [ ] Verify feature PR CI for bounded, separately pinned new Zeek capture inference (`src/blue_team_ai/new_log_inference.py`, `scripts/score_zeek_new_log.py`, `tests/test_zeek_new_log_inference.py`), then merge only when green; PR/CI details are in PROGRESS.
+- [x] PR #87 merged; final PR and post-merge main CI passed (464 passed, 2 skipped, 2 warnings on PR). Bounded, separately pinned new Zeek capture inference (`src/blue_team_ai/new_log_inference.py`, `scripts/score_zeek_new_log.py`, `tests/test_zeek_new_log_inference.py`). PR/CI details are in PROGRESS.
 - [ ] Student runs private Windows Python 3.12.9 acceptance on a **new** authorized VMware Host-only `conn.log` not used for TRAIN, VALIDATION or held-out TEST; independently preserve capture/model SHA-256, physical isolation and scenario evidence. CI synthetic fixtures do not satisfy this.
 - [ ] Only after real independent holdout evaluation, add an explicit analyst-reviewed AI-to-SOC research alert pipeline with model provenance and detection latency; do not silently treat research candidates as confirmed attacks. Keep Red Team active traffic disabled until isolation and safety controls are validated.
