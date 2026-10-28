@@ -146,3 +146,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] PR #67 merged; PR-head and post-merge Python 3.12.9 CI passed (360 passed, 2 skipped). The `--preflight` option validates private source/annotation hashes and split contracts, prints aggregate counts without fitting/scoring a model, and preserves the existing `--output` experiment path. See PROGRESS.md for links.
 - [ ] On student Windows + VMware Host-only, run preflight on **genuine** independently annotated captures and archive a private run transcript, original hashes, Zeek version, isolation screenshots and pre-registered host-disjoint split assignment. Structural validation cannot authenticate ground truth or isolation.
 - [ ] Only after independent evidence and a held-out evaluation: assess deployable Zeek model trust, safe offline inference and AI-to-SOC alerts. Do not turn synthetic-only scores into attack-detection claims.
+
+
+## Cyber Lab — offline declared network scope screen (28/10/2026)
+
+- [ ] Validate PR/CI and merge the offline-only `check_zeek_lab_scope.py` CLI: strict RFC1918 IPv4 allowlist membership for both endpoints of every parsed Zeek flow, bounded source input, exclusive private aggregate/hash report, synthetic regression tests; see `PROGRESS.md` for actual status.
+- [ ] On the student Windows/VMware Host-only lab, record physical/virtual isolation configuration and Zeek version separately; run scope screening on genuine authorized `conn.log` using the **actual** configured lab CIDR, preserving original bytes and SHA-256 outside GitHub. Passing membership is not proof of isolation.
+- [ ] Independently annotate the captured UIDs, pre-register host-disjoint partitions and run private structural preflight/evaluation before interpreting AI results. No automatic Zeek alert or Red Team traffic until evidence and safety gates are satisfied.
