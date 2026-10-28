@@ -21,6 +21,7 @@ from blue_team_ai.new_log_review import (
     MAX_NEW_LOG_REPORT_BYTES, review_pinned_new_log_report,
 )
 from blue_team_ai.new_log_triage import create_new_log_candidate_case
+from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
 from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
 from blue_team_ai.partition_guard import verify_declared_partition_exclusion
 from evaluate_zeek_lab import MAX_MANIFEST_BYTES, load_experiment_manifest
@@ -138,6 +139,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-manifest-sha256",
                         help="Independent SHA-256 pin required when --manifest is supplied")
     parser.add_argument("--cidr", action="append", required=True)
+    parser.add_argument("--offline-import-report", type=Path,
+                        help="Optional original offline_import_report.json")
+    parser.add_argument("--expected-offline-import-report-sha256",
+                        help="Independently recorded import report SHA-256")
+    parser.add_argument("--offline-import-pcap", type=Path,
+                        help="Original authorized classic PCAP (offline only)")
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument("--list-candidates", action="store_true")
     action.add_argument("--record-index", type=int)
@@ -152,6 +159,23 @@ def main(argv: list[str] | None = None) -> int:
         log_path = _private_file(args.log)
         report_path = _private_file(args.report)
         inputs = {model_path, log_path, report_path}
+        import_options = (
+            args.offline_import_report,
+            args.expected_offline_import_report_sha256,
+            args.offline_import_pcap,
+        )
+        if any(value is not None for value in import_options) and not all(
+            value is not None for value in import_options
+        ):
+            raise ValueError("All three offline PCAP provenance flags are required")
+        import_report_path = None
+        import_pcap_path = None
+        if all(value is not None for value in import_options):
+            import_report_path = _private_file(args.offline_import_report)
+            import_pcap_path = _private_file(args.offline_import_pcap)
+            if import_report_path in inputs or import_pcap_path in inputs or import_report_path == import_pcap_path:
+                raise ValueError("PCAP provenance inputs must be distinct private files")
+            inputs.update((import_report_path, import_pcap_path))
         if (args.manifest is None) != (args.expected_manifest_sha256 is None):
             raise ValueError("Manifest and independent digest must be provided together")
         manifest_path = _private_file(args.manifest) if args.manifest is not None else None
@@ -159,7 +183,8 @@ def main(argv: list[str] | None = None) -> int:
             if manifest_path in inputs:
                 raise ValueError("Manifest must be distinct from model/log/report")
             inputs.add(manifest_path)
-        if len(inputs) != (4 if manifest_path is not None else 3) or report_path.parent != log_path.parent or report_path.suffix.lower() != ".json":
+        expected_inputs = 3 + (1 if manifest_path is not None else 0) + (2 if import_report_path is not None else 0)
+        if len(inputs) != expected_inputs or report_path.parent != log_path.parent or report_path.suffix.lower() != ".json":
             raise ValueError("Model, log and report must be separate; report alongside log")
         if args.list_candidates:
             if args.db is not None or any((
@@ -171,6 +196,14 @@ def main(argv: list[str] | None = None) -> int:
         )):
             raise ValueError("Writing requires private DB and all explicit confirmations")
         db_path = _private_db(args.db, inputs) if args.db is not None else None
+        if import_report_path is not None:
+            verified_import = verify_offline_pcap_import(
+                import_report_path,
+                expected_report_sha256=args.expected_offline_import_report_sha256,
+                pcap_path=import_pcap_path, log_path=log_path, lab_cidrs=args.cidr,
+            )
+            if verified_import["zeek_conn_sha256"] != args.expected_log_sha256:
+                raise ValueError("Pinned new-log bytes differ from verified PCAP import")
         model = load_pinned_zeek_research_model(
             model_path, expected_sha256=args.expected_model_sha256,
         )
@@ -218,6 +251,8 @@ def main(argv: list[str] | None = None) -> int:
                       "historical/semantic independence NOT verified.")
             else:
                 print("Declared TEST exclusion NOT checked; operator attestation only.")
+            if import_report_path is not None:
+                print("offline_pcap_provenance_reverified=true (bytes and scope only)")
             print("No SOC write, operational alert, or real detection verified.")
             return 0
 
@@ -234,12 +269,18 @@ def main(argv: list[str] | None = None) -> int:
             declared_dataset=declared_dataset,
             declared_manifest_sha256=args.expected_manifest_sha256,
             declared_captures=declared_captures,
+            offline_import_report_path=import_report_path,
+            offline_import_report_sha256=args.expected_offline_import_report_sha256,
+            offline_import_pcap_path=import_pcap_path,
+            offline_import_log_path=log_path if import_report_path is not None else None,
         )
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError, RecursionError):
         # Never print private IPs, UIDs, paths, model contents or raw evidence.
         print("Private new-log research SOC triage refused.", file=sys.stderr)
         return 1
     print(f"case_id={case_id} verdict=Unclassified (manual research review only)")
+    if import_report_path is not None:
+        print("offline_pcap_provenance_reverified=true (bytes and scope only)")
     print("Existing source+UID case may have been reused; original audit is preserved.")
     print("No confirmed attack, operational AI alert, or real lab detection verified.")
     return 0
