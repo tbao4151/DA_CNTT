@@ -339,6 +339,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — pinned original Zeek capture evidence re-verification (28/10/2026)
 
-- [ ] Verify feature PR CI and merge the offline, SHA-pinned Zeek capture inventory verifier. It must re-read all five private originals and re-evaluate declared CIDR scope; synthetic regression is not student Windows acceptance. Track final PR/CI in PROGRESS.
+- [x] [PR #117](https://github.com/tbao4151/DA_CNTT/pull/117) merged after final-head [CI #40689613894](https://github.com/tbao4151/DA_CNTT/actions/runs/40689613894) and post-merge main [CI #40689948085](https://github.com/tbao4151/DA_CNTT/actions/runs/40689948085) passed (620 passed, 2 skipped, 2 existing warnings). The offline verifier re-reads all five private originals and recomputes declared Zeek scope; synthetic regression is not student Windows acceptance.
 - [ ] Student runs the verifier on an authorized Host-only Zeek capture, with an independently recorded inventory SHA-256 and original evidence; inspect all VMware guest adapters/routes and approval manually. Do not publish private logs, screenshots or notebook entries.
 - [ ] Collect independently labeled, host/session-disjoint real captures and evaluate model generalization and event-to-alert latency before claiming attack detection. No automatic alerts or active Red Team traffic.
