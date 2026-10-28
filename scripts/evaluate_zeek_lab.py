@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from blue_team_ai.labeled_dataset import MAX_CAPTURES, build_labeled_lab_dataset
+from blue_team_ai.labeled_dataset import MAX_CAPTURES, SPLITS, build_labeled_lab_dataset
 from blue_team_ai.offline_baseline import evaluate_offline_zeek_baseline
 from blue_team_ai.zeek import MAX_LOG_BYTES
 
@@ -120,6 +120,57 @@ def load_experiment_manifest(manifest_path: str | Path) -> tuple[list[dict[str, 
     return captures, manifest_digest
 
 
+
+def inspect_offline_experiment(manifest_path: str | Path) -> dict[str, object]:
+    """Validate a private experiment's inputs without fitting or scoring a model.
+
+    This checks file hashes, exact UID annotations, explicit split assignments,
+    and host/session separation. It cannot verify labeling truth or isolation.
+    Only aggregate counts and the manifest digest are returned, never raw UIDs,
+    IPs, host identifiers, paths, or evidence-reference strings.
+    """
+    captures, manifest_sha256 = load_experiment_manifest(manifest_path)
+    dataset = build_labeled_lab_dataset(captures)
+    partitions: dict[str, dict[str, int]] = {}
+    warnings: list[str] = []
+    for split in SPLITS:
+        labels = dataset.labels[split]
+        provenance = dataset.provenance[split]
+        groups = len({row["host_group"] for row in provenance})
+        attacks = labels.count(1)
+        normals = labels.count(0)
+        partitions[split] = {
+            "flows": len(labels),
+            "normal": normals,
+            "attack": attacks,
+            "host_groups": groups,
+            "sessions": len({row["session_id"] for row in provenance}),
+        }
+        if len(labels) < 100:
+            warnings.append(f"{split}: fewer than 100 labeled flows")
+        if groups < 2:
+            warnings.append(f"{split}: only one host group; within-split host variability unavailable")
+        if min(attacks, normals) < 30:
+            warnings.append(f"{split}: fewer than 30 flows in a class")
+    return {
+        "mode": "offline_zeek_structural_preflight_only",
+        "input_manifest_sha256": manifest_sha256,
+        "capture_count": len(captures),
+        "partitions": partitions,
+        "structural_validation_passed": True,
+        "label_truth_verified": False,
+        "host_only_isolation_verified": False,
+        "model_fitted": False,
+        "test_scored": False,
+        "warnings": warnings,
+        "interpretation": (
+            "Input consistency only; operator-provided labels, host groups and "
+            "lab isolation are not independently authenticated. No model or "
+            "detection metric was computed."
+        ),
+    }
+
+
 def run_offline_experiment(manifest_path: str | Path) -> dict[str, object]:
     captures, manifest_sha256 = load_experiment_manifest(manifest_path)
     dataset = build_labeled_lab_dataset(captures)
@@ -135,10 +186,15 @@ def run_offline_experiment(manifest_path: str | Path) -> dict[str, object]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True, type=Path, help="Private experiment manifest v1 JSON")
-    parser.add_argument("--output", required=True, type=Path, help="New report JSON (must not exist)")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--output", type=Path, help="New report JSON (must not exist)")
+    mode.add_argument("--preflight", action="store_true", help="Validate inputs and print aggregate counts; no model or file writes")
     args = parser.parse_args(argv)
     try:
         manifest = args.manifest.resolve(strict=True)
+        if args.preflight:
+            print(json.dumps(inspect_offline_experiment(manifest), indent=2, ensure_ascii=False, allow_nan=False))
+            return 0
         output = args.output.resolve()
         if not output.is_relative_to(manifest.parent) or output == manifest:
             raise ValueError("Report output must remain inside private manifest directory")
