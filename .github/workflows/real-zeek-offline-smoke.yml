@@ -13,6 +13,10 @@ on:
       - "tests/test_zeek_real_smoke.py"
       - "tests/ci_real_zeek_scoring.py"
       - "tests/test_ci_real_zeek_scoring.py"
+      - "tests/test_ci_real_zeek_soc_contract.py"
+      - "scripts/triage_zeek_new_log.py"
+      - "src/blue_team_ai/new_log_triage.py"
+      - "src/siem_ai/case_report.py"
       - "src/blue_team_ai/new_log_inference.py"
       - "src/blue_team_ai/model_artifact.py"
       - "src/blue_team_ai/new_log_review.py"
@@ -184,7 +188,7 @@ jobs:
           )
           print(json.dumps(result, indent=2))
           PY
-      - name: Exercise production pinned scoring and independent review (synthetic-only model)
+      - name: Exercise production scoring, review and explicit manual SOC triage (synthetic-only)
         run: PYTHONPATH=src:tests python tests/ci_real_zeek_scoring.py --root "$SMOKE_DIR"
       - name: Upload synthetic-only reproducibility evidence
         if: success()
