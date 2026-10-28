@@ -92,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
             if manifest_path in inputs:
                 raise ValueError("Manifest must be distinct from model/log/report")
             inputs.add(manifest_path)
-        if len(inputs) != 3 or report_path.parent != log_path.parent or report_path.suffix.lower() != ".json":
+        if len(inputs) != (4 if manifest_path is not None else 3) or report_path.parent != log_path.parent or report_path.suffix.lower() != ".json":
             raise ValueError("Model, log and report must be separate; report alongside log")
         if args.list_candidates:
             if args.db is not None or any((
