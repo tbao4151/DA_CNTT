@@ -245,6 +245,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — normalized flow identity non-reuse preflight (28/10/2026)
 
-- [ ] Validate and merge the conservative UID/UTC timestamp/five-tuple overlap screen against original pinned TRAIN/VALIDATION/TEST captures in the read-only preflight and manual SOC case write path; synthetic regressions added, CI pending. No claim of semantic flow non-reuse or detection accuracy; see PROGRESS.
+- [x] [PR #97](https://github.com/tbao4151/DA_CNTT/pull/97) merged the conservative UID/UTC timestamp/five-tuple overlap screen against original pinned TRAIN/VALIDATION/TEST captures in read-only preflight and manual SOC case write path. Final-head [CI #40652526062](https://github.com/tbao4151/DA_CNTT/actions/runs/40652526062) and post-merge main [CI #40652861554](https://github.com/tbao4151/DA_CNTT/actions/runs/40652861554) passed (519 passed, 2 skipped on PR). Synthetic-only; not semantic non-reuse or genuine detection evidence.
 - [ ] Student verifies on Windows with real authorized Host-only Zeek captures, original private annotated manifest, independently pinned hashes, physical isolation evidence and manual SOC audit. Synthetic CI is not an experiment on the student laptop.
 - [ ] Continue independent labeled holdout evaluation and measured latency before considering explicitly gated operational AI alerts. Do not activate Red Team traffic on the strength of a digest or identity match check.
