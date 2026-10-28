@@ -48,3 +48,33 @@ py -3.12 -m pytest -q tests/test_zeek_new_log_review.py
 
 These tests are software checks only. Student-run Windows and VMware
 acceptance remain separate, unverified milestones.
+
+## Optional original PCAP provenance recheck at review (29/10/2026)
+
+When the prediction JSON was generated from a verified offline PCAP import,
+repeat the **same** three provenance arguments used by the scorer during this
+read-only review (in addition to all required arguments above):
+
+```powershell
+  --offline-import-report "C:/DA005-private/capture-001/zeek-run-001/offline_import_report.json" `
+  --expected-offline-import-report-sha256 "<independently recorded 64-character lowercase SHA-256>" `
+  --offline-import-pcap "C:/DA005-private/capture-001/input.pcap"
+```
+
+The three options are all-or-none. The verifier first checks the exact
+original PCAP, Zeek `conn.log`, separately pinned import report, flow count
+and declared CIDR. It then independently re-scores the original Zeek log and
+compares the complete saved prediction JSON. A PCAP changed **after scoring**
+causes review to fail even if the model, Zeek log and prediction JSON still
+match. The CLI prints `offline_pcap_provenance_reverified=true` only after
+both checks pass. It never modifies the originals, prediction report or SOC.
+
+The old command without these options remains compatible for Zeek logs that
+did not come from the PCAP importer. A successful optional gate proves only
+byte consistency and declared network scope, **not** capture authenticity,
+real Zeek execution, VMware isolation, test-partition exclusion, labels,
+attack detection, latency or SOC alerting. Retain all original files and
+independently recorded hashes outside Git.
+
+Synthetic/mock-only regression:
+`py -3.12 -m pytest -q tests/test_offline_pcap_report_review_gate.py`.
