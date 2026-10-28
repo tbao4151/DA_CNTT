@@ -301,3 +301,27 @@ The trace is a **one-time held-out analysis**: do not iterate model choices
 based on its false positives/false negatives and then report the same test
 set as untouched. For further tuning, collect a fresh independently labeled
 holdout. Synthetic CI fixtures demonstrate only the software contract.
+
+## Blue Team UI: read-only private held-out prediction review
+
+After running the **existing** offline experiment with `--trace-output`, start the local
+Streamlit app (`py -3.12 -m streamlit run app.py`) and navigate to **Cyber Lab · Blue Team**.
+Upload one of the original **held-out test** Zeek `conn.log` files, then optionally upload
+the private trace JSON in the research review section. Keep both files outside GitHub.
+
+The UI checks the original log SHA-256, exact UID coverage for that log, the
+private trace's declared schema, validation-selected threshold, probability/
+verdict consistency, unique SHA/UID keys and confusion totals against the
+operator-supplied labels. It shows a **read-only**, label-free list of up to 500
+research Attack candidates and their actual Zeek IP/timestamps, sorted by
+research probability. The trace may include other test captures; this view
+does **not** verify their original bytes. Uploading a trace neither fits/loads
+a model nor writes alerts, SOC cases, database rows or network traffic.
+
+A passing check only establishes **internal consistency of supplied files**.
+It cannot authenticate who trained the model, whether labels are correct, or
+whether VMware Host-only was truly isolated. It is NOT live detection and
+must not be presented as a deployed AI alert queue. The separate manual
+`Unclassified` case action still requires explicit operator confirmation and
+does not import a research AI verdict or score. Do not select thresholds or
+retrain using the untouched held-out test trace.

@@ -17,6 +17,7 @@ import streamlit as st
 
 from blue_team_ai.preview import summarize_offline_flows
 from blue_team_ai.triage import create_offline_review_case
+from blue_team_ai.trace_review import MAX_PRIVATE_TRACE_BYTES, review_private_zeek_trace
 from blue_team_ai.verified_report import export_verified_offline_case
 from blue_team_ai.zeek import MAX_LOG_BYTES, parse_zeek_conn_log
 
@@ -88,9 +89,63 @@ else:
         ]
         st.dataframe(pd.DataFrame(events[:500])[columns], use_container_width=True, hide_index=True)
         st.caption(
-            "Không có nhãn Normal/Attack, xác suất AI hoặc cảnh báo AI trên trang này. "
+            "Bảng Zeek gốc không có nhãn hoặc dự đoán AI. "
             "Cần mô hình riêng tương thích schema Zeek và dữ liệu lab có nhãn để đánh giá phát hiện."
         )
+
+
+        st.divider()
+        st.markdown("### Đối chiếu dự đoán AI nghiên cứu (chỉ đọc)")
+        st.caption(
+            "Tùy chọn nạp JSON private --trace-output được tạo từ thực nghiệm Zeek ngoại tuyến. "
+            "Đối chiếu SHA-256 và toàn bộ UID của conn.log đang mở, xác minh xác suất/ngưỡng "
+            "và số liệu nhất quán. Không huấn luyện AI, không phát cảnh báo hoặc tạo case tự động."
+        )
+        trace_upload = st.file_uploader(
+            "Tệp JSON private held-out prediction trace",
+            type=["json"],
+            key=f"cyber_trace_{summary['source_sha256']}",
+            help="Chỉ dùng file riêng tư do nhóm tự tạo; không tải lên GitHub.",
+        )
+        if trace_upload is not None:
+            if trace_upload.size > MAX_PRIVATE_TRACE_BYTES:
+                st.error("Trace JSON vượt giới hạn 16 MiB; từ chối xử lý.")
+            else:
+                try:
+                    trace_review = review_private_zeek_trace(
+                        uploaded.getvalue(), trace_upload.getvalue(),
+                    )
+                except (ValueError, TypeError, UnicodeError, OverflowError) as exc:
+                    st.error(f"Không thể đối chiếu trace nghiên cứu: {exc}")
+                else:
+                    st.warning(
+                        "Đã đối chiếu nội bộ log/trace; KHÔNG xác thực nguồn gốc mô hình, "
+                        "nhãn tấn công hoặc cô lập VMware. Đây là dự đoán held-out nghiên cứu, "
+                        "không phải phát hiện live hoặc cảnh báo SOC."
+                    )
+                    c1, c2 = st.columns(2)
+                    c1.metric("Flow khớp nguồn", trace_review["flow_count"])
+                    c2.metric("Ứng viên AI Attack (nghiên cứu)", trace_review["candidate_count"])
+                    st.caption(f"Ngưỡng validation đã khóa trong trace: {trace_review['selected_threshold']:.2f}")
+                    candidates = [
+                        {
+                            "Dòng Zeek": row["record_index"] + 1,
+                            "UID": row["uid"],
+                            "P(Attack) nghiên cứu": row["attack_probability"],
+                            "Thời gian Zeek UTC": events[row["record_index"]]["event_time_utc"],
+                            "IP nguồn": events[row["record_index"]]["src_ip"],
+                            "IP đích": events[row["record_index"]]["dst_ip"],
+                        }
+                        for row in trace_review["rows"] if row["predicted_attack"]
+                    ]
+                    if candidates:
+                        candidates.sort(key=lambda row: row["P(Attack) nghiên cứu"], reverse=True)
+                        st.dataframe(
+                            pd.DataFrame(candidates[:500]), use_container_width=True, hide_index=True,
+                        )
+                        st.caption("Tối đa 500 ứng viên; nhãn ground truth không được đưa vào bảng.")
+                    else:
+                        st.info("Không có ứng viên Attack theo ngưỡng nghiên cứu trong log này.")
 
         st.divider()
         st.markdown("### Hồ sơ điều tra thủ công (không phải cảnh báo AI)")
