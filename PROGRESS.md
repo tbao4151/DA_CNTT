@@ -1325,3 +1325,10 @@
 - Added synthetic regression tests and `docs/ZEEK_TELEMETRY_QUALITY.md` for Windows acceptance. Missing optional fields are counted, not imputed; warnings do not constitute attack labels, detection latency or proof of isolation.
 - **At authoring:** feature-head CI, PR merge, post-merge CI and student Windows/VMware acceptance are NOT verified. No change to UNSW official benchmark, SOC database, model or Red Team execution.
 - Next: verify PR-head Python 3.12.9 CI and conflict-free merge; students independently collect authorized Host-only PCAP/Zeek evidence, pin source hashes, run private quality screening and independent annotation/holdout evaluation.
+
+
+## 2026-10-29: Offline Zeek telemetry quality screen merged and CI verified (#157)
+
+- [PR #157](https://github.com/tbao4151/DA_CNTT/pull/157) squash-merged as `5cef10a9deddeea7cba83ade7eb28b610a99f4a7`. Final PR-head [Python 3.12.9 quality gates #40785698571](https://github.com/tbao4151/DA_CNTT/actions/runs/40785698571) and post-merge [main quality gates #40786278275](https://github.com/tbao4151/DA_CNTT/actions/runs/40786278275) **both passed**; PR head had **782 passed, 2 skipped, 2 pre-existing warnings**. This supersedes the earlier pending feature merge item.
+- Verified code is a read-only, private, SHA-256-pinned Zeek log quality CLI with CIDR membership, exact nine-feature schema, duplicate-UID refusal and aggregate missingness/protocol/timestamp-order summaries. Tests are synthetic, not real student captures; no inference, operational alert, SOC write or Red Team traffic.
+- Student must independently validate VMware Host-only adapter/routes, run real Zeek on an authorized genuine PCAP, record separate SHA-256 pins, then run the private quality CLI before independent annotation/host-disjoint evaluation. No genuine attack-detection metrics or Windows laptop evidence exist yet.
