@@ -200,3 +200,8 @@ export. No pickle, model file loader, new-log inference CLI, automatic SOC
 alert, network traffic or genuine detection claim is included. Record the
 printed artifact SHA-256 separately; a hash does not authenticate its author
 or independently verify labels. See [private Zeek model export](docs/ZEEK_PRIVATE_MODEL_EXPORT.md).
+
+
+## Cyber Lab — suy luận ngoại tuyến trên Zeek log MỚI (nghiên cứu)
+
+Có công cụ `scripts/score_zeek_new_log.py` sử dụng mô hình Zeek JSON đã được kiểm tra với SHA-256 **ghi độc lập** để chấm điểm một `conn.log` mới trong phạm vi CIDR Host-only khai báo. Dữ liệu đầu vào/đầu ra ở thư mục riêng ngoài Git; công cụ không đọc nhãn, không ghi SOC case, không tạo alert vận hành và không phát lưu lượng mạng. Không sử dụng lại tập TRAIN/VALIDATION/TEST để gọi là dữ liệu mới. Xem [hướng dẫn và giới hạn khoa học](docs/ZEEK_NEW_LOG_OFFLINE_INFERENCE.md). Kiểm thử synthetic/CI không chứng minh khả năng phát hiện tấn công trong VMware thực tế.
