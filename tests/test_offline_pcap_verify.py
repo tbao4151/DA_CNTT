@@ -128,9 +128,11 @@ def test_refuse_untrusted_inputs(imported, bad):
 
 
 def test_symlinked_report_refused(imported):
-    alias = imported["report"].parent / "alias"
+    alias_dir = imported["report"].parent.parent / "alias-dir"
+    alias_dir.mkdir()
+    alias = alias_dir / "offline_import_report.json"
     alias.symlink_to(imported["report"])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Symlink"):
         check(imported, report_path=alias)
 
 
