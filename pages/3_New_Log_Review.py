@@ -6,15 +6,19 @@ not create SOC cases or claim live detection, lab isolation, or label truth.
 from __future__ import annotations
 
 import sys
+import hashlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 import pandas as pd
 import streamlit as st
 
 from blue_team_ai.new_log_workspace import prepare_new_log_review
+from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
+from evaluate_zeek_lab import MAX_MANIFEST_BYTES, load_experiment_manifest
 from blue_team_ai.new_log_review import MAX_NEW_LOG_REPORT_BYTES
 from blue_team_ai.zeek import MAX_LOG_BYTES
 
@@ -24,7 +28,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.sidebar.markdown("### SENTINEL LAB / BLUE TEAM")
-st.sidebar.caption("Cyber Lab / NEW-log / Read-only")
+st.sidebar.caption("Cyber Lab / NEW-log / Pinned partitions / Read-only")
 st.sidebar.warning("Không kết nối mạng, không tạo cảnh báo hoặc SOC case.")
 st.title("Cyber Lab · NEW-log AI Review")
 st.caption("DA005 / TDTU · Verified offline inference · Analyst workspace")
@@ -35,8 +39,9 @@ st.warning(
 )
 st.info(
     "Giữ model JSON và SHA-256 được ghi độc lập trong thư mục riêng trên máy. "
-    "Dữ liệu TRAIN/VALIDATION/TEST phải được đối chiếu độc lập bằng "
-    "scripts/check_zeek_partition_exclusion.py trước khi sử dụng báo cáo này."
+    "Trang này bắt buộc đối chiếu manifest đã ghim SHA-256 với toàn bộ "
+    "TRAIN/VALIDATION/TEST gốc, gồm kiểm tra trùng flow theo UID/thời gian/5-tuple. "
+    "Đây không phải xác thực lịch sử thu thập hay nguồn gốc nhãn."
 )
 
 with st.form("pinned_new_log_review"):
@@ -60,6 +65,13 @@ with st.form("pinned_new_log_review"):
     expected_log_sha256 = col2.text_input(
         "NEW-log SHA-256 đã ghi độc lập (64 ký tự hex thường)", max_chars=64,
     )
+    manifest_path = st.text_input(
+        "Đường dẫn tuyệt đối đến manifest TRAIN/VALIDATION/TEST riêng tư",
+        placeholder="C:/DA005-private/zeek-experiment/manifest.json",
+    )
+    expected_manifest_sha256 = st.text_input(
+        "Manifest SHA-256 đã ghi độc lập (64 ký tự hex thường)", max_chars=64,
+    )
     cidr_input = st.text_input(
         "CIDR Host-only được phép (1–4 dải, ngăn cách bằng dấu phẩy)",
         placeholder="192.168.56.0/24",
@@ -67,8 +79,9 @@ with st.form("pinned_new_log_review"):
     verified = st.form_submit_button("Xác minh và xem ứng viên nghiên cứu")
 
 if verified:
-    if log_file is None or report_file is None or not model_path.strip():
-        st.error("Cần đủ log gốc, báo cáo JSON và đường dẫn model riêng tư.")
+    if (log_file is None or report_file is None or not model_path.strip()
+            or not manifest_path.strip() or not expected_manifest_sha256.strip()):
+        st.error("Cần đủ log, báo cáo, model và manifest kèm SHA-256 độc lập.")
     elif log_file.size > MAX_LOG_BYTES or report_file.size > MAX_NEW_LOG_REPORT_BYTES:
         st.error("Tệp vượt giới hạn kích thước; không xử lý.")
     else:
@@ -77,7 +90,27 @@ if verified:
             st.error("Phải khai báo từ 1 đến 4 CIDR được phép.")
         else:
             try:
-                with st.spinner("Đang đối chiếu toàn bộ dự đoán với model và log gốc..."):
+                with st.spinner("Đang xác minh manifest, phân vùng và dự đoán AI..."):
+                    manifest = Path(manifest_path.strip())
+                    if manifest.is_symlink():
+                        raise ValueError("Manifest symlink refused")
+                    manifest = manifest.resolve(strict=True)
+                    if not manifest.is_file() or manifest.is_relative_to(ROOT):
+                        raise ValueError("Manifest must be a private regular file outside Git")
+                    with manifest.open("rb") as stream:
+                        manifest_bytes = stream.read(MAX_MANIFEST_BYTES + 1)
+                    expected_manifest = expected_manifest_sha256.strip()
+                    if (not 0 < len(manifest_bytes) <= MAX_MANIFEST_BYTES
+                            or len(expected_manifest) != 64
+                            or any(ch not in "0123456789abcdef" for ch in expected_manifest)
+                            or hashlib.sha256(manifest_bytes).hexdigest() != expected_manifest):
+                        raise ValueError("Pinned manifest SHA-256 mismatch")
+                    captures, loaded_manifest_sha = load_experiment_manifest(
+                        manifest, lab_cidrs=cidrs,
+                    )
+                    if loaded_manifest_sha != expected_manifest:
+                        raise ValueError("Manifest changed during validation")
+                    dataset = build_labeled_lab_dataset(captures)
                     verified_result = prepare_new_log_review(
                         source_data=log_file.getvalue(),
                         report_data=report_file.getvalue(),
@@ -85,16 +118,24 @@ if verified:
                         expected_log_sha256=expected_log_sha256.strip(),
                         expected_model_sha256=expected_model_sha256.strip(),
                         lab_cidrs=cidrs,
+                        declared_dataset=dataset,
+                        declared_manifest_sha256=expected_manifest,
+                        declared_captures=captures,
                     )
-            except (ValueError, TypeError, OSError, UnicodeError, OverflowError, RecursionError) as exc:
-                st.error(f"Từ chối xác minh: {exc}")
+            except (ValueError, TypeError, OSError, UnicodeError, OverflowError, RecursionError):
+                st.error("Từ chối xác minh. Kiểm tra tệp và SHA-256 riêng tư trên máy; không hiển thị dữ liệu nhạy cảm.")
             else:
                 review = verified_result["review"]
-                st.success("Báo cáo khớp toàn bộ dự đoán được tính lại từ model và log đã ghim.")
+                st.success("Đã đối chiếu phân vùng khai báo và tính lại toàn bộ dự đoán từ model/log đã ghim.")
                 a, b, c = st.columns(3)
                 a.metric("Flow đã xác minh", review["flow_count"])
                 b.metric("Ứng viên nghiên cứu", review["research_candidate_count"])
                 c.metric("Flow trong cửa sổ hiển thị", verified_result["visible_flow_count"])
+                st.caption(
+                    f"Manifest SHA-256: {verified_result['declared_partition_check']['manifest_sha256']} · "
+                    "Đã kiểm tra trùng byte và UID/thời gian/5-tuple với nguồn khai báo. "
+                    "Không chứng minh lịch sử độc lập. "
+                )
                 st.caption(
                     f"Ngưỡng validation: {verified_result['validation_threshold']:.4f} · "
                     f"SHA-256 báo cáo: {review['report_sha256']} · "
@@ -112,8 +153,9 @@ if verified:
                 )
                 st.markdown("#### 3. Giới hạn bằng chứng")
                 st.warning(
-                    "TRAIN/VALIDATION/TEST exclusion: CHƯA xác minh trên trang này. "
-                    "Host-only isolation, model authorship, ground truth, attack detection: CHƯA xác minh. "
+                    "Chỉ xác minh không trùng dữ liệu trong manifest do người vận hành khai báo. "
+                    "Lịch sử phân vùng độc lập, Host-only isolation, model authorship, "
+                    "ground truth và phát hiện tấn công: CHƯA xác minh. "
                     "Muốn tạo hồ sơ Unclassified có xác nhận thủ công, dùng "
-                    "scripts/triage_zeek_new_log.py cùng manifest được ghim độc lập."
+                    "scripts/triage_zeek_new_log.py cùng manifest đã ghim."
                 )
