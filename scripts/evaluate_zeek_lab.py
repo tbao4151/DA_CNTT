@@ -187,10 +187,13 @@ def inspect_offline_experiment(
 
 def run_offline_experiment(
     manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
+    include_private_test_trace: bool = False,
 ) -> dict[str, object]:
     captures, manifest_sha256 = load_experiment_manifest(manifest_path, lab_cidrs=lab_cidrs)
     dataset = build_labeled_lab_dataset(captures)
-    report = evaluate_offline_zeek_baseline(dataset)
+    report = evaluate_offline_zeek_baseline(
+        dataset, include_private_test_trace=include_private_test_trace,
+    )
     return {
         **report,
         "input_manifest_sha256": manifest_sha256,
@@ -207,7 +210,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cidr", action="append", default=None,
                         help="Optional strict RFC1918 lab CIDR; repeat 1-4 times to screen ALL captures")
     mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument("--output", type=Path, help="New report JSON (must not exist)")
+    mode.add_argument("--output", type=Path, help="New aggregate report JSON (must not exist)")
+    mode.add_argument("--trace-output", type=Path,
+                      help="New PRIVATE held-out test prediction trace JSON (must not exist)")
     mode.add_argument("--preflight", action="store_true", help="Validate inputs and print aggregate counts; no model or file writes")
     args = parser.parse_args(argv)
     try:
@@ -215,17 +220,26 @@ def main(argv: list[str] | None = None) -> int:
         if args.preflight:
             print(json.dumps(inspect_offline_experiment(manifest, lab_cidrs=args.cidr), indent=2, ensure_ascii=False, allow_nan=False))
             return 0
-        output = args.output.resolve()
+        output = (args.trace_output or args.output).resolve()
         if not output.is_relative_to(manifest.parent) or output == manifest:
             raise ValueError("Report output must remain inside private manifest directory")
+        if args.trace_output is not None and output.is_relative_to(ROOT):
+            raise ValueError("Private prediction trace must stay outside the Git repository")
         if output.exists():
             raise FileExistsError("Report already exists; refusing overwrite")
-        report = run_offline_experiment(manifest, lab_cidrs=args.cidr)
+        report = run_offline_experiment(
+            manifest, lab_cidrs=args.cidr,
+            include_private_test_trace=args.trace_output is not None,
+        )
         payload = json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         # Exclusive creation: no partial report is written if validation or fit fails.
         with output.open("x", encoding="utf-8") as stream:
             stream.write(payload)
-        print("Offline Zeek research report written. No model, alerts or live capture created.")
+        print(
+            "Private held-out test prediction trace written; no model, alerts or live capture created."
+            if args.trace_output is not None else
+            "Offline Zeek research report written. No model, alerts or live capture created."
+        )
         return 0
     except (ValueError, OSError, UnicodeError, TypeError):
         # Do not print raw filenames, UIDs or annotation content to shared logs.

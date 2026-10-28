@@ -118,12 +118,16 @@ def _scores(labels: list[int], probabilities: np.ndarray, threshold: float) -> d
     }
 
 
-def evaluate_offline_zeek_baseline(dataset: LabeledLabDataset) -> dict[str, object]:
+def evaluate_offline_zeek_baseline(
+    dataset: LabeledLabDataset, *, include_private_test_trace: bool = False,
+) -> dict[str, object]:
     """Fit a deterministic research baseline, select on validation, evaluate held-out test.
 
     Input labels/metadata are operator-supplied and NOT authenticated here.
     Do not treat synthetic test scores as research results or deploy this model.
     """
+    if type(include_private_test_trace) is not bool:
+        raise ValueError("Expected explicit boolean private trace option")
     _validate_dataset(dataset)
     train = _frame(dataset.features["train"])
     # The imputer's medians, scaler statistics and category vocabulary are fitted
@@ -165,7 +169,7 @@ def evaluate_offline_zeek_baseline(dataset: LabeledLabDataset) -> dict[str, obje
         }
         for split in SPLITS
     }
-    return {
+    report = {
         "report_version": 4,
         "mode": "offline_labeled_zeek_research_only",
         "label_authenticity": "operator_supplied_not_verified",
@@ -195,3 +199,40 @@ def evaluate_offline_zeek_baseline(dataset: LabeledLabDataset) -> dict[str, obje
         "live_capture": False,
         "automated_alerts": False,
     }
+    if include_private_test_trace:
+        # Private, test-only event-level predictions for later manual analysis.
+        # Never mix these UIDs and independently supplied labels into the
+        # aggregate report or interpret them as authenticated ground truth.
+        flows = []
+        for meta, label, probability in zip(
+            dataset.provenance["test"], dataset.labels["test"], test_probs,
+            strict=True,
+        ):
+            attack_probability = float(probability)
+            if not math.isfinite(attack_probability) or not 0 <= attack_probability <= 1:
+                raise ValueError("Invalid model probability")
+            predicted_attack = attack_probability >= selected
+            outcome = (
+                "true_positive" if label == 1 else "false_positive"
+            ) if predicted_attack else (
+                "false_negative" if label == 1 else "true_negative"
+            )
+            flows.append({
+                "source_sha256": meta["source_sha256"],
+                "uid": meta["uid"],
+                "attack_probability": attack_probability,
+                "predicted_attack": bool(predicted_attack),
+                "operator_supplied_label": label,
+                "outcome_against_supplied_label": outcome,
+            })
+        report["private_test_trace"] = {
+            "trace_version": 1,
+            "mode": "offline_zeek_heldout_test_predictions_only",
+            "feature_schema_version": LAB_FEATURE_SCHEMA_VERSION,
+            "selected_threshold": selected,
+            "label_authenticity": "operator_supplied_not_verified",
+            "live_capture": False,
+            "automated_alerts": False,
+            "flows": flows,
+        }
+    return report

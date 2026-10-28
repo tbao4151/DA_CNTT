@@ -270,3 +270,34 @@ Keep reports in the private experiment directory. Even aggregated
 small-group counts may reveal sensitive details when combined with
 external lab notebooks. Record genuine host/scenario provenance and
 isolation evidence separately on the student Windows/VMware environment.
+
+
+## Optional private held-out prediction trace (research, not automated SOC)
+
+After **pre-registering** host-disjoint train/validation/test splits and verifying
+independent labels, the experiment can produce a **separate, opt-in private
+test-flow trace** instead of the aggregate report. It fits the same train-only
+Logistic Regression and validation-selected threshold; test labels do **not**
+influence fitting, threshold choice or predicted probabilities.
+
+~~~powershell
+py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --cidr "192.168.56.0/24" --trace-output "C:/DA005-private/zeek-experiment/private-heldout-trace.json"
+~~~
+
+The output is a **new, exclusive JSON file** within the private manifest
+directory, outside the Git repository. It contains the existing aggregate
+research report plus `private_test_trace` v1: for each held-out test flow,
+the original source SHA-256, Zeek UID, model Attack probability, fixed-threshold
+binary prediction, operator-supplied label and TP/FP/TN/FN outcome. It does not
+include raw IP addresses or private label-reference strings. UIDs and per-flow
+labels remain sensitive; **never upload this trace to public GitHub**.
+Join UID and source SHA to the original privately held conn.log for manual
+analyst review. The trace does not create SOC cases, deploy a model, verify
+ground truth, run network traffic or produce live alerts.
+
+`--trace-output`, `--output` and `--preflight` are mutually exclusive.
+Existing aggregate reports remain unchanged and contain no test-flow UIDs.
+The trace is a **one-time held-out analysis**: do not iterate model choices
+based on its false positives/false negatives and then report the same test
+set as untouched. For further tuning, collect a fresh independently labeled
+holdout. Synthetic CI fixtures demonstrate only the software contract.
