@@ -81,3 +81,22 @@ This check is distinct from the standard `tests/test_zeek_real_smoke.py` unit te
 ### First verified runner result (not student-machine acceptance)
 
 The dedicated workflow [#40765032431](https://github.com/tbao4151/DA_CNTT/actions/runs/40765032431) succeeded with actual **Zeek 9.0.1** in a network-disabled Docker container. Its `conn.log` passed the one-flow fixture identity/timestamp check. The artifact is synthetic-only and retained for seven days. This result does not replace the Linux VMware local acceptance procedure above; no genuine capture or attack detection is established.
+
+
+## Zeek → lab feature projection smoke (synthetic only)
+
+The same benign offline smoke now checks that the actual Zeek `conn.log`
+passes `extract_zeek_feature_rows` with exactly the nine v1 Zeek-lab
+features, in the declared order. Source/destination IP, UID, timestamp,
+source digest, labels and predicted verdicts are **not** model features.
+Optional Zeek measurements remain `None` when absent; they are not
+silently replaced by zero. A malformed numeric field, unexpected fixture
+flow, or schema mismatch fails the smoke instead of producing a success
+report. The CI JSON records schema version/column names and a projection
+flag, not a fabricated prediction or metric.
+
+This verifies the **telemetry-to-feature boundary** with a real Zeek binary
+in GitHub Actions (when its workflow passes). It does not fit/load an AI
+model, emit alerts, create SOC cases, authenticate genuine captures, or
+validate student VMware Host-only isolation. Run the local smoke separately
+in the Linux VM and keep the synthetic fixture out of research splits.

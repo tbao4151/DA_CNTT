@@ -7,6 +7,7 @@ on:
       - "src/blue_team_ai/zeek_smoke.py"
       - "src/blue_team_ai/offline_pcap.py"
       - "src/blue_team_ai/zeek.py"
+      - "src/blue_team_ai/features.py"
       - "src/blue_team_ai/lab_scope.py"
       - "tests/test_zeek_real_smoke.py"
   workflow_dispatch:
@@ -61,13 +62,13 @@ jobs:
           import os
           from pathlib import Path
           from blue_team_ai.lab_scope import inspect_zeek_lab_scope
-          from blue_team_ai.zeek_smoke import _verify_fixture_flow, build_benign_udp_pcap
+          from blue_team_ai.zeek_smoke import build_benign_udp_pcap, verify_fixture_feature_projection
 
           root = Path(os.environ["SMOKE_DIR"])
           pcap = root / "benign_synthetic.pcap"
           conn = root / "conn.log"
           assert pcap.read_bytes() == build_benign_udp_pcap()
-          _verify_fixture_flow(conn)
+          feature_contract = verify_fixture_feature_projection(conn)
           scope = inspect_zeek_lab_scope(conn.read_bytes(), ["192.168.56.0/24"])
           assert scope["flow_count"] == 1
           version = (root / "zeek_version.txt").read_text(encoding="utf-8").strip()
@@ -83,6 +84,7 @@ jobs:
               "flow_count": scope["flow_count"],
               "fixture_flow_identity_verified": True,
               "fixture_event_time_verified": True,
+              **feature_contract,
               "zeek_container_network_disabled": True,
               "vmware_capture_performed": False,
               "host_only_isolation_verified": False,

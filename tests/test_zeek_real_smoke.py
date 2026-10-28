@@ -70,6 +70,42 @@ def test_fixture_contract_rejects_multiple_flows(tmp_path):
         zeek_smoke._verify_fixture_flow(path)
 
 
+def test_fixture_projection_matches_separate_lab_schema_without_identity(tmp_path):
+    from blue_team_ai.features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION
+
+    path = tmp_path / "conn.log"
+    path.write_bytes(log(_fixture_row()))
+    projection = zeek_smoke.verify_fixture_feature_projection(path)
+    assert projection == {
+        "feature_schema_version": LAB_FEATURE_SCHEMA_VERSION,
+        "feature_columns": list(LAB_FEATURE_COLUMNS),
+        "feature_count": len(LAB_FEATURE_COLUMNS),
+        "feature_projection_verified": True,
+    }
+    assert not set(projection["feature_columns"]) & {
+        "uid", "src_ip", "dst_ip", "event_time_utc", "source_sha256",
+        "label", "attack_cat", "research_candidate",
+    }
+
+
+def test_fixture_projection_rejects_invalid_optional_zeek_measurement(tmp_path):
+    row = list(_fixture_row())
+    row[9] = "invalid-orig-bytes"
+    path = tmp_path / "conn.log"
+    path.write_bytes(log(tuple(row)))
+    with pytest.raises(ValueError, match="orig_bytes"):
+        zeek_smoke.verify_fixture_feature_projection(path)
+
+
+def test_fixture_projection_rejects_other_in_scope_flow(tmp_path):
+    row = list(_fixture_row())
+    row[3] = "51001"
+    path = tmp_path / "conn.log"
+    path.write_bytes(log(tuple(row)))
+    with pytest.raises(ValueError, match="fixture"):
+        zeek_smoke.verify_fixture_feature_projection(path)
+
+
 def test_benign_fixture_is_deterministic_classic_pcap_with_valid_ip_checksums():
     raw = zeek_smoke.build_benign_udp_pcap()
     assert raw == zeek_smoke.build_benign_udp_pcap()
@@ -135,6 +171,9 @@ def test_smoke_exercises_real_import_and_verifier_with_mocked_zeek(tmp_path, mon
     assert result["flow_count"] == 1
     assert result["fixture_flow_identity_verified"] is True
     assert result["fixture_event_time_verified"] is True
+    assert result["feature_projection_verified"] is True
+    assert result["feature_schema_version"] == 1
+    assert "uid" not in result["feature_columns"]
     assert result["vmware_capture_performed"] is False
     assert result["ai_scoring_performed"] is False
     assert result["host_only_isolation_verified"] is False

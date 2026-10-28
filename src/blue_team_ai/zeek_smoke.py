@@ -15,6 +15,7 @@ from pathlib import Path
 
 from .offline_pcap import _private_path, import_offline_pcap
 from .offline_pcap_verify import verify_offline_pcap_import
+from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION, extract_zeek_feature_rows
 from .zeek import load_zeek_conn_log
 
 FIXTURE_CIDR = "192.168.56.0/24"
@@ -84,6 +85,27 @@ def _verify_fixture_flow(conn_log: Path) -> None:
         raise ValueError("Zeek flow timestamp does not match synthetic PCAP")
 
 
+def verify_fixture_feature_projection(conn_log: Path) -> dict[str, object]:
+    """Check real Zeek output can enter the separate v1 lab feature contract.
+
+    This does NOT score a model, assign labels or assert an attack. Only the
+    benign, deterministic offline fixture is accepted for this smoke check.
+    """
+    _verify_fixture_flow(conn_log)
+    rows = extract_zeek_feature_rows(load_zeek_conn_log(conn_log))
+    if len(rows) != 1 or tuple(rows[0]) != LAB_FEATURE_COLUMNS:
+        raise ValueError("Zeek fixture feature schema mismatch")
+    row = rows[0]
+    if (row["proto"], row["src_port"], row["dst_port"]) != ("udp", 51000, 53000):
+        raise ValueError("Zeek fixture feature values mismatch")
+    return {
+        "feature_schema_version": LAB_FEATURE_SCHEMA_VERSION,
+        "feature_columns": list(LAB_FEATURE_COLUMNS),
+        "feature_count": len(row),
+        "feature_projection_verified": True,
+    }
+
+
 def _zeek_version() -> str:
     try:
         completed = subprocess.run(
@@ -132,7 +154,7 @@ def run_benign_zeek_smoke(
     )
     if verified["zeek_conn_sha256"] != imported["zeek_conn_sha256"]:
         raise ValueError("Offline Zeek verification mismatch")
-    _verify_fixture_flow(zeek_output / "conn.log")
+    projection = verify_fixture_feature_projection(zeek_output / "conn.log")
     result: dict[str, object] = {
         "report_version": 1,
         "source_kind": "synthetic_benign_udp_fixture",
@@ -145,6 +167,7 @@ def run_benign_zeek_smoke(
         "flow_count": imported["flow_count"],
         "fixture_flow_identity_verified": True,
         "fixture_event_time_verified": True,
+        **projection,
         "import_and_verification_succeeded": True,
         "vmware_capture_performed": False,
         "host_only_isolation_verified": False,
