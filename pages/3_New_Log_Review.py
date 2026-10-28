@@ -16,6 +16,7 @@ import pandas as pd
 import streamlit as st
 
 from blue_team_ai.new_log_workspace import prepare_new_log_review
+from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
 from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
 from evaluate_zeek_lab import MAX_MANIFEST_BYTES, load_experiment_manifest
 from blue_team_ai.new_log_review import MAX_NEW_LOG_REPORT_BYTES
@@ -76,6 +77,20 @@ with st.form("pinned_new_log_review"):
         "CIDR Host-only được phép (1–4 dải, ngăn cách bằng dấu phẩy)",
         placeholder="192.168.56.0/24",
     )
+    st.markdown("##### Tùy chọn: đối chiếu PCAP gốc đã import offline")
+    offline_import_report_path = st.text_input(
+        "Đường dẫn offline_import_report.json riêng tư",
+        placeholder="C:/DA005-private/capture/zeek-run/offline_import_report.json",
+    )
+    offline_import_report_sha256 = st.text_input(
+        "SHA-256 báo cáo import đã ghi độc lập (64 ký tự hex thường)", max_chars=64,
+    )
+    offline_import_pcap_path = st.text_input(
+        "Đường dẫn PCAP gốc riêng tư",
+        placeholder="C:/DA005-private/capture/original.pcap",
+    )
+    st.caption("Để trống cả ba trường nếu không có PCAP gốc. Khi sử dụng phải điền đủ; "
+               "cả lúc xem và lúc ghi SOC đều xác minh lại PCAP/conn.log.")
     verified = st.form_submit_button("Xác minh và xem ứng viên nghiên cứu")
 
 if verified:
@@ -117,6 +132,27 @@ if st.session_state.get("new_log_verified", False):
                     if loaded_manifest_sha != expected_manifest:
                         raise ValueError("Manifest changed during validation")
                     dataset = build_labeled_lab_dataset(captures)
+                    pcap_options = (
+                        offline_import_report_path.strip(),
+                        offline_import_report_sha256.strip(),
+                        offline_import_pcap_path.strip(),
+                    )
+                    if any(pcap_options) and not all(pcap_options):
+                        raise ValueError("All three pinned PCAP fields are required")
+                    pinned_pcap = None
+                    if all(pcap_options):
+                        import_report = Path(pcap_options[0])
+                        pinned_pcap = verify_offline_pcap_import(
+                            import_report,
+                            expected_report_sha256=pcap_options[1],
+                            pcap_path=Path(pcap_options[2]),
+                            log_path=import_report.parent / "conn.log",
+                            lab_cidrs=cidrs,
+                        )
+                        if (pinned_pcap["zeek_conn_sha256"] != expected_log_sha256.strip()
+                                or hashlib.sha256(log_file.getvalue()).hexdigest()
+                                != pinned_pcap["zeek_conn_sha256"]):
+                            raise ValueError("Uploaded Zeek log differs from pinned PCAP import")
                     verified_result = prepare_new_log_review(
                         source_data=log_file.getvalue(),
                         report_data=report_file.getvalue(),
@@ -148,6 +184,11 @@ if st.session_state.get("new_log_verified", False):
                     f"SHA-256 báo cáo: {review['report_sha256']} · "
                     f"SHA-256 phạm vi CIDR: {verified_result['declared_scope_sha256']}"
                 )
+                if pinned_pcap is not None:
+                    st.caption("PCAP gốc/Zeek/import report: SHA-256 và CIDR đã kiểm tra lại. "
+                               "Không chứng minh nguồn thu thập hoặc cô lập VMware.")
+                else:
+                    st.caption("PCAP gốc: chưa xác minh (không khai báo provenance).")
                 st.markdown("#### 2. Ứng viên AI để nhà phân tích xem xét")
                 rows = verified_result["candidate_rows"]
                 if rows:
@@ -204,6 +245,9 @@ if st.session_state.get("new_log_verified", False):
                                 analyst_confirmed=analyst_confirmed,
                                 operator_confirmed_authorized=operator_confirmed_authorized,
                                 operator_confirmed_new_capture=operator_confirmed_new_capture,
+                                offline_import_report_path=(pcap_options[0] or None),
+                                offline_import_report_sha256=(pcap_options[1] or None),
+                                offline_import_pcap_path=(pcap_options[2] or None),
                             )
                         except (ValueError, TypeError, OSError, UnicodeError, OverflowError, RecursionError):
                             st.error(
