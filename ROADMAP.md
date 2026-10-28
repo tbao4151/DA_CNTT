@@ -384,3 +384,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head PR CI before merging the private adjudication finalizer; see PROGRESS for feature status. It accepts only a separately SHA-pinned, fully manually decided worksheet, rejects changed original reviewer labels and writes a new annotation-v1 beside the private log without touching existing labels.
 - [ ] Student must complete genuine Host-only capture and independent annotations, document scenario evidence for each disputed UID, record worksheet/output hashes outside Git and run finalization plus annotation verifier on Windows Python 3.12.9. Agreement and evidence references are not proof of ground truth.
 - [ ] Freeze host/session-disjoint TRAIN/VALIDATION/TEST, evaluate the separate Zeek model on actual labeled captures, measure event-to-alert latency, and connect approved AI candidates to SOC. Keep Dataset Mode benchmark unchanged and active Red Team traffic disabled.
+
+
+## Cyber Lab — verified private adjudication finalization (28/10/2026)
+
+- [x] [PR #125](https://github.com/tbao4151/DA_CNTT/pull/125) merged after final-head [CI #40708581003](https://github.com/tbao4151/DA_CNTT/actions/runs/40708581003) passed (665 passed, 2 skipped, 2 warnings). The earlier pending feature checklist above is superseded by this verified record; only a private manual-review annotation-v1 converter is complete.
+- [ ] Student manually adjudicates all disputed UIDs against independently retained scenario evidence and verifies a newly SHA-pinned annotation-v1 on Windows Python 3.12.9. An unresolved disagreement must block finalization; private labels and evidence remain outside Git.
+- [ ] Capture genuine authorized VMware Host-only logs, freeze independent TRAIN/VALIDATION/TEST partitions, evaluate separate Zeek AI on external labels, and measure event-to-alert latency. Do not claim actual attack detection from synthetic CI or activate Red Team network scenarios yet.
