@@ -71,8 +71,11 @@ def test_missing_original_capture_or_mismatched_new_bytes_fails_closed(tmp_path)
             new_capture_sha256=hashlib.sha256(new.read_bytes()).hexdigest(),
             declared_captures=captures,
         )
-    with pytest.raises(ValueError, match="do not cover"):
+    with pytest.raises(ValueError, match="Invalid pinned flow identity"):
         _verify(manifest, dataset, model, new.read_bytes(), captures[:2])
+    mismatched = [*captures[:2], {**captures[2], "log_bytes": captures[1]["log_bytes"]}]
+    with pytest.raises(ValueError, match="differs from validated dataset"):
+        _verify(manifest, dataset, model, new.read_bytes(), mismatched)
     with pytest.raises(ValueError, match="Invalid pinned flow identity"):
         verify_declared_partition_exclusion(
             model, dataset,
