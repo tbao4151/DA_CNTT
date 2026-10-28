@@ -1035,3 +1035,11 @@
 - **At authoring:** PR CI, merge and real Windows/VMware acceptance are not yet verified. Verify the final PR-head CI and merge only if successful. Students must independently record the inventory hash and run the verifier on a genuine authorized Host-only capture, retaining originals privately.
 
 - **Verified and merged:** [PR #117](https://github.com/tbao4151/DA_CNTT/pull/117) squash-merged as `bebe6601c249ca12d64b05c15d38cbc837c642fd`. Final PR-head [quality gates #40689613894](https://github.com/tbao4151/DA_CNTT/actions/runs/40689613894) passed Ubuntu Python 3.12.9 with **620 passed, 2 skipped, 2 warnings**. Post-merge main [quality gates #40689948085](https://github.com/tbao4151/DA_CNTT/actions/runs/40689948085) also passed with the same counts. These are synthetic tests, not Windows/VMware acceptance.
+
+
+## 2026-10-28 — Zeek cross-capture normalized flow reuse guard (feature PR; verification pending)
+
+- Inspected current `main` at `27ee9976818c20c39b09992a22ef21f09ea1985a`, README, PROGRESS, ROADMAP, repository tree, recent green Actions and zero open PRs before editing. The prior pinned capture inventory PR #117 and documentation PR #118 were merged.
+- Reused one conservative normalized UID/time/five-tuple identity helper in the existing NEW-log partition guard and the offline labeled dataset builder. Re-encoded copies of a flow in distinct declared captures now fail before model training, including when raw SHA-256 differs. Existing cross-split host/session and label checks remain.
+- Added synthetic regression for cross-split and within-split duplicate identities, legitimate UID reuse at different timestamps, and CLI preflight/fit fail-closed behavior. Updated the offline experiment runbook.
+- **At feature-branch authoring:** GitHub PR CI and merge are not yet verified. No student Windows/VMware Host-only experiment, authenticated labels, true event-to-alert latency, live traffic, operational alert or new official UNSW-NB15 benchmark is claimed.
