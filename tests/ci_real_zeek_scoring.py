@@ -87,7 +87,9 @@ def validate_ci_synthetic_case(
         or len(events) != 1
         or not isinstance(events[0], dict)
         or events[0].get("new_state") != "New"
-        or events[0].get("case_id") != case["case_id"]
+        or events[0].get("old_state") is not None
+        or type(events[0].get("event_id")) is not int
+        or events[0]["event_id"] < 1
     ):
         failed = {
             "type": export.get("report_type") != "DA005 educational SOC case",
@@ -112,7 +114,9 @@ def validate_ci_synthetic_case(
             "audit_count": len(events) != 1,
             "audit_event": not events or not isinstance(events[0], dict)
                 or events[0].get("new_state") != "New"
-                or events[0].get("case_id") != case.get("case_id"),
+                or events[0].get("old_state") is not None
+                or type(events[0].get("event_id")) is not int
+                or events[0]["event_id"] < 1,
         }
         raise ValueError(
             "Synthetic SOC case must remain unclassified and auditable; invalid fields: "
