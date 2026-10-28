@@ -343,3 +343,109 @@ def test_preflight_and_fit_refuse_reencoded_cross_split_flow_reuse(tmp_path):
     assert not output.exists()
     assert "192.168.56" not in evaluated.stderr
     assert str(manifest) not in evaluated.stderr
+
+
+def _pin_annotation_files(manifest):
+    """Freeze exact annotation bytes, independently of the Zeek source hashes."""
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    for entry in spec["captures"]:
+        label_path = manifest.parent / entry["labels_path"]
+        entry["labels_sha256"] = hashlib.sha256(label_path.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    return spec
+
+
+def test_strict_annotation_pins_require_every_capture_before_preflight_or_fit(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    output = manifest.parent / "should-not-exist.json"
+    base = [sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+            "--manifest", str(manifest), "--require-label-sha256"]
+    for args in (["--preflight"], ["--output", str(output)]):
+        result = subprocess.run(base + args, capture_output=True, text=True, check=False)
+        assert result.returncode == 1
+        assert "192.168.56." not in result.stderr
+        assert not output.exists()
+    assert load_experiment_manifest(manifest)[0]  # legacy manifest remains supported
+    with pytest.raises(ValueError, match="requires labels_sha256"):
+        load_experiment_manifest(manifest, require_label_sha256=True)
+
+
+def test_pinned_annotation_bytes_are_checked_before_fit_and_report(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    _pin_annotation_files(manifest)
+    preflight = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--require-label-sha256", "--preflight",
+    ], capture_output=True, text=True, check=False)
+    assert preflight.returncode == 0, preflight.stderr
+    summary = json.loads(preflight.stdout)
+    assert summary["all_annotation_sha256_pins_required"] is True
+    assert summary["annotation_chain_verified"] is False
+    assert summary["label_truth_verified"] is False
+    output = manifest.parent / "pinned-report.json"
+    run = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--require-label-sha256",
+        "--output", str(output),
+    ], capture_output=True, text=True, check=False)
+    assert run.returncode == 0, run.stderr
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["all_annotation_sha256_pins_required"] is True
+    assert report["annotation_chain_verified"] is False
+    assert report["test_metrics"]["support"] == 2
+
+
+def test_changed_annotation_bytes_fail_even_when_source_hash_and_uids_match(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    _pin_annotation_files(manifest)
+    label_path = manifest.parent / "host-2-labels.json"
+    before = label_path.read_bytes()
+    labels = json.loads(before)
+    labels["labels_by_uid"] = {"N2": 1, "A2": 0}
+    label_path.write_text(json.dumps(labels), encoding="utf-8")
+    with pytest.raises(ValueError, match="Annotation file SHA-256 mismatch"):
+        load_experiment_manifest(manifest, require_label_sha256=True)
+    output = manifest.parent / "must-not-exist.json"
+    result = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--require-label-sha256",
+        "--output", str(output),
+    ], capture_output=True, text=True, check=False)
+    assert result.returncode == 1
+    assert not output.exists()
+    assert "N2" not in result.stderr and "192.168.56." not in result.stderr
+    # Byte-exact pinning also catches harmless formatting changes.
+    label_path.write_bytes(before + b" ")
+    with pytest.raises(ValueError, match="Annotation file SHA-256 mismatch"):
+        load_experiment_manifest(manifest)
+
+
+def test_malformed_or_partial_annotation_pins_are_rejected(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    spec = _pin_annotation_files(manifest)
+    spec["captures"][0]["labels_sha256"] = "BAD"
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    with pytest.raises(ValueError, match="Expected lowercase SHA-256"):
+        load_experiment_manifest(manifest)
+    spec["captures"][0].pop("labels_sha256")
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    # Mixed legacy/pinned entries are allowed only without strict opt-in.
+    assert load_experiment_manifest(manifest)[0]
+    with pytest.raises(ValueError, match="requires labels_sha256"):
+        load_experiment_manifest(manifest, require_label_sha256=True)
+
+
+def test_repinning_changed_labels_does_not_authenticate_ground_truth(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    spec = _pin_annotation_files(manifest)
+    label_path = manifest.parent / "host-1-labels.json"
+    labels = json.loads(label_path.read_text(encoding="utf-8"))
+    labels["labels_by_uid"] = {"N1": 1, "A1": 0}
+    label_path.write_text(json.dumps(labels), encoding="utf-8")
+    spec["captures"][1]["labels_sha256"] = hashlib.sha256(label_path.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    from evaluate_zeek_lab import inspect_offline_experiment
+    summary = inspect_offline_experiment(manifest, require_label_sha256=True)
+    assert summary["structural_validation_passed"] is True
+    assert summary["annotation_chain_verified"] is False
+    assert summary["label_truth_verified"] is False
