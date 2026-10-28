@@ -232,3 +232,12 @@ và tải JSON snapshot cục bộ. Không cần nạp lại model/log để đ�
 không tạo case, sửa trạng thái, xác nhận tấn công hoặc phát lưu lượng. Xem
 [quy trình Windows và giới hạn](docs/ZEEK_NEW_LOG_BLUE_TEAM_UI.md).
 Kết quả CI synthetic không thay thế thí nghiệm VMware Host-only của nhóm.
+
+### Offline integrity check for private Windows host preflight
+
+After collecting the read-only host network snapshot, separately record the
+inventory SHA-256 in a private notebook, then run
+`scripts/verify_windows_host_network.py --report <private-host-network-preflight.json> --expected-report-sha256 <independent-sha256>`.
+See [Windows host preflight instructions](docs/WINDOWS_HOST_NETWORK_PREFLIGHT.md).
+This verifies only original file integrity, **not** VMware isolation, attack
+detection, or student-laptop acceptance. Do not commit private host outputs.

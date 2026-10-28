@@ -55,3 +55,31 @@ not count as a real Windows/VMware acceptance run.
 ```powershell
 py -3.12 -m pytest -q tests/test_windows_host_preflight.py
 ```
+
+## Independently pinned offline integrity verification
+
+Immediately after collecting the original host snapshot, record the SHA-256 of
+`host-network-preflight.json` **independently in your private dated notebook**.
+This pin is not a signature and cannot authenticate the operator, but it
+prevents a later modified report from being silently accepted.
+
+```powershell
+Get-FileHash "C:/DA005-private/capture-001/host-preflight/host-network-preflight.json" -Algorithm SHA256
+py -3.12 scripts/verify_windows_host_network.py `
+  --report "C:/DA005-private/capture-001/host-preflight/host-network-preflight.json" `
+  --expected-report-sha256 "<SHA256_FROM_PRIOR_PRIVATE_NOTEBOOK>"
+```
+
+The verifier works offline on Windows or Linux, reads only the original JSON
+and the three exact filenames from the same private folder, rejects missing,
+modified, oversized, symlinked, unpinned, or invalid evidence, and writes
+nothing. It does **not** rerun diagnostics, interpret network routes or prove
+Host-only isolation. Never publish the originals, hashes associated with
+private systems, or host inventory in the public repository.
+
+```powershell
+py -3.12 -m pytest -q tests/test_windows_host_preflight_verify.py
+```
+
+Software tests use synthetic Windows command output; passing tests do not
+constitute acceptance on the student's Windows laptop.

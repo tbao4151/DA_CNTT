@@ -1012,3 +1012,10 @@
 
 - [PR #113](https://github.com/tbao4151/DA_CNTT/pull/113) was squash-merged to `main` at `7a81bc531a725898bedcd8570c2e6b1a1cbae205` after its **final-head** [CI #40682056972](https://github.com/tbao4151/DA_CNTT/actions/runs/40682056972) passed: **586 passed, 2 skipped, 2 warnings** on Ubuntu 24.04 / Python 3.12.9. The post-merge main run #40682389167 was queued when this note was written; it must be checked separately.
 - The new command is read-only Windows host network evidence capture with mock-based CI tests. No student Windows run, VMware isolation validation, Zeek capture, labels, model evaluation or SOC operational alert is claimed. Original host diagnostics are sensitive and must remain private outside Git.
+
+## 2026-10-28 — Pinned private Windows host preflight integrity verification (feature branch; CI pending)
+
+- Inspected main at `17dd56cd0d879facda61d28cca7978c4eec53bb5`, README/PROGRESS/ROADMAP, tree, existing Windows host preflight and capture inventory, recent green Actions and no open PRs before this slice.
+- Added `src/blue_team_ai/host_preflight_verify.py`, `scripts/verify_windows_host_network.py` and synthetic regression `tests/test_windows_host_preflight_verify.py`: independently pinned report SHA-256, bounded strict JSON schema, original exact-file digest/size verification and fail-closed private paths. Purely offline read-only; no Windows commands, network, VMware changes, inference, SOC writes or alert.
+- At feature-branch creation **PR CI and merge are not yet verified**. No real student Windows/VMware execution, physical isolation, independent attack labels or detection performance is claimed. The inventory itself remains operator-controlled and unauthenticated.
+- Student must independently pin the report hash in a private notebook, verify original host outputs and inspect each guest adapter/route manually; then collect genuine Zeek capture evidence and run separate labeled evaluation.
