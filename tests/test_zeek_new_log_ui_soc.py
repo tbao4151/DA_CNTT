@@ -68,13 +68,17 @@ def test_ui_write_requires_all_attestations(tmp_path, missing):
 
 
 def test_ui_write_reloads_model_and_manifest_instead_of_trusting_preview(tmp_path):
-    args = _ui_args(tmp_path)
+    first = tmp_path / "first"
+    first.mkdir()
+    args = _ui_args(first)
     args["model_path"].write_text('{"tampered":true}', encoding="utf-8")
     with pytest.raises(ValueError, match="SHA-256"):
         create_ui_candidate_case(**args)
     assert not args["db_path"].exists()
 
-    args = _ui_args(tmp_path)
+    second = tmp_path / "second"
+    second.mkdir()
+    args = _ui_args(second)
     args["manifest_path"].write_bytes(args["manifest_path"].read_bytes() + b" ")
     with pytest.raises(ValueError, match="manifest SHA-256"):
         create_ui_candidate_case(**args)
