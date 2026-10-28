@@ -28,11 +28,17 @@ def imported(tmp_path, monkeypatch):
         assert argv == ["zeek", "-r", str(pcap)]
         (Path(kwargs["cwd"]) / "conn.log").write_bytes(log(VALUES))
         return SimpleNamespace(returncode=0)
+    real_run = subprocess.run
     monkeypatch.setattr(offline_pcap.subprocess, "run", fake_zeek)
     destination = tmp_path / "zeek-output"
-    offline_pcap.import_offline_pcap(
-        pcap, destination, lab_cidrs=CIDR, operator_confirmed_offline=True,
-    )
+    try:
+        offline_pcap.import_offline_pcap(
+            pcap, destination, lab_cidrs=CIDR, operator_confirmed_offline=True,
+        )
+    finally:
+        # offline_pcap.subprocess is the global subprocess module. Restore
+        # run before exercising the real CLI in a child Python interpreter.
+        monkeypatch.setattr(offline_pcap.subprocess, "run", real_run)
     report = destination / "offline_import_report.json"
     return {
         "pcap": pcap,
