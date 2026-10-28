@@ -132,7 +132,7 @@ def test_symlinked_report_refused(imported):
     alias_dir.mkdir()
     alias = alias_dir / "offline_import_report.json"
     alias.symlink_to(imported["report"])
-    with pytest.raises(ValueError, match="Symlink"):
+    with pytest.raises(ValueError, match="symlink"):
         check(imported, report_path=alias)
 
 
