@@ -769,3 +769,13 @@
 - Opt-in research-only SHA-256 source+Zeek-UID idempotency key is stored in a lazily created SQLite table; an immediate write transaction serializes concurrent lookup/insert. Repeated validated clicks (even if a different consistent research trace is supplied) return the first Unclassified case without duplicating its initial audit. Ordinary manual case creation remains non-deduplicated; Dataset Mode benchmark/DB semantics unchanged.
 - New regression tests use **synthetic Zeek fixtures**, not genuine Windows VMware captures. This change does not authenticate labels, traces or model training, perform inference, produce automatic alerts, or generate traffic. Student Windows/VMware Host-only acceptance and real detection evidence remain unverified.
 - Next: collect authorized Host-only Zeek logs with independently documented labels and preserved source hashes, run private held-out trace review once, and verify duplicate-click behavior on Windows. Never treat a held-out research trace as an operational AI alert.
+
+
+## 2026-10-28: Private held-out trace source-set guard (feature PR, verification pending)
+
+- Read current main `a21de0598af53a47125ebd2cea3ac31174ff5c8d`, PR #80 merged, no open PRs; latest relevant PR/main quality gates passed. No student Windows/VMware evidence verified.
+- Hardened `src/blue_team_ai/trace_review.py`: the private research trace must match the declared held-out test source SHA-256 set and total flow count from the aggregate experiment provenance, with strict schema/count validation. The original supplied log is still matched by SHA-256 and exact UID coverage.
+- Updated synthetic fixtures and regression cases for missing/forged sources, duplicate source, incorrect counts and schema mismatch; documented the research-only limitation.
+- **At writing:** feature PR CI, merge and Windows acceptance have not been verified. This is internal consistency, not a signed model, authenticated labels, genuine VMware capture, real attack detection or operational AI alert. Dataset Mode and Red Team remain unchanged.
+
+- First PR CI [#40628483916](https://github.com/tbao4151/DA_CNTT/actions/runs/40628483916) **failed** (1 failed, 427 passed, 2 skipped): a synthetic test changed the original capture and trace digest but not the newly required aggregate test provenance digest. Updated that test fixture in follow-up commit; final-head CI must pass before merge.

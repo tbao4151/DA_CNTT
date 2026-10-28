@@ -138,3 +138,36 @@ def test_no_database_or_artifact_written(tmp_path):
     review_private_zeek_trace(raw, _encode(report))
     after = sorted(str(p.relative_to(tmp_path)) for p in tmp_path.rglob("*"))
     assert before == after
+
+
+@pytest.mark.parametrize("mutation", [
+    "missing_provenance", "wrong_source", "wrong_flow_count",
+    "duplicate_source", "bool_flow_count", "wrong_feature_schema",
+])
+def test_private_trace_requires_aggregate_heldout_provenance(tmp_path, mutation):
+    raw, report = _fixture(tmp_path)
+    test = report["provenance"]["test"]
+    if mutation == "missing_provenance":
+        report.pop("provenance")
+    elif mutation == "wrong_source":
+        test["source_sha256"] = ["0" * 64]
+    elif mutation == "wrong_flow_count":
+        test["flows"] += 1
+    elif mutation == "duplicate_source":
+        test["source_sha256"].append(test["source_sha256"][0])
+    elif mutation == "bool_flow_count":
+        test["flows"] = True
+    elif mutation == "wrong_feature_schema":
+        report["feature_schema_version"] = -1
+    with pytest.raises(ValueError):
+        review_private_zeek_trace(raw, _encode(report))
+
+
+def test_private_trace_accepts_genuine_synthetic_experiment_provenance(tmp_path):
+    raw, report = _fixture(tmp_path)
+    test = report["provenance"]["test"]
+    assert test["flows"] == len(report["private_test_trace"]["flows"])
+    assert test["source_sha256"] == [hashlib.sha256(raw).hexdigest()]
+    reviewed = review_private_zeek_trace(raw, _encode(report))
+    assert reviewed["source_join_verified"] is True
+    assert reviewed["model_provenance_authenticated"] is False

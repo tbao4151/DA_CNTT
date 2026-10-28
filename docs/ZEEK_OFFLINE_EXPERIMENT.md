@@ -360,3 +360,21 @@ the workflow on Windows with independently annotated, authorized VMware
 Host-only evidence; synthetic CI does not replace that acceptance test.
 
 Developer regression: `py -3.12 -m pytest -q tests/test_zeek_research_triage.py`.
+
+
+## Private trace source-set consistency (28/10/2026)
+
+The read-only Blue Team private trace reviewer now rejects a report unless its
+held-out `provenance.test.source_sha256` list matches **exactly** the source
+SHA-256 set in the private per-flow trace and its declared test flow count
+matches the number of trace rows. The report and trace feature schema versions
+must also agree with the supported Zeek feature contract. This prevents a
+self-consistent trace for a different test source from silently appearing under
+an unrelated experiment's aggregate provenance. Existing private trace files
+created by the official v4 experiment CLI already contain these fields.
+
+This is **internal consistency only**: the JSON, labels, model-training claims,
+source collection context and physical Host-only isolation are not
+cryptographically authenticated. The reviewer still checks original bytes and
+UIDs for only the supplied log, not other test captures. Do not infer real
+attack detection or operational alerts from this check.
