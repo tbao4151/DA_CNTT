@@ -1084,6 +1084,6 @@
 
 ## 2026-10-28 — Private Zeek adjudication finalization (feature branch; verification pending)
 
-- Read current main at \`fb3cfe8433cd38202ab184d2cc4ea3c533910eb6\`, README/PROGRESS/ROADMAP, repository tree, existing independent agreement and private disagreement workflow, open PRs (none), and recent green Actions (#40703530003 main; #40704016957 documentation PR). This is a follow-up to merged PR #123/#124, not a parallel duplicate.
+- Read current main at `fb3cfe8433cd38202ab184d2cc4ea3c533910eb6`, README/PROGRESS/ROADMAP, repository tree, existing independent agreement and private disagreement workflow, open PRs (none), and recent green Actions (#40703530003 main; #40704016957 documentation PR). This is a follow-up to merged PR #123/#124, not a parallel duplicate.
 - Added an opt-in offline finalization path for a manually completed, independently SHA-pinned private worksheet. It rebuilds the original UID disagreement template from the pinned log and two reviewer annotations, rejects changed reviewer labels, extra UIDs, unresolved decisions, missing evidence references, and writes a **new private annotation-v1** file only after explicit operator confirmation. The original inputs, manifest, model, benchmark and SQLite remain unchanged.
 - Added synthetic regression tests and Windows instructions. **At feature authoring**, CI, merge and student Windows/VMware execution are not yet verified. The new binary annotation is not authenticated attack ground truth; manual evidence and preregistered independent holdout are still mandatory.
