@@ -59,6 +59,73 @@ def _private_db(path: Path, inputs: set[Path]) -> Path:
     return resolved
 
 
+
+def create_ui_candidate_case(
+    *, db_path: str | Path, model_path: str | Path,
+    manifest_path: str | Path, expected_manifest_sha256: str,
+    source_data: bytes, report_data: bytes,
+    expected_log_sha256: str, expected_model_sha256: str,
+    lab_cidrs: list[str], record_index: int,
+    analyst_confirmed: bool, operator_confirmed_authorized: bool,
+    operator_confirmed_new_capture: bool,
+) -> int:
+    """UI write boundary: reload pinned private evidence, then manual SOC triage.
+
+    A prior UI preview is never sufficient authorization or partition evidence.
+    No socket access, auto-alert, or confirmed attack classification.
+    """
+    if not all((
+        analyst_confirmed is True, operator_confirmed_authorized is True,
+        operator_confirmed_new_capture is True,
+    )):
+        raise ValueError("All three explicit analyst attestations are required")
+    if not isinstance(source_data, bytes) or not 0 < len(source_data) <= MAX_LOG_BYTES:
+        raise ValueError("Invalid bounded original Zeek log")
+    if not isinstance(report_data, bytes) or not 0 < len(report_data) <= MAX_NEW_LOG_REPORT_BYTES:
+        raise ValueError("Invalid bounded original prediction report")
+    if (
+        not isinstance(expected_log_sha256, str)
+        or len(expected_log_sha256) != 64
+        or any(c not in "0123456789abcdef" for c in expected_log_sha256)
+        or hashlib.sha256(source_data).hexdigest() != expected_log_sha256
+    ):
+        raise ValueError("Original NEW-log SHA-256 does not match independent reference")
+
+    model_file = _private_file(Path(model_path))
+    manifest_file = _private_file(Path(manifest_path))
+    if model_file == manifest_file:
+        raise ValueError("Model and manifest must be distinct private files")
+    database = _private_db(Path(db_path), {model_file, manifest_file})
+    manifest_bytes = _read_bounded(manifest_file, MAX_MANIFEST_BYTES)
+    if (
+        not 0 < len(manifest_bytes) <= MAX_MANIFEST_BYTES
+        or not isinstance(expected_manifest_sha256, str)
+        or len(expected_manifest_sha256) != 64
+        or any(c not in "0123456789abcdef" for c in expected_manifest_sha256)
+        or hashlib.sha256(manifest_bytes).hexdigest() != expected_manifest_sha256
+    ):
+        raise ValueError("Pinned manifest SHA-256 mismatch at SOC write boundary")
+    captures, manifest_sha = load_experiment_manifest(
+        manifest_file, lab_cidrs=lab_cidrs,
+    )
+    if manifest_sha != expected_manifest_sha256:
+        raise ValueError("Manifest changed during SOC write validation")
+    dataset = build_labeled_lab_dataset(captures)
+    model = load_pinned_zeek_research_model(
+        model_file, expected_sha256=expected_model_sha256,
+    )
+    return create_new_log_candidate_case(
+        database, source_data=source_data, model=model,
+        report_data=report_data, expected_log_sha256=expected_log_sha256,
+        model_sha256=expected_model_sha256, lab_cidrs=lab_cidrs,
+        record_index=record_index, analyst_confirmed=analyst_confirmed,
+        operator_confirmed_authorized=operator_confirmed_authorized,
+        operator_confirmed_new_capture=operator_confirmed_new_capture,
+        declared_dataset=dataset, declared_manifest_sha256=manifest_sha,
+        declared_captures=captures,
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", type=Path, required=True)
