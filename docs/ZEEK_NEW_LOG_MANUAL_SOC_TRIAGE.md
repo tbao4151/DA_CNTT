@@ -102,7 +102,7 @@ For a stronger **software-enforced exact-byte non-reuse check**, append the
 following pair to **both** the listing and manual case commands above:
 
 ```powershell
-  --manifest "C:/DA005-private/zeek-experiment/manifest.json" \`
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" `
   --expected-manifest-sha256 "<INDEPENDENTLY_RECORDED_MANIFEST_SHA256>"
 ```
 
