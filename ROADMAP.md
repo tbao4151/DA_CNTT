@@ -280,6 +280,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — pinned offline batch runtime measurement (28/10/2026)
 
-- [ ] Validate PR CI and merge the read-only NEW-log batch scoring runtime benchmark; record verified Actions and keep official Dataset Mode and Red Team safe-off unchanged. See `docs/ZEEK_NEW_LOG_RUNTIME_BENCHMARK.md`.
+- [x] [PR #105](https://github.com/tbao4151/DA_CNTT/pull/105) merged with final-head [CI #40665921468](https://github.com/tbao4151/DA_CNTT/actions/runs/40665921468) and post-merge main [CI #40666245219](https://github.com/tbao4151/DA_CNTT/actions/runs/40666245219) passed (558 passed, 2 skipped, 2 existing warnings on PR). Keep official Dataset Mode and Red Team safe-off unchanged. See `docs/ZEEK_NEW_LOG_RUNTIME_BENCHMARK.md`.
 - [ ] Student collects genuine authorized VMware Host-only Zeek captures and independently pinned model/manifest/log SHA-256; runs benchmark on Windows Python 3.12.9 with documented hardware, Zeek version and capture duration. Store outputs privately and distinguish synthetic CI from student measurements.
 - [ ] Only after verified real capture and independent labels, design event arrival/ingest/alert timestamp instrumentation to measure actual end-to-end detection latency. Offline batch runtime is not detection latency or operational throughput.
