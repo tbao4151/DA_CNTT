@@ -146,9 +146,9 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"record_index={index} probability={row['attack_probability']:.8f}")
             print("research_candidate_count_total=" + str(review["research_candidate_count"]))
             if declared_dataset is not None:
-                print("Pinned declared-partition exact-byte and normalized flow "
-                      "identity non-reuse checked; historical/semantic "
-                      "independence NOT verified.")
+                print("Pinned declared-partition exact-byte non-reuse checked; "
+                      "normalized UID/time/five-tuple identity overlap checked; "
+                      "historical/semantic independence NOT verified.")
             else:
                 print("Declared TEST exclusion NOT checked; operator attestation only.")
             print("No SOC write, operational alert, or real detection verified.")
