@@ -1,7 +1,6 @@
-"""Local, read-only review of independently pinned NEW Zeek log predictions.
+"""Offline pinned NEW-log review with optional explicit manual SOC triage.
 
-Separate from held-out research trace review and Dataset Mode. This page does
-not create SOC cases or claim live detection, lab isolation, or label truth.
+No live detection, automatic alerts, lab isolation or ground-truth claim.
 """
 from __future__ import annotations
 
@@ -21,6 +20,7 @@ from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
 from evaluate_zeek_lab import MAX_MANIFEST_BYTES, load_experiment_manifest
 from blue_team_ai.new_log_review import MAX_NEW_LOG_REPORT_BYTES
 from blue_team_ai.zeek import MAX_LOG_BYTES
+from triage_zeek_new_log import create_ui_candidate_case
 
 st.set_page_config(page_title="DA005 | New-log Review", page_icon=None, layout="wide")
 st.markdown(
@@ -28,8 +28,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.sidebar.markdown("### SENTINEL LAB / BLUE TEAM")
-st.sidebar.caption("Cyber Lab / NEW-log / Pinned partitions / Read-only")
-st.sidebar.warning("Không kết nối mạng, không tạo cảnh báo hoặc SOC case.")
+st.sidebar.caption("Cyber Lab / NEW-log / Pinned partitions / Manual SOC")
+st.sidebar.warning("Offline; chỉ tạo SOC case Unclassified khi nhà phân tích xác nhận.")
 st.title("Cyber Lab · NEW-log AI Review")
 st.caption("DA005 / TDTU · Verified offline inference · Analyst workspace")
 st.warning(
@@ -79,14 +79,20 @@ with st.form("pinned_new_log_review"):
     verified = st.form_submit_button("Xác minh và xem ứng viên nghiên cứu")
 
 if verified:
+    st.session_state["new_log_verified"] = True
+
+if st.session_state.get("new_log_verified", False):
     if (log_file is None or report_file is None or not model_path.strip()
             or not manifest_path.strip() or not expected_manifest_sha256.strip()):
+        st.session_state["new_log_verified"] = False
         st.error("Cần đủ log, báo cáo, model và manifest kèm SHA-256 độc lập.")
     elif log_file.size > MAX_LOG_BYTES or report_file.size > MAX_NEW_LOG_REPORT_BYTES:
+        st.session_state["new_log_verified"] = False
         st.error("Tệp vượt giới hạn kích thước; không xử lý.")
     else:
         cidrs = [part.strip() for part in cidr_input.split(",") if part.strip()]
         if not 1 <= len(cidrs) <= 4:
+            st.session_state["new_log_verified"] = False
             st.error("Phải khai báo từ 1 đến 4 CIDR được phép.")
         else:
             try:
@@ -123,6 +129,7 @@ if verified:
                         declared_captures=captures,
                     )
             except (ValueError, TypeError, OSError, UnicodeError, OverflowError, RecursionError):
+                st.session_state["new_log_verified"] = False
                 st.error("Từ chối xác minh. Kiểm tra tệp và SHA-256 riêng tư trên máy; không hiển thị dữ liệu nhạy cảm.")
             else:
                 review = verified_result["review"]
@@ -149,13 +156,71 @@ if verified:
                     st.info("Không có ứng viên trong 500 dòng Zeek đầu.")
                 st.caption(
                     "Chỉ hiển thị ứng viên thuộc 500 dòng đầu, sắp xếp theo xác suất. "
-                    "Không hiển thị ground truth; không ghi SQLite hoặc tạo alert."
+                    "Không hiển thị ground truth; không tự tạo alert."
                 )
-                st.markdown("#### 3. Giới hạn bằng chứng")
+                st.markdown("#### 3. Tạo hồ sơ SOC thủ công (tùy chọn)")
+                st.caption(
+                    "Chỉ ứng viên trong 500 dòng đầu; Zeek row là vị trí gốc, "
+                    "không phải thứ tự bảng sau khi sắp xếp. "
+                    "Khi ghi, hệ thống tải lại model/manifest gốc và xác minh "
+                    "toàn bộ phân vùng, CIDR, báo cáo trước SQLite."
+                )
+                if rows:
+                    with st.form("manual_new_log_soc_case"):
+                        labels = [
+                            f"Zeek row {row['Zeek row']} · P(Attack) {row['P(Attack) research']:.4f}"
+                            for row in rows
+                        ]
+                        selected = st.selectbox("Chọn ứng viên đã xem xét", labels)
+                        db_path = st.text_input(
+                            "SQLite SOC riêng tư ngoài Git (.sqlite3)",
+                            placeholder="C:/DA005-private/soc/cyber_lab_cases.sqlite3",
+                        )
+                        analyst_confirmed = st.checkbox(
+                            "Tôi đã xem log gốc và bằng chứng của flow này."
+                        )
+                        operator_confirmed_authorized = st.checkbox(
+                            "Tôi xác nhận có quyền sử dụng dữ liệu và phạm vi lab."
+                        )
+                        operator_confirmed_new_capture = st.checkbox(
+                            "Tôi xác nhận NEW log không thuộc TRAIN/VALIDATION/TEST đã đăng ký."
+                        )
+                        submitted = st.form_submit_button(
+                            "Tạo hoặc tái sử dụng hồ sơ Unclassified"
+                        )
+                    if submitted:
+                        try:
+                            case_id = create_ui_candidate_case(
+                                db_path=db_path.strip(),
+                                model_path=model_path.strip(),
+                                manifest_path=manifest_path.strip(),
+                                expected_manifest_sha256=expected_manifest_sha256.strip(),
+                                source_data=log_file.getvalue(),
+                                report_data=report_file.getvalue(),
+                                expected_log_sha256=expected_log_sha256.strip(),
+                                expected_model_sha256=expected_model_sha256.strip(),
+                                lab_cidrs=cidrs,
+                                record_index=rows[labels.index(selected)]["Zeek row"] - 1,
+                                analyst_confirmed=analyst_confirmed,
+                                operator_confirmed_authorized=operator_confirmed_authorized,
+                                operator_confirmed_new_capture=operator_confirmed_new_capture,
+                            )
+                        except (ValueError, TypeError, OSError, UnicodeError, OverflowError, RecursionError):
+                            st.error(
+                                "Từ chối ghi SOC. Kiểm tra lại xác nhận, model, manifest, "
+                                "log, CIDR và đường dẫn SQLite riêng tư; không có kết luận tấn công."
+                            )
+                        else:
+                            st.success(
+                                f"SOC case #{case_id} (Unclassified). "
+                                "Có thể là hồ sơ đã tồn tại; không xác nhận tấn công."
+                            )
+                else:
+                    st.info("Không có ứng viên đủ điều kiện tạo hồ sơ trong 500 dòng đầu.")
+                st.markdown("#### 4. Giới hạn bằng chứng")
                 st.warning(
-                    "Chỉ xác minh không trùng dữ liệu trong manifest do người vận hành khai báo. "
-                    "Lịch sử phân vùng độc lập, Host-only isolation, model authorship, "
-                    "ground truth và phát hiện tấn công: CHƯA xác minh. "
-                    "Muốn tạo hồ sơ Unclassified có xác nhận thủ công, dùng "
-                    "scripts/triage_zeek_new_log.py cùng manifest đã ghim."
+                    "Chỉ kiểm tra dữ liệu trong manifest do người vận hành khai báo. "
+                    "Lịch sử phân vùng độc lập, cô lập VMware, nguồn gốc model, "
+                    "ground truth và phát hiện tấn công thực tế: CHƯA xác minh. "
+                    "Hồ sơ SOC là nghiên cứu thủ công, không phải operational alert."
                 )
