@@ -84,7 +84,16 @@ def ensure_case_db(path: str | Path) -> None:
         )""")
 
 
-def create_case(path: str | Path, *, row: dict, verdict: str, confidence: float | None) -> int:
+def create_case(
+    path: str | Path, *, row: dict, verdict: str, confidence: float | None,
+    creation_note: str | None = None,
+) -> int:
+    # Existing callers retain the original empty analyst_note and default event.
+    # Explicit research triage may atomically attach a bounded initial audit note.
+    if creation_note is not None and (
+        not isinstance(creation_note, str) or not 0 < len(creation_note.strip()) <= 2000
+    ):
+        raise ValueError("Creation note must be 1..2000 non-whitespace characters")
     ensure_case_db(path)
     if verdict not in ("Attack", "Normal", "Unclassified"):
         raise ValueError("Invalid verdict")
@@ -103,15 +112,15 @@ def create_case(path: str | Path, *, row: dict, verdict: str, confidence: float 
     now = datetime.now(timezone.utc).isoformat()
     with sqlite3.connect(path) as conn:
         cursor = conn.execute(
-            """INSERT INTO cases (flow_id,verdict,confidence,evidence_json,created_at,updated_at)
-               VALUES (?,?,?,?,?,?)""",
-            (flow_id(row), verdict, confidence, json.dumps(evidence), now, now),
+            """INSERT INTO cases (flow_id,verdict,confidence,analyst_note,evidence_json,created_at,updated_at)
+               VALUES (?,?,?,?,?,?,?)""",
+            (flow_id(row), verdict, confidence, creation_note.strip() if creation_note else "", json.dumps(evidence), now, now),
         )
         case_id = int(cursor.lastrowid)
         conn.execute(
             """INSERT INTO case_events (case_id,old_state,new_state,note,created_at)
                VALUES (?,?,?,?,?)""",
-            (case_id, None, "New", "Case created from selected flow", now),
+            (case_id, None, "New", creation_note.strip() if creation_note else "Case created from selected flow", now),
         )
         return case_id
 
