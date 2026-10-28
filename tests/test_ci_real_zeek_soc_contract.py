@@ -29,7 +29,7 @@ def _case():
             ),
         },
         "flow_evidence": {"source_sha256": "a" * 64, "uid": "fixture-uid"},
-        "case_events": [{"case_id": 1, "new_state": "New"}],
+        "case_events": [{"event_id": 1, "old_state": None, "new_state": "New"}],
     }
 
 
@@ -52,7 +52,7 @@ def test_ci_synthetic_manual_soc_contract_accepts_unclassified_case():
     (("flow_evidence", "source_sha256"), "0" * 64),
     (("flow_evidence", "label"), 1),
     (("case_events", 0, "new_state"), "Escalated"),
-    (("case_events", 0, "case_id"), 999),
+    (("case_events", 0, "event_id"), True),
 ])
 def test_ci_synthetic_manual_soc_contract_rejects_invalid_claims(path, value):
     report = copy.deepcopy(_case())
