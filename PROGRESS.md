@@ -810,3 +810,10 @@
 - Added `src/blue_team_ai/trusted_model.py`: bounded 2 MiB read-only loader, explicit independently recorded lowercase SHA-256 comparison **before parsing**, strict JSON duplicate-key/NaN/UTF-8 rejection and existing exact artifact/schema validation. Added `scripts/verify_zeek_model.py` for private Windows verification and synthetic regression tests.
 - This is a **byte-integrity gate against an independently pinned reference**, not digital signing or authorship verification. No fresh-log inference, test scoring, automatic AI alerts, SOC writes, network traffic, Red Team execution, or UNSW benchmark changes.
 - At writing, feature PR CI/merge/post-merge CI and student Windows/VMware acceptance remain unverified. Next: verify CI before merge; student preserves original Host-only captures, independent labels and model digest outside Git; next slice can add bounded **new-log offline inference** using this gate, without tuning on held-out TEST.
+
+
+## 2026-10-28: Pinned private Zeek JSON verifier merged, CI verified (#85)
+
+- [PR #85](https://github.com/tbao4151/DA_CNTT/pull/85) squash-merged as `5721004aa3e233fe6f1e2bbf24967cd31cb5a7df`. Final-head [PR CI #40633769315](https://github.com/tbao4151/DA_CNTT/actions/runs/40633769315) and [post-merge main CI #40633974947](https://github.com/tbao4151/DA_CNTT/actions/runs/40633974947) both **passed** on Ubuntu Python 3.12.9; PR CI: **461 passed, 2 skipped, 2 warnings** (existing pandas FutureWarnings).
+- The verifier requires an **independently pinned** exact SHA-256 and checks bytes before strict, bounded, duplicate-key-rejecting JSON/schema parsing. Read-only CLI is private/offline. All new tests are synthetic software regressions, not real Zeek detection evidence.
+- Still **not verified**: student Windows/VMware Host-only run, independent labels, authentic model authorship, model generalization, new-log inference, operational AI alerts, or Red Team traffic. The model checksum is not a signature. No official UNSW-NB15 changes.
