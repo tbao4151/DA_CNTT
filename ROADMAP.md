@@ -199,3 +199,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #83](https://github.com/tbao4151/DA_CNTT/pull/83) merged: TRAIN-only Zeek Logistic Regression JSON research export with validation-locked threshold, fitted numeric/categorical parameters, explicit CIDR gate and SHA-256 output. Final PR-head [CI #40630943857](https://github.com/tbao4151/DA_CNTT/actions/runs/40630943857) and post-merge [CI #40631126434](https://github.com/tbao4151/DA_CNTT/actions/runs/40631126434) passed (442 passed, 2 skipped). Synthetic tests only; see `docs/ZEEK_PRIVATE_MODEL_EXPORT.md`.
 - [ ] Student Windows/VMware Host-only acceptance: collect authorized raw logs, independently document labels and isolation, run export outside Git, preserve artifact SHA-256 and private evidence. GitHub synthetic CI is not proof of genuine attack detection.
 - [ ] Later add independently pinned SHA-256 loader and bounded inference on **new** Zeek logs, then SOC alert controls and latency measurement. Do not treat held-out TEST predictions or this research artifact as a trusted operational detector.
+
+
+## Cyber Lab — independently pinned private Zeek model verifier (28/10/2026)
+
+- [ ] Feature PR pending verification: SHA-256-pinned, bounded, strict JSON-only loader and read-only verification CLI, with synthetic tests. See `src/blue_team_ai/trusted_model.py` and `docs/ZEEK_PRIVATE_MODEL_EXPORT.md`. Mark complete only after PR CI passes and merge is confirmed.
+- [ ] Student Windows/VMware Host-only verification: preserve independent model SHA-256, original authorized Zeek logs, label records and isolation screenshots; run the verifier locally. Passing a digest does not authenticate model authorship or detection quality.
+- [ ] Future: bounded inference on **new** privately collected Zeek logs with scope check, explicit research-only output and no automatic SOC alerts until genuine independent evaluation.

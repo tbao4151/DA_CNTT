@@ -53,3 +53,33 @@ Never tune the locked threshold on held-out TEST.
 If writing is interrupted, the newly created output may be incomplete.
 The CLI never silently overwrites it: inspect the file, preserve any evidence
 needed, and select a **different new output path** for another run.
+
+
+## Independently pinned private model verifier (28/10/2026)
+
+After exporting a private JSON model, preserve the printed SHA-256 in a
+**separate trusted experiment notebook or record**, not in the model's folder
+as a self-asserted source of truth. Verify on Windows before any future scoring:
+
+```powershell
+py -3.12 scripts/verify_zeek_model.py `
+  --model "C:/DA005-private/zeek-experiment/zeek-research-model.json" `
+  --expected-sha256 "<64 lowercase hex digits recorded independently>"
+```
+
+The read-only verifier refuses missing/incorrect digests, direct symlinks,
+non-regular files, files larger than 2 MiB, duplicate JSON keys (including
+nested duplicates), non-standard NaN/Infinity, invalid UTF-8 and incompatible
+artifact schemas. It checks SHA-256 **before JSON parsing**. The model must
+remain outside the Git repository. No pickle/joblib is loaded, no traffic
+is scored and no alert/SOC record is created. This is a prerequisite for
+future *offline new-log inference*, **not** that inference itself.
+
+A checksum comparison only binds the bytes to the independently supplied
+digest; it does not authenticate the original exporter or prevent someone
+who can replace both the file and the independent record from forging it.
+The directory containing the model must be trusted, particularly on Windows
+where a filesystem race or parent-directory junction is not fully prevented
+by the direct-symlink check. The independent label provenance, actual Host-only
+isolation, authorization, held-out evaluation and Windows acceptance are still
+required. Synthetic CI tests are not genuine attack-detection evidence.
