@@ -421,6 +421,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — offline classic PCAP import (28/10/2026)
 
-- [ ] Verify PR/CI for the bounded offline classic PCAP -> Zeek `conn.log` import tool and synthetic tests; see `PROGRESS.md` for merge status. No active traffic, live capture, AI scoring or SOC write.
+- [x] PR #131 merged after successful PR CI (run 40728220108, 698 passed, 2 skipped): bounded offline classic PCAP -> Zeek `conn.log` importer and synthetic tests. Main CI run 40728824378 was still pending when documented; see `PROGRESS.md`. No active traffic, live capture, AI scoring or SOC write.
 - [ ] Run `scripts/import_offline_pcap.py` with a **genuine authorized** classic PCAP inside a Linux VM with Zeek installed; archive original PCAP, `conn.log`, both SHA-256 values, Zeek version, VMware Host-only adapter/route screenshots and session notes outside Git. The tool's CIDR screening does not prove physical isolation or authenticity.
 - [ ] Validate the resulting Zeek flow schema against existing offline Blue Team pipeline and independently annotated labels before making any detection claim. Preserve official UNSW-NB15 benchmark.
