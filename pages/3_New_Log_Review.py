@@ -224,3 +224,83 @@ if st.session_state.get("new_log_verified", False):
                     "ground truth và phát hiện tấn công thực tế: CHƯA xác minh. "
                     "Hồ sơ SOC là nghiên cứu thủ công, không phải operational alert."
                 )
+
+
+# Independent read-only SOC history browser: works without re-uploading the
+# model or original Zeek capture. No state transition or case creation here.
+import json
+import sqlite3
+from blue_team_ai.case_workspace import list_private_zeek_cases, read_private_zeek_case
+
+st.markdown("#### 5. Hồ sơ SOC nghiên cứu đã lưu (chỉ đọc)")
+with st.expander("Xem bằng chứng và lịch sử điều tra từ SQLite riêng tư"):
+    st.caption(
+        "Chỉ đọc hồ sơ Zeek Unclassified trong cơ sở dữ liệu cục bộ ngoài Git. "
+        "Không chỉnh sửa trạng thái, không xác thực tấn công và không tạo alert. "
+        "Chỉ mở Streamlit trên máy tin cậy: hồ sơ có thể chứa IP và ghi chú riêng tư."
+    )
+    viewer_db = st.text_input(
+        "Đường dẫn tuyệt đối tới SQLite SOC riêng tư (.sqlite3)",
+        placeholder="C:/DA005-private/soc/cyber_lab_cases.sqlite3",
+        key="zeek_soc_viewer_db_input",
+    )
+    if st.button("Đọc danh sách hồ sơ đã lưu", key="zeek_soc_viewer_load"):
+        st.session_state["zeek_soc_viewer_active_db"] = viewer_db.strip()
+    active_db = st.session_state.get("zeek_soc_viewer_active_db")
+    if active_db:
+        try:
+            case_index = list_private_zeek_cases(active_db)
+            if not case_index["cases"]:
+                st.info("Không có hồ sơ Zeek Unclassified phù hợp trong phạm vi đọc.")
+            else:
+                st.dataframe(
+                    pd.DataFrame(case_index["cases"]),
+                    hide_index=True, use_container_width=True,
+                )
+                if case_index["limited"]:
+                    st.caption(
+                        "Danh sách giới hạn 100 hồ sơ Zeek gần nhất, "
+                        "quét tối đa 500 hồ sơ Unclassified; không phải toàn bộ DB."
+                    )
+                case_ids = [item["case_id"] for item in case_index["cases"]]
+                selected_case_id = st.selectbox(
+                    "Chọn hồ sơ để xem bằng chứng và audit",
+                    case_ids, format_func=lambda value: f"SOC case #{value}",
+                    key="zeek_soc_viewer_case_id",
+                )
+                snapshot = read_private_zeek_case(active_db, selected_case_id)
+                st.caption(
+                    f"Case #{selected_case_id} · "
+                    f"Trạng thái: {snapshot['case']['state']} · "
+                    "Unclassified (chưa xác minh tấn công)"
+                )
+                st.markdown("**Bằng chứng network flow lưu trong case**")
+                st.json(snapshot["flow_evidence"])
+                st.markdown("**Lịch sử audit (theo event ID)**")
+                if snapshot["case_events"]:
+                    st.dataframe(
+                        pd.DataFrame(snapshot["case_events"]),
+                        hide_index=True, use_container_width=True,
+                    )
+                else:
+                    st.info("Hồ sơ này chưa có sự kiện audit.")
+                if snapshot["history_truncated"]:
+                    st.warning("Chỉ hiển thị 200 sự kiện audit mới nhất.")
+                st.caption(
+                    "Bản xuất JSON chỉ là snapshot SQLite có thể sửa đổi, "
+                    "không có chữ ký số hoặc bảo đảm pháp chứng."
+                )
+                st.download_button(
+                    "Tải JSON hồ sơ nghiên cứu (riêng tư)",
+                    data=(json.dumps(
+                        snapshot, indent=2, ensure_ascii=False, allow_nan=False,
+                    ) + "\n").encode("utf-8"),
+                    file_name=f"zeek-research-case-{selected_case_id}.json",
+                    mime="application/json",
+                    key="zeek_soc_viewer_download",
+                )
+        except (ValueError, OSError, sqlite3.DatabaseError, TypeError):
+            st.error(
+                "Không thể đọc hồ sơ SOC riêng tư. Kiểm tra tệp SQLite hiện có, "
+                "quyền truy cập và định dạng; hệ thống không tạo database mới."
+            )
