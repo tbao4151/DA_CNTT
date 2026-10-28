@@ -1006,3 +1006,9 @@
 - Refuses non-Windows execution, missing explicit CLI confirmation, failed/oversized outputs, existing files and in-repository destinations. Tests use mocked synthetic command output; **no student's laptop or VMware capture was tested**.
 - CI and merge status **not yet verified** at time of this entry. Do not treat this as evidence of Host-only isolation, authorization, correct labels or AI attack detection.
 - Next: inspect PR CI, merge only on a green final head, then have the student run the CLI on Windows 3.12.9, independently inspect each guest adapter/route, and archive the original private evidence.
+
+
+## 2026-10-28 — Windows host preflight feature verified and merged
+
+- [PR #113](https://github.com/tbao4151/DA_CNTT/pull/113) was squash-merged to `main` at `7a81bc531a725898bedcd8570c2e6b1a1cbae205` after its **final-head** [CI #40682056972](https://github.com/tbao4151/DA_CNTT/actions/runs/40682056972) passed: **586 passed, 2 skipped, 2 warnings** on Ubuntu 24.04 / Python 3.12.9. The post-merge main run #40682389167 was queued when this note was written; it must be checked separately.
+- The new command is read-only Windows host network evidence capture with mock-based CI tests. No student Windows run, VMware isolation validation, Zeek capture, labels, model evaluation or SOC operational alert is claimed. Original host diagnostics are sensitive and must remain private outside Git.
