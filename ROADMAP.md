@@ -560,3 +560,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify both full Python 3.12.9 quality gates and dedicated real-Zeek workflow on the **final** [PR #151](https://github.com/tbao4151/DA_CNTT/pull/151) head before conflict-free merge. The new CI stage uses the actual offline importer with a `-r`-only network-disabled Zeek 9.0.1 Docker proxy, then re-verifies the imported `conn.log` and nine-feature projection; synthetic-only evidence, not a lab experiment.
 - [ ] Student runs `scripts/smoke_zeek_offline.py` using installed Zeek inside Linux VMware and archives PCAP, `conn.log`, import report, Zeek version, checksums and screenshots privately. Independently inspect Host-only adapter and routes before any genuine capture.
 - [ ] Obtain independently documented, authorized VMware Host-only PCAP with session/host-disjoint labels; evaluate Zeek-specific model Precision/Recall/FPR and event-to-SOC latency. Do not report synthetic smoke as attack detection; preserve UNSW benchmark and leave active Red Team disabled.
+
+
+## Cyber Lab — real Zeek production importer CI verified (29/10/2026)
+
+- [x] [PR #151](https://github.com/tbao4151/DA_CNTT/pull/151) merged after final-head [real Zeek CI #40773929990](https://github.com/tbao4151/DA_CNTT/actions/runs/40773929990) and [full quality gates #40773928870](https://github.com/tbao4151/DA_CNTT/actions/runs/40773928870) passed. This supersedes the pending merge item above. Actual `import_offline_pcap` ran with Zeek 9.0.1 inside a network-disabled container and produced independently verified **synthetic-only** log evidence.
+- [ ] Student executes installed Zeek in a Linux VMware VM and saves local private evidence, then verifies actual Host-only adapter/routes and collects a separately authorized genuine PCAP. CI evidence is not laptop evidence.
+- [ ] Evaluate independently labeled, host/session-disjoint lab data and measure model accuracy and event-to-SOC latency. No claim of real attack detection, operational alerting or Red Team active traffic is supported by the synthetic CI check.

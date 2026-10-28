@@ -137,3 +137,18 @@ student-machine acceptance, VMware isolation, real attack ground truth,
 model inference, automatic alerting, SOC case creation, or detection latency.
 No active Red Team traffic is generated. The local CLI and official
 UNSW-NB15 benchmark remain unchanged.
+
+
+### Verified production importer execution on CI (29 October 2026)
+
+The final [PR #151](https://github.com/tbao4151/DA_CNTT/pull/151)
+head passed both the
+[actual Zeek 9.0.1 importer workflow](https://github.com/tbao4151/DA_CNTT/actions/runs/40773929990)
+and the
+[Python 3.12.9 quality gates](https://github.com/tbao4151/DA_CNTT/actions/runs/40773928870)
+before merge. The real offline importer generated `conn.log` from the
+deterministic synthetic PCAP using the network-disabled container and
+passed the offline import verifier plus nine-feature contract.
+This is **GitHub Linux CI only**: no student Windows/VMware run, actual
+Host-only capture, attack detection, independently labeled evaluation,
+AI alert, or SOC case is established.
