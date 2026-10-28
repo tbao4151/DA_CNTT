@@ -777,3 +777,5 @@
 - Hardened `src/blue_team_ai/trace_review.py`: the private research trace must match the declared held-out test source SHA-256 set and total flow count from the aggregate experiment provenance, with strict schema/count validation. The original supplied log is still matched by SHA-256 and exact UID coverage.
 - Updated synthetic fixtures and regression cases for missing/forged sources, duplicate source, incorrect counts and schema mismatch; documented the research-only limitation.
 - **At writing:** feature PR CI, merge and Windows acceptance have not been verified. This is internal consistency, not a signed model, authenticated labels, genuine VMware capture, real attack detection or operational AI alert. Dataset Mode and Red Team remain unchanged.
+
+- First PR CI [#40628483916](https://github.com/tbao4151/DA_CNTT/actions/runs/40628483916) **failed** (1 failed, 427 passed, 2 skipped): a synthetic test changed the original capture and trace digest but not the newly required aggregate test provenance digest. Updated that test fixture in follow-up commit; final-head CI must pass before merge.
