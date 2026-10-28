@@ -997,3 +997,12 @@
 - [PR #111](https://github.com/tbao4151/DA_CNTT/pull/111) squash-merged as `b858b15c67842ea8fad80adfa4e4348a5bf91992`. Final-head [PR CI #40677916507](https://github.com/tbao4151/DA_CNTT/actions/runs/40677916507) **passed** on Ubuntu Python 3.12.9: **579 passed, 2 skipped, 2 existing pandas warnings**. Post-merge main CI [#40678349785](https://github.com/tbao4151/DA_CNTT/actions/runs/40678349785) was queued when this note was drafted; verify its final result separately.
 - The independent Blue Team viewer opens only an existing private offline Zeek Unclassified SQLite case DB in read-only mode, bounds the index/history, displays stored flow evidence and audit, and exports a private JSON snapshot. No case/DB writes, model changes, operational alerts, traffic or change to official UNSW benchmark.
 - Synthetic regression and GitHub CI are **not** student Windows/VMware Host-only acceptance. Private capture provenance, physical isolation, independently verified attack labels and detection latency remain unverified. The exported snapshot is mutable SQLite evidence, not signed forensic proof.
+
+
+## 2026-10-28 — Windows host network preflight evidence (feature PR; CI pending)
+
+- Added `src/blue_team_ai/windows_host_preflight.py`, `scripts/record_windows_host_network.py`, `tests/test_windows_host_preflight.py`, and `docs/WINDOWS_HOST_NETWORK_PREFLIGHT.md`. This is a **read-only Windows host configuration snapshot**, not packet capture or proof of VMware isolation.
+- Only three local, allowlisted diagnostics are invoked with `shell=False`: `ipconfig /all`, `route print -4`, and `netsh interface ipv4 show interfaces`. Original outputs stay outside Git in an explicitly selected private directory; a bounded SHA-256 JSON inventory does not embed addresses or hostnames.
+- Refuses non-Windows execution, missing explicit CLI confirmation, failed/oversized outputs, existing files and in-repository destinations. Tests use mocked synthetic command output; **no student's laptop or VMware capture was tested**.
+- CI and merge status **not yet verified** at time of this entry. Do not treat this as evidence of Host-only isolation, authorization, correct labels or AI attack detection.
+- Next: inspect PR CI, merge only on a green final head, then have the student run the CLI on Windows 3.12.9, independently inspect each guest adapter/route, and archive the original private evidence.
