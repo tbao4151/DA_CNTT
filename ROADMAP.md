@@ -511,3 +511,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify PR-head CI and merge the fixture-flow guard. Require exactly one parsed UDP flow with the generated PCAP's addresses, ports and first-packet timestamp; reject unrelated in-scope Zeek logs. Tests use synthetic/mock Zeek only.
 - [ ] Student runs the offline smoke with an installed real Zeek in a Linux VM and records `smoke_report.json`, Zeek version, original PCAP/conn.log and SHA-256 privately. This checks local binary decoding, **not** genuine Host-only capture or attack detection.
 - [ ] Collect authorized, independently labeled Host-only captures separately; establish holdout metrics and end-to-end event-to-SOC latency before claiming real-world attack detection.
+
+
+## Cyber Lab — exact synthetic Zeek fixture-flow gate verified (29/10/2026)
+
+- [x] [PR #145](https://github.com/tbao4151/DA_CNTT/pull/145) merged; final-head [CI #40761458458](https://github.com/tbao4151/DA_CNTT/actions/runs/40761458458) and post-merge [main CI #40762224232](https://github.com/tbao4151/DA_CNTT/actions/runs/40762224232) succeeded (**750 passed, 2 skipped, 2 existing warnings**). This supersedes the earlier pending merge item. CI used mocked Zeek.
+- [ ] Student runs installed Zeek with `scripts/smoke_zeek_offline.py` on a Linux VM and archives the private fixture PCAP, Zeek `conn.log`, version, reports and checksums. This is only synthetic benign toolchain acceptance, not actual VMware capture or attack detection.
+- [ ] Independently validate real authorized Host-only capture and labels, then measure held-out Zeek AI precision/recall/FPR and end-to-end alert/SOC latency before making operational claims.

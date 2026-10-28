@@ -1223,3 +1223,10 @@
 - Strengthened the opt-in synthetic smoke to **fail closed** unless the parsed Zeek `conn.log` contains exactly one flow matching the generated PCAP's source/destination IPs, UDP ports, protocol and first-packet UTC timestamp (1 ms tolerance). Previously, a different in-CIDR Zeek log could pass the import hashes and scope checks. This validates the specific fixture, not only file self-consistency.
 - Added synthetic regression cases for mismatched in-scope addresses, ports, protocol, timestamp and duplicate flows; updated the mocked-Zeek success fixture and private runbook. Success report now explicitly records the fixture identity/time checks.
 - **CI/PR and merge pending at feature authoring.** No actual Zeek binary or student Windows/VMware experiment was run; these tests use mocked Zeek. No new attack detection, independent labels, real capture, live alerts or measured latency. Official UNSW benchmark, existing model/cases and Red Team traffic unchanged.
+
+
+## 2026-10-29 — Exact synthetic Zeek fixture-flow gate merged and CI verified
+
+- [PR #145](https://github.com/tbao4151/DA_CNTT/pull/145) squash-merged as `417ac21d85c9e62b518cdcf1cea93cd3359e6651` after final-head [CI #40761458458](https://github.com/tbao4151/DA_CNTT/actions/runs/40761458458) passed: **750 passed, 2 skipped, 2 existing warnings**, Ubuntu Python 3.12.9. Post-merge [main CI #40762224232](https://github.com/tbao4151/DA_CNTT/actions/runs/40762224232) also succeeded. This supersedes the pending feature-authoring note.
+- The smoke now rejects a `conn.log` whose single flow does not match the generated PCAP's IP/UDP-port/protocol/first timestamp, even when the log is within the declared CIDR. This guards against falsely accepting an unrelated file; CI tests use **mocked Zeek**, not an installed real binary.
+- No laptop/VMware test, real Zeek acceptance, capture provenance, attack labels, AI detection, SOC alert latency, or physical Host-only isolation has been verified. No official UNSW benchmark, model, case, or active Red Team change.
