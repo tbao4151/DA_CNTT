@@ -100,7 +100,7 @@ def create_new_log_candidate_case(
             if declared_dataset is not None else
             "TRAIN/VALIDATION/TEST exclusion is an operator attestation only. "
         )
-        + "Authorization, Host-only isolation and ground truth remain unverified."
+        + "Authorization, Host-only isolation and ground truth are unverified."
     )
     # Share the existing research idempotency namespace: one source+UID should
     # never produce two research cases, even across held-out/new-log workflows.
