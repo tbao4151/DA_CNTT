@@ -391,3 +391,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #125](https://github.com/tbao4151/DA_CNTT/pull/125) merged after final-head [CI #40708581003](https://github.com/tbao4151/DA_CNTT/actions/runs/40708581003) passed (665 passed, 2 skipped, 2 warnings). The earlier pending feature checklist above is superseded by this verified record; only a private manual-review annotation-v1 converter is complete.
 - [ ] Student manually adjudicates all disputed UIDs against independently retained scenario evidence and verifies a newly SHA-pinned annotation-v1 on Windows Python 3.12.9. An unresolved disagreement must block finalization; private labels and evidence remain outside Git.
 - [ ] Capture genuine authorized VMware Host-only logs, freeze independent TRAIN/VALIDATION/TEST partitions, evaluate separate Zeek AI on external labels, and measure event-to-alert latency. Do not claim actual attack detection from synthetic CI or activate Red Team network scenarios yet.
+
+
+## Cyber Lab — verify finalized private labels before independent evaluation (28/10/2026)
+
+- [ ] Verify final-head PR CI and merge the offline read-only five-input final-label chain verifier; implementation and synthetic tests are on a feature branch. Check `PROGRESS.md` and GitHub Actions for the final status. It does not authenticate attacks or create new labels.
+- [ ] Student runs `scripts/verify_zeek_final_labels.py` on Windows Python 3.12.9 with a genuinely authorized Host-only `conn.log`, two independently annotated originals, completed manually adjudicated worksheet, finalized annotation, and five independently recorded SHA-256 values. Keep all five private files and the aggregate output outside Git.
+- [ ] Pre-register and freeze host/session-disjoint TRAIN/VALIDATION/TEST; independently verify scenario evidence and actual lab isolation, then evaluate the Zeek model on held-out real captures with FPR/Recall and event-to-alert latency. Do not use synthetic CI or reviewer agreement as ground truth. Leave Dataset Mode benchmark and active Red Team traffic unchanged.
