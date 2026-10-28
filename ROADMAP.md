@@ -248,3 +248,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #97](https://github.com/tbao4151/DA_CNTT/pull/97) merged the conservative UID/UTC timestamp/five-tuple overlap screen against original pinned TRAIN/VALIDATION/TEST captures in read-only preflight and manual SOC case write path. Final-head [CI #40652526062](https://github.com/tbao4151/DA_CNTT/actions/runs/40652526062) and post-merge main [CI #40652861554](https://github.com/tbao4151/DA_CNTT/actions/runs/40652861554) passed (519 passed, 2 skipped on PR). Synthetic-only; not semantic non-reuse or genuine detection evidence.
 - [ ] Student verifies on Windows with real authorized Host-only Zeek captures, original private annotated manifest, independently pinned hashes, physical isolation evidence and manual SOC audit. Synthetic CI is not an experiment on the student laptop.
 - [ ] Continue independent labeled holdout evaluation and measured latency before considering explicitly gated operational AI alerts. Do not activate Red Team traffic on the strength of a digest or identity match check.
+
+
+## Cyber Lab — pinned NEW-log Blue Team read-only UI (28/10/2026)
+
+- [ ] Verify PR/main CI for the separate `pages/3_New_Log_Review.py` interface: strict independently SHA-pinned model, source/report recomputation, authorized CIDR, bounded candidate table, synthetic regression and no automatic case write. See PROGRESS for status.
+- [ ] Student tests the page on Windows Python 3.12.9 using genuine authorized Host-only Zeek capture, original private model/report, separately recorded hashes and independently pinned TRAIN/VALIDATION/TEST partition preflight. Save screenshots and negative-test evidence outside Git.
+- [ ] After verified independent lab evaluation, integrate optional explicit analyst-confirmed SOC triage into UI with full pinned manifest guard and evidence; no operational auto-alert or Red Team active traffic is authorized by this read-only page.
