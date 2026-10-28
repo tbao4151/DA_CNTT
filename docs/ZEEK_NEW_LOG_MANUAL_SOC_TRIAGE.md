@@ -111,15 +111,15 @@ TRAIN, VALIDATION and TEST capture and annotation referenced by relative path.
 The CLI checks its independently pinned SHA-256, loads and validates all
 source bytes/UID labels, checks the declared CIDR on each capture, verifies
 host-disjoint partitions and model-manifest TRAIN/VALIDATION linkage, then
-refuses the new capture if its bytes equal any declared split (including TEST).
-The same check is repeated **inside the manual case write path**. Either
+refuses the new capture if its bytes equal any declared split (including TEST), or if any parsed flow matches a declared UID/UTC timestamp/five-tuple identity even after header/comment re-encoding.
+The same checks are repeated **inside the manual case write path**. This identity screen is conservative and does not prove semantic non-reuse when UID, timestamp or endpoints change. Either
 missing flag, invalid input or mismatch fails closed before any SQLite write.
 The legacy commands without this optional pair remain compatible and explicitly
 report that declared TEST exclusion is **not** software-checked. An existing
 idempotent case may be reused without rewriting its original audit note.
 
-This is not proof of preregistration, true independent labels, flow-level
-non-reuse after re-encoding, physical isolation, or detection accuracy. Keep
+This is not proof of preregistration, true independent labels, semantic flow-level
+non-reuse after identifiers change, physical isolation, or detection accuracy. Keep
 the explicit `--confirm-new-capture` attestation even with a passing gate;
 its historical/semantic meaning is not established by a digest comparison.
 No raw model, log, labels, manifest or SQLite files should be committed.
