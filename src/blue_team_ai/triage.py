@@ -16,12 +16,13 @@ from .zeek import parse_zeek_conn_log
 def create_offline_review_case(
     db_path: str | Path, *, source_data: bytes, record_index: int,
     research_note: str | None = None,
+    deduplication_key: str | None = None,
 ) -> int:
     """Persist one operator-selected Zeek flow in a dedicated Cyber Lab DB.
 
     Does not infer attack labels, execute any network operation, or modify
-    Dataset Mode's database. Each explicit call creates a new case; callers
-    should not invoke this automatically on upload or page reruns.
+    Dataset Mode's database. Ordinary manual calls create new cases; research
+    callers may opt into atomic per-source/UID deduplication.
     """
     if isinstance(record_index, bool) or not isinstance(record_index, int):
         raise ValueError("Record index must be an integer")
@@ -34,5 +35,5 @@ def create_offline_review_case(
         raise ValueError("Record index out of range")
     return create_case(
         db_path, row=events[record_index], verdict="Unclassified", confidence=None,
-        creation_note=research_note,
+        creation_note=research_note, idempotency_key=deduplication_key,
     )

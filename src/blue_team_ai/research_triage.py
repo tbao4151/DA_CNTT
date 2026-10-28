@@ -17,7 +17,7 @@ def create_research_candidate_case(
     db_path: str | Path, *, source_data: bytes, trace_data: bytes,
     record_index: int, analyst_confirmed: bool,
 ) -> int:
-    """Create ONE Unclassified case only after explicit analyst confirmation.
+    """Create or reuse ONE Unclassified case after explicit confirmation.
 
     Revalidates the original source and complete private trace at click time.
     The stored audit note identifies a *research-only* score and trace hash;
@@ -47,7 +47,14 @@ def create_research_candidate_case(
         f"validation_threshold={review['selected_threshold']:.8f}. "
         "Operator-supplied ground truth is not authenticated or stored."
     )
+    # One research case per original source+UID, even if the analyst reloads
+    # the page or supplies a different internally consistent research trace.
+    # Never use probability/threshold/trace bytes in this key: a revised trace
+    # must not silently create a second case for the same captured flow.
+    deduplication_key = hashlib.sha256(
+        f"zeek-research-v1:{review['source_sha256']}:{candidate['uid']}".encode("utf-8")
+    ).hexdigest()
     return create_offline_review_case(
         db_path, source_data=source_data, record_index=record_index,
-        research_note=note,
+        research_note=note, deduplication_key=deduplication_key,
     )

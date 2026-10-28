@@ -178,3 +178,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #77](https://github.com/tbao4151/DA_CNTT/pull/77) merged with final-head [CI #40622139148](https://github.com/tbao4151/DA_CNTT/actions/runs/40622139148) and post-merge [CI #40622287624](https://github.com/tbao4151/DA_CNTT/actions/runs/40622287624) green (416 passed, 2 skipped). Explicit analyst-selected source/UID-matched research candidates (first 500 Zeek rows) create Unclassified cases with initial audit provenance. No model deployment, auto-alert or live capture.
 - [ ] Student verifies this flow on Windows/VMware Host-only with genuine authorized, independently labeled data and an untouched held-out trace; preserve original source, private labels and network isolation evidence. CI synthetic fixtures are not a lab detection result.
 - [ ] Later, after authentic lab evaluation, design trusted Zeek inference on *new* telemetry, gated alert generation, deduplication and measured end-to-end latency. Do not reinterpret research test predictions as operational alerts.
+
+
+## Cyber Lab — deduplicate explicit research SOC triage (28/10/2026)
+
+- [ ] Verify and merge the narrowly scoped source-SHA/Zeek-UID idempotency change for **manual research** candidates. Concurrent clicks must reuse one original Unclassified case and initial audit event, while ordinary manual and Dataset Mode case creation remain unchanged. Synthetic tests only; check PR CI before marking complete.
+- [ ] Validate on Windows with genuine authorized Host-only evidence; an idempotent case is not proof of model provenance, attack authenticity or network isolation.
+- [ ] Do not use held-out research traces as live alerts. Trusted Zeek model deployment, new-log inference and operational AI-to-SOC alerts remain future work.

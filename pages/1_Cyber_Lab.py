@@ -194,8 +194,9 @@ else:
                                         "record_index": selection,
                                     }
                                     st.success(
-                                        f"Đã mở hồ sơ thủ công #{case_id} (Unclassified). "
-                                        "Dấu vết dự đoán nghiên cứu đã lưu trong audit."
+                                        f"Hồ sơ nghiên cứu #{case_id} (Unclassified) đã được ghi nhận. "
+                                        "Nếu flow nguồn/UID này đã được mở trước đó, hệ thống "
+                                        "tái sử dụng hồ sơ và audit gốc, không tạo bản trùng."
                                     )
                     else:
                         st.info("Không có ứng viên Attack theo ngưỡng nghiên cứu trong log này.")

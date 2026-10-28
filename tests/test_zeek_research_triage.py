@@ -140,3 +140,79 @@ def test_invalid_research_note_rejected_before_creating_database(tmp_path):
             db, source_data=raw, record_index=1, research_note="x" * 2001,
         )
     assert not db.exists()
+
+
+def test_repeated_research_selection_is_idempotent_and_keeps_first_audit(tmp_path):
+    raw, trace = _inputs()
+    db = tmp_path / "cyber.sqlite3"
+    first = create_research_candidate_case(
+        db, source_data=raw, trace_data=trace, record_index=1, analyst_confirmed=True,
+    )
+    # A distinct, internally consistent threshold is still the same source/UID.
+    changed = json.loads(trace)
+    changed["selected_threshold"] = 0.6
+    changed["private_test_trace"]["selected_threshold"] = 0.6
+    revised_trace = json.dumps(changed).encode()
+    second = create_research_candidate_case(
+        db, source_data=raw, trace_data=revised_trace, record_index=1, analyst_confirmed=True,
+    )
+    assert second == first
+    assert len(list_cases(db)) == 1
+    assert len(case_history(db, first)) == 1
+    assert hashlib.sha256(trace).hexdigest() in list_cases(db).iloc[0]["analyst_note"]
+    assert hashlib.sha256(revised_trace).hexdigest() not in list_cases(db).iloc[0]["analyst_note"]
+
+
+def test_distinct_source_same_uid_creates_distinct_research_case(tmp_path):
+    raw, trace = _inputs()
+    db = tmp_path / "cyber.sqlite3"
+    first = create_research_candidate_case(
+        db, source_data=raw, trace_data=trace, record_index=1, analyst_confirmed=True,
+    )
+    second_raw = raw.replace(b"192.168.56.11", b"192.168.56.12")
+    second_report = json.loads(trace)
+    for flow in second_report["private_test_trace"]["flows"]:
+        flow["source_sha256"] = hashlib.sha256(second_raw).hexdigest()
+    second = create_research_candidate_case(
+        db, source_data=second_raw, trace_data=json.dumps(second_report).encode(),
+        record_index=1, analyst_confirmed=True,
+    )
+    assert first != second
+    assert len(list_cases(db)) == 2
+
+
+def test_legacy_manual_case_can_still_create_two_distinct_cases(tmp_path):
+    raw, _ = _inputs()
+    db = tmp_path / "cyber.sqlite3"
+    first = create_offline_review_case(db, source_data=raw, record_index=1)
+    second = create_offline_review_case(db, source_data=raw, record_index=1)
+    assert first != second
+    assert len(list_cases(db)) == 2
+
+
+def test_invalid_idempotency_key_rejected_without_db(tmp_path):
+    from siem_ai.core import create_case
+    db = tmp_path / "cases.sqlite3"
+    for key in ("bad", "A" * 64, True, "x" * 64):
+        with pytest.raises(ValueError, match="Idempotency key"):
+            create_case(db, row={"uid": "test"}, verdict="Unclassified",
+                        confidence=None, idempotency_key=key)
+        assert not db.exists()
+
+
+def test_concurrent_research_case_creation_is_atomic(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    raw, trace = _inputs()
+    db = tmp_path / "cyber.sqlite3"
+
+    def create(_):
+        return create_research_candidate_case(
+            db, source_data=raw, trace_data=trace, record_index=1,
+            analyst_confirmed=True,
+        )
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        ids = list(executor.map(create, range(4)))
+    assert len(set(ids)) == 1
+    assert len(list_cases(db)) == 1
+    assert len(case_history(db, ids[0])) == 1

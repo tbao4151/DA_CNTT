@@ -349,8 +349,12 @@ Dataset Mode and its SQLite store remain untouched.
 This is **manual analyst triage of a research hypothesis**, not an AI-to-SOC
 automatic alert, authenticated attack, deployed model or real-time detection.
 The source file, trace, SQLite and research note are all mutable and not
-forensic-grade. Repeated explicit clicks can create multiple cases; there is
-no deduplication. Keep private traces/logs/cases outside public GitHub and
+forensic-grade. Repeated explicit clicks for the same original source SHA-256 and Zeek
+UID reuse the first research case (including its original audit note), even if
+a later valid research trace changes its threshold. The lookup and insert are
+atomic in SQLite, and this is **not** an authentication mechanism. Distinct
+source files with the same UID can create distinct research cases; ordinary
+manual cases still allow duplicates. Keep private traces/logs/cases outside public GitHub and
 do not tune the held-out test based on this review. The student must verify
 the workflow on Windows with independently annotated, authorized VMware
 Host-only evidence; synthetic CI does not replace that acceptance test.

@@ -87,6 +87,7 @@ def ensure_case_db(path: str | Path) -> None:
 def create_case(
     path: str | Path, *, row: dict, verdict: str, confidence: float | None,
     creation_note: str | None = None,
+    idempotency_key: str | None = None,
 ) -> int:
     # Existing callers retain the original empty analyst_note and default event.
     # Explicit research triage may atomically attach a bounded initial audit note.
@@ -94,6 +95,12 @@ def create_case(
         not isinstance(creation_note, str) or not 0 < len(creation_note.strip()) <= 2000
     ):
         raise ValueError("Creation note must be 1..2000 non-whitespace characters")
+    # Optional research-only deduplication; legacy Dataset/manual callers omit it.
+    if idempotency_key is not None and (
+        type(idempotency_key) is not str or len(idempotency_key) != 64
+        or any(char not in "0123456789abcdef" for char in idempotency_key)
+    ):
+        raise ValueError("Idempotency key must be a lowercase SHA-256 hex digest")
     ensure_case_db(path)
     if verdict not in ("Attack", "Normal", "Unclassified"):
         raise ValueError("Invalid verdict")
@@ -111,6 +118,20 @@ def create_case(
     }
     now = datetime.now(timezone.utc).isoformat()
     with sqlite3.connect(path) as conn:
+        if idempotency_key is not None:
+            # BEGIN IMMEDIATE serializes lookup+insert across simultaneous UI sessions.
+            # The table is created lazily, preserving existing Dataset/manual DB layout.
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute("""CREATE TABLE IF NOT EXISTS case_idempotency (
+                idempotency_key TEXT PRIMARY KEY,
+                case_id INTEGER NOT NULL REFERENCES cases(case_id)
+            )""")
+            existing = conn.execute(
+                "SELECT case_id FROM case_idempotency WHERE idempotency_key=?",
+                (idempotency_key,),
+            ).fetchone()
+            if existing is not None:
+                return int(existing[0])
         cursor = conn.execute(
             """INSERT INTO cases (flow_id,verdict,confidence,analyst_note,evidence_json,created_at,updated_at)
                VALUES (?,?,?,?,?,?,?)""",
@@ -122,6 +143,11 @@ def create_case(
                VALUES (?,?,?,?,?)""",
             (case_id, None, "New", creation_note.strip() if creation_note else "Case created from selected flow", now),
         )
+        if idempotency_key is not None:
+            conn.execute(
+                "INSERT INTO case_idempotency (idempotency_key,case_id) VALUES (?,?)",
+                (idempotency_key, case_id),
+            )
         return case_id
 
 
