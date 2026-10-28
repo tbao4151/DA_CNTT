@@ -175,8 +175,10 @@ def test_distinct_source_same_uid_creates_distinct_research_case(tmp_path):
     )
     second_raw = raw.replace(b"192.168.56.11", b"192.168.56.12")
     second_report = json.loads(trace)
+    second_digest = hashlib.sha256(second_raw).hexdigest()
     for flow in second_report["private_test_trace"]["flows"]:
-        flow["source_sha256"] = hashlib.sha256(second_raw).hexdigest()
+        flow["source_sha256"] = second_digest
+    second_report["provenance"]["test"]["source_sha256"] = [second_digest]
     second = create_research_candidate_case(
         db, source_data=second_raw, trace_data=json.dumps(second_report).encode(),
         record_index=1, analyst_confirmed=True,
