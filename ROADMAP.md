@@ -418,3 +418,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #129](https://github.com/tbao4151/DA_CNTT/pull/129) merged after final-head [CI #40722795229](https://github.com/tbao4151/DA_CNTT/actions/runs/40722795229) and post-merge `main` [CI #40723382103](https://github.com/tbao4151/DA_CNTT/actions/runs/40723382103) both passed (**684 passed, 2 skipped, 2 existing warnings**). This supersedes the pending checkbox above. Strict annotation-byte pinning is implemented, but authentic labeling remains unverified.
 - [ ] Student independently freezes each `labels.json` SHA-256, performs five-input chain verification where applicable, then runs `evaluate_zeek_lab.py --require-label-sha256 --preflight` on Windows Python 3.12.9 using authorized genuine Host-only captures. Keep sensitive evidence outside Git.
 - [ ] Evaluate a separate Zeek model on independently validated, host/session-disjoint held-out data and measure real event-to-alert latency; preserve official UNSW benchmark, offline-only default and inactive Red Team network execution.
+
+## Cyber Lab — offline classic PCAP import (28/10/2026)
+
+- [ ] Verify PR/CI for the bounded offline classic PCAP -> Zeek `conn.log` import tool and synthetic tests; see `PROGRESS.md` for merge status. No active traffic, live capture, AI scoring or SOC write.
+- [ ] Run `scripts/import_offline_pcap.py` with a **genuine authorized** classic PCAP inside a Linux VM with Zeek installed; archive original PCAP, `conn.log`, both SHA-256 values, Zeek version, VMware Host-only adapter/route screenshots and session notes outside Git. The tool's CIDR screening does not prove physical isolation or authenticity.
+- [ ] Validate the resulting Zeek flow schema against existing offline Blue Team pipeline and independently annotated labels before making any detection claim. Preserve official UNSW-NB15 benchmark.
