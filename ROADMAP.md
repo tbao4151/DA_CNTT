@@ -609,3 +609,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #157](https://github.com/tbao4151/DA_CNTT/pull/157) merged after final-head [CI #40785698571](https://github.com/tbao4151/DA_CNTT/actions/runs/40785698571) and post-merge [main CI #40786278275](https://github.com/tbao4151/DA_CNTT/actions/runs/40786278275) passed (**782 passed, 2 skipped, 2 warnings**). Earlier pending CI/merge checklist is superseded; regression fixtures are synthetic only.
 - [ ] Student runs real authorized Zeek `conn.log` through the private quality CLI on Windows Python 3.12.9, retaining original PCAP/log, separate hashes, Zeek version, VMware Host-only adapter/routes and authorization evidence outside Git.
 - [ ] Independently label multiple host/session-disjoint genuine captures, evaluate Precision/Recall/FPR and event-to-SOC latency with measured boundaries. Aggregate data-quality checks cannot prove capture authenticity, ground truth or attack detection; Red Team network execution stays disabled.
+
+
+## Cyber Lab — real Zeek telemetry quality acceptance (29/10/2026)
+
+- [ ] Verify final-head **real Zeek 9.0.1** workflow and Python 3.12.9 quality gates for the feature PR before merging; the new CI stage must invoke the production private telemetry-quality CLI on actual synthetic Zeek output and reject wrong SHA-256, wrong CIDR and overwrite attempts without changing the source.
+- [ ] Student runs installed Zeek inside Linux VMware and separately records source hashes, Host-only adapters/routes, capture authorization, private PCAP/conn.log and quality JSON. A synthetic CI-generated pin is not independent capture provenance or Windows acceptance.
+- [ ] Establish independent attack labels and host/session-disjoint holdout, evaluate Zeek-specific Precision/Recall/FPR and event-to-SOC latency; preserve UNSW-NB15 baseline and keep Red Team network execution disabled. The quality screen does not establish attack detection.

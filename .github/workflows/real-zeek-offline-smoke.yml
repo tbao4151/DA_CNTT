@@ -10,6 +10,9 @@ on:
       - "src/blue_team_ai/zeek.py"
       - "src/blue_team_ai/features.py"
       - "src/blue_team_ai/lab_scope.py"
+      - "src/blue_team_ai/telemetry_quality.py"
+      - "scripts/inspect_zeek_telemetry_quality.py"
+      - "tests/test_zeek_telemetry_quality.py"
       - "tests/test_zeek_real_smoke.py"
       - "tests/ci_real_zeek_scoring.py"
       - "tests/test_ci_real_zeek_scoring.py"
@@ -188,6 +191,62 @@ jobs:
           )
           print(json.dumps(result, indent=2))
           PY
+      - name: Check production telemetry quality CLI against real Zeek output (synthetic only)
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          root = Path(os.environ["SMOKE_DIR"])
+          source = root / "importer-real" / "conn.log"
+          original = source.read_bytes()
+          digest = hashlib.sha256(original).hexdigest()
+          output = root / "ci_real_zeek_telemetry_quality.json"
+          cli = Path("scripts/inspect_zeek_telemetry_quality.py")
+
+          def run_quality(pin, cidr, destination):
+              return subprocess.run(
+                  [
+                      sys.executable, str(cli), "--log", str(source),
+                      "--expected-log-sha256", pin,
+                      "--cidr", cidr, "--output", str(destination),
+                  ],
+                  capture_output=True, text=True, check=False,
+              )
+
+          accepted = run_quality(digest, "192.168.56.0/24", output)
+          assert accepted.returncode == 0, accepted.stderr
+          quality = json.loads(output.read_text(encoding="utf-8"))
+          assert quality["mode"] == "offline_zeek_telemetry_quality_only"
+          assert quality["source_sha256"] == digest
+          assert quality["flow_count"] == 1
+          assert quality["feature_schema_version"] == 1
+          assert quality["protocol_bucket_counts"]["udp"] == 1
+          assert sum(quality["protocol_bucket_counts"].values()) == 1
+          assert "fewer_than_30_flows" in quality["warnings"]
+          for key in (
+              "host_only_isolation_verified", "capture_authenticity_verified",
+              "independent_ground_truth_verified", "model_fitted",
+              "attack_detection_performed", "operational_alerts", "live_capture",
+          ):
+              assert quality[key] is False
+          serialized = json.dumps(quality)
+          assert "192.168.56." not in serialized
+
+          bad_pin = root / "rejected_wrong_hash_quality.json"
+          assert run_quality("0" * 64, "192.168.56.0/24", bad_pin).returncode != 0
+          assert not bad_pin.exists()
+          bad_scope = root / "rejected_wrong_scope_quality.json"
+          assert run_quality(digest, "10.0.0.0/24", bad_scope).returncode != 0
+          assert not bad_scope.exists()
+          assert run_quality(digest, "192.168.56.0/24", output).returncode != 0
+          assert source.read_bytes() == original
+          print("Real-Zeek synthetic quality CLI: accepted, fail-closed gates and no overwrite verified.")
+          PY
       - name: Exercise production scoring, review and explicit manual SOC triage (synthetic-only)
         run: PYTHONPATH=src:tests python tests/ci_real_zeek_scoring.py --root "$SMOKE_DIR"
       - name: Upload synthetic-only reproducibility evidence
@@ -201,6 +260,7 @@ jobs:
             ${{ env.SMOKE_DIR }}/zeek_version.txt
             ${{ env.SMOKE_DIR }}/ci_smoke_report.json
             ${{ env.SMOKE_DIR }}/ci_importer_real_report.json
+            ${{ env.SMOKE_DIR }}/ci_real_zeek_telemetry_quality.json
             ${{ env.SMOKE_DIR }}/ci_real_zeek_scoring_report.json
             ${{ env.SMOKE_DIR }}/importer-real/conn.log
             ${{ env.SMOKE_DIR }}/importer-real/offline_import_report.json

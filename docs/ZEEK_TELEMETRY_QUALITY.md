@@ -45,3 +45,20 @@ py -3.12 -m pytest -q tests/test_zeek_telemetry_quality.py
 ```
 
 UNSW-NB15 Dataset Mode and Red Team execution remain unchanged.
+
+## Real-Zeek synthetic CI acceptance (not student capture)
+
+The `real-zeek-offline-smoke.yml` workflow now calls the **production CLI**
+against the `conn.log` created by the production offline PCAP importer and
+**actual Zeek 9.0.1** running in a network-disabled container. It verifies a
+single synthetic UDP flow, nine-feature schema, warning for fewer than 30
+flows, absence of detection/isolation claims, and refusal of wrong SHA-256,
+wrong CIDR and overwriting an existing report. The original log must remain
+byte-identical. On successful runs, the short-lived GitHub Actions artifact
+contains `ci_real_zeek_telemetry_quality.json` from this synthetic fixture.
+
+The expected SHA-256 is computed within the **same CI run**, not independently
+recorded before capture. CI cannot establish provenance of a student-owned
+capture, real VMware Host-only isolation, independent labels, attack detection,
+or performance. For real research, follow the private Windows procedure above
+with a separately recorded digest and preserve the evidence outside Git.
