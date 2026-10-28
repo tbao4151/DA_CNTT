@@ -213,3 +213,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] PR #87 merged; final PR and post-merge main CI passed (464 passed, 2 skipped, 2 warnings on PR). Bounded, separately pinned new Zeek capture inference (`src/blue_team_ai/new_log_inference.py`, `scripts/score_zeek_new_log.py`, `tests/test_zeek_new_log_inference.py`). PR/CI details are in PROGRESS.
 - [ ] Student runs private Windows Python 3.12.9 acceptance on a **new** authorized VMware Host-only `conn.log` not used for TRAIN, VALIDATION or held-out TEST; independently preserve capture/model SHA-256, physical isolation and scenario evidence. CI synthetic fixtures do not satisfy this.
 - [ ] Only after real independent holdout evaluation, add an explicit analyst-reviewed AI-to-SOC research alert pipeline with model provenance and detection latency; do not silently treat research candidates as confirmed attacks. Keep Red Team active traffic disabled until isolation and safety controls are validated.
+
+
+## Cyber Lab — verify private NEW-log research predictions (28/10/2026)
+
+- [ ] Verify feature PR CI before marking complete: `src/blue_team_ai/new_log_review.py`, `scripts/verify_zeek_new_log_report.py` and synthetic regression tests recompute and compare the entire saved new-log research prediction report against independently pinned original capture/model bytes; see `docs/ZEEK_NEW_LOG_REPORT_REVIEW.md`. This is read-only consistency validation, not operational detection or a lab capture.
+- [ ] Student Windows/VMware Host-only acceptance: retain private original `conn.log`, model JSON, hashes, report, isolation evidence, and pre-registered TRAIN/VALIDATION/TEST split; verify a genuinely new authorized capture outside all splits. Preserve the verification result in a private lab notebook.
+- [ ] Only after independently labeled held-out evaluation and confirmed isolation, design analyst-reviewed research candidate-to-SOC workflow with provenance, deduplication and latency measurement. Never automatically turn this private research report into an operational alert or attack verdict.
