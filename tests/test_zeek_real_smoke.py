@@ -20,6 +20,56 @@ from test_zeek_telemetry import VALUES, log
 from smoke_zeek_offline import main
 
 
+
+def _fixture_row():
+    """Expected Zeek tuple for the deterministic two-packet benign PCAP."""
+    values = list(VALUES)
+    values[0] = "1700000000.000000"
+    values[1] = "CFIXTURE"
+    values[2] = zeek_smoke.SOURCE_IP
+    values[3] = "51000"
+    values[4] = zeek_smoke.DESTINATION_IP
+    values[5] = "53000"
+    values[6] = "udp"
+    values[7] = "-"
+    values[8] = "1.0"
+    values[9] = "44"
+    values[10] = "0"
+    values[11] = "2"
+    values[12] = "0"
+    return tuple(values)
+
+
+def test_fixture_contract_accepts_matching_offline_zeek_log(tmp_path):
+    path = tmp_path / "conn.log"
+    path.write_bytes(log(_fixture_row()))
+    zeek_smoke._verify_fixture_flow(path)
+
+
+@pytest.mark.parametrize("index,changed", [
+    (0, "1700000001.000000"),
+    (2, "192.168.56.11"),
+    (3, "51001"),
+    (4, "192.168.56.30"),
+    (5, "53001"),
+    (6, "tcp"),
+])
+def test_fixture_contract_rejects_unrelated_in_scope_flow(tmp_path, index, changed):
+    row = list(_fixture_row())
+    row[index] = changed
+    path = tmp_path / "conn.log"
+    path.write_bytes(log(tuple(row)))
+    with pytest.raises(ValueError, match="fixture|timestamp"):
+        zeek_smoke._verify_fixture_flow(path)
+
+
+def test_fixture_contract_rejects_multiple_flows(tmp_path):
+    path = tmp_path / "conn.log"
+    path.write_bytes(log(_fixture_row(), _fixture_row()))
+    with pytest.raises(ValueError, match="exactly one"):
+        zeek_smoke._verify_fixture_flow(path)
+
+
 def test_benign_fixture_is_deterministic_classic_pcap_with_valid_ip_checksums():
     raw = zeek_smoke.build_benign_udp_pcap()
     assert raw == zeek_smoke.build_benign_udp_pcap()
@@ -73,7 +123,7 @@ def test_smoke_exercises_real_import_and_verifier_with_mocked_zeek(tmp_path, mon
             return SimpleNamespace(returncode=0, stdout="zeek version 7.0\n", stderr="")
         assert argv[0:2] == ["zeek", "-r"]
         assert Path(argv[2]).name == "benign_synthetic.pcap"
-        (Path(kwargs["cwd"]) / "conn.log").write_bytes(log(VALUES))
+        (Path(kwargs["cwd"]) / "conn.log").write_bytes(log(_fixture_row()))
         return SimpleNamespace(returncode=0)
     monkeypatch.setattr(offline_pcap.subprocess, "run", fake_zeek)
     target = tmp_path / "smoke"
@@ -83,6 +133,8 @@ def test_smoke_exercises_real_import_and_verifier_with_mocked_zeek(tmp_path, mon
     assert seen == [["zeek", "--version"], ["zeek", "-r", str(target / "benign_synthetic.pcap")]]
     assert result["source_kind"] == "synthetic_benign_udp_fixture"
     assert result["flow_count"] == 1
+    assert result["fixture_flow_identity_verified"] is True
+    assert result["fixture_event_time_verified"] is True
     assert result["vmware_capture_performed"] is False
     assert result["ai_scoring_performed"] is False
     assert result["host_only_isolation_verified"] is False
