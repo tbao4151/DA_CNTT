@@ -10,11 +10,13 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+from collections.abc import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.labeled_dataset import MAX_CAPTURES, SPLITS, build_labeled_lab_dataset
+from blue_team_ai.lab_scope import inspect_zeek_lab_scope
 from blue_team_ai.offline_baseline import evaluate_offline_zeek_baseline
 from blue_team_ai.zeek import MAX_LOG_BYTES
 
@@ -70,7 +72,9 @@ def _sha256(value: object) -> str:
     return value
 
 
-def load_experiment_manifest(manifest_path: str | Path) -> tuple[list[dict[str, object]], str]:
+def load_experiment_manifest(
+    manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
+) -> tuple[list[dict[str, object]], str]:
     """Resolve bounded inputs from one private manifest directory, no network I/O."""
     manifest = Path(manifest_path).resolve(strict=True)
     if not manifest.is_file():
@@ -103,6 +107,11 @@ def load_experiment_manifest(manifest_path: str | Path) -> tuple[list[dict[str, 
         digest = _sha256(entry["source_sha256"])
         if hashlib.sha256(raw).hexdigest() != digest:
             raise ValueError("Zeek capture SHA-256 mismatch")
+        # Optional, explicit and fail-closed: every capture must fit the same
+        # operator-declared private scope before labels/model are consulted.
+        # This is NOT a VMware isolation or authorization attestation.
+        if lab_cidrs is not None:
+            inspect_zeek_lab_scope(raw, lab_cidrs)
         annotation = _read_json(label_path, MAX_LABEL_BYTES)
         if not isinstance(annotation, dict) or set(annotation) != {"source_sha256", "labels_by_uid"}:
             raise ValueError("Expected exact annotation v1 fields")
@@ -121,7 +130,9 @@ def load_experiment_manifest(manifest_path: str | Path) -> tuple[list[dict[str, 
 
 
 
-def inspect_offline_experiment(manifest_path: str | Path) -> dict[str, object]:
+def inspect_offline_experiment(
+    manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
+) -> dict[str, object]:
     """Validate a private experiment's inputs without fitting or scoring a model.
 
     This checks file hashes, exact UID annotations, explicit split assignments,
@@ -129,7 +140,7 @@ def inspect_offline_experiment(manifest_path: str | Path) -> dict[str, object]:
     Only aggregate counts and the manifest digest are returned, never raw UIDs,
     IPs, host identifiers, paths, or evidence-reference strings.
     """
-    captures, manifest_sha256 = load_experiment_manifest(manifest_path)
+    captures, manifest_sha256 = load_experiment_manifest(manifest_path, lab_cidrs=lab_cidrs)
     dataset = build_labeled_lab_dataset(captures)
     partitions: dict[str, dict[str, int]] = {}
     warnings: list[str] = []
@@ -158,6 +169,8 @@ def inspect_offline_experiment(manifest_path: str | Path) -> dict[str, object]:
         "capture_count": len(captures),
         "partitions": partitions,
         "structural_validation_passed": True,
+        "declared_scope_screened": lab_cidrs is not None,
+        "all_endpoints_within_declared_scope": True if lab_cidrs is not None else None,
         "label_truth_verified": False,
         "host_only_isolation_verified": False,
         "model_fitted": False,
@@ -165,19 +178,24 @@ def inspect_offline_experiment(manifest_path: str | Path) -> dict[str, object]:
         "warnings": warnings,
         "interpretation": (
             "Input consistency only; operator-provided labels, host groups and "
-            "lab isolation are not independently authenticated. No model or "
+            "lab isolation are not independently authenticated. Optional declared "
+            "CIDR screening is not physical isolation proof. No model or "
             "detection metric was computed."
         ),
     }
 
 
-def run_offline_experiment(manifest_path: str | Path) -> dict[str, object]:
-    captures, manifest_sha256 = load_experiment_manifest(manifest_path)
+def run_offline_experiment(
+    manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
+) -> dict[str, object]:
+    captures, manifest_sha256 = load_experiment_manifest(manifest_path, lab_cidrs=lab_cidrs)
     dataset = build_labeled_lab_dataset(captures)
     report = evaluate_offline_zeek_baseline(dataset)
     return {
         **report,
         "input_manifest_sha256": manifest_sha256,
+        "declared_scope_screened": lab_cidrs is not None,
+        "all_endpoints_within_declared_scope": True if lab_cidrs is not None else None,
         "evaluation_protocol": "operator_assigned_host_disjoint_train_validation_test",
         "evidence_warning": "Capture isolation and ground-truth authenticity require independent student verification.",
     }
@@ -186,6 +204,8 @@ def run_offline_experiment(manifest_path: str | Path) -> dict[str, object]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True, type=Path, help="Private experiment manifest v1 JSON")
+    parser.add_argument("--cidr", action="append", default=None,
+                        help="Optional strict RFC1918 lab CIDR; repeat 1-4 times to screen ALL captures")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--output", type=Path, help="New report JSON (must not exist)")
     mode.add_argument("--preflight", action="store_true", help="Validate inputs and print aggregate counts; no model or file writes")
@@ -193,14 +213,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         manifest = args.manifest.resolve(strict=True)
         if args.preflight:
-            print(json.dumps(inspect_offline_experiment(manifest), indent=2, ensure_ascii=False, allow_nan=False))
+            print(json.dumps(inspect_offline_experiment(manifest, lab_cidrs=args.cidr), indent=2, ensure_ascii=False, allow_nan=False))
             return 0
         output = args.output.resolve()
         if not output.is_relative_to(manifest.parent) or output == manifest:
             raise ValueError("Report output must remain inside private manifest directory")
         if output.exists():
             raise FileExistsError("Report already exists; refusing overwrite")
-        report = run_offline_experiment(manifest)
+        report = run_offline_experiment(manifest, lab_cidrs=args.cidr)
         payload = json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         # Exclusive creation: no partial report is written if validation or fit fails.
         with output.open("x", encoding="utf-8") as stream:

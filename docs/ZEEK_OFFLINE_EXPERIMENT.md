@@ -140,6 +140,32 @@ Keep the untouched test partition sealed until the final planned experiment.
 Use exactly one of `--preflight` and `--output`; the existing `--output`
 research workflow remains unchanged.
 
+## Optional all-capture declared-CIDR gate (offline, fail-closed)
+
+The standalone scope checker can now also be applied to **every capture** in
+the same private experiment manifest. Add one or more explicit `--cidr`
+arguments (up to four canonical RFC1918 IPv4 networks, each /16 or narrower)
+to **either** `--preflight` or `--output`. The check uses the original,
+SHA-256-verified log bytes already loaded for the experiment; an out-of-scope
+source or destination in **any** train, validation or test capture refuses
+the entire operation before model fitting or report creation.
+
+~~~powershell
+py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --cidr "192.168.56.0/24" --preflight
+py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --cidr "192.168.56.0/24" --output "C:/DA005-private/zeek-experiment/scoped-report.json"
+~~~
+
+The CIDR above is illustrative; use the **actual independently verified**
+VMware Host-only network(s). Do not expand scope to conceal unexpected
+endpoints. The CLI remains backward-compatible when `--cidr` is omitted:
+`declared_scope_screened=false` and
+`all_endpoints_within_declared_scope=null` explicitly mean **not checked**.
+When requested and successful, both fields become `true`; they assert
+address membership only, **not** physical network isolation, authorization,
+log authenticity, label correctness or AI detection. No CIDR/IP/UID is added
+to the aggregate preflight or experiment JSON. This is an opt-in research
+safety gate, not a network connection or live traffic control.
+
 ## Execute on Windows (Python 3.12.9)
 
 From the repository root after installing requirements.txt:
