@@ -14,7 +14,8 @@ from .zeek import parse_zeek_conn_log
 
 
 def create_offline_review_case(
-    db_path: str | Path, *, source_data: bytes, record_index: int
+    db_path: str | Path, *, source_data: bytes, record_index: int,
+    research_note: str | None = None,
 ) -> int:
     """Persist one operator-selected Zeek flow in a dedicated Cyber Lab DB.
 
@@ -32,5 +33,6 @@ def create_offline_review_case(
     if record_index >= len(events):
         raise ValueError("Record index out of range")
     return create_case(
-        db_path, row=events[record_index], verdict="Unclassified", confidence=None
+        db_path, row=events[record_index], verdict="Unclassified", confidence=None,
+        creation_note=research_note,
     )

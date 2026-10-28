@@ -325,3 +325,34 @@ must not be presented as a deployed AI alert queue. The separate manual
 `Unclassified` case action still requires explicit operator confirmation and
 does not import a research AI verdict or score. Do not select thresholds or
 retrain using the untouched held-out test trace.
+
+
+## Analyst-confirmed research candidate to local SOC case (offline only)
+
+On the **Cyber Lab · Blue Team** page, load the original held-out test
+`conn.log` and the private `--trace-output` JSON together. The read-only
+trace review must pass SHA-256, UID coverage, threshold and confusion-count
+checks before any candidate is selectable. The analyst can then explicitly
+select a predicted-Attack candidate among the **first 500 Zeek rows**, tick
+a consent checkbox and press **Mở hồ sơ nghiên cứu Unclassified**.
+
+Only this deliberate click calls `create_research_candidate_case`. The server
+revalidates the entire trace and source bytes, verifies that the chosen row is
+a predicted-Attack candidate and atomically creates a **New / Unclassified**
+case in `runtime/cyber_lab_cases.sqlite3`. Confidence remains null.
+The initial audit note records source SHA-256, private trace SHA-256, Zeek UID,
+research-only probability and locked validation threshold; operator-supplied
+ground-truth labels are **not** copied into the case. The typed Zeek export
+continues to require the original source bytes and snapshot consistency.
+Dataset Mode and its SQLite store remain untouched.
+
+This is **manual analyst triage of a research hypothesis**, not an AI-to-SOC
+automatic alert, authenticated attack, deployed model or real-time detection.
+The source file, trace, SQLite and research note are all mutable and not
+forensic-grade. Repeated explicit clicks can create multiple cases; there is
+no deduplication. Keep private traces/logs/cases outside public GitHub and
+do not tune the held-out test based on this review. The student must verify
+the workflow on Windows with independently annotated, authorized VMware
+Host-only evidence; synthetic CI does not replace that acceptance test.
+
+Developer regression: `py -3.12 -m pytest -q tests/test_zeek_research_triage.py`.

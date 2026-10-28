@@ -5,6 +5,7 @@ No packet capture, traffic generation, model prediction, or AI alert occurs here
 """
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 import sys
 from pathlib import Path
@@ -16,6 +17,7 @@ import pandas as pd
 import streamlit as st
 
 from blue_team_ai.preview import summarize_offline_flows
+from blue_team_ai.research_triage import create_research_candidate_case
 from blue_team_ai.triage import create_offline_review_case
 from blue_team_ai.trace_review import MAX_PRIVATE_TRACE_BYTES, review_private_zeek_trace
 from blue_team_ai.verified_report import export_verified_offline_case
@@ -144,6 +146,57 @@ else:
                             pd.DataFrame(candidates[:500]), use_container_width=True, hide_index=True,
                         )
                         st.caption("Tối đa 500 ứng viên; nhãn ground truth không được đưa vào bảng.")
+                        visible_candidates = [
+                            row for row in trace_review["rows"]
+                            if row["predicted_attack"] and row["record_index"] < 500
+                        ]
+                        if visible_candidates:
+                            st.markdown("#### Chuyển ứng viên nghiên cứu sang điều tra thủ công")
+                            st.caption(
+                                "Chỉ các flow trong 500 dòng Zeek đầu được chọn. "
+                                "Hồ sơ vẫn Unclassified, confidence rỗng; xác suất nghiên cứu "
+                                "chỉ nằm trong ghi chú audit, không phải cảnh báo AI vận hành."
+                            )
+                            trace_digest = hashlib.sha256(trace_upload.getvalue()).hexdigest()
+                            selection = st.selectbox(
+                                "Ứng viên cần điều tra",
+                                options=[row["record_index"] for row in visible_candidates],
+                                format_func=lambda i: (
+                                    f"Dòng {i + 1} · {events[i]['uid']} · "
+                                    f"P(Attack)={trace_review['rows'][i]['attack_probability']:.3f}"
+                                ),
+                                key=f"research_select_{summary['source_sha256']}_{trace_digest}",
+                            )
+                            approved = st.checkbox(
+                                "Tôi đã xem bằng chứng và chủ động mở hồ sơ nghiên cứu; "
+                                "không coi đây là tấn công đã xác nhận.",
+                                key=f"research_consent_{summary['source_sha256']}_{trace_digest}",
+                            )
+                            if st.button(
+                                "Mở hồ sơ nghiên cứu Unclassified",
+                                disabled=not approved,
+                                key=f"research_create_{summary['source_sha256']}_{trace_digest}",
+                            ):
+                                try:
+                                    case_id = create_research_candidate_case(
+                                        ROOT / "runtime" / "cyber_lab_cases.sqlite3",
+                                        source_data=uploaded.getvalue(),
+                                        trace_data=trace_upload.getvalue(),
+                                        record_index=selection,
+                                        analyst_confirmed=approved,
+                                    )
+                                except (ValueError, TypeError, OSError, sqlite3.Error) as exc:
+                                    st.error(f"Không thể mở hồ sơ nghiên cứu: {exc}")
+                                else:
+                                    st.session_state["cyber_last_manual_case"] = {
+                                        "source_sha256": summary["source_sha256"],
+                                        "case_id": case_id,
+                                        "record_index": selection,
+                                    }
+                                    st.success(
+                                        f"Đã mở hồ sơ thủ công #{case_id} (Unclassified). "
+                                        "Dấu vết dự đoán nghiên cứu đã lưu trong audit."
+                                    )
                     else:
                         st.info("Không có ứng viên Attack theo ngưỡng nghiên cứu trong log này.")
 
