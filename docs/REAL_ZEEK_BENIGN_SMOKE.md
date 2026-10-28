@@ -100,3 +100,17 @@ in GitHub Actions (when its workflow passes). It does not fit/load an AI
 model, emit alerts, create SOC cases, authenticate genuine captures, or
 validate student VMware Host-only isolation. Run the local smoke separately
 in the Linux VM and keep the synthetic fixture out of research splits.
+
+
+### Verified real Zeek feature projection on GitHub runner (29 October 2026)
+
+[PR #149](https://github.com/tbao4151/DA_CNTT/pull/149) passed the
+[real Zeek 9.0.1 binary check](https://github.com/tbao4151/DA_CNTT/actions/runs/40769267570)
+and the [full Python 3.12.9 quality gate](https://github.com/tbao4151/DA_CNTT/actions/runs/40769267520)
+(753 passed, 2 skipped, 2 existing warnings). Post-merge
+[main CI](https://github.com/tbao4151/DA_CNTT/actions/runs/40769902214)
+also passed. The genuine Zeek-generated synthetic `conn.log` was projected
+onto **nine Zeek-lab v1 feature columns**, with identity and label fields
+excluded; the report records `feature_projection_verified=true`.
+This does **not** establish AI inference, true attack labels, a genuine VMware
+capture, local Windows acceptance, automatic SOC alerts or detection latency.

@@ -546,3 +546,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify both full Python 3.12.9 quality gate and real Zeek 9.0.1 offline workflow on the final PR head, then merge only if conflict-free. New check should confirm the actual synthetic Zeek log projects onto exactly nine separate lab features without UID/IP/time/label leakage. See PROGRESS for the feature's pending status.
 - [ ] Student runs the benign offline smoke with installed Zeek inside Linux VMware and retains version, PCAP, `conn.log`, feature-schema result, hashes and screenshots privately. This is not an attack experiment or evidence of Host-only isolation.
 - [ ] Independently collect authorized genuine Host-only PCAP and labels, keep host/session-disjoint holdout, and evaluate Zeek-specific AI Precision/Recall/FPR and event-to-SOC latency before operational claims. Keep Red Team network execution disabled and UNSW-NB15 official benchmark unchanged.
+
+
+## Cyber Lab — real Zeek feature projection CI verified (29/10/2026)
+
+- [x] [PR #149](https://github.com/tbao4151/DA_CNTT/pull/149) merged after final-head [real Zeek #40769267570](https://github.com/tbao4151/DA_CNTT/actions/runs/40769267570) and [quality gate #40769267520](https://github.com/tbao4151/DA_CNTT/actions/runs/40769267520) passed (**753 passed, 2 skipped**); post-merge [main CI #40769902214](https://github.com/tbao4151/DA_CNTT/actions/runs/40769902214) also passed. The earlier pending item is superseded. Real Zeek on GitHub Linux now validates the separate nine-feature lab schema, **not** AI detection.
+- [ ] Student executes the same benign smoke in a Linux VMware VM and records local Zeek version, hashes and artifacts privately; independently document Host-only adapters/routes and authorized capture provenance before collecting real traffic.
+- [ ] Obtain independent labels and host/session-disjoint holdout; evaluate real Zeek-specific model metrics and event-to-SOC latency before claiming operational alerts. Do not treat synthetic fixture as attack ground truth; keep active Red Team disabled.
