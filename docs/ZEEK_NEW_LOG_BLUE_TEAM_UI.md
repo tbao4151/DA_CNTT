@@ -1,8 +1,10 @@
 # DA005 — Blue Team NEW-log verified review (local Streamlit)
 
-This is a separate **read-only** Cyber Lab page for NEW Zeek `conn.log`
-predictions, distinct from the held-out research trace viewer. It does not
-capture traffic, run Red Team, create SQLite cases or emit operational alerts.
+This is a separate **offline** Cyber Lab page for NEW Zeek `conn.log`
+predictions, distinct from the held-out research trace viewer. It can optionally
+create one analyst-confirmed **Unclassified research SOC case** in a private
+SQLite database. It does not capture traffic, run Red Team, verify attacks or
+emit operational alerts.
 
 ## Windows acceptance procedure
 
@@ -29,7 +31,7 @@ capture traffic, run Red Team, create SQLite cases or emit operational alerts.
    and endpoints. Capture screenshots and retain original evidence privately.
    Try an incorrect manifest digest, a reserved TEST log (including re-encoded
    bytes), a wrong model/log digest and a modified report. All must be
-   refused without creating a SOC case.
+   refused before any SOC write.
 
 The page uses the strict JSON-only SHA-pinned model loader, checks the
 original log and CIDR, recomputes and compares **every** saved prediction,
@@ -41,16 +43,44 @@ This is a **declared-partition consistency check**, not proof that the
 operator's manifest captures the full research history. A changed UID,
 timestamp or endpoint may evade the conservative identity screen.
 
-For explicitly consented `Unclassified` SOC case creation, continue using
-`scripts/triage_zeek_new_log.py` with the separately pinned manifest gate
-described in `docs/ZEEK_NEW_LOG_MANUAL_SOC_TRIAGE.md`. This UI deliberately
-does not write SQLite or create operational alerts. Its successful preflight
-must not be substituted for the CLI's recheck at the case-write boundary.
+## Optional manual SOC triage on this page
+
+After successful pinned verification, the **Manual SOC** form appears if there
+are research candidates in the first 500 original Zeek rows. Select a candidate
+by its **original one-based Zeek row** (not the sorted table position). Enter
+an absolute private SQLite `.sqlite3` destination **outside Git** in an
+existing private directory, and explicitly check all three attestations:
+reviewed original evidence, authorization, and independent NEW-capture status.
+The selected row is converted to the existing zero-based manual-triage API.
+An empty selection, missing confirmation, invalid destination or changed
+evidence is refused. The page never silently opens a case.
+
+The **write boundary** uses the same strict private-path rules as the CLI:
+reload model bytes using its independent SHA-256, reload the manifest and all
+original TRAIN/VALIDATION/TEST captures/labels, recheck the independent
+manifest digest, source SHA-256, CIDR, exact-byte and normalized flow non-reuse,
+and recompute every prediction from the original uploaded log and report.
+Only then can an `Unclassified` case be created/reused in private SQLite.
+A repeat click for the same source SHA-256 + Zeek UID reuses the original case
+and its audit history. The earlier on-screen preview is **not** accepted as
+evidence at write time. There is no automatic alert, attack verdict or network
+operation. The UI does not export the private database.
+
+Alternatively, use `scripts/triage_zeek_new_log.py` with the independently
+pinned manifest gate in `docs/ZEEK_NEW_LOG_MANUAL_SOC_TRIAGE.md`.
+Both paths rely on operator attestations: SHA-256 and the declared manifest
+cannot independently prove complete historical partition independence, model
+authorship, physical isolation, ground-truth authenticity or real detection.
+
+For Windows acceptance, test a valid case, repeated creation (same ID), each
+missing checkbox, altered model/manifest/report and a reserved TEST capture;
+save local screenshots and private audit JSON. Never commit the private
+model, log, manifest, annotations or SQLite database.
 
 ## Software-only verification
 
 ```powershell
-py -3.12 -m pytest -q tests/test_zeek_new_log_workspace.py tests/test_zeek_new_log_ui_partition.py
+py -3.12 -m pytest -q tests/test_zeek_new_log_workspace.py tests/test_zeek_new_log_ui_partition.py tests/test_zeek_new_log_ui_soc.py
 ```
 
 Synthetic tests and GitHub CI do not prove a student-owned Host-only
