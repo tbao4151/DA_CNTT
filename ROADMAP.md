@@ -156,5 +156,5 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — declared CIDR screening in experiment CLI (28/10/2026)
 
-- [ ] Verify/merge the optional all-capture `--cidr` gate for both Zeek `--preflight` and `--output` after final Python 3.12.9 CI passes. Scope screening checks only operator-declared IPv4 endpoint membership; no network activity, model deployment or automatic SOC alert. See PROGRESS for PR/CI status.
+- [x] Verified/merged the optional all-capture `--cidr` gate for both Zeek `--preflight` and `--output` (PR #71, final PR and post-merge Python 3.12.9 CI passed: 384 passed, 2 skipped). Scope screening checks only operator-declared IPv4 endpoint membership; no network activity, model deployment or automatic SOC alert. See PROGRESS for PR/CI status.
 - [ ] Student-run Windows/VMware Host-only experiment: verify actual virtual network isolation separately, preserve private source hashes and scenario/label evidence, and pass the explicit scope gate on every pre-registered train/validation/test capture. Never claim a passing CIDR screen proves isolation or detection.
