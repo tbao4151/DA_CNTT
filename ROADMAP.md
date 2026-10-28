@@ -231,6 +231,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — pinned declared-partition non-reuse preflight (28/10/2026)
 
-- [ ] Validate and merge the read-only `check_zeek_partition_exclusion.py` feature PR only after full Python 3.12.9 CI passes; it compares independently pinned new capture bytes with **all** declared TRAIN/VALIDATION/TEST source digests, checks model/manifest linkage and refuses mismatches. Synthetic regressions are not a student lab result.
+- [x] [PR #93](https://github.com/tbao4151/DA_CNTT/pull/93) merged the read-only `check_zeek_partition_exclusion.py` gate; final-head and post-merge main Python 3.12.9 CI passed (**508 passed, 2 skipped**). It compares independently pinned new capture bytes with **all** declared TRAIN/VALIDATION/TEST source digests, checks model/manifest linkage and refuses mismatches. Synthetic regressions are not a student lab result.
 - [ ] Student runs this tool on Windows with a genuinely pre-registered private experiment manifest, all original annotated captures, separately recorded SHA-256 references, actual VMware Host-only CIDR and an independently captured NEW log. Preserve screenshots, Zeek version and scenario/label evidence outside GitHub.
 - [ ] Do not claim this exact-byte screen proves semantic flow non-reuse, authentic partition history, physical isolation or detection accuracy. Existing new-log inference reports remain research-only and do not gain an automatic alert or operational confidence claim.
