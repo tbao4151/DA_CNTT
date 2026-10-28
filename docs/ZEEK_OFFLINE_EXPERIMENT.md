@@ -114,6 +114,32 @@ The placeholders are format illustrations only. Do not fabricate UIDs,
 ground truth or digests. On Windows, calculate exact source hashes with
 Get-FileHash -Algorithm SHA256 PATH_TO_CONN_LOG and use lowercase hex in JSON.
 
+## Validate a private manifest without training (preflight)
+
+After completing UID annotations and assigning host-disjoint splits in the
+private manifest, run this **read-only** preflight first:
+
+~~~powershell
+py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --preflight
+~~~
+
+This command reuses the experiment's bounded manifest, SHA-256, annotation,
+UID and host/session split checks, then prints JSON with aggregate per-split
+Normal/Attack flow counts, host-group counts, session counts and small-sample
+warnings. It **does not fit a model, score held-out test predictions, save
+reports, generate alerts or contact a network**. Its output deliberately omits
+private paths, UIDs, IPs, host names and label-reference strings. It refuses
+incomplete labels and invalid splits rather than silently substituting values.
+
+`structural_validation_passed=true` only means the provided files and
+declared split structure passed software checks. It does **not** prove that
+the VM network was Host-only, that an Attack occurred, that labels are true,
+or that a model will converge. With fewer than two host groups in a split,
+host-variability diagnostics cannot compare machines within that split.
+Keep the untouched test partition sealed until the final planned experiment.
+Use exactly one of `--preflight` and `--output`; the existing `--output`
+research workflow remains unchanged.
+
 ## Execute on Windows (Python 3.12.9)
 
 From the repository root after installing requirements.txt:
