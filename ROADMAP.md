@@ -182,6 +182,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — deduplicate explicit research SOC triage (28/10/2026)
 
-- [ ] Verify and merge the narrowly scoped source-SHA/Zeek-UID idempotency change for **manual research** candidates. Concurrent clicks must reuse one original Unclassified case and initial audit event, while ordinary manual and Dataset Mode case creation remain unchanged. Synthetic tests only; check PR CI before marking complete.
+- [x] [PR #79](https://github.com/tbao4151/DA_CNTT/pull/79) merged the narrowly scoped source-SHA/Zeek-UID idempotency change for **manual research** candidates. Concurrent clicks reuse one original Unclassified case and initial audit event; ordinary manual and Dataset Mode case creation remain unchanged. Final PR and post-merge Ubuntu Python 3.12.9 CI passed (421 passed, 2 skipped); synthetic tests only. See PROGRESS.
 - [ ] Validate on Windows with genuine authorized Host-only evidence; an idempotent case is not proof of model provenance, attack authenticity or network isolation.
 - [ ] Do not use held-out research traces as live alerts. Trusted Zeek model deployment, new-log inference and operational AI-to-SOC alerts remain future work.
