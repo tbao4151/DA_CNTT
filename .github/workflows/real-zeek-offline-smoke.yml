@@ -1,4 +1,5 @@
 name: Real Zeek offline synthetic smoke
+# The second acceptance stage exercises the production offline importer via real Zeek.
 
 on:
   pull_request:
@@ -99,6 +100,80 @@ jobs:
           )
           print(json.dumps(result, indent=2))
           PY
+      - name: Exercise production offline importer with actual network-disabled Zeek
+        run: |
+          # The host Python CLI remains unchanged. Only the Zeek executable
+          # is proxied into the pinned, network-disabled Docker image.
+          # No capture interface or live traffic is used.
+          mkdir -p "$SMOKE_DIR/bin"
+          cat > "$SMOKE_DIR/bin/zeek" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [[ "$#" -ne 2 || "$1" != "-r" || ! -f "$2" ]]; then
+            echo "CI Zeek proxy only permits -r with an existing PCAP" >&2
+            exit 2
+          fi
+          exec docker run --rm \
+            --network none --read-only \
+            --user "$(id -u):$(id -g)" \
+            --env HOME=/tmp \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --tmpfs /tmp:rw,nosuid,noexec,size=16m \
+            --mount "type=bind,src=$2,dst=/input.pcap,readonly" \
+            --mount "type=bind,src=$PWD,dst=/work" \
+            --workdir /work \
+            zeek/zeek:9.0.1 \
+            /bin/sh -c 'zeek -r /input.pcap'
+          SH
+          chmod +x "$SMOKE_DIR/bin/zeek"
+          export PATH="$SMOKE_DIR/bin:$PATH"
+          PYTHONPATH=src python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from blue_team_ai.offline_pcap import import_offline_pcap
+          from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
+          from blue_team_ai.zeek_smoke import verify_fixture_feature_projection
+
+          root = Path(os.environ["SMOKE_DIR"])
+          pcap = root / "benign_synthetic.pcap"
+          output = root / "importer-real"
+          imported = import_offline_pcap(
+              pcap, output, lab_cidrs=["192.168.56.0/24"],
+              operator_confirmed_offline=True,
+          )
+          report = output / "offline_import_report.json"
+          digest = hashlib.sha256(report.read_bytes()).hexdigest()
+          verified = verify_offline_pcap_import(
+              report, expected_report_sha256=digest,
+              pcap_path=pcap, log_path=output / "conn.log",
+              lab_cidrs=["192.168.56.0/24"],
+          )
+          projection = verify_fixture_feature_projection(output / "conn.log")
+          assert imported["flow_count"] == verified["flow_count"] == 1
+          assert imported["zeek_conn_sha256"] == verified["zeek_conn_sha256"]
+          assert imported["ai_inference_performed"] is False
+          result = {
+              "source_kind": "synthetic_benign_udp_fixture",
+              "execution": "real_zeek_offline_importer_via_network_disabled_container",
+              "import_report_sha256": digest,
+              "zeek_conn_sha256": imported["zeek_conn_sha256"],
+              "flow_count": imported["flow_count"],
+              "importer_and_independent_verifier_succeeded": True,
+              **projection,
+              "vmware_capture_performed": False,
+              "attack_ground_truth_verified": False,
+              "ai_scoring_performed": False,
+              "soc_case_created": False,
+              "interpretation": "Synthetic offline importer acceptance in CI only; not a real lab capture or attack detection.",
+          }
+          (root / "ci_importer_real_report.json").write_text(
+              json.dumps(result, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(result, indent=2))
+          PY
       - name: Upload synthetic-only reproducibility evidence
         if: success()
         uses: actions/upload-artifact@v4
@@ -109,5 +184,8 @@ jobs:
             ${{ env.SMOKE_DIR }}/conn.log
             ${{ env.SMOKE_DIR }}/zeek_version.txt
             ${{ env.SMOKE_DIR }}/ci_smoke_report.json
+            ${{ env.SMOKE_DIR }}/ci_importer_real_report.json
+            ${{ env.SMOKE_DIR }}/importer-real/conn.log
+            ${{ env.SMOKE_DIR }}/importer-real/offline_import_report.json
           if-no-files-found: error
           retention-days: 7

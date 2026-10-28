@@ -114,3 +114,26 @@ onto **nine Zeek-lab v1 feature columns**, with identity and label fields
 excluded; the report records `feature_projection_verified=true`.
 This does **not** establish AI inference, true attack labels, a genuine VMware
 capture, local Windows acceptance, automatic SOC alerts or detection latency.
+
+
+## Production offline importer with actual Zeek in CI (PR #151)
+
+The real-Zeek workflow now additionally exercises the **existing production**
+`import_offline_pcap` function against the deterministic benign PCAP.
+The host Python importer invokes `zeek -r` through a CI-only executable
+proxy, which accepts **only** `-r <existing-pcap>` and runs the actual Zeek
+9.0.1 binary in a `--network none`, read-only, capability-dropped Docker
+container. The importer itself is not monkeypatched. Its resulting
+`conn.log` and import report are checked with
+`verify_offline_pcap_import` and the exact fixture-to-nine-feature contract.
+A second CI report (`ci_importer_real_report.json`) records this result
+separately from the earlier direct-binary smoke.
+
+This verifies importer orchestration and offline decoding on a GitHub-hosted
+Linux runner **only if the corresponding workflow run succeeds**. The
+import-report digest is computed in the same CI run and does not independently
+authenticate the PCAP or capture provenance. This does not demonstrate
+student-machine acceptance, VMware isolation, real attack ground truth,
+model inference, automatic alerting, SOC case creation, or detection latency.
+No active Red Team traffic is generated. The local CLI and official
+UNSW-NB15 benchmark remain unchanged.
