@@ -129,3 +129,41 @@ Synthetic regressions (not student Windows acceptance):
 ```powershell
 py -3.12 -m pytest -q tests/test_zeek_new_log_partition_triage.py
 ```
+
+
+## Optional pinned offline PCAP provenance at manual SOC write (29/10/2026)
+
+When the original `conn.log` was produced from an operator-owned classic PCAP
+by `scripts/import_offline_pcap.py`, append the following **three arguments**
+to both `--list-candidates` and the explicit `--record-index` command:
+
+```powershell
+  --offline-import-report "C:/DA005-private/new-capture/offline_import_report.json" `
+  --expected-offline-import-report-sha256 "<INDEPENDENTLY_RECORDED_IMPORT_REPORT_SHA256>" `
+  --offline-import-pcap "C:/DA005-private/original.pcap"
+```
+
+All three are required together. The private report must be in the same directory
+as the original `conn.log`. The verifier rereads the original classic PCAP,
+Zeek log and import report; checks their SHA-256, declared scope and flow count;
+and rejects mismatches. Crucially, the core manual case function **repeats**
+the provenance check at the SOC write boundary rather than trusting an earlier
+candidate listing. The initial `Unclassified` case audit note records the
+verified import-report and PCAP digests, or explicitly says PCAP provenance
+was not software-checked for legacy commands.
+
+This is an optional stronger **byte-integrity** check, not a claim that the
+PCAP was genuinely captured in VMware, that Host-only isolation was effective,
+that a flow is an attack, or that the held-out TEST partition is independent.
+The existing `--manifest` partition gate remains separately available.
+Neither gate enables automated SOC alerts or network activity. Keep original
+files, pins and SQLite outside public Git; do not derive the independent pin
+from the report under review. A pinned report cannot authenticate its author.
+
+Synthetic regression (Zeek execution mocked, real scoring and SOC CLI used):
+
+```powershell
+py -3.12 -m pytest -q tests/test_offline_pcap_soc_triage_gate.py
+```
+
+This does **not** replace a Windows/VMware experiment with actual Zeek `-r`.
