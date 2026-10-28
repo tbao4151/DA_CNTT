@@ -10,11 +10,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
 from blue_team_ai.model_artifact import build_zeek_research_artifact
 from test_offline_pcap_verify import imported  # pytest fixture: mocked Zeek import
 from test_zeek_offline_baseline import _dataset
 
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def _command(item, model_path, model_digest, output):
