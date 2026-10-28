@@ -91,3 +91,42 @@ def test_rejects_missing_partition_and_non_sequence():
     rows[2]["split"] = "train"
     with pytest.raises(ValueError, match="Split test"):
         build_labeled_lab_dataset(rows)
+
+
+def test_reencoded_flow_reuse_across_splits_is_rejected_before_training():
+    rows = samples()
+    original = rows[0]
+    # Re-encoding changes file SHA-256, not the normalized UID/time/5-tuple.
+    rows[2]["log_bytes"] = original["log_bytes"].replace(
+        b"#fields\\t", b"# innocuous header comment\\n#fields\\t", 1
+    )
+    rows[2]["labels_by_uid"] = original["labels_by_uid"].copy()
+    assert hashlib.sha256(rows[2]["log_bytes"]).hexdigest() != hashlib.sha256(
+        original["log_bytes"]
+    ).hexdigest()
+    with pytest.raises(ValueError, match="Normalized Zeek flow identity reused"):
+        build_labeled_lab_dataset(rows)
+
+
+def test_reencoded_flow_reuse_within_one_split_is_also_rejected():
+    rows = samples()
+    duplicate = capture("train", 99)
+    duplicate["log_bytes"] = rows[0]["log_bytes"].replace(
+        b"#fields\\t", b"# other comment\\n#fields\\t", 1
+    )
+    duplicate["labels_by_uid"] = rows[0]["labels_by_uid"].copy()
+    rows.append(duplicate)
+    with pytest.raises(ValueError, match="Normalized Zeek flow identity reused"):
+        build_labeled_lab_dataset(rows)
+
+
+def test_reused_uid_at_distinct_event_times_is_not_a_false_overlap():
+    rows = samples()
+    raw = rows[0]["log_bytes"]
+    rows[2]["log_bytes"] = raw.replace(
+        b"1630000000.25", b"1630000010.25"
+    ).replace(b"1630000001.0", b"1630000011.0")
+    rows[2]["labels_by_uid"] = rows[0]["labels_by_uid"].copy()
+    result = build_labeled_lab_dataset(rows)
+    assert result.labels["test"] == [0, 1]
+    assert len(result.features["test"]) == 2
