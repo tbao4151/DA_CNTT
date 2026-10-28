@@ -730,3 +730,10 @@
 - Added synthetic-only regression tests using a real small Logistic Regression baseline and negative cases; updated the offline experiment documentation and roadmap.
 - **At writing:** GitHub PR-head Python 3.12.9 CI, merge, post-merge CI, and student Windows acceptance are **not yet verified**. Trace internal consistency cannot prove authentic model provenance, independent ground truth, physical Host-only isolation, or real attack detection.
 - Next: verify CI and merge only if green; student must collect authorized Host-only logs and independently annotated test data, run the experiment with `--trace-output`, and review private predictions locally without tuning on held-out test.
+
+## 2026-10-28: Private Zeek trace read-only Blue Team review merged and verified (#75)
+
+- [PR #75](https://github.com/tbao4151/DA_CNTT/pull/75) squash-merged as `58a58ced1348494c7cc74c41d9748777a206d845`. Final-head [PR CI #40619319844](https://github.com/tbao4151/DA_CNTT/actions/runs/40619319844) and [post-merge main CI #40619489913](https://github.com/tbao4151/DA_CNTT/actions/runs/40619489913) both **passed** on Ubuntu Python 3.12.9. PR CI: **403 passed, 2 skipped, 2 warnings** (pre-existing pandas FutureWarnings).
+- Read-only `trace_review.py` validates private trace schema, source SHA-256, exact UID join, validation-selected threshold, probabilities/verdicts and confusion totals. Optional Blue Team UI shows up to 500 label-free research Attack candidates from the supplied original Zeek log; no model loaded, no automatic alerts/cases, no traffic generated.
+- Tests used synthetic Zeek fixtures and a real small fitted Logistic Regression, **not** genuine student VMware logs. Source/trace consistency cannot authenticate training, independent labels, capture origin or network isolation. Windows UI and authorized Host-only E2E remain **unverified**. UNSW benchmark unchanged.
+- Next: student captures authorized genuine Host-only Zeek logs, archives isolation evidence and independent labels, preregisters holdout, then runs `--trace-output` and checks the private trace against original `conn.log` in the Blue Team page without tuning on test.

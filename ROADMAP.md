@@ -168,6 +168,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — private research prediction review in Blue Team UI (28/10/2026)
 
-- [ ] Verify PR-head CI, merge, and post-merge quality gates for the read-only `trace_review.py` source-SHA/UID/threshold/confusion validation and optional Blue Team research candidate table. This UI does not deploy an AI model or create operational alerts; synthetic tests are not real attack evidence.
+- [x] [PR #75](https://github.com/tbao4151/DA_CNTT/pull/75) merged read-only `trace_review.py` and optional Blue Team research candidate table; final PR-head [CI #40619319844](https://github.com/tbao4151/DA_CNTT/actions/runs/40619319844) and post-merge [CI #40619489913](https://github.com/tbao4151/DA_CNTT/actions/runs/40619489913) passed (403 passed, 2 skipped). No model deployment, operational alerts or genuine attack detection.
 - [ ] Student runs the optional trace upload against a **genuine** authorized Host-only `conn.log` and a pre-registered private held-out `--trace-output`; preserve original source, hashes, independent labels and isolation screenshots outside GitHub. Review candidate FP/FN privately without test-set tuning.
 - [ ] Only after independent detection evidence: design trusted model persistence/inference and explicitly gated AI-to-SOC alerts, with source provenance, confidence semantics and audit controls. Keep Red Team traffic disabled until isolation/authorization verified.

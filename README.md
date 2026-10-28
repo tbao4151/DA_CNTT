@@ -178,3 +178,7 @@ TP/FP/TN/FN outcome. It must remain **outside the Git repository**, never be
 uploaded publicly, and must not be used to tune against the held-out test.
 This is **not live detection, a deployed Zeek model or an automated SOC alert**.
 See `docs/ZEEK_OFFLINE_EXPERIMENT.md` for protocol and privacy limits.
+
+## Cyber Lab: đối chiếu dự đoán AI nghiên cứu ngoại tuyến (PR #75)
+
+Trang **Cyber Lab · Blue Team** có thể nạp thêm JSON private từ `scripts/evaluate_zeek_lab.py --trace-output` cùng một tệp `conn.log` gốc của tập held-out test. Giao diện kiểm tra SHA-256, UID, ngưỡng và tính nhất quán của trace rồi hiển thị tối đa 500 ứng viên Attack **chỉ đọc**; không hiển thị nhãn gán, không tự tạo case/alert, không tải model hoặc kết nối mạng. Đây là kết quả nghiên cứu ngoại tuyến do người vận hành cung cấp, **không xác thực nguồn gốc mô hình hoặc nhãn thực**, và không phải phát hiện trực tiếp. Xem `docs/ZEEK_OFFLINE_EXPERIMENT.md` để thực hiện trên Windows và giữ dữ liệu riêng tư ngoài GitHub.
