@@ -518,3 +518,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #145](https://github.com/tbao4151/DA_CNTT/pull/145) merged; final-head [CI #40761458458](https://github.com/tbao4151/DA_CNTT/actions/runs/40761458458) and post-merge [main CI #40762224232](https://github.com/tbao4151/DA_CNTT/actions/runs/40762224232) succeeded (**750 passed, 2 skipped, 2 existing warnings**). This supersedes the earlier pending merge item. CI used mocked Zeek.
 - [ ] Student runs installed Zeek with `scripts/smoke_zeek_offline.py` on a Linux VM and archives the private fixture PCAP, Zeek `conn.log`, version, reports and checksums. This is only synthetic benign toolchain acceptance, not actual VMware capture or attack detection.
 - [ ] Independently validate real authorized Host-only capture and labels, then measure held-out Zeek AI precision/recall/FPR and end-to-end alert/SOC latency before making operational claims.
+
+
+## Cyber Lab — real Zeek binary CI on synthetic offline PCAP (29/10/2026)
+
+- [ ] Confirm the new `real-zeek-offline-smoke.yml` PR-head workflow runs **real Zeek 9.0.1** in a network-disabled Docker container and verifies the exact synthetic benign UDP flow; merge only after both new workflow and existing quality gate are green. At feature authoring this remains pending.
+- [ ] Record the successful Actions run, Zeek version/image ID and synthetic-only artifact provenance; do not present runner CI as student laptop/VMware testing or as attack-detection evidence.
+- [ ] Student executes `scripts/smoke_zeek_offline.py` on installed Zeek in Linux VMware, then separately obtains genuine authorized Host-only PCAP with adapter/routes evidence, independent labels, host/session-disjoint evaluation and measured event-to-SOC latency. Preserve UNSW official benchmark; keep Red Team network execution disabled.
