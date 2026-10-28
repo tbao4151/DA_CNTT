@@ -349,3 +349,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #119](https://github.com/tbao4151/DA_CNTT/pull/119) merged after final-head [CI #40694487688](https://github.com/tbao4151/DA_CNTT/actions/runs/40694487688) passed (624 passed, 2 skipped, 2 warnings on Ubuntu Python 3.12.9). Shared normalized UID/time/five-tuple overlap screening rejects re-encoded flow reuse across labeled captures before training; synthetic tests only. Post-merge main CI is tracked separately in PROGRESS.
 - [ ] Student records independently pinned original Host-only captures, separate annotations, sessions and hosts, then runs `evaluate_zeek_lab.py --preflight` on Windows 3.12.9 before any fit. A passing exact-identity screen does not prove semantic non-reuse, authorization, label truth or physical isolation.
 - [ ] Evaluate on genuinely independent, host/session-disjoint captures and report FPR, recall and event-to-alert latency only with independently documented experimental evidence. Red Team active traffic remains disabled.
+
+
+## Cyber Lab — two-annotator label quality review (28/10/2026)
+
+- [ ] Verify final-head CI and merge the optional SHA-pinned offline annotation agreement feature; see PROGRESS for pending PR state. The aggregate agreement report includes 2x2 counts and Cohen's kappa, never creates or alters labels, models, alerts or cases.
+- [ ] Student collects an authorized genuine VMware Host-only Zeek capture, obtains two blind independent UID annotations with separately recorded evidence and hashes, runs the agreement CLI on Windows Python 3.12.9, and documents disagreements/adjudication privately. Software agreement does not establish attack ground truth or independent reviewers.
+- [ ] Pre-register host/session-disjoint splits, freeze held-out TEST, evaluate a separately trained Zeek model with independently substantiated labels and measure event-to-alert latency. Keep official UNSW benchmark and active Red Team unchanged.
