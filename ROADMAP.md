@@ -464,3 +464,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #137](https://github.com/tbao4151/DA_CNTT/pull/137) merged after final-head [CI #40742422992](https://github.com/tbao4151/DA_CNTT/actions/runs/40742422992) and post-merge [main CI #40743228957](https://github.com/tbao4151/DA_CNTT/actions/runs/40743228957) passed (**718 passed, 2 skipped, 2 warnings**). This supersedes the feature-authoring pending checkbox; optional read-only PCAP recheck now guards independent report review.
 - [ ] Student runs actual Zeek `-r` on a private, authorized Host-only PCAP in Linux VMware, pins PCAP/import report/log/model hashes and executes both gated scoring and review on Windows Python 3.12.9. Keep physical isolation, Zeek version, scenario and annotation evidence outside Git.
 - [ ] Establish genuine independent labels and host/session-disjoint held-out evaluation, then measure Precision/Recall/FPR and event-to-alert latency. No operational attack detection claim or active Red Team traffic from synthetic CI.
+
+
+## Cyber Lab — pinned original-PCAP recheck before manual SOC case (29/10/2026)
+
+- [ ] Verify final-head CI and merge the optional original-PCAP provenance recheck at `triage_zeek_new_log.py` and the core `create_new_log_candidate_case` write boundary. Preserve existing legacy commands and SQLite records. See PROGRESS for feature verification status.
+- [ ] Student runs actual authorized Zeek `-r` on private Host-only PCAP in Linux VMware; separately pins PCAP/import report/log/model, then runs gated scoring, independent review, candidate listing and manual SOC case creation. Preserve adapter/routes, Zeek version, scenario authorization and independently reviewed labels outside Git.
+- [ ] Validate held-out host/session-disjoint labels and measure real Precision/Recall/FPR and event-to-alert latency before any operational alert claims. Synthetic CI cannot prove capture authenticity, Host-only isolation, attack ground truth or live detection; Red Team network actions remain disabled.
