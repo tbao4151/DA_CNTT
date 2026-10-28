@@ -404,3 +404,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #127](https://github.com/tbao4151/DA_CNTT/pull/127) merged after final-head [CI #40713687729](https://github.com/tbao4151/DA_CNTT/actions/runs/40713687729) passed (**679 passed, 2 skipped, 2 existing pandas warnings**). This supersedes the earlier pending feature checkbox; offline consistency checking does not authenticate labels or physical events.
 - [ ] Student runs `scripts/verify_zeek_final_labels.py` on Windows Python 3.12.9 with five independently SHA-pinned private files from an authorized VMware Host-only capture. Keep original Zeek, reviewer annotations, worksheet, finalized annotation, and separate scenario/isolation evidence outside Git.
 - [ ] Freeze host/session-disjoint TRAIN/VALIDATION/TEST, independently validate actual scenario ground truth and isolation, then measure held-out Zeek Precision/Recall/FPR and event-to-alert latency. Red Team active traffic and operational auto-alerts remain disabled until authorized safety and research gates are satisfied.
+
+
+## Cyber Lab — frozen annotation byte integrity before Zeek fitting (28/10/2026)
+
+- [ ] Verify final-head CI and merge the optional `labels_sha256` manifest guard with strict `--require-label-sha256` preflight/fit; see PROGRESS for pending feature PR status. This protects exact annotation bytes, not their scientific validity.
+- [ ] Student records independent SHA-256 for every finalized private annotation file, runs five-input final-label chain verification where applicable, then runs strict pinned preflight on Windows Python 3.12.9 before training/evaluation. Preserve original evidence outside Git and freeze the test partition before model selection.
+- [ ] Validate real VMware Host-only isolation, authorization and scenario ground truth independently; assess held-out Zeek FPR/Recall and event-to-alert latency only after genuine host/session-disjoint captures exist. Do not enable active Red Team traffic or change official UNSW-NB15 benchmark.
