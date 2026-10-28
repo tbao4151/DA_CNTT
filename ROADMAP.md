@@ -276,3 +276,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #103](https://github.com/tbao4151/DA_CNTT/pull/103) merged: read-only NEW-log UI now requires a SHA-256-pinned private manifest and all original TRAIN/VALIDATION/TEST captures/annotations, rejecting exact-byte or normalized flow identity overlap before displaying AI research candidates. Final-head [CI #40661904366](https://github.com/tbao4151/DA_CNTT/actions/runs/40661904366) and post-merge main [CI #40662219929](https://github.com/tbao4151/DA_CNTT/actions/runs/40662219929) passed (545 passed, 2 skipped, 2 existing warnings on PR).
 - [ ] Student verifies the UI and refusal paths on Windows Python 3.12.9 with genuine authorized VMware Host-only captures, independent hashes, preserved original manifest/annotations and isolation screenshots outside Git. CI synthetic fixtures do not establish attack detection.
 - [ ] Add optional explicitly analyst-confirmed `Unclassified` SOC case creation in UI with a fresh pinned-manifest check at the SQLite write boundary. No operational auto-alert or Red Team traffic.
+
+
+## Cyber Lab — pinned offline batch runtime measurement (28/10/2026)
+
+- [ ] Validate PR CI and merge the read-only NEW-log batch scoring runtime benchmark; record verified Actions and keep official Dataset Mode and Red Team safe-off unchanged. See `docs/ZEEK_NEW_LOG_RUNTIME_BENCHMARK.md`.
+- [ ] Student collects genuine authorized VMware Host-only Zeek captures and independently pinned model/manifest/log SHA-256; runs benchmark on Windows Python 3.12.9 with documented hardware, Zeek version and capture duration. Store outputs privately and distinguish synthetic CI from student measurements.
+- [ ] Only after verified real capture and independent labels, design event arrival/ingest/alert timestamp instrumentation to measure actual end-to-end detection latency. Offline batch runtime is not detection latency or operational throughput.
