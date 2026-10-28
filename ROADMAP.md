@@ -411,3 +411,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head CI and merge the optional `labels_sha256` manifest guard with strict `--require-label-sha256` preflight/fit; see PROGRESS for pending feature PR status. This protects exact annotation bytes, not their scientific validity.
 - [ ] Student records independent SHA-256 for every finalized private annotation file, runs five-input final-label chain verification where applicable, then runs strict pinned preflight on Windows Python 3.12.9 before training/evaluation. Preserve original evidence outside Git and freeze the test partition before model selection.
 - [ ] Validate real VMware Host-only isolation, authorization and scenario ground truth independently; assess held-out Zeek FPR/Recall and event-to-alert latency only after genuine host/session-disjoint captures exist. Do not enable active Red Team traffic or change official UNSW-NB15 benchmark.
+
+
+## Cyber Lab — verified Zeek annotation byte pins merged (28/10/2026)
+
+- [x] [PR #129](https://github.com/tbao4151/DA_CNTT/pull/129) merged after final-head [CI #40722795229](https://github.com/tbao4151/DA_CNTT/actions/runs/40722795229) and post-merge `main` [CI #40723382103](https://github.com/tbao4151/DA_CNTT/actions/runs/40723382103) both passed (**684 passed, 2 skipped, 2 existing warnings**). This supersedes the pending checkbox above. Strict annotation-byte pinning is implemented, but authentic labeling remains unverified.
+- [ ] Student independently freezes each `labels.json` SHA-256, performs five-input chain verification where applicable, then runs `evaluate_zeek_lab.py --require-label-sha256 --preflight` on Windows Python 3.12.9 using authorized genuine Host-only captures. Keep sensitive evidence outside Git.
+- [ ] Evaluate a separate Zeek model on independently validated, host/session-disjoint held-out data and measure real event-to-alert latency; preserve official UNSW benchmark, offline-only default and inactive Red Team network execution.
