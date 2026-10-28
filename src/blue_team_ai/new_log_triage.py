@@ -14,6 +14,7 @@ from .labeled_dataset import LabeledLabDataset
 from .new_log_inference import score_new_zeek_log
 from .partition_guard import verify_declared_partition_exclusion
 from .new_log_review import review_pinned_new_log_report
+from .offline_pcap_verify import verify_offline_pcap_import
 from .triage import create_offline_review_case
 from .zeek import parse_zeek_conn_log
 
@@ -35,6 +36,10 @@ def create_new_log_candidate_case(
     declared_dataset: LabeledLabDataset | None = None,
     declared_manifest_sha256: str | None = None,
     declared_captures: Sequence[Mapping[str, object]] | None = None,
+    offline_import_report_path: str | Path | None = None,
+    offline_import_report_sha256: str | None = None,
+    offline_import_pcap_path: str | Path | None = None,
+    offline_import_log_path: str | Path | None = None,
 ) -> int:
     """Create/reuse one manual Unclassified case for a verified candidate.
 
@@ -50,6 +55,29 @@ def create_new_log_candidate_case(
         raise ValueError("Explicit analyst, authorization and partition confirmations required")
     if type(record_index) is not int or not 0 <= record_index < MAX_VISIBLE_NEW_LOG_FLOWS:
         raise ValueError("Select a valid visible record index (0..499)")
+
+    provenance_options = (
+        offline_import_report_path, offline_import_report_sha256,
+        offline_import_pcap_path, offline_import_log_path,
+    )
+    if any(option is not None for option in provenance_options) and not all(
+        option is not None for option in provenance_options
+    ):
+        raise ValueError("All four pinned offline PCAP provenance inputs are required")
+    verified_import = None
+    if all(option is not None for option in provenance_options):
+        # Re-read ORIGINAL PCAP/import report/conn.log at the SOC write boundary.
+        # Earlier successful listing or scoring cannot replace this verification.
+        verified_import = verify_offline_pcap_import(
+            offline_import_report_path,
+            expected_report_sha256=offline_import_report_sha256,
+            pcap_path=offline_import_pcap_path,
+            log_path=offline_import_log_path,
+            lab_cidrs=lab_cidrs,
+        )
+        if (verified_import["zeek_conn_sha256"] != expected_log_sha256
+                or hashlib.sha256(source_data).hexdigest() != expected_log_sha256):
+            raise ValueError("SOC source bytes differ from verified offline PCAP import")
 
     if (declared_dataset is None) != (declared_manifest_sha256 is None):
         raise ValueError("Declared dataset and pinned manifest SHA must be supplied together")
@@ -107,6 +135,13 @@ def create_new_log_candidate_case(
             + "historical completeness and semantic flow non-reuse unverified. "
             if declared_dataset is not None else
             "TRAIN/VALIDATION/TEST exclusion is an operator attestation only. "
+        )
+        + (
+            "Pinned original PCAP/import report/Zeek byte integrity and declared "
+            f"scope rechecked: import_report_sha256={verified_import['report_sha256']}; "
+            f"pcap_sha256={verified_import['pcap_sha256']}. "
+            if verified_import is not None else
+            "Original PCAP provenance NOT software-checked. "
         )
         + "Authorization, Host-only isolation and ground truth are unverified."
     )
