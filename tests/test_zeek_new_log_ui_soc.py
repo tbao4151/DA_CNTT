@@ -126,7 +126,7 @@ def test_ui_write_rejects_test_partition_reuse_even_with_new_report(tmp_path):
 
 def test_ui_write_rejects_database_inside_repository(tmp_path):
     args = _ui_args(tmp_path)
-    args["db_path"] = ROOT / "runtime" / "do-not-create-ui-case.sqlite3"
+    args["db_path"] = ROOT / "tests" / "do-not-create-ui-case.sqlite3"
     with pytest.raises(ValueError, match="private"):
         create_ui_candidate_case(**args)
     assert not args["db_path"].exists()
