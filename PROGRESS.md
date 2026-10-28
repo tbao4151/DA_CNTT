@@ -779,3 +779,10 @@
 - **At writing:** feature PR CI, merge and Windows acceptance have not been verified. This is internal consistency, not a signed model, authenticated labels, genuine VMware capture, real attack detection or operational AI alert. Dataset Mode and Red Team remain unchanged.
 
 - First PR CI [#40628483916](https://github.com/tbao4151/DA_CNTT/actions/runs/40628483916) **failed** (1 failed, 427 passed, 2 skipped): a synthetic test changed the original capture and trace digest but not the newly required aggregate test provenance digest. Updated that test fixture in follow-up commit; final-head CI must pass before merge.
+
+
+## 2026-10-28: Held-out private trace provenance guard merged and verified (#81)
+
+- [PR #81](https://github.com/tbao4151/DA_CNTT/pull/81) squash-merged as `df30233f50786790a8f2bce8aca5ede376b0d86a`. Final-head [PR CI #40628673416](https://github.com/tbao4151/DA_CNTT/actions/runs/40628673416) and [post-merge main CI #40628781898](https://github.com/tbao4151/DA_CNTT/actions/runs/40628781898) **passed** on Ubuntu Python 3.12.9: **428 passed, 2 skipped, 2 warnings** (existing pandas FutureWarnings). The initial failing CI and subsequent fixture correction remain recorded above.
+- Research trace review now checks exact source SHA-256 set and total flow count against declared held-out test provenance, in addition to original uploaded source/UID matching. Tests use synthetic fixtures only. No model authenticity, genuine VMware isolation, independent label truth, new-log inference or operational alert verified.
+- Student Windows/VMware Host-only acceptance is still outstanding; do not tune on held-out test or upload private logs/traces to GitHub.
