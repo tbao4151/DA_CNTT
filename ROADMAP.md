@@ -335,3 +335,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #115](https://github.com/tbao4151/DA_CNTT/pull/115) merged after green final-head [CI #40686152438](https://github.com/tbao4151/DA_CNTT/actions/runs/40686152438) (600 passed, 2 skipped, 2 warnings). Offline SHA-pinned private host inventory and three original diagnostics are verified for integrity only; main CI is tracked in PROGRESS.
 - [ ] Student independently pins the report SHA-256 and runs the verifier on Windows Python 3.12.9, manually checks all VMware guest adapters/routes and archives original private evidence outside Git. The tool cannot prove isolation or authorization.
 - [ ] Gather genuinely new, authorized Host-only Zeek captures with independent scenario labels and evaluate on host/session-disjoint partitions before claiming operational attack detection. Keep Dataset Mode official benchmark and Red Team active traffic unchanged.
+
+
+## Cyber Lab — pinned original Zeek capture evidence re-verification (28/10/2026)
+
+- [ ] Verify feature PR CI and merge the offline, SHA-pinned Zeek capture inventory verifier. It must re-read all five private originals and re-evaluate declared CIDR scope; synthetic regression is not student Windows acceptance. Track final PR/CI in PROGRESS.
+- [ ] Student runs the verifier on an authorized Host-only Zeek capture, with an independently recorded inventory SHA-256 and original evidence; inspect all VMware guest adapters/routes and approval manually. Do not publish private logs, screenshots or notebook entries.
+- [ ] Collect independently labeled, host/session-disjoint real captures and evaluate model generalization and event-to-alert latency before claiming attack detection. No automatic alerts or active Red Team traffic.

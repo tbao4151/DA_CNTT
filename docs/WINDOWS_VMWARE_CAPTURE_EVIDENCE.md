@@ -89,3 +89,41 @@ py -3.12 -m pytest -q tests/test_zeek_capture_evidence.py
 CI fixtures are synthetic; they do not establish a VMware capture, network
 isolation, authorization, true Attack labels, model generalization or
 end-to-end SOC alerting.
+
+
+## Verify the pinned inventory against all five originals (offline)
+
+After creating `evidence-inventory.json`, record its SHA-256 **separately**
+in the dated private lab notebook. The verifier takes the original five files
+again, checks each recorded SHA-256/byte length, validates file types, reparses
+the original Zeek log and recomputes its declared CIDR scope, flow count and
+event-time bounds. It fails closed if the operator changes CIDRs, any file
+changes, the JSON is malformed, or a safety flag is incorrectly asserted.
+
+```powershell
+Get-FileHash "C:/DA005-private/capture-001/evidence-inventory.json" -Algorithm SHA256
+
+py -3.12 scripts/verify_zeek_capture_inventory.py `
+  --report "C:/DA005-private/capture-001/evidence-inventory.json" `
+  --expected-report-sha256 "<SHA256_FROM_PRIOR_PRIVATE_NOTEBOOK>" `
+  --log "C:/DA005-private/capture-001/conn.log" `
+  --cidr "192.168.56.0/24" `
+  --vmware-screenshot "C:/DA005-private/capture-001/vmware-network.png" `
+  --host-adapter-screenshot "C:/DA005-private/capture-001/host-adapter.png" `
+  --zeek-version-file "C:/DA005-private/capture-001/zeek-version.txt" `
+  --scenario-notes "C:/DA005-private/capture-001/scenario-notes.txt"
+```
+
+Use the **actual** canonical lab CIDR, not the example. For multiple approved
+CIDRs repeat `--cidr`. This command never changes the original files or
+connects to a VM. An integrity pass proves only consistency of operator-supplied
+bytes and declared scope, **not** VMware isolation, capture authenticity,
+authorization, independent labels, or detection accuracy. Do not publish
+originals or hashes associated with private systems.
+
+```powershell
+py -3.12 -m pytest -q tests/test_zeek_capture_evidence_verify.py
+```
+
+GitHub CI uses synthetic fixtures; run the actual command on the student's
+Windows laptop and archive the result and originals privately.
