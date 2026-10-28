@@ -424,3 +424,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] PR #131 merged after successful PR CI (run 40728220108, 698 passed, 2 skipped): bounded offline classic PCAP -> Zeek `conn.log` importer and synthetic tests. Main CI run 40728824378 was still pending when documented; see `PROGRESS.md`. No active traffic, live capture, AI scoring or SOC write.
 - [ ] Run `scripts/import_offline_pcap.py` with a **genuine authorized** classic PCAP inside a Linux VM with Zeek installed; archive original PCAP, `conn.log`, both SHA-256 values, Zeek version, VMware Host-only adapter/route screenshots and session notes outside Git. The tool's CIDR screening does not prove physical isolation or authenticity.
 - [ ] Validate the resulting Zeek flow schema against existing offline Blue Team pipeline and independently annotated labels before making any detection claim. Preserve official UNSW-NB15 benchmark.
+
+
+## Cyber Lab — independently pinned offline PCAP import evidence (29/10/2026)
+
+- [ ] Verify final-head CI and merge the read-only `offline_pcap_verify.py` and `verify_offline_pcap_import.py` slice. The tool rechecks original PCAP, generated Zeek `conn.log`, import report and CIDR aggregate from a separately recorded report SHA-256; no network traffic or AI inference is performed. See PROGRESS for current PR status.
+- [ ] Student runs **actual** Zeek `-r` on an authorized classic PCAP inside a Linux VM, independently pins the resulting report, then runs the verifier with original PCAP, `conn.log` and declared Host-only CIDR. Preserve Zeek version, screenshots, routing table, timestamps, scenario notes and three private files outside Git. Successful verification does not prove capture origin or physical isolation.
+- [ ] Only after independent lab evidence and human-reviewed labels, validate a separate Zeek model on host/session-disjoint held-out captures and measure Precision/Recall/FPR plus event-to-alert latency. Preserve official UNSW-NB15 benchmark and keep active Red Team network execution disabled.
