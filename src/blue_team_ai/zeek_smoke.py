@@ -10,10 +10,12 @@ import ipaddress
 import json
 import struct
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 from .offline_pcap import _private_path, import_offline_pcap
 from .offline_pcap_verify import verify_offline_pcap_import
+from .zeek import load_zeek_conn_log
 
 FIXTURE_CIDR = "192.168.56.0/24"
 SOURCE_IP = "192.168.56.10"
@@ -52,6 +54,34 @@ def build_benign_udp_pcap() -> bytes:
         pcap.extend(struct.pack("<IIII", 1700000000 + index, 0, len(frame), len(frame)))
         pcap.extend(frame)
     return bytes(pcap)
+
+
+
+def _verify_fixture_flow(conn_log: Path) -> None:
+    """Require Zeek's flow to match the exact generated synthetic packet tuple.
+
+    CIDR membership and matching hashes alone cannot establish that Zeek
+    decoded *this* fixture. This is only an offline toolchain acceptance guard,
+    not proof of genuine capture, isolation, attack labels or AI detection.
+    """
+    events = load_zeek_conn_log(conn_log)
+    if len(events) != 1:
+        raise ValueError("Benign smoke requires exactly one fixture flow")
+    event = events[0]
+    expected = {
+        "src_ip": SOURCE_IP,
+        "src_port": 51000,
+        "dst_ip": DESTINATION_IP,
+        "dst_port": 53000,
+        "proto": "udp",
+    }
+    if any(event.get(field) != value for field, value in expected.items()):
+        raise ValueError("Zeek flow does not match generated benign UDP fixture")
+    # The first of two deterministic packets starts at this UTC epoch second.
+    # Allow only sub-millisecond representation differences in Zeek ASCII logs.
+    timestamp = datetime.fromisoformat(event["event_time_utc"]).timestamp()
+    if abs(timestamp - 1700000000) > 0.001:
+        raise ValueError("Zeek flow timestamp does not match synthetic PCAP")
 
 
 def _zeek_version() -> str:
@@ -102,6 +132,7 @@ def run_benign_zeek_smoke(
     )
     if verified["zeek_conn_sha256"] != imported["zeek_conn_sha256"]:
         raise ValueError("Offline Zeek verification mismatch")
+    _verify_fixture_flow(zeek_output / "conn.log")
     result: dict[str, object] = {
         "report_version": 1,
         "source_kind": "synthetic_benign_udp_fixture",
@@ -112,6 +143,8 @@ def run_benign_zeek_smoke(
         "zeek_conn_sha256": imported["zeek_conn_sha256"],
         "offline_import_report_sha256": report_sha,
         "flow_count": imported["flow_count"],
+        "fixture_flow_identity_verified": True,
+        "fixture_event_time_verified": True,
         "import_and_verification_succeeded": True,
         "vmware_capture_performed": False,
         "host_only_isolation_verified": False,

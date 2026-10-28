@@ -504,3 +504,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #143](https://github.com/tbao4151/DA_CNTT/pull/143) merged after final-head [CI #40757107763](https://github.com/tbao4151/DA_CNTT/actions/runs/40757107763) and post-merge [main CI #40757667200](https://github.com/tbao4151/DA_CNTT/actions/runs/40757667200) succeeded (**742 passed, 2 skipped, 2 existing warnings**). This supersedes the pending merge checkbox above. The tests mock Zeek and verify only the synthetic fixture format and offline harness control flow.
 - [ ] Student runs `scripts/smoke_zeek_offline.py` with a **real** Zeek installation inside the Linux VM and saves actual `conn.log`, Zeek version and private report. Do not use the synthetic benign smoke as a captured attack, verified Host-only experiment or AI accuracy metric.
 - [ ] Next, separately collect genuine authorized VMware Host-only traffic with independent session/host labels and evaluate held-out Zeek inference and SOC response latency. Keep active Red Team disabled until explicit isolation and authorization controls are verified.
+
+
+## Cyber Lab — synthetic Zeek smoke exact-flow acceptance (29/10/2026)
+
+- [ ] Verify PR-head CI and merge the fixture-flow guard. Require exactly one parsed UDP flow with the generated PCAP's addresses, ports and first-packet timestamp; reject unrelated in-scope Zeek logs. Tests use synthetic/mock Zeek only.
+- [ ] Student runs the offline smoke with an installed real Zeek in a Linux VM and records `smoke_report.json`, Zeek version, original PCAP/conn.log and SHA-256 privately. This checks local binary decoding, **not** genuine Host-only capture or attack detection.
+- [ ] Collect authorized, independently labeled Host-only captures separately; establish holdout metrics and end-to-end event-to-SOC latency before claiming real-world attack detection.
