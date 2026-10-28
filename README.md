@@ -205,3 +205,13 @@ or independently verify labels. See [private Zeek model export](docs/ZEEK_PRIVAT
 ## Cyber Lab — suy luận ngoại tuyến trên Zeek log MỚI (nghiên cứu)
 
 Có công cụ `scripts/score_zeek_new_log.py` sử dụng mô hình Zeek JSON đã được kiểm tra với SHA-256 **ghi độc lập** để chấm điểm một `conn.log` mới trong phạm vi CIDR Host-only khai báo. Dữ liệu đầu vào/đầu ra ở thư mục riêng ngoài Git; công cụ không đọc nhãn, không ghi SOC case, không tạo alert vận hành và không phát lưu lượng mạng. Không sử dụng lại tập TRAIN/VALIDATION/TEST để gọi là dữ liệu mới. Xem [hướng dẫn và giới hạn khoa học](docs/ZEEK_NEW_LOG_OFFLINE_INFERENCE.md). Kiểm thử synthetic/CI không chứng minh khả năng phát hiện tấn công trong VMware thực tế.
+
+
+### Cyber Lab: manual review of a NEW Zeek research candidate
+
+For a **separately SHA-256-pinned new capture and model**, use
+[`docs/ZEEK_NEW_LOG_MANUAL_SOC_TRIAGE.md`](docs/ZEEK_NEW_LOG_MANUAL_SOC_TRIAGE.md)
+to list candidates without writes, then explicitly create/reuse one private
+`Unclassified` SOC research case after independent operator review. This is
+**offline-only**, not an operational AI alert or verified attack. Genuine
+Windows/VMware Host-only evidence remains a separate requirement.
