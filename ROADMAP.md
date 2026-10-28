@@ -595,3 +595,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #155](https://github.com/tbao4151/DA_CNTT/pull/155) merged after [real Zeek CI #40782784754](https://github.com/tbao4151/DA_CNTT/actions/runs/40782784754) and [Python 3.12.9 quality gates #40782784659](https://github.com/tbao4151/DA_CNTT/actions/runs/40782784659) passed (**774 passed, 2 skipped**). This supersedes the earlier pending feature checklist. The synthetic PCAP passed real Zeek importer → separate feature schema → research scoring/review → explicit manual `Unclassified` SOC case, with idempotency and fail-closed regression. **No operational alert or verified attack**.
 - [ ] Student runs actual Zeek on Linux VMware and archives PCAP, conn.log, Zeek version, checksums and screenshots; independently verifies Host-only adapter/routes before any authorized genuine capture.
 - [ ] Collect independently labeled, host/session-disjoint lab captures, evaluate Zeek-specific model Precision/Recall/FPR and measure event-to-SOC latency. Keep the CI-only neutral fixture out of research metrics, leave Red Team active traffic disabled, and preserve the official UNSW-NB15 benchmark.
+
+
+## Cyber Lab — private offline Zeek telemetry quality acceptance (29/10/2026)
+
+- [ ] Verify final feature PR-head Python 3.12.9 quality gates and merge only when green and conflict-free. New read-only quality CLI must reject altered SHA-256, malformed/out-of-scope logs and duplicate UIDs, while preserving private identifiers and original data.
+- [ ] Student runs `scripts/inspect_zeek_telemetry_quality.py` against genuine authorized Zeek `conn.log` in a private Windows folder and archives original PCAP/log, separately recorded hashes, Zeek version, Host-only adapter/routes evidence and quality JSON. Synthetic CI tests are not student lab evidence.
+- [ ] Independently annotate multiple host/session-disjoint captures and evaluate held-out Zeek-specific Precision/Recall/FPR and event-to-SOC latency; do not infer attack labels or physical isolation from aggregate quality checks. Keep UNSW-NB15 official benchmark and Red Team network-disabled.
