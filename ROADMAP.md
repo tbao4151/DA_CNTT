@@ -431,3 +431,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head CI and merge the read-only `offline_pcap_verify.py` and `verify_offline_pcap_import.py` slice. The tool rechecks original PCAP, generated Zeek `conn.log`, import report and CIDR aggregate from a separately recorded report SHA-256; no network traffic or AI inference is performed. See PROGRESS for current PR status.
 - [ ] Student runs **actual** Zeek `-r` on an authorized classic PCAP inside a Linux VM, independently pins the resulting report, then runs the verifier with original PCAP, `conn.log` and declared Host-only CIDR. Preserve Zeek version, screenshots, routing table, timestamps, scenario notes and three private files outside Git. Successful verification does not prove capture origin or physical isolation.
 - [ ] Only after independent lab evidence and human-reviewed labels, validate a separate Zeek model on host/session-disjoint held-out captures and measure Precision/Recall/FPR plus event-to-alert latency. Preserve official UNSW-NB15 benchmark and keep active Red Team network execution disabled.
+
+
+## Cyber Lab — verified offline PCAP import pin gate merged (29/10/2026)
+
+- [x] [PR #133](https://github.com/tbao4151/DA_CNTT/pull/133) merged after final-head [CI #40734466006](https://github.com/tbao4151/DA_CNTT/actions/runs/40734466006) and [CI #40734456078](https://github.com/tbao4151/DA_CNTT/actions/runs/40734456078) succeeded (716 passed, 2 skipped, 2 warnings). This supersedes the pending CI checkbox above; no live capture or real Zeek execution is claimed.
+- [ ] Student uses an authorized classic PCAP, runs actual Zeek `-r` inside Linux VMware Host-only, separately pins `offline_import_report.json`, verifies all original files and scope, and archives Zeek version, routes, adapter screenshots and scenario notes outside Git.
+- [ ] Build evidence-backed host/session-disjoint Zeek evaluation and measure actual detection latency. No operational alert or Red Team active traffic until independent lab evidence is available. Preserve UNSW-NB15 official benchmark.
