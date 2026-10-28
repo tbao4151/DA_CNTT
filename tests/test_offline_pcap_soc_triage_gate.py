@@ -52,7 +52,8 @@ def prepared(imported):
     report = json.loads(report_path.read_text(encoding="utf-8"))
     index = next(i for i, row in enumerate(report["predictions"])
                  if row["research_candidate"] is True)
-    base = [sys.executable, str(ROOT / "scripts" / "triage_zeek_new_log.py"), *common]
+    base = [sys.executable, str(ROOT / "scripts" / "triage_zeek_new_log.py"),
+            *common, "--report", str(report_path)]
     db = imported["pcap"].parent / "soc.sqlite3"
     return {
         **imported, "model": model, "model_sha": model_sha, "log_sha": log_sha,
