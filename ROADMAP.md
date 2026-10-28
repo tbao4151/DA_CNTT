@@ -317,3 +317,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head CI and merge the read-only Windows host network evidence helper; code and synthetic mocked tests are on a feature branch. Do not claim Windows/VMware acceptance from Ubuntu CI.
 - [ ] Student runs `scripts/record_windows_host_network.py` on Windows 3.12.9 with explicit confirmation, privately archives host diagnostics and checks every VMware guest adapter/route against approved Host-only configuration. Record authorization and original Zeek capture evidence separately.
 - [ ] Independently label genuine host/session-disjoint captures and measure actual event-to-alert latency before operational AI alerting. Dataset Mode benchmark and Red Team active traffic remain unchanged.
+
+
+## Cyber Lab — Windows host preflight feature merged (28/10/2026)
+
+- [x] [PR #113](https://github.com/tbao4151/DA_CNTT/pull/113) merged after final-head [CI #40682056972](https://github.com/tbao4151/DA_CNTT/actions/runs/40682056972) passed (586 passed, 2 skipped, 2 warnings). Post-merge main CI #40682389167 was queued at documentation time; track it separately. This is only read-only host network evidence, not isolation proof.
+- [ ] Student performs Windows 3.12.9 acceptance, inspects all VMware guest adapters and routes, and archives private original outputs and SHA-256 independently. Keep Red Team active traffic off and Dataset Mode benchmark unchanged.
