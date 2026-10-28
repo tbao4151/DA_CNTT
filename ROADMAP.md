@@ -567,3 +567,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #151](https://github.com/tbao4151/DA_CNTT/pull/151) merged after final-head [real Zeek CI #40773929990](https://github.com/tbao4151/DA_CNTT/actions/runs/40773929990) and [full quality gates #40773928870](https://github.com/tbao4151/DA_CNTT/actions/runs/40773928870) passed. This supersedes the pending merge item above. Actual `import_offline_pcap` ran with Zeek 9.0.1 inside a network-disabled container and produced independently verified **synthetic-only** log evidence.
 - [ ] Student executes installed Zeek in a Linux VMware VM and saves local private evidence, then verifies actual Host-only adapter/routes and collects a separately authorized genuine PCAP. CI evidence is not laptop evidence.
 - [ ] Evaluate independently labeled, host/session-disjoint lab data and measure model accuracy and event-to-SOC latency. No claim of real attack detection, operational alerting or Red Team active traffic is supported by the synthetic CI check.
+
+
+## Cyber Lab — real Zeek to pinned research scoring acceptance (29/10/2026)
+
+- [ ] Verify final-head real-Zeek CI **and** full Python 3.12.9 quality gates for the feature PR, ensure mergeability/no competing PR, then merge only when both are green. CI must execute the actual Zeek binary offline, production PCAP importer, pinned scorer and independent prediction review with deliberate tamper/pin rejection.
+- [ ] Treat the CI-only Logistic Regression fitted on arbitrary synthetic labels strictly as an integration fixture; never publish its candidate count as accuracy, ground truth, or verified detection. Keep the model and predictions out of the uploaded artifact, retain only an explicitly labeled summary.
+- [ ] Student must run real Zeek on Linux VMware and separately collect authorized Host-only traffic with independently verified adapter/routes, session/host-disjoint labels and true holdout; then measure Precision/Recall/FPR and event-to-SOC latency before operational alert claims. Preserve official UNSW benchmark, disable active Red Team.

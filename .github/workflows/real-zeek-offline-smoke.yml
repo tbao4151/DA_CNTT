@@ -11,6 +11,14 @@ on:
       - "src/blue_team_ai/features.py"
       - "src/blue_team_ai/lab_scope.py"
       - "tests/test_zeek_real_smoke.py"
+      - "tests/ci_real_zeek_scoring.py"
+      - "tests/test_ci_real_zeek_scoring.py"
+      - "src/blue_team_ai/new_log_inference.py"
+      - "src/blue_team_ai/model_artifact.py"
+      - "src/blue_team_ai/new_log_review.py"
+      - "scripts/score_zeek_new_log.py"
+      - "scripts/verify_zeek_new_log_report.py"
+      - "requirements.txt"
   workflow_dispatch:
 
 permissions:
@@ -27,6 +35,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12.9"
+      - name: Install research scoring dependencies
+        run: python -m pip install -r requirements.txt 'pytest>=8,<10'
       - name: Generate deterministic benign PCAP (no sockets)
         run: |
           mkdir -p "$SMOKE_DIR"
@@ -174,6 +184,8 @@ jobs:
           )
           print(json.dumps(result, indent=2))
           PY
+      - name: Exercise production pinned scoring and independent review (synthetic-only model)
+        run: PYTHONPATH=src:tests python tests/ci_real_zeek_scoring.py --root "$SMOKE_DIR"
       - name: Upload synthetic-only reproducibility evidence
         if: success()
         uses: actions/upload-artifact@v4
@@ -185,6 +197,7 @@ jobs:
             ${{ env.SMOKE_DIR }}/zeek_version.txt
             ${{ env.SMOKE_DIR }}/ci_smoke_report.json
             ${{ env.SMOKE_DIR }}/ci_importer_real_report.json
+            ${{ env.SMOKE_DIR }}/ci_real_zeek_scoring_report.json
             ${{ env.SMOKE_DIR }}/importer-real/conn.log
             ${{ env.SMOKE_DIR }}/importer-real/offline_import_report.json
           if-no-files-found: error
