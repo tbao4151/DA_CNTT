@@ -346,6 +346,6 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 ## Cyber Lab — conservative cross-capture flow identity exclusion (28/10/2026)
 
-- [ ] Verify feature PR CI and merge the shared normalized Zeek UID/time/five-tuple overlap screen used by the offline labeled dataset builder and NEW-log partition guard. Synthetic tests only; check PR/CI in PROGRESS.
+- [x] [PR #119](https://github.com/tbao4151/DA_CNTT/pull/119) merged after final-head [CI #40694487688](https://github.com/tbao4151/DA_CNTT/actions/runs/40694487688) passed (624 passed, 2 skipped, 2 warnings on Ubuntu Python 3.12.9). Shared normalized UID/time/five-tuple overlap screening rejects re-encoded flow reuse across labeled captures before training; synthetic tests only. Post-merge main CI is tracked separately in PROGRESS.
 - [ ] Student records independently pinned original Host-only captures, separate annotations, sessions and hosts, then runs `evaluate_zeek_lab.py --preflight` on Windows 3.12.9 before any fit. A passing exact-identity screen does not prove semantic non-reuse, authorization, label truth or physical isolation.
 - [ ] Evaluate on genuinely independent, host/session-disjoint captures and report FPR, recall and event-to-alert latency only with independently documented experimental evidence. Red Team active traffic remains disabled.

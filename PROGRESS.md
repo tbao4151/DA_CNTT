@@ -1043,3 +1043,10 @@
 - Reused one conservative normalized UID/time/five-tuple identity helper in the existing NEW-log partition guard and the offline labeled dataset builder. Re-encoded copies of a flow in distinct declared captures now fail before model training, including when raw SHA-256 differs. Existing cross-split host/session and label checks remain.
 - Added synthetic regression for cross-split and within-split duplicate identities, legitimate UID reuse at different timestamps, and CLI preflight/fit fail-closed behavior. Updated the offline experiment runbook.
 - **At feature-branch authoring:** GitHub PR CI and merge are not yet verified. No student Windows/VMware Host-only experiment, authenticated labels, true event-to-alert latency, live traffic, operational alert or new official UNSW-NB15 benchmark is claimed.
+
+
+## 2026-10-28 — Cross-capture Zeek flow identity guard merged (#119)
+
+- [PR #119](https://github.com/tbao4151/DA_CNTT/pull/119) squash-merged to `main` at `c6ecd06221291b77e1b7abb7f69b15038be0d877` only after its **final-head** [GitHub Actions quality gates #40694487688](https://github.com/tbao4151/DA_CNTT/actions/runs/40694487688) passed on Ubuntu Python 3.12.9: **624 passed, 2 skipped, 2 existing pandas warnings**. Earlier intermediate feature commits had failed tests due to malformed synthetic byte-literal fixtures; these were corrected and the final PR head was green.
+- Shared normalized UID/time/five-tuple overlap screening now rejects re-encoded duplicate flows across any declared training, validation or test captures before offline model fitting. This is not semantic deduplication or independent ground-truth verification. The official UNSW benchmark, Red Team traffic and existing private artifacts are unchanged.
+- Post-merge `main` quality gates [#40694838963](https://github.com/tbao4151/DA_CNTT/actions/runs/40694838963) started; **final status pending verification at documentation time**. No student Windows/VMware experiment, actual attack-detection rate or event-to-alert latency is claimed.
