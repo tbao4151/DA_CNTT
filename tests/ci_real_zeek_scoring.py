@@ -15,6 +15,8 @@ from pathlib import Path
 
 from blue_team_ai.model_artifact import build_zeek_research_artifact
 from blue_team_ai.zeek_smoke import verify_fixture_feature_projection
+from siem_ai.case_report import export_case_report
+from siem_ai.core import list_cases
 from test_zeek_offline_baseline import _dataset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -54,6 +56,41 @@ def validate_research_only_report(
         raise ValueError("Synthetic-only research scoring contract violated")
 
 
+def validate_ci_synthetic_case(
+    export: dict[str, object], *, log_sha: str, model_sha: str,
+    import_sha: str,
+) -> None:
+    """Require a human-gated Unclassified case, never a confirmed attack."""
+    case = export.get("case")
+    evidence = export.get("flow_evidence")
+    events = export.get("case_events")
+    if not isinstance(case, dict) or not isinstance(evidence, dict) or not isinstance(events, list):
+        raise ValueError("Synthetic SOC case export structure invalid")
+    note = case.get("analyst_note")
+    if (
+        export.get("report_type") != "DA005 educational SOC case"
+        or "not signed" not in str(export.get("integrity_notice", ""))
+        or type(case.get("case_id")) is not int
+        or case["case_id"] < 1
+        or case.get("verdict") != "Unclassified"
+        or case.get("confidence") is not None
+        or case.get("state") != "New"
+        or not isinstance(note, str)
+        or "NOT a verified attack or operational AI alert" not in note
+        or "ground truth are unverified" not in note
+        or f"source_sha256={log_sha}" not in note
+        or f"model_sha256={model_sha}" not in note
+        or f"import_report_sha256={import_sha}" not in note
+        or evidence.get("source_sha256") != log_sha
+        or any(key in evidence for key in ("label", "attack_cat", "AI_verdict", "AI_attack_probability"))
+        or len(events) != 1
+        or not isinstance(events[0], dict)
+        or events[0].get("new_state") != "New"
+        or events[0].get("case_id") != case["case_id"]
+    ):
+        raise ValueError("Synthetic SOC case must remain unclassified and auditable")
+
+
 def _command(argv: list[str], *, should_succeed: bool) -> None:
     completed = subprocess.run(
         [sys.executable, *argv], capture_output=True, text=True,
@@ -80,6 +117,9 @@ def run(root: Path) -> dict[str, object]:
     artifact = build_zeek_research_artifact(
         _dataset(), input_manifest_sha256="a" * 64,
     )
+    # Force one fixture candidate for exercising the MANUAL SOC write boundary.
+    # This is NOT a validated threshold or an empirical attack-detection result.
+    artifact["selected_threshold"] = 0.000001
     model = root / "ci_synthetic_model_not_for_use.json"
     model_bytes = (json.dumps(artifact, sort_keys=True, allow_nan=False) + "\n").encode()
     with model.open("xb") as stream:
@@ -102,6 +142,8 @@ def run(root: Path) -> dict[str, object]:
     ], should_succeed=True)
     report = json.loads(prediction.read_text(encoding="utf-8"))
     validate_research_only_report(report, log_sha=log_sha, model_sha=model_sha)
+    if report["research_candidate_count"] != 1:
+        raise ValueError("Forced synthetic-only threshold must produce one candidate")
     verify = [
         str(ROOT / "scripts" / "verify_zeek_new_log_report.py"),
         *common, "--report", str(prediction),
@@ -128,6 +170,50 @@ def run(root: Path) -> dict[str, object]:
     if blocked.exists():
         raise ValueError("Scorer wrote an output despite invalid model pin")
 
+    # The genuine Zeek importer/scorer output now reaches the production manual
+    # triage CLI. All confirmations refer ONLY to this owned synthetic fixture,
+    # which is distinct from the CI model's training rows. They do NOT verify
+    # physical isolation, an attack, or independent holdout provenance.
+    triage = [
+        str(ROOT / "scripts" / "triage_zeek_new_log.py"),
+        *common, "--report", str(prediction),
+    ]
+    db = root / "ci_synthetic_manual_soc.sqlite3"
+    _command([*triage, "--list-candidates"], should_succeed=True)
+    if db.exists():
+        raise ValueError("Read-only candidate listing created a SOC database")
+    manual = [
+        *triage, "--record-index", "0", "--db", str(db),
+        "--confirm-reviewed", "--confirm-authorized", "--confirm-new-capture",
+    ]
+    _command(manual, should_succeed=True)
+    cases = list_cases(db)
+    if len(cases) != 1:
+        raise ValueError("Manual synthetic triage must create exactly one case")
+    case_id = int(cases.iloc[0]["case_id"])
+    case_export = json.loads(export_case_report(db, case_id))
+    validate_ci_synthetic_case(
+        case_export, log_sha=log_sha, model_sha=model_sha, import_sha=import_sha,
+    )
+    _command(manual, should_succeed=True)
+    if len(list_cases(db)) != 1:
+        raise ValueError("Repeated manual review must reuse the same case")
+
+    # A modified PCAP must fail before creating a case in a fresh database.
+    # Keep original PCAP, log, predictions and importer report untouched.
+    tampered_pcap = root / "ci_modified_pcap_expected_rejection.pcap"
+    with tampered_pcap.open("xb") as stream:
+        stream.write(pcap.read_bytes() + b"tampered-after-scoring")
+    refused_db = root / "ci_refused_soc.sqlite3"
+    bad_triage = manual.copy()
+    bad_triage[bad_triage.index("--offline-import-pcap") + 1] = str(tampered_pcap)
+    bad_triage[bad_triage.index("--db") + 1] = str(refused_db)
+    _command(bad_triage, should_succeed=False)
+    if refused_db.exists():
+        raise ValueError("Tampered PCAP produced a SOC database")
+    no_confirm = [arg for arg in manual if arg != "--confirm-reviewed"]
+    _command(no_confirm, should_succeed=False)
+
     summary = {
         "source_kind": "synthetic_benign_udp_fixture",
         "execution": "real_zeek_importer_then_production_pinned_scoring_and_review_ci",
@@ -140,18 +226,26 @@ def run(root: Path) -> dict[str, object]:
         "independent_prediction_recomputation_passed": True,
         "tampered_probability_rejected": True,
         "wrong_model_pin_rejected": True,
+        "synthetic_manual_soc_case_created": True,
+        "synthetic_manual_case_unclassified_verified": True,
+        "synthetic_manual_case_idempotency_verified": True,
+        "tampered_pcap_soc_write_rejected": True,
+        "missing_analyst_confirmation_rejected": True,
         "pins_independently_preregistered": False,
         "vmware_capture_performed": False,
         "host_only_isolation_verified": False,
         "attack_ground_truth_verified": False,
         "operational_attack_detection_verified": False,
         "soc_case_created": False,
+        "operational_soc_case_created": False,
         "automated_alerts": False,
         "interpretation": (
             "Actual Zeek decoded a benign synthetic PCAP in GitHub CI; a CI-only "
             "model fitted on synthetic labels exercised research scoring and "
             "review. No independent model/label validity, attack detection, "
-            "real Host-only capture, SOC response or Windows acceptance."
+            "real Host-only capture, operational SOC response or Windows acceptance. "
+            "One manually confirmed Unclassified synthetic-only case was "
+            "created in a disposable CI SQLite database, never uploaded."
         ),
     }
     with (root / "ci_real_zeek_scoring_report.json").open("x", encoding="utf-8") as stream:
