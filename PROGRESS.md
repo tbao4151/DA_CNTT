@@ -673,3 +673,9 @@
 - Added synthetic regression tests for valid summaries, no-write behavior, missing labels, cross-split host reuse, mutually exclusive CLI modes and privacy. Documented Windows invocation in `docs/ZEEK_OFFLINE_EXPERIMENT.md`.
 - **At writing:** GitHub Python 3.12.9 PR CI, merge and Windows acceptance are not yet verified. No scientific detection metrics, authenticated ground truth, physical isolation proof or deployed Zeek model is claimed. Dataset Mode/UNSW benchmark unchanged.
 - Next: verify CI before merge; student collects authorized Host-only Zeek logs, independently annotates every UID, records isolation evidence, checks manifest with preflight, then runs the pre-registered private holdout experiment once.
+
+## 2026-10-28: Zeek structural preflight merged and verified (#67)
+
+- [PR #67](https://github.com/tbao4151/DA_CNTT/pull/67) squash-merged as `22a27aef23934c571caf87d41627c0c07825316e`. Final PR-head [CI #40606690395](https://github.com/tbao4151/DA_CNTT/actions/runs/40606690395) and post-merge main [CI #40606955867](https://github.com/tbao4151/DA_CNTT/actions/runs/40606955867) **both passed** on Ubuntu Python 3.12.9: **360 passed, 2 skipped, 2 warnings**. The two pandas FutureWarnings remain in existing `tests/test_model.py`.
+- The new `--preflight` checks private Zeek manifest, SHA-256, UID labels and host-disjoint partitions without fitting/scoring AI, writing a report or touching the network. Five synthetic regression tests were added; this is a structural input check, not attack-detection evidence.
+- No Windows/VMware student capture, authenticated labels, live Blue Team alerts or active Red Team execution was verified. Next: run preflight privately on independently annotated authorized Host-only logs, retain isolation evidence and pre-registered holdout, then run the experiment without test tuning.
