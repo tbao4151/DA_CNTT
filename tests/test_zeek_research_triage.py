@@ -37,6 +37,10 @@ def _inputs():
         "report_version": 4,
         "mode": "offline_labeled_zeek_research_only",
         "input_manifest_sha256": "a" * 64,
+        "feature_schema_version": 1,
+        "provenance": {
+            "test": {"flows": 2, "source_sha256": [digest], "host_groups": 1, "sessions": 1},
+        },
         "selected_threshold": 0.5,
         "test_metrics": {"tp": 1, "fp": 0, "tn": 1, "fn": 0, "support": 2},
         "live_capture": False, "automated_alerts": False,
