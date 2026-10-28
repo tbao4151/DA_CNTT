@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
 from blue_team_ai.new_log_review import (
     MAX_NEW_LOG_REPORT_BYTES, review_pinned_new_log_report,
 )
@@ -49,6 +50,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--cidr", action="append", required=True,
                         help="Actual authorized RFC1918 Host-only subnet (repeat up to four)")
+    parser.add_argument("--offline-import-report", type=Path,
+                        help="Optional original PCAP-to-Zeek import report")
+    parser.add_argument("--expected-offline-import-report-sha256",
+                        help="Separately recorded original import-report SHA-256")
+    parser.add_argument("--offline-import-pcap", type=Path,
+                        help="Original private classic PCAP")
     args = parser.parse_args(argv)
     try:
         model_path = _private_file(args.model)
@@ -58,6 +65,23 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("Model, capture and report must be separate files")
         if report_path.parent != log_path.parent or report_path.suffix.lower() != ".json":
             raise ValueError("Report must be private JSON alongside capture")
+        import_options = (
+            args.offline_import_report,
+            args.expected_offline_import_report_sha256,
+            args.offline_import_pcap,
+        )
+        if any(option is not None for option in import_options):
+            if not all(option is not None for option in import_options):
+                raise ValueError("All PCAP provenance options must be supplied")
+            verified_import = verify_offline_pcap_import(
+                args.offline_import_report,
+                expected_report_sha256=args.expected_offline_import_report_sha256,
+                pcap_path=args.offline_import_pcap,
+                log_path=log_path,
+                lab_cidrs=args.cidr,
+            )
+            if verified_import["zeek_conn_sha256"] != args.expected_log_sha256:
+                raise ValueError("Pinned log differs from verified PCAP import")
         model = load_pinned_zeek_research_model(
             model_path, expected_sha256=args.expected_model_sha256,
         )
@@ -78,6 +102,8 @@ def main(argv: list[str] | None = None) -> int:
     print("flow_count=" + str(result["flow_count"]))
     print("research_candidate_count=" + str(result["research_candidate_count"]))
     print("NOT verified: VMware isolation, TEST exclusion, labels, model authorship or real detection.")
+    if all(option is not None for option in import_options):
+        print("offline_pcap_provenance_reverified=true (byte integrity and declared scope only)")
     print("No network, SOC case or operational alert generated.")
     return 0
 
