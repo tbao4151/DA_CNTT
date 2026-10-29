@@ -42,7 +42,9 @@ def _prepared(tmp_path, *, source_data=None):
         raw, model, expected_log_sha256=log_sha,
         lab_cidrs=CIDR, model_sha256=model_sha,
     )
-    captures, manifest_sha = load_experiment_manifest(manifest, lab_cidrs=CIDR)
+    captures, manifest_sha = load_experiment_manifest(
+        manifest, lab_cidrs=CIDR, require_label_sha256=True,
+    )
     return dict(
         source_data=raw, report_data=json.dumps(report, allow_nan=False).encode(),
         model_path=model_path, expected_log_sha256=log_sha,
