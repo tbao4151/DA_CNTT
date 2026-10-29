@@ -1000,3 +1000,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9, Windows offline Zeek and applicable synthetic CI; merge only when all required checks are green and no conflict exists. Require `labels_sha256` for every declared annotation in CLI/UI SOC triage, matching the already strict scoring path.
 - [ ] Student independently pins annotation, manifest, model, original Zeek and PCAP hashes; tests modified-label and missing-label-pin refusals on Windows 11 with copies, then preserves genuine authorized Host-only evidence outside Git.
 - [ ] Collect independently adjudicated held-out labels and measured event-to-AI-alert-to-SOC-case timing. Digest checks do not authenticate ground truth, physical isolation or operational detection.
+
+## Blue Team — NEW-log SOC annotation gate verified (#211, 29/10/2026)
+
+- [x] PR #211 merged as `581fa73d162ab9200cff44a08a441bc34c2af597` after final-head Ubuntu #40875566011 (**949 passed, 2 skipped**), Windows #40875566280 (**160 Zeek + 46 Red Team passed**) and real-Zeek synthetic smoke #40875566154 (**success**). Supersedes the pending feature CI/merge item above.
+- [ ] Independently verify post-merge main CI and student Windows 11/VMware Host-only capture with separately pinned annotation/manifest/model/Zeek/PCAP evidence, actual isolation and ground-truth adjudication.
+- [ ] Measure held-out attack Precision/Recall/FPR and actual event-to-AI-alert-to-SOC-case timing; annotation hashes only establish consistency with operator-supplied bytes.
