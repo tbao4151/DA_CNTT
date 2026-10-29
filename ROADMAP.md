@@ -1207,3 +1207,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #241](https://github.com/tbao4151/DA_CNTT/pull/241) merged at `e119441a7d28487b8d1ee87df8594e3332fab722` after [Ubuntu #40963986710](https://github.com/tbao4151/DA_CNTT/actions/runs/40963986710) (**1076 passed, 2 skipped**) and [Windows #40963986611](https://github.com/tbao4151/DA_CNTT/actions/runs/40963986611) (**212 Zeek + existing offline suites passed**). This supersedes the pending CI/merge checkbox above; post-merge main is a separate check.
 - [ ] On student Windows 11, export a pinned private research candidate bundle from authorized genuine Host-only Zeek capture; manually triage one original candidate row to one Unclassified SOC case, retain original PCAP/log/model/manifest/annotation hashes and screenshot the actual workflow.
 - [ ] Evaluate held-out real-lab detection, operator scope/VMware isolation, false positives and actual event-to-candidate-to-SOC timing. The research queue is not operational alerting and cannot validate labels or physical isolation.
+
+
+## Cyber Lab — opt-in strict classic-PCAP framing (30/10/2026)
+
+- [ ] Verify final feature-head Ubuntu Python 3.12.9 quality CI and Windows Server 2022 offline tests, including new synthetic parser/CLI regressions; merge only if green, no conflict and no competing PR. The isolated parser unit test passed 16 cases locally, but this is not full CI or a real capture.
+- [ ] Student runs the strict `--require-pcap-framing` read-only verifier on an independently SHA-256-pinned, authorized classic PCAP from their private Windows 11/VMware Host-only lab. Archive original PCAP, Zeek `conn.log`, report, version, isolation/authorization evidence and actual command outputs outside Git.
+- [ ] Investigate packet-to-Zeek flow semantic linkage separately; record framing does not establish packet/flow correspondence or genuine AI detection. Independently adjudicate held-out labels and measure event-to-candidate-to-manual-SOC latency without substituting synthetic CI.
