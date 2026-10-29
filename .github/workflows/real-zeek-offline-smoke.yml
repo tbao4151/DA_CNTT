@@ -13,6 +13,7 @@ on:
       - "src/blue_team_ai/telemetry_quality.py"
       - "scripts/inspect_zeek_telemetry_quality.py"
       - "tests/test_zeek_telemetry_quality.py"
+      - "tests/test_zeek_declared_types.py"
       - "tests/test_zeek_real_smoke.py"
       - "tests/ci_real_zeek_scoring.py"
       - "tests/test_ci_real_zeek_scoring.py"
@@ -214,6 +215,7 @@ jobs:
                       sys.executable, str(cli), "--log", str(source),
                       "--expected-log-sha256", pin,
                       "--cidr", cidr, "--output", str(destination),
+                       "--require-zeek-types",
                   ],
                   capture_output=True, text=True, check=False,
               )
@@ -225,6 +227,8 @@ jobs:
           assert quality["source_sha256"] == digest
           assert quality["flow_count"] == 1
           assert quality["feature_schema_version"] == 1
+          assert quality["zeek_declared_types"]["declared_types_checked"] is True
+          assert quality["zeek_declared_types"]["required_type_fields_checked"] == 7
           assert quality["protocol_bucket_counts"]["udp"] == 1
           assert sum(quality["protocol_bucket_counts"].values()) == 1
           assert "fewer_than_30_flows" in quality["warnings"]
