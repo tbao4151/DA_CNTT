@@ -106,8 +106,10 @@ with st.form("manual_red_team_feedback", clear_on_submit=True):
     blue_flagged = st.radio("Trong quan sát thủ công, Blue Team có đánh dấu?", [True, False],
                             format_func=lambda v: "Có (flagged)" if v else "Không (unflagged)")
     confirm = st.checkbox("Tôi xác nhận đây là phản hồi thủ công, chưa được kiểm chứng.")
-    submitted = st.form_submit_button("Thêm phản hồi", disabled=not confirm or plan is None)
-if submitted and pending_id is not None:
+    submitted = st.form_submit_button("Thêm phản hồi", disabled=plan is None)
+if submitted and pending_id is not None and not confirm:
+    st.error("Cần xác nhận đây là quan sát thủ công chưa được kiểm chứng.")
+if submitted and pending_id is not None and confirm:
     st.session_state["red_team_audit_events"] = append_manual_feedback(
         st.session_state["red_team_audit_events"],
         proposal_id=pending_id, blue_flagged=blue_flagged,
