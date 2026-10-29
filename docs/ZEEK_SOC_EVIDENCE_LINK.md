@@ -72,3 +72,9 @@ private evidence details.
 ```powershell
 py -3.12 -m pytest -q tests/test_zeek_soc_case_link_cli.py
 ```
+
+## Canonical creation-audit verification (29/10/2026)
+
+The read-only verifier now requires the complete canonical original creation note rather than disconnected substrings. It refuses inserted claims such as verified attack, reordered provenance clauses and trailing text. The strict CLI also compares the stored manifest digest against the independently pinned manifest and (when supplied) import-report/PCAP digests against verified original bytes. Legitimate later analyst updates remain valid.
+
+This is a fail-closed software-consistency check. Older or manually edited noncanonical creation notes may be refused; preserve original evidence rather than rewriting it. SQLite remains mutable, unsigned and unauthenticated. No independent label, isolation, attack detection or latency claim follows. Regression command: py -3.12 -m pytest -q tests/test_zeek_soc_evidence_link.py tests/test_zeek_soc_case_link_cli.py.
