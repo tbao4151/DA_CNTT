@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.labeled_dataset import MAX_CAPTURES, SPLITS, build_labeled_lab_dataset
+from blue_team_ai.cross_split_overlap import screen_uid_independent_cross_split_overlap
 from blue_team_ai.lab_scope import inspect_zeek_lab_scope
 from blue_team_ai.offline_baseline import evaluate_offline_zeek_baseline
 from blue_team_ai.telemetry_quality import inspect_zeek_telemetry_quality
@@ -210,6 +211,7 @@ def load_experiment_manifest(
 def inspect_offline_experiment(
     manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
     require_label_sha256: bool = False, require_telemetry_quality: bool = False,
+    require_uid_independent_overlap: bool = False,
 ) -> dict[str, object]:
     """Validate a private experiment's inputs without fitting or scoring a model.
 
@@ -224,6 +226,10 @@ def inspect_offline_experiment(
         manifest_path, lab_cidrs=lab_cidrs, require_label_sha256=require_label_sha256,
     )
     dataset = build_labeled_lab_dataset(captures)
+    overlap = (
+        screen_uid_independent_cross_split_overlap(captures)
+        if require_uid_independent_overlap else None
+    )
     quality = _summarize_telemetry_quality(captures, lab_cidrs) if require_telemetry_quality else None
     partitions: dict[str, dict[str, int]] = {}
     warnings: list[str] = []
@@ -262,6 +268,7 @@ def inspect_offline_experiment(
         "test_scored": False,
         "warnings": warnings,
         **({"telemetry_quality": quality} if quality is not None else {}),
+        **({"uid_independent_overlap_screen": overlap} if overlap is not None else {}),
         "interpretation": (
             "Input consistency only; operator-provided labels, host groups and "
             "lab isolation are not independently authenticated. Optional declared "
@@ -275,6 +282,7 @@ def run_offline_experiment(
     manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
     include_private_test_trace: bool = False,
     require_label_sha256: bool = False, require_telemetry_quality: bool = False,
+    require_uid_independent_overlap: bool = False,
 ) -> dict[str, object]:
     if require_telemetry_quality and lab_cidrs is None:
         raise ValueError("Telemetry quality screening requires explicit lab CIDRs")
@@ -282,6 +290,10 @@ def run_offline_experiment(
         manifest_path, lab_cidrs=lab_cidrs, require_label_sha256=require_label_sha256,
     )
     dataset = build_labeled_lab_dataset(captures)
+    overlap = (
+        screen_uid_independent_cross_split_overlap(captures)
+        if require_uid_independent_overlap else None
+    )
     quality = _summarize_telemetry_quality(captures, lab_cidrs) if require_telemetry_quality else None
     report = evaluate_offline_zeek_baseline(
         dataset, include_private_test_trace=include_private_test_trace,
@@ -295,6 +307,7 @@ def run_offline_experiment(
         "all_endpoints_within_declared_scope": True if lab_cidrs is not None else None,
         "evaluation_protocol": "operator_assigned_host_disjoint_train_validation_test",
         **({"telemetry_quality": quality} if quality is not None else {}),
+        **({"uid_independent_overlap_screen": overlap} if overlap is not None else {}),
         "evidence_warning": "Capture isolation and ground-truth authenticity require independent student verification.",
     }
 
@@ -308,6 +321,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Require independently recorded labels_sha256 for EVERY capture before fit")
     parser.add_argument("--require-telemetry-quality", action="store_true",
                         help="Opt in to aggregate quality screening for EVERY capture; requires --cidr")
+    parser.add_argument("--require-uid-independent-overlap", action="store_true",
+                        help="Refuse cross-split reuse of timestamp/five-tuple even if Zeek UID differs")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--output", type=Path, help="New aggregate report JSON (must not exist)")
     mode.add_argument("--trace-output", type=Path,
@@ -321,6 +336,7 @@ def main(argv: list[str] | None = None) -> int:
                 manifest, lab_cidrs=args.cidr,
                 require_label_sha256=args.require_label_sha256,
                 require_telemetry_quality=args.require_telemetry_quality,
+                require_uid_independent_overlap=args.require_uid_independent_overlap,
             ), indent=2, ensure_ascii=False, allow_nan=False))
             return 0
         output = (args.trace_output or args.output).resolve()
@@ -335,6 +351,7 @@ def main(argv: list[str] | None = None) -> int:
             include_private_test_trace=args.trace_output is not None,
             require_label_sha256=args.require_label_sha256,
             require_telemetry_quality=args.require_telemetry_quality,
+            require_uid_independent_overlap=args.require_uid_independent_overlap,
         )
         payload = json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         # Exclusive creation: no partial report is written if validation or fit fails.
