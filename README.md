@@ -259,3 +259,6 @@ prediction schema and offline-only semantics are unchanged. See
 ## Cyber Lab — Windows guest network snapshot (offline, research only)
 
 A Windows **guest-side** read-only NIC/IPv4/IPv6/default-route/DNS snapshot collector and SHA-256-pinned offline checker complement the host adapter preflight. Both require independent VMware Virtual Network Editor inspection and written authorization; neither establishes physical Host-only isolation or enables Red Team traffic. See [docs/WINDOWS_GUEST_NETWORK_PREFLIGHT.md](docs/WINDOWS_GUEST_NETWORK_PREFLIGHT.md). The synthetic regression is not a student laptop experiment.
+
+
+Cyber Lab có thêm công cụ **đối chiếu cấu hình host/guest ngoại tuyến**: `scripts/check_paired_network_preflight.py` (hướng dẫn tại [WINDOWS_PAIRED_NETWORK_PREFLIGHT.md](docs/WINDOWS_PAIRED_NETWORK_PREFLIGHT.md)). Công cụ chỉ đối chiếu hai snapshot SHA-256 đã khai báo, không xác nhận cô lập VMware, không phát lưu lượng và không tạo cảnh báo tấn công.

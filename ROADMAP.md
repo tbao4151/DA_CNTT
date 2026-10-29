@@ -1097,3 +1097,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #225](https://github.com/tbao4151/DA_CNTT/pull/225) merged at `0cb865f2b23937d813271fa0e38477bc223be2f9`. Final-head [Ubuntu CI #40909968852](https://github.com/tbao4151/DA_CNTT/actions/runs/40909968852) **1028 passed, 2 skipped**; [Windows CI #40909968472](https://github.com/tbao4151/DA_CNTT/actions/runs/40909968472) **200 Zeek + 21 host + 31 guest + 46 Red Team passed**, mocked host/guest PowerShell smoke passed. Supersedes the pending PR merge gate above. Post-merge main CI #40914048171 was queued when documented.
 - [ ] Student runs the pinned offline guest checker on original privately stored Windows 11 guest evidence, preserves independent SHA-256 and manually verifies VMware Virtual Network Editor, host/guest NIC inventory, default routes, absence of unintended egress and approved scope. Synthetic CI does not attest network isolation.
 - [ ] Collect independently authorized PCAP and Zeek logs, adjudicate held-out labels and measure genuine event-to-AI-alert-to-SOC-case timing, Precision, Recall and FPR; keep these separate from UNSW-NB15 metrics and CI runtime.
+
+
+## Cyber Lab — pinned offline host/guest configuration pair (30/10/2026)
+
+- [ ] Confirm final feature-head Ubuntu Python 3.12.9 and Windows offline CI, ensure no competing PR/conflicts, then merge. Synthetic tests are not student VMware acceptance.
+- [ ] Student collects original private host and guest snapshots on their own Windows/VMware setup, independently pins both SHA-256 digests, runs `scripts/check_paired_network_preflight.py`, and manually verifies VMware Host-only/NAT/bridging, every NIC/route and written authorization. Software consistency is not physical isolation proof.
+- [ ] Obtain independently authorized PCAP/Zeek captures and held-out labels; measure genuine telemetry-to-AI-to-alert-to-SOC-case latency separately from offline verification overhead.

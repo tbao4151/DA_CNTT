@@ -1882,3 +1882,11 @@
 - Feature-head and base were verified conflict-free immediately before merge. Post-merge main CI run #40914048171 was **queued** at the time of this documentation update and must be checked separately; do not claim it passed.
 - Guest snapshot checker is offline, SHA-256 pinned and deliberately fail-closed. It is **not** proof of guest isolation, independent snapshot authenticity, approved test scope, or detection effectiveness. No real Windows 11/VMware capture, independent attack labels, operational alert, SOC case creation or event-to-alert latency was measured in this change.
 - Next: student must record actual Windows host and guest adapter snapshots, their independent hashes, VMware Host-only configuration, guest NIC/route screenshots and authorization; only then collect permitted PCAP/Zeek evidence and independently adjudicated labels.
+
+
+## 2026-10-30 — Pinned offline Windows host/guest pair preflight (feature PR pending)
+
+- Verified current main `c713c2b2a3b6740c222918a72e65a866136f4b3c` after PR #226 documentation-only merge, and checked open PRs (none), Ubuntu CI on #226 (success) and post-#225 main CI (success). Reviewed README, roadmap, existing host/guest collectors and independent offline checkers before adding code.
+- Added a new read-only, private, SHA-256-pinned **paired** host/guest snapshot checker that reuses both existing validators and rejects host/guest IPv4 collisions on one explicitly declared RFC1918 CIDR. Rejects changed bytes, symlinks, duplicate keys, oversized files and private evidence inside Git; returns only sanitized flags and SHA pins.
+- Added synthetic regression, Windows Python 3.12.9 CI step and a private Windows workflow guide. Local isolated Python syntax compilation succeeded; complete integration tests and GitHub CI are **not yet verified** at authoring. No real student Windows/VMware snapshot or network operation was performed.
+- This checks only two operator-supplied configurations. Physical Host-only isolation, snapshot authenticity/completeness, authorization, capture provenance, independent attack labels, operational AI alerts and event-to-SOC latency remain unverified. No UNSW benchmark, model, SQLite case or Red Team traffic was changed.
