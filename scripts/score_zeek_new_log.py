@@ -11,6 +11,7 @@ import json
 import os
 import stat
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +44,27 @@ def _read_bounded_capture(path: Path) -> bytes:
         if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
             raise ValueError("Capture must be a regular file")
         return stream.read(MAX_LOG_BYTES + 1)
+
+
+def _write_new_report_atomically(output: Path, payload: str) -> None:
+    """Publish a complete private report without overwriting a competing file.
+
+    A same-directory temporary file is flushed before an atomic hard-link
+    publication. Unlike os.replace(), os.link() refuses an existing target,
+    including one created between the preflight and publication. On filesystems
+    without hard-link support, fail closed rather than risk partial evidence.
+    """
+    descriptor, temporary = tempfile.mkstemp(
+        prefix=".da005-new-log-", suffix=".tmp", dir=output.parent,
+    )
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\\n") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, output)
+    finally:
+        os.unlink(temporary)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -130,8 +152,7 @@ def main(argv: list[str] | None = None) -> int:
             model_sha256=args.expected_model_sha256,
         )
         payload = (json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
-        with output.open("x", encoding="utf-8") as stream:
-            stream.write(payload)
+        _write_new_report_atomically(output, payload)
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError):
         # Avoid leaking private paths, IPs, UIDs or model parameters in shared CI.
         print("Private new-log Zeek inference refused; inspect local evidence.", file=sys.stderr)
