@@ -1,7 +1,6 @@
 """Synthetic-only end-to-end CLI regressions for pinned NEW-log SOC evidence links."""
 from __future__ import annotations
 
-import hashlib
 import sqlite3
 import subprocess
 import sys
@@ -69,12 +68,12 @@ def test_pinned_case_cli_fails_closed_without_private_details(tmp_path, change):
                              ("tampered", case_id))
     elif change == "annotation":
         labels = manifest.parent / "host-0-labels.json"
-        labels.write_bytes(labels.read_bytes() + b"\\n")
+        labels.write_bytes(labels.read_bytes() + b"\n")
     elif change == "manifest":
-        manifest.write_bytes(manifest.read_bytes() + b"\\n")
+        manifest.write_bytes(manifest.read_bytes() + b"\n")
     elif change == "report":
         report = Path(verify[verify.index("--report") + 1])
-        report.write_bytes(report.read_bytes() + b"\\n")
+        report.write_bytes(report.read_bytes() + b"\n")
     elif change == "missing_db":
         verify[verify.index("--db") + 1] = str(tmp_path / "missing.sqlite3")
     elif change == "wrong_model_pin":
