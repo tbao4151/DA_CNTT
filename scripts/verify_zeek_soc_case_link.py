@@ -57,6 +57,7 @@ def main(argv: list[str] | None = None) -> int:
             args.expected_offline_import_report_sha256,
             args.offline_import_pcap,
         )
+        imported = None
         if any(value is not None for value in import_options):
             if not all(value is not None for value in import_options):
                 raise ValueError("PCAP provenance options must be provided together")
@@ -103,6 +104,13 @@ def main(argv: list[str] | None = None) -> int:
             model_sha256=args.expected_model_sha256,
             lab_cidrs=args.cidr, record_index=args.record_index,
             case_id=args.case_id,
+            expected_manifest_sha256=manifest_pin,
+            expected_import_report_sha256=(
+                imported["report_sha256"] if imported is not None else None
+            ),
+            expected_pcap_sha256=(
+                imported["pcap_sha256"] if imported is not None else None
+            ),
         )
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError, RecursionError):
         # No private paths, UIDs, IPs, labels or model contents on failure.
