@@ -553,3 +553,63 @@ def test_quality_opt_in_rejects_changed_source_even_with_labels_pinned(tmp_path)
     assert not output.exists()
     assert "192.168.56." not in result.stderr
     assert str(manifest) not in result.stderr
+
+
+def test_uid_independent_overlap_opt_in_rejects_renamed_uids_across_splits(tmp_path):
+    """Default fixture uses different UIDs but identical timestamp/five-tuples."""
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    # Legacy evaluation is unchanged unless explicitly opted in.
+    assert inspect_offline_experiment(manifest)["structural_validation_passed"] is True
+    with pytest.raises(ValueError, match="Cross-split timestamp/five-tuple overlap"):
+        inspect_offline_experiment(manifest, require_uid_independent_overlap=True)
+    output = manifest.parent / "must-not-exist.json"
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--require-uid-independent-overlap",
+        "--output", str(output),
+    ], capture_output=True, text=True, check=False)
+    assert proc.returncode == 1
+    assert not output.exists()
+    assert "192.168.56." not in proc.stderr
+    assert str(manifest) not in proc.stderr
+
+
+def test_uid_independent_overlap_opt_in_accepts_distinct_times_and_reports_only_aggregates(tmp_path):
+    """Same endpoints may legitimately recur in separate nonoverlapping sessions."""
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    for index, entry in enumerate(spec["captures"]):
+        path = manifest.parent / entry["log_path"]
+        raw = path.read_bytes()
+        raw = raw.replace(b"1630000000.25", f"{1630000000 + index * 100}.25".encode())
+        raw = raw.replace(b"1630000001.0", f"{1630000001 + index * 100}.0".encode())
+        path.write_bytes(raw)
+        digest = hashlib.sha256(raw).hexdigest()
+        entry["source_sha256"] = digest
+        label_path = manifest.parent / entry["labels_path"]
+        annotation = json.loads(label_path.read_text(encoding="utf-8"))
+        annotation["source_sha256"] = digest
+        label_path.write_text(json.dumps(annotation), encoding="utf-8")
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    report = inspect_offline_experiment(manifest, require_uid_independent_overlap=True)
+    overlap = report["uid_independent_overlap_screen"]
+    assert overlap["screened_flows"] == 6
+    assert overlap["cross_split_overlaps"] == 0
+    assert overlap["uid_excluded_from_identity"] is True
+    assert overlap["capture_independence_verified"] is False
+    assert "uid_independent_overlap_screen" not in inspect_offline_experiment(manifest)
+    output = manifest.parent / "screened-research.json"
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--require-uid-independent-overlap",
+        "--output", str(output),
+    ], capture_output=True, text=True, check=False)
+    assert proc.returncode == 0, proc.stderr
+    result = json.loads(output.read_text(encoding="utf-8"))
+    assert result["uid_independent_overlap_screen"]["screened_flows"] == 6
+    assert result["automated_alerts"] is False
+    serialized = json.dumps(result)
+    assert "192.168.56." not in serialized
+    assert "private-operator-note" not in serialized
