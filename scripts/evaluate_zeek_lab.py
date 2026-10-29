@@ -81,6 +81,8 @@ def _sha256(value: object) -> str:
 def _summarize_telemetry_quality(
     captures: list[dict[str, object]], lab_cidrs: Sequence[str] | None,
     *, require_zeek_types: bool = False,
+    event_window_start_utc: str | None = None,
+    event_window_end_utc: str | None = None,
 ) -> dict[str, object]:
     """Screen every already-pinned log before fitting; export fixed aggregates only.
 
@@ -111,6 +113,8 @@ def _summarize_telemetry_quality(
         quality = inspect_zeek_telemetry_quality(
             raw, expected_sha256=hashlib.sha256(raw).hexdigest(),
             lab_cidrs=lab_cidrs, require_zeek_types=require_zeek_types,
+            event_window_start_utc=event_window_start_utc,
+            event_window_end_utc=event_window_end_utc,
         )
         split = capture["split"]
         if split not in partitions:
@@ -129,6 +133,7 @@ def _summarize_telemetry_quality(
     return {
         "mode": "offline_pinned_zeek_manifest_quality_only",
         "screened_captures": len(captures),
+        "operator_event_window_checked": event_window_start_utc is not None,
         **({"zeek_declared_types_checked_captures": len(captures)} if require_zeek_types else {}),
         "partitions": partitions,
         "declared_cidr_membership_checked": True,
@@ -221,6 +226,8 @@ def inspect_offline_experiment(
     require_uid_independent_overlap: bool = False,
     require_zeek_types: bool = False,
     expected_manifest_sha256: str | None = None,
+    event_window_start_utc: str | None = None,
+    event_window_end_utc: str | None = None,
 ) -> dict[str, object]:
     """Validate a private experiment's inputs without fitting or scoring a model.
 
@@ -229,7 +236,7 @@ def inspect_offline_experiment(
     Only aggregate counts and the manifest digest are returned, never raw UIDs,
     IPs, host identifiers, paths, or evidence-reference strings.
     """
-    if (require_telemetry_quality or require_zeek_types) and lab_cidrs is None:
+    if (require_telemetry_quality or require_zeek_types or event_window_start_utc is not None or event_window_end_utc is not None) and lab_cidrs is None:
         raise ValueError("Telemetry quality screening requires explicit lab CIDRs")
     captures, manifest_sha256 = load_experiment_manifest(
         manifest_path, lab_cidrs=lab_cidrs, require_label_sha256=require_label_sha256,
@@ -242,7 +249,9 @@ def inspect_offline_experiment(
     )
     quality = _summarize_telemetry_quality(
         captures, lab_cidrs, require_zeek_types=require_zeek_types,
-    ) if (require_telemetry_quality or require_zeek_types) else None
+        event_window_start_utc=event_window_start_utc,
+        event_window_end_utc=event_window_end_utc,
+    ) if (require_telemetry_quality or require_zeek_types or event_window_start_utc is not None or event_window_end_utc is not None) else None
     partitions: dict[str, dict[str, int]] = {}
     warnings: list[str] = []
     for split in SPLITS:
@@ -298,8 +307,10 @@ def run_offline_experiment(
     require_uid_independent_overlap: bool = False,
     require_zeek_types: bool = False,
     expected_manifest_sha256: str | None = None,
+    event_window_start_utc: str | None = None,
+    event_window_end_utc: str | None = None,
 ) -> dict[str, object]:
-    if (require_telemetry_quality or require_zeek_types) and lab_cidrs is None:
+    if (require_telemetry_quality or require_zeek_types or event_window_start_utc is not None or event_window_end_utc is not None) and lab_cidrs is None:
         raise ValueError("Telemetry quality screening requires explicit lab CIDRs")
     captures, manifest_sha256 = load_experiment_manifest(
         manifest_path, lab_cidrs=lab_cidrs, require_label_sha256=require_label_sha256,
@@ -312,7 +323,9 @@ def run_offline_experiment(
     )
     quality = _summarize_telemetry_quality(
         captures, lab_cidrs, require_zeek_types=require_zeek_types,
-    ) if (require_telemetry_quality or require_zeek_types) else None
+        event_window_start_utc=event_window_start_utc,
+        event_window_end_utc=event_window_end_utc,
+    ) if (require_telemetry_quality or require_zeek_types or event_window_start_utc is not None or event_window_end_utc is not None) else None
     report = evaluate_offline_zeek_baseline(
         dataset, include_private_test_trace=include_private_test_trace,
     )
@@ -342,6 +355,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Opt in to aggregate quality screening for EVERY capture; requires --cidr")
     parser.add_argument("--require-zeek-types", action="store_true",
                         help="Opt-in Zeek #fields/#types check on all captures; requires --cidr")
+    parser.add_argument("--event-start-utc", help="Optional inclusive UTC Zeek start-time lower bound for ALL captures (YYYY-MM-DDTHH:MM:SSZ)")
+    parser.add_argument("--event-end-utc", help="Optional inclusive UTC Zeek start-time upper bound for ALL captures (YYYY-MM-DDTHH:MM:SSZ)")
     parser.add_argument("--require-uid-independent-overlap", action="store_true",
                         help="Refuse cross-split reuse of timestamp/five-tuple even if Zeek UID differs")
     parser.add_argument("--expected-manifest-sha256", type=str,
@@ -369,6 +384,8 @@ def main(argv: list[str] | None = None) -> int:
                 require_uid_independent_overlap=require_uid_independent_overlap,
                 require_zeek_types=args.require_zeek_types,
                 expected_manifest_sha256=args.expected_manifest_sha256,
+                event_window_start_utc=args.event_start_utc,
+                event_window_end_utc=args.event_end_utc,
             ), indent=2, ensure_ascii=False, allow_nan=False))
             return 0
         output = (args.trace_output or args.output).resolve()
@@ -386,6 +403,8 @@ def main(argv: list[str] | None = None) -> int:
             require_uid_independent_overlap=require_uid_independent_overlap,
             require_zeek_types=args.require_zeek_types,
             expected_manifest_sha256=args.expected_manifest_sha256,
+            event_window_start_utc=args.event_start_utc,
+            event_window_end_utc=args.event_end_utc,
         )
         payload = json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         # Exclusive creation: no partial report is written if validation or fit fails.

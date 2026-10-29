@@ -610,3 +610,42 @@ captures before model fitting; missing or incompatible declarations fail.
 The flag is deliberately independent of `--strict-input-gates` to preserve
 existing synthetic/minimal fixtures. It does not authenticate a capture,
 independent labels, physical Host-only isolation or a real attack.
+
+
+## Optional manifest-wide Zeek connection-start UTC window (29/10/2026)
+
+The pinned single-log quality CLI supports paired UTC event-start bounds. The
+experiment CLI now also accepts `--event-start-utc` and `--event-end-utc`
+**together**, in exact `YYYY-MM-DDTHH:MM:SSZ` format, to screen **every**
+TRAIN/VALIDATION/TEST `conn.log` before fitting or writing a report. These
+are inclusive bounds for Zeek **connection-start `ts`**, not a live-capture
+clock or end-of-connection guarantee. A missing/reversed/malformed bound, or
+one flow outside the window, refuses the entire experiment. `--cidr` is
+required. The report only records a boolean and aggregate quality counts;
+it does not publish operator-declared bounds, raw IPs or UIDs. Without these
+flags the existing CLI and model evaluation remain unchanged. This gate is
+independent of `--strict-input-gates`.
+
+Record the experiment's approved UTC window and independent PCAP/log hashes
+in a private notebook **before** running the tool. For a single coherent
+experiment window covering all partitions:
+
+```powershell
+py -3.12 scripts/evaluate_zeek_lab.py `
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" `
+  --expected-manifest-sha256 "<PREVIOUSLY_RECORDED_SHA256>" `
+  --cidr "<ACTUAL_HOST_ONLY_CIDR>" `
+  --strict-input-gates `
+  --event-start-utc "2026-10-29T01:00:00Z" `
+  --event-end-utc "2026-10-29T03:00:00Z" `
+  --preflight
+```
+
+Replace the example bounds with independently documented actual UTC times;
+use the **same** bounds for a subsequent private `--output` or
+`--trace-output` run. If TRAIN, VALIDATION and TEST were captured on
+different days, a single wide bound is weak evidence; keep per-session
+windows separately in the lab notebook and do not infer time independence.
+A valid Zeek timestamp inside an operator-entered window cannot authenticate
+clock accuracy, Host-only isolation, ground-truth labels or detection timing.
+All automated regression fixtures are synthetic, not student VMware evidence.
