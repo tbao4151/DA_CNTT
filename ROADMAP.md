@@ -1195,3 +1195,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #239](https://github.com/tbao4151/DA_CNTT/pull/239) merged at `b509693db8a1b9b9cc5f127820d9a13546d16206` after final-head [Ubuntu CI #40950725108](https://github.com/tbao4151/DA_CNTT/actions/runs/40950725108) and [Windows CI #40950725439](https://github.com/tbao4151/DA_CNTT/actions/runs/40950725439) succeeded; this supersedes the pending CI/merge item above.
 - [ ] Student validates opt-in guest-flow presence only for scenarios in which the declared guest is expected to send/receive traffic, using independently pinned private Host-only evidence and manually checked VMnet/NIC isolation and authorization. A matching IP is not proof of capture authenticity or isolation.
 - [ ] Prioritize offline end-to-end Zeek telemetry → Zeek-schema AI inference → research alert → SQLite SOC case, with reproducible stage timings and independent held-out labels. Keep official UNSW-NB15 metrics separate and do not claim live detection from synthetic CI.
+
+## Cyber Lab — verified offline research candidate queue (30/10/2026)
+
+- [ ] Verify feature-head Ubuntu Python 3.12.9 and Windows Server 2022 CI for the new pinned offline research-alert bundle and synthetic tamper/no-overwrite regressions. Merge only if checks pass, no conflicts or competing PR.
+- [ ] Student exports a private candidate queue on Windows 11 from genuine authorized Host-only Zeek data with independent model/log/report/manifest/annotation SHA-256 pins; manually triages one original row into exactly one Unclassified SOC case and archives evidence outside Git.
+- [ ] Establish independent capture/ground-truth provenance, untouched held-out Zeek evaluation, actual alert-to-SOC timing and operator-approved isolation before claiming attack detection or moving from research candidates to operational alerts.
