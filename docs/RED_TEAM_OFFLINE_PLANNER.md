@@ -21,3 +21,18 @@ Tests use synthetic operator feedback and a Streamlit empty-state smoke check. T
 ## Next safety and research gates
 
 Before adding *any* replay/execution: obtain documented student authorization, verify VMware Host-only isolation, implement operator opt-in, lab allowlist, bounded rates, audit logging and an effective emergency stop. Attach only owned/authorized offline fixtures and distinguish synthetic replay from captured data. Evaluate UCB1 versus random with a preregistered protocol and independently verified Blue Team outcomes; never call manually entered feedback ground truth. No active Red Team behavior is authorized by this preview.
+
+
+## In-memory proposal-to-feedback timeline (29/10/2026)
+
+The Red Team page now keeps a bounded, session-only `red_team_audit_events` timeline. Each proposed catalog scenario records a sequential proposal ID, exact policy (`ucb1` or `random`), random seed and UI-action UTC timestamp. A subsequent **operator-entered** `blue_flagged` observation must reference that same outstanding proposal ID; the UI does not accept arbitrary scenario feedback or a second proposal while the first is pending. The module replays policy selection from prior linked feedback and rejects mismatched selections, duplicate/unlinked observations, unknown keys, non-boolean feedback, out-of-order timestamps and any assertion of network execution or verified outcomes. It caps the session at 1,000 proposals.
+
+The UI shows a chronological table and offers a JSON export. **The timestamps record button actions, not network events or detection times.** JSON is editable, unsigned and not authenticated scientific evidence. An observation is always `verified=false`, even if an operator types that Blue Team flagged something. Neither a proposed scenario nor its feedback establishes that traffic was generated or that Blue Team actually detected an attack. The planner remains offline and never runs a replay. The stop button clears the session-only audit and synthetic comparison; no real traffic process exists to stop.
+
+On Windows Python 3.12.9 run:
+
+```powershell
+py -3.12 -m pytest -q tests/test_red_team_planning_audit.py tests/test_red_team_scenario_policy.py
+```
+
+To check the actual UI, run `streamlit run app.py`, navigate to **Red Team Lab**, propose one offline scenario, record an explicitly unverified observation, review the timeline, export JSON and clear the session. Keep the exported planning notes private. For a future scientific UCB1/random comparison, separately establish authorized lab observations, a predefined protocol, independent Blue Team outcomes and time measurements; this session log is not that evidence.
