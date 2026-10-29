@@ -661,3 +661,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Python 3.12.9 Ubuntu quality gates **and** Windows offline Zeek CI; merge only after both pass and GitHub reports a clean, conflict-free PR. The opt-in guard rejects same timestamp/five-tuple reused across TRAIN/VALIDATION/TEST despite different Zeek UIDs; default research behavior remains unchanged.
 - [ ] Student repeats strict preflight with `--require-uid-independent-overlap` on separately pinned authorized captures in Windows 11, retaining private results and investigating possible exact-key collisions without modifying original evidence. Exact overlap checks can have false positives and cannot establish genuine capture independence.
 - [ ] Independently verify VMware Host-only adapter/routes, run real Zeek on authorized genuine traffic, obtain independent labels and evaluate held-out Precision/Recall/FPR and event-to-SOC latency. Preserve UNSW official benchmark; active Red Team network actions stay disabled.
+
+
+## Cyber Lab — UID-independent Zeek overlap gate verified (#165, 29/10/2026)
+
+- [x] [PR #165](https://github.com/tbao4151/DA_CNTT/pull/165) merged after final-head [Ubuntu Python 3.12.9 #40798459769](https://github.com/tbao4151/DA_CNTT/actions/runs/40798459769) (**788 passed, 2 skipped**) and [Windows Python 3.12.9 #40798459757](https://github.com/tbao4151/DA_CNTT/actions/runs/40798459757) (**76 passed**) succeeded; conflict-free. Supersedes the pending feature gate above.
+- [ ] Student runs strict preflight on genuine, separately pinned, authorized Zeek captures on Windows 11 and privately investigates any exact timestamp/five-tuple collisions. GitHub CI is synthetic software verification, not local capture evidence.
+- [ ] Verify VMware Host-only isolation independently, obtain independent labels and host/session-disjoint holdout, then measure Zeek-specific Precision/Recall/FPR and event-to-SOC latency. Preserve UNSW benchmark and keep active Red Team network-disabled.
