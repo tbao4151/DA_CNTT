@@ -100,3 +100,21 @@ def test_ipv6_and_absent_bytes_supported():
     event = parse_zeek_conn_log(log(values))[0]
     assert event["src_ip"] == "2001:db8::1"
     assert event["orig_bytes"] is None
+
+
+def test_single_zeek_types_header_accepted_but_duplicate_or_late_refused():
+    # Real Zeek ASCII includes #types; legacy minimal fixtures may omit it.
+    types = ("time", "string", "addr", "port", "addr", "port", "enum",
+             "string", "interval", "count", "count", "count", "count")
+    declaration = ("#types\\t" + "\\t".join(types) + "\\n").encode()
+    original = log(VALUES)
+    header = original.splitlines(keepends=True)[1]
+    typed = original.replace(header, header + declaration, 1)
+    assert parse_zeek_conn_log(typed) == parse_zeek_conn_log(original)
+
+    with pytest.raises(ValueError, match="Zeek types header"):
+        parse_zeek_conn_log(typed.replace(declaration, declaration * 2, 1))
+    with pytest.raises(ValueError, match="Zeek types header"):
+        parse_zeek_conn_log(original + declaration)
+    with pytest.raises(ValueError, match="Zeek types header"):
+        parse_zeek_conn_log(typed + declaration)
