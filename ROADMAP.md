@@ -1139,3 +1139,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #231](https://github.com/tbao4151/DA_CNTT/pull/231) merged as `5160b28cc68af10abf6959fdb0d463f54a9e41ad` after [Ubuntu CI #40929024137](https://github.com/tbao4151/DA_CNTT/actions/runs/40929024137) (**1050 passed, 2 skipped**), [Windows CI #40929023842](https://github.com/tbao4151/DA_CNTT/actions/runs/40929023842) (**205 Zeek, 21 host, 31 guest, 17 paired, 46 Red Team tests passed**) and [real Zeek synthetic smoke #40929023992](https://github.com/tbao4151/DA_CNTT/actions/runs/40929023992) (success). This supersedes the pending CI checkbox above; post-merge main CI is tracked separately.
 - [ ] Student validates the pinned new-log CLI on private Windows 11 NTFS and records report SHA-256, with original PCAP/Zeek and model/manifest pins; CI is not a substitute for Windows laptop acceptance.
 - [ ] Collect genuine authorized Host-only captures and independent labels, verify held-out Zeek AI Precision/Recall/FPR, and measure event-to-AI-to-SOC timing without confusing offline processing time with live detection latency.
+
+
+## Cyber Lab — integrated private evidence consistency gate (30/10/2026)
+
+- [ ] Validate final feature-head Ubuntu Python 3.12.9 and Windows offline CI for the integrated five-file SHA-256-pinned host/guest/PCAP/Zeek/import-report consistency gate. Merge only after required checks pass and no conflicting PR remains. Synthetic regression is not real VMware acceptance.
+- [ ] Student obtains authorized Host-only configuration and real PCAP, original Zeek `conn.log`, independent SHA-256 pins, host/guest snapshots and offline import report **outside Git**; runs `scripts/verify_lab_evidence_chain.py` on Windows 11 and archives the sanitized result privately.
+- [ ] Independently verify VMware VMnet/NIC/routes/egress and approval, adjudicate labels on held-out captures, then measure genuine event-to-AI-alert-to-SOC latency and Precision/Recall/FPR. The new gate verifies only supplied file consistency and does not create alerts or cases.
