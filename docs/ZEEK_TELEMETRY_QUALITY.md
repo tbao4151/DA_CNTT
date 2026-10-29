@@ -62,3 +62,26 @@ recorded before capture. CI cannot establish provenance of a student-owned
 capture, real VMware Host-only isolation, independent labels, attack detection,
 or performance. For real research, follow the private Windows procedure above
 with a separately recorded digest and preserve the evidence outside Git.
+
+
+## Optional Zeek ASCII declared-type verification (29/10/2026)
+
+Real Zeek ASCII `conn.log` normally declares both `#fields` and `#types`.
+Use `--require-zeek-types` on the private quality CLI to reject missing,
+duplicated, late, mismatched or incompatible declarations **before** accepting
+a source for research. It checks the seven required fields and six optional
+model-relevant fields, permits unrelated Zeek extension columns, and exports
+only aggregate schema counts. It does not infer values, labels, authenticity
+or Host-only isolation.
+
+~~~powershell
+py -3.12 scripts/inspect_zeek_telemetry_quality.py --log "C:/DA005-private/capture-001/conn.log" --expected-log-sha256 "<PIN>" --cidr "192.168.56.0/24" --require-zeek-types --output "C:/DA005-private/capture-001/typed-quality.json"
+~~~
+
+For an experiment manifest, add `--require-zeek-types` and the actual
+`--cidr` to both `scripts/evaluate_zeek_lab.py --preflight` and the final
+evaluation command. All declared split captures are checked. The existing
+parser and `--strict-input-gates` bundle keep their previous behavior unless
+this **separate** flag is specified. A forged header can pass this software
+check; Zeek execution, independent labels and physical isolation must still
+be verified separately.
