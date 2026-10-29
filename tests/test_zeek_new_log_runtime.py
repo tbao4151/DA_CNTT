@@ -22,9 +22,19 @@ CIDR = ["192.168.56.0/24"]
 
 def _fixture(tmp_path):
     manifest, dataset, model, new_log = _inputs(tmp_path)
+    # The runtime CLI must use the same per-annotation byte pins as scoring
+    # and manual SOC triage. Rebind the synthetic model to the pinned manifest.
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    for capture in spec["captures"]:
+        labels = manifest.parent / capture["labels_path"]
+        capture["labels_sha256"] = hashlib.sha256(labels.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    model["input_manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
     model_path = manifest.parent / "runtime-model.json"
     model_path.write_text(json.dumps(model, allow_nan=False), encoding="utf-8")
-    captures, manifest_sha = load_experiment_manifest(manifest, lab_cidrs=CIDR)
+    captures, manifest_sha = load_experiment_manifest(
+        manifest, lab_cidrs=CIDR, require_label_sha256=True,
+    )
     raw = new_log.read_bytes()
     args = dict(
         expected_log_sha256=hashlib.sha256(raw).hexdigest(),
@@ -119,3 +129,37 @@ def test_cli_read_only_and_refuses_modified_hash(tmp_path):
         assert not refused.stdout
         assert str(manifest) not in refused.stderr
     assert before == {p.name: p.read_bytes() for p in manifest.parent.iterdir() if p.is_file()}
+
+
+@pytest.mark.parametrize("tamper", ["missing_label_pin", "modified_label_bytes"])
+def test_runtime_cli_refuses_unpinned_or_changed_annotations(tmp_path, tamper):
+    manifest, model_path, new_log, _, _, args = _fixture(tmp_path)
+    if tamper == "missing_label_pin":
+        # A newly re-pinned manifest and model must not bypass the
+        # requirement for EVERY annotation to have its own SHA-256.
+        spec = json.loads(manifest.read_text(encoding="utf-8"))
+        del spec["captures"][0]["labels_sha256"]
+        manifest.write_text(json.dumps(spec), encoding="utf-8")
+        model = json.loads(model_path.read_text(encoding="utf-8"))
+        model["input_manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
+        model_path.write_text(json.dumps(model), encoding="utf-8")
+    else:
+        labels = manifest.parent / "host-0-labels.json"
+        labels.write_bytes(labels.read_bytes() + b"\n")
+
+    command = [
+        sys.executable, str(ROOT / "scripts" / "benchmark_zeek_new_log_runtime.py"),
+        "--model", str(model_path),
+        "--expected-model-sha256", hashlib.sha256(model_path.read_bytes()).hexdigest(),
+        "--manifest", str(manifest),
+        "--expected-manifest-sha256", hashlib.sha256(manifest.read_bytes()).hexdigest(),
+        "--log", str(new_log),
+        "--expected-log-sha256", args["expected_log_sha256"],
+        "--cidr", CIDR[0], "--repetitions", "2", "--warmup", "0",
+    ]
+    refused = subprocess.run(command, capture_output=True, text=True, check=False)
+    assert refused.returncode == 1
+    assert not refused.stdout  # No fabricated timing JSON.
+    assert str(manifest) not in refused.stderr
+    assert "192.168.56" not in refused.stderr
+    assert not list(tmp_path.rglob("*.sqlite3"))

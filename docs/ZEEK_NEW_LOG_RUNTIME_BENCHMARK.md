@@ -25,7 +25,14 @@ py -3.12 scripts/benchmark_zeek_new_log_runtime.py --model "C:/DA005-private/zee
 The CLI prints aggregate JSON to stdout only and refuses to write files.
 It checks all declared split captures and normalized flow identities against
 the new source before timing. The pinned model, log and manifest must pass
-SHA-256 validation; these checks do not authenticate model authorship,
+SHA-256 validation. **Every declared TRAIN/VALIDATION/TEST annotation must
+also include `labels_sha256` in the manifest**, and the CLI re-reads and
+checks those original annotation bytes before measuring. A missing pin or
+changed annotation fails closed without producing timing JSON. This aligns
+the runtime benchmark input gate with strict NEW-log scoring and SOC triage;
+older manifests without per-annotation pins must be updated and the model
+recreated or explicitly rebound to the newly pinned manifest through the
+documented trusted research workflow. These checks do not authenticate model authorship,
 complete partition history, independent labels or physical isolation.
 
 Report the exact Windows version, Python version, CPU, RAM, VM configuration,

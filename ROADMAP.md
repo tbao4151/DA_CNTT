@@ -1006,3 +1006,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] PR #211 merged as `581fa73d162ab9200cff44a08a441bc34c2af597` after final-head Ubuntu #40875566011 (**949 passed, 2 skipped**), Windows #40875566280 (**160 Zeek + 46 Red Team passed**) and real-Zeek synthetic smoke #40875566154 (**success**). Supersedes the pending feature CI/merge item above.
 - [ ] Independently verify post-merge main CI and student Windows 11/VMware Host-only capture with separately pinned annotation/manifest/model/Zeek/PCAP evidence, actual isolation and ground-truth adjudication.
 - [ ] Measure held-out attack Precision/Recall/FPR and actual event-to-AI-alert-to-SOC-case timing; annotation hashes only establish consistency with operator-supplied bytes.
+
+## Blue Team — strict per-annotation pins for NEW-log runtime benchmark (29/10/2026)
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 and Windows offline Zeek CI, check conflicts and merge only if green. Runtime timing must refuse a missing `labels_sha256` or changed annotation, even if the manifest/model hashes are otherwise consistent; no timing JSON on failure.
+- [ ] Student reruns the pinned read-only runtime benchmark with actual independently preserved Windows 11/VMware Host-only model, manifest, labels and new capture, records original hashes and isolation evidence outside Git.
+- [ ] Obtain independently adjudicated held-out attack metrics and actual event-to-AI-alert-to-SOC-case timing. Offline batch timing excludes capture, I/O, model load, partition preflight and SOC work, and must not be reported as detection latency.
