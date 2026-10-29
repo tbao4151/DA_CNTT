@@ -738,3 +738,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #175](https://github.com/tbao4151/DA_CNTT/pull/175) merged after final-head [Ubuntu CI #40813579884](https://github.com/tbao4151/DA_CNTT/actions/runs/40813579884) (**828 passed, 2 skipped**) and [Windows CI #40813579774](https://github.com/tbao4151/DA_CNTT/actions/runs/40813579774) (**87 Zeek + 46 Red Team passed**) succeeded; mergeability and unchanged base were checked. This supersedes the earlier pending PR verification checklist.
 - [ ] Student tests Red Team pending proposal and manual feedback after rerun/navigation on their own Windows 11 machine, exports a private audit and independently records SHA-256. GitHub-hosted Windows CI does not prove laptop acceptance.
 - [ ] Build independently labeled, authorized VMware Host-only Zeek experiments and measure genuine Blue Team outcomes and event-to-SOC latency before any AI-vs-AI effectiveness claim. Offline Red Team execution remains disabled and official UNSW-NB15 benchmark unchanged.
+
+
+## Cyber Lab — Zeek ASCII declared-type provenance (29/10/2026)
+
+- [ ] Verify and merge the optional `--require-zeek-types` quality/manifest gate only after final-head Ubuntu, Windows and network-disabled real Zeek synthetic CI pass without conflict. Missing, conflicting, duplicate or late `#types` must fail before experiment output.
+- [ ] On Windows 11/VMware, run the private typed-header gate on a genuine authorized Zeek `conn.log`, recording PCAP/log SHA-256, Zeek version and Host-only isolation proof separately. Header correctness alone does not establish capture authenticity or label validity.
+- [ ] Continue independently labeled host/session-disjoint experiments, measured event-to-alert/SOC latency and held-out Zeek Precision/Recall/FPR. No synthetic metric is real detection evidence. Red Team active traffic stays disabled; Dataset Mode remains unchanged.
