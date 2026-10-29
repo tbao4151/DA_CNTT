@@ -36,7 +36,7 @@ def inspect_zeek_declared_types(raw: bytes) -> dict[str, object]:
 
     This opt-in check preserves legacy minimal synthetic fixtures by default.
     """
-    if not isinstance(raw, bytes) or not 0 < len(raw) <= MAX_LOG_BYTES or b"\\x00" in raw:
+    if not isinstance(raw, bytes) or not 0 < len(raw) <= MAX_LOG_BYTES or b"\x00" in raw:
         raise ValueError("Invalid bounded Zeek type-contract input")
     lines = raw.decode("utf-8", errors="strict").splitlines()
     if not lines or lines[0] != "#separator \\x09":
@@ -45,16 +45,16 @@ def inspect_zeek_declared_types(raw: bytes) -> dict[str, object]:
     declared = None
     saw_data = False
     for line in lines[1:]:
-        if line.startswith("#fields\\t"):
+        if line.startswith("#fields\t"):
             if fields is not None or saw_data:
                 raise ValueError("Duplicate or late Zeek fields declaration")
-            fields = line.split("\\t")[1:]
+            fields = line.split("\t")[1:]
             if not fields or len(fields) != len(set(fields)):
                 raise ValueError("Invalid Zeek fields declaration")
-        elif line.startswith("#types\\t"):
+        elif line.startswith("#types\t"):
             if fields is None or declared is not None or saw_data:
                 raise ValueError("Missing fields or duplicate/late Zeek types")
-            declared = line.split("\\t")[1:]
+            declared = line.split("\t")[1:]
             if len(declared) != len(fields):
                 raise ValueError("Zeek declared type count differs from fields")
         elif line and not line.startswith("#"):
