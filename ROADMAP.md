@@ -1012,3 +1012,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Ubuntu Python 3.12.9 and Windows offline Zeek CI, check conflicts and merge only if green. Runtime timing must refuse a missing `labels_sha256` or changed annotation, even if the manifest/model hashes are otherwise consistent; no timing JSON on failure.
 - [ ] Student reruns the pinned read-only runtime benchmark with actual independently preserved Windows 11/VMware Host-only model, manifest, labels and new capture, records original hashes and isolation evidence outside Git.
 - [ ] Obtain independently adjudicated held-out attack metrics and actual event-to-AI-alert-to-SOC-case timing. Offline batch timing excludes capture, I/O, model load, partition preflight and SOC work, and must not be reported as detection latency.
+
+## Blue Team — runtime annotation-pin parity verified (#213, 29/10/2026)
+
+- [x] [PR #213](https://github.com/tbao4151/DA_CNTT/pull/213) merged at `8a1c6eeb16ff3e111b83178a90d3cf4e1da57619` after final-head Ubuntu #40879238610 (**951 passed, 2 skipped**), Windows #40879238646 (**175 Zeek + 46 Red Team passed**) and Ubuntu push #40879213816 (**success**). This supersedes the pending feature merge gate above; post-merge main CI is separate.
+- [ ] Student independently measures actual Windows 11/VMware Host-only offline batch runtime with original pinned annotations, manifest, model and Zeek/PCAP, records CPU/RAM/Zeek version, isolation and clock evidence outside Git.
+- [ ] Obtain independently adjudicated held-out detection metrics and actual event-to-alert-to-SOC-case latency. Software runtime and synthetic CI must not be interpreted as operational detection timing.
