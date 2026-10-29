@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.labeled_dataset import MAX_CAPTURES, SPLITS, build_labeled_lab_dataset
 from blue_team_ai.cross_split_overlap import screen_uid_independent_cross_split_overlap
+from blue_team_ai.originator_split import screen_originator_ip_disjoint_splits
 from blue_team_ai.lab_scope import inspect_zeek_lab_scope
 from blue_team_ai.offline_baseline import evaluate_offline_zeek_baseline
 from blue_team_ai.telemetry_quality import inspect_zeek_telemetry_quality
@@ -224,6 +225,7 @@ def inspect_offline_experiment(
     manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
     require_label_sha256: bool = False, require_telemetry_quality: bool = False,
     require_uid_independent_overlap: bool = False,
+    require_originator_ip_disjoint: bool = False,
     require_zeek_types: bool = False,
     expected_manifest_sha256: str | None = None,
     event_window_start_utc: str | None = None,
@@ -246,6 +248,10 @@ def inspect_offline_experiment(
     overlap = (
         screen_uid_independent_cross_split_overlap(captures)
         if require_uid_independent_overlap else None
+    )
+    originator_screen = (
+        screen_originator_ip_disjoint_splits(captures)
+        if require_originator_ip_disjoint else None
     )
     quality = _summarize_telemetry_quality(
         captures, lab_cidrs, require_zeek_types=require_zeek_types,
@@ -291,6 +297,7 @@ def inspect_offline_experiment(
         "warnings": warnings,
         **({"telemetry_quality": quality} if quality is not None else {}),
         **({"uid_independent_overlap_screen": overlap} if overlap is not None else {}),
+        **({"originator_ip_split_screen": originator_screen} if originator_screen is not None else {}),
         "interpretation": (
             "Input consistency only; operator-provided labels, host groups and "
             "lab isolation are not independently authenticated. Optional declared "
@@ -305,6 +312,7 @@ def run_offline_experiment(
     include_private_test_trace: bool = False,
     require_label_sha256: bool = False, require_telemetry_quality: bool = False,
     require_uid_independent_overlap: bool = False,
+    require_originator_ip_disjoint: bool = False,
     require_zeek_types: bool = False,
     expected_manifest_sha256: str | None = None,
     event_window_start_utc: str | None = None,
@@ -320,6 +328,10 @@ def run_offline_experiment(
     overlap = (
         screen_uid_independent_cross_split_overlap(captures)
         if require_uid_independent_overlap else None
+    )
+    originator_screen = (
+        screen_originator_ip_disjoint_splits(captures)
+        if require_originator_ip_disjoint else None
     )
     quality = _summarize_telemetry_quality(
         captures, lab_cidrs, require_zeek_types=require_zeek_types,
@@ -340,6 +352,7 @@ def run_offline_experiment(
         "evaluation_protocol": "operator_assigned_host_disjoint_train_validation_test",
         **({"telemetry_quality": quality} if quality is not None else {}),
         **({"uid_independent_overlap_screen": overlap} if overlap is not None else {}),
+        **({"originator_ip_split_screen": originator_screen} if originator_screen is not None else {}),
         "evidence_warning": "Capture isolation and ground-truth authenticity require independent student verification.",
     }
 
@@ -359,6 +372,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--event-end-utc", help="Optional inclusive UTC Zeek start-time upper bound for ALL captures (YYYY-MM-DDTHH:MM:SSZ)")
     parser.add_argument("--require-uid-independent-overlap", action="store_true",
                         help="Refuse cross-split reuse of timestamp/five-tuple even if Zeek UID differs")
+    parser.add_argument("--require-originator-ip-disjoint", action="store_true",
+                        help="Opt-in conservative source-IP disjoint screen across train/validation/test; shared servers allowed")
     parser.add_argument("--expected-manifest-sha256", type=str,
                         help="Optional independently recorded lowercase SHA-256 of exact manifest bytes; refuse changes before parsing/fitting")
     parser.add_argument("--strict-input-gates", action="store_true",
@@ -382,6 +397,7 @@ def main(argv: list[str] | None = None) -> int:
                 require_label_sha256=require_label_sha256,
                 require_telemetry_quality=require_telemetry_quality,
                 require_uid_independent_overlap=require_uid_independent_overlap,
+                require_originator_ip_disjoint=args.require_originator_ip_disjoint,
                 require_zeek_types=args.require_zeek_types,
                 expected_manifest_sha256=args.expected_manifest_sha256,
                 event_window_start_utc=args.event_start_utc,
@@ -401,6 +417,7 @@ def main(argv: list[str] | None = None) -> int:
             require_label_sha256=require_label_sha256,
             require_telemetry_quality=require_telemetry_quality,
             require_uid_independent_overlap=require_uid_independent_overlap,
+            require_originator_ip_disjoint=args.require_originator_ip_disjoint,
             require_zeek_types=args.require_zeek_types,
             expected_manifest_sha256=args.expected_manifest_sha256,
             event_window_start_utc=args.event_start_utc,
