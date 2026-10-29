@@ -111,3 +111,25 @@ sessions, and no p-value, confidence interval, statistical significance,
 causal port importance, or deployment winner is asserted. Do not use TEST to
 retune either variant. Validate on separately captured host/session-disjoint
 data before any scientific performance claim.
+
+
+## Anonymous paired host-group disagreement (29/10/2026)
+
+The same optional v2 JSON report now includes
+`paired_test_correctness.by_anonymous_host_group`. This compares **which**
+of the two predeclared models was correct within each operator-declared TEST
+host group, not just each model's separate confusion matrix. Only aggregate
+four-cell correctness counts and discordant counts are emitted. Groups are
+numbered anonymously; raw group names, IPs, UIDs, timestamps and row-level
+predictions are not exported.
+
+To avoid exposing correctness for a tiny group by subtracting visible group
+counts from overall totals, **all** per-group cells are suppressed whenever
+**any** TEST group contains fewer than 30 flows. In that case `groups` is
+empty and `all_group_counts_suppressed` is true; overall and class-level
+aggregate counts remain as in the earlier report. The 30-flow threshold is a
+privacy guard, **not** a sample-size sufficiency guarantee. One group, even
+when large, cannot establish generalization. This is descriptive analysis:
+flows may be dependent within host/session, group assignments and labels
+remain operator-supplied, and no p-value, confidence interval or deployment
+winner is asserted. Do not tune using held-out TEST.

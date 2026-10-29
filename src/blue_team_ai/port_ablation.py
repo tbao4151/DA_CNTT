@@ -89,7 +89,10 @@ def evaluate_zeek_port_ablation(dataset: LabeledLabDataset) -> dict[str, object]
     _validate_dataset(dataset)
     full, full_predictions = _fit_one(dataset, make_zeek_research_pipeline(), LAB_FEATURE_COLUMNS)
     portless, portless_predictions = _fit_one(dataset, _portless_pipeline(), PORTLESS_COLUMNS)
-    paired = summarize_paired_zeek_test(dataset.labels["test"], full_predictions, portless_predictions)
+    paired = summarize_paired_zeek_test(
+        dataset.labels["test"], full_predictions, portless_predictions,
+        host_groups=[p["host_group"] for p in dataset.provenance["test"]],
+    )
     deltas = {
         name: portless["test_metrics"][name] - full["test_metrics"][name]
         for name in ("precision", "recall", "f1", "false_positive_rate")
