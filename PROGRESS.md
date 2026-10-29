@@ -1553,3 +1553,11 @@
 - Earlier feature-head CI failed on a synthetic CLI fixture that reused the same five-tuple across research splits, which the existing strict overlap guard correctly rejected. After making the fixture split-disjoint, a second test-only Windows failure was due to calling `.decode()` on `subprocess.run(text=True).stderr`; both test defects were corrected before final-head green CI and merge. The safety gate was **not** relaxed.
 - This opt-in research comparison fits full nine-column and portless seven-column Zeek Logistic Regression variants on the same declared splits, selects thresholds using validation only and evaluates TEST after selection. It does not replace the existing Zeek research model, alter official UNSW-NB15 metrics or create operational alerts, SOC cases or traffic.
 - **Post-merge main CI #40829543357 was queued when checked, not claimed passed.** GitHub Windows CI is not student Windows 11/VMware acceptance. Synthetic fixture scores are not empirical attack-detection results. Student must independently pin real authorized Host-only PCAP/Zeek/annotation evidence, preregister variants/splits and report actual held-out class supports and uncertainty before drawing scientific conclusions.
+
+
+
+## 2026-10-29 — Paired Zeek port-ablation TEST correctness (feature PR pending)
+
+- Added an aggregate per-row paired correctness contingency for the two already-prespecified full/portless Zeek research variants, including operator-label class breakdowns. It reuses the identical held-out TEST order after TRAIN-only fitting and VALIDATION-only threshold selection; does not expose per-flow predictions or add a significance claim.
+- Added synthetic unit/regression tests for confusion-matrix consistency, input refusal and test-label invariance of the two validation-selected thresholds. CI/PR merge and student Windows 11/VMware experiment are **pending at authoring**; do not treat local fixtures as real detection evidence.
+- No change to official UNSW-NB15 benchmark, active Red Team traffic, operational alerts, SOC database, or model deployment. Next: verify final-head Ubuntu and Windows CI, then preregister a genuine independently labeled Host-only evaluation with multiple independent sessions.
