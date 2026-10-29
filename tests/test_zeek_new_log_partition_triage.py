@@ -154,7 +154,7 @@ def test_cli_soc_refuses_unpinned_or_changed_annotation_before_write(tmp_path, c
     manifest, _, _, _, _, index, base, pinned = _setup(tmp_path)
     if change == "annotation_modified":
         labels = manifest.parent / "host-0-labels.json"
-        labels.write_bytes(labels.read_bytes() + b"\\n")
+        labels.write_bytes(labels.read_bytes() + b"\n")
     else:
         spec = json.loads(manifest.read_text(encoding="utf-8"))
         del spec["captures"][0]["labels_sha256"]
