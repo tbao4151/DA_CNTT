@@ -175,3 +175,26 @@ On Windows Python 3.12.9 run
 `py -3.12 -m pytest -q tests/test_zeek_telemetry.py tests/test_zeek_manual_triage.py`.
 Preserve the original authorized Zeek file and its independently pinned
 SHA-256; test malformed copies, not the original evidence.
+
+
+## Optional Zeek ASCII sentinel and conn-path metadata (29/10/2026)
+
+The shared bounded \`conn.log\` parser now validates optional Zeek ASCII
+\`#unset_field\`, \`#empty_field\` and \`#path\` metadata. If present, they
+must occur once before the first flow record and use the standard values
+\`-\`, \`(empty)\` and \`conn\`, respectively. Custom sentinel encodings or a
+non-\`conn\` path fail closed rather than silently changing missingness or
+log provenance. Minimal legacy fixtures without these headers still parse.
+
+When \`#empty_field\\t(empty)\` is explicitly declared, an encoded
+\`(empty)\` service is decoded as the empty string, distinct from the
+\`#unset_field\\t-\` missing service (Python \`None\`). Without the
+declaration, legacy minimal logs retain their original literal values.
+The existing strict \`--require-zeek-types\` check remains separate.
+\`#set_separator\` and \`#open\` are not authenticated by this change.
+
+Run the synthetic regressions with
+\`py -3.12 -m pytest -q tests/test_zeek_telemetry.py tests/test_zeek_manual_triage.py\`.
+A matching metadata header does not prove original PCAP provenance, physical
+Host-only isolation, independent attack labels, or model performance.
+Do not edit the original lab capture to satisfy this gate.
