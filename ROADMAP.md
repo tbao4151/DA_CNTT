@@ -978,3 +978,19 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
   measured event-to-AI-alert-to-SOC-case latency. Declared non-reuse checks
   cannot establish physical isolation, complete history, ground-truth
   authenticity or operational attack detection.
+
+
+## Blue Team — pinned NEW-log scoring gate verified (#209, 29/10/2026)
+
+- [x] PR #209 merged at `e8ee5f836c586875ed1a8f6e12e7a7b89ecb4577`
+  after final-head Ubuntu #40871455246 (945 passed, 2 skipped),
+  Windows #40871455253 (160 Zeek + 46 Red Team passed) and
+  real-Zeek synthetic smoke #40871455362 (success). This supersedes
+  the pending feature merge gate above. Post-merge main CI is separate.
+- [ ] Student verifies pinned strict scoring on independently recorded
+  Windows 11/VMware Host-only inputs, tests reserved TEST and normalized
+  identity reuse refusal on copies, and records physical isolation and
+  labels separately. Synthetic CI is not hardware evidence.
+- [ ] Demonstrate independently adjudicated held-out attack detection and
+  actual event-to-alert-to-SOC-case timing; the new gate does not provide
+  these measurements or operational alerts.
