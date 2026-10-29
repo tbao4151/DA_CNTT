@@ -960,3 +960,21 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] PR #207 (https://github.com/tbao4151/DA_CNTT/pull/207) merged as c3839d0418c96b25e1dbf0242bc8aee1b18fc784 after final-head Ubuntu CI #40866881807 (936 passed, 2 skipped), Windows CI #40866881735 (151 Zeek + 46 Red Team passed) and real-Zeek synthetic CI #40866881683 (success). Supersedes the pending feature-merge item above; post-merge main CI remains a separate check.
 - [ ] Student verifies the original authorized Windows 11/VMware Host-only PCAP/Zeek privately with pinned SHA-256, Zeek version, actual isolation/clock evidence and independent labels. Do not modify source captures for tests.
 - [ ] Obtain genuine held-out host/session-disjoint detection evidence and measured event-to-AI-alert-to-SOC-case latency. Software metadata consistency does not establish operational detection, authenticated provenance or an active Red Team kill switch.
+
+
+## Blue Team — NEW-log scoring with pinned declared partition screening (29/10/2026)
+
+- [ ] Confirm final feature-head Ubuntu Python 3.12.9 and Windows offline Zeek
+  CI for optional pinned TRAIN/VALIDATION/TEST and flow identity screening
+  performed **at the scoring boundary**; merge only after checks pass and
+  conflicts are absent. Preserve the existing prediction JSON schema and
+  legacy unpinned CLI behavior.
+- [ ] On student Windows 11, preserve original authorized VMware Host-only
+  PCAP/Zeek and independently pinned model, manifest, annotation and capture
+  hashes; run the strict scoring mode with actual private CIDR, inspect
+  report and verify that a copy of reserved TEST is refused. Do not alter
+  original evidence or commit private inputs.
+- [ ] Obtain genuine independently adjudicated held-out attack metrics and
+  measured event-to-AI-alert-to-SOC-case latency. Declared non-reuse checks
+  cannot establish physical isolation, complete history, ground-truth
+  authenticity or operational attack detection.
