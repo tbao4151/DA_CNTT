@@ -675,3 +675,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final PR-head Ubuntu Python 3.12.9 quality gates and Windows offline Zeek CI, then merge the `--strict-input-gates` convenience option only if both pass and GitHub reports no conflicts. This bundles existing label SHA-256, telemetry quality and UID-independent cross-split overlap screens; it is not a new model or live sensor.
 - [ ] Student runs strict `--preflight` with an independently established Host-only CIDR and fully pinned private Zeek/label files, then only after review runs held-out research evaluation. Archive separate checksums, scenario notes, independent annotations and VMware/Zeek evidence outside public GitHub.
 - [ ] Evaluate genuine independently labeled, host/session-disjoint lab captures and measured event-to-SOC latency. A passing strict preflight is only internal consistency, not verified isolation, attack detection or scientific accuracy. Keep Red Team active traffic disabled and preserve the UNSW-NB15 official benchmark.
+
+
+## Cyber Lab — strict offline Zeek input gate verified (#167, 29/10/2026)
+
+- [x] [PR #167](https://github.com/tbao4151/DA_CNTT/pull/167) merged conflict-free after final-head [Ubuntu Python 3.12.9 CI #40801801187](https://github.com/tbao4151/DA_CNTT/actions/runs/40801801187) (**791 passed, 2 skipped**) and [Windows Python 3.12.9 CI #40801801069](https://github.com/tbao4151/DA_CNTT/actions/runs/40801801069) (**79 passed**) succeeded. Supersedes the earlier pending gate item; synthetic regressions only.
+- [ ] Student runs strict `--preflight` on independently pinned authorized Host-only Zeek captures and labels in Windows 11, preserving original PCAP/log, Zeek version, independent checksum records, network-isolation screenshots and adjudication notes outside public GitHub.
+- [ ] Establish authentic independent labels and host/session-disjoint holdout; evaluate Zeek-specific Precision/Recall/FPR and measured event-to-SOC latency. A strict input gate cannot prove scientific validity or operational attack detection; keep Red Team active traffic disabled and UNSW official benchmark unchanged.
