@@ -20,6 +20,7 @@ from blue_team_ai.cross_split_overlap import screen_uid_independent_cross_split_
 from blue_team_ai.originator_split import screen_originator_ip_disjoint_splits
 from blue_team_ai.lab_scope import inspect_zeek_lab_scope
 from blue_team_ai.offline_baseline import evaluate_offline_zeek_baseline
+from blue_team_ai.port_ablation import evaluate_zeek_port_ablation
 from blue_team_ai.telemetry_quality import inspect_zeek_telemetry_quality
 from blue_team_ai.zeek import MAX_LOG_BYTES
 
@@ -317,7 +318,10 @@ def run_offline_experiment(
     expected_manifest_sha256: str | None = None,
     event_window_start_utc: str | None = None,
     event_window_end_utc: str | None = None,
+    port_ablation: bool = False,
 ) -> dict[str, object]:
+    if type(port_ablation) is not bool:
+        raise ValueError("Port ablation option must be boolean")
     if (require_telemetry_quality or require_zeek_types or event_window_start_utc is not None or event_window_end_utc is not None) and lab_cidrs is None:
         raise ValueError("Telemetry quality screening requires explicit lab CIDRs")
     captures, manifest_sha256 = load_experiment_manifest(
@@ -338,9 +342,12 @@ def run_offline_experiment(
         event_window_start_utc=event_window_start_utc,
         event_window_end_utc=event_window_end_utc,
     ) if (require_telemetry_quality or require_zeek_types or event_window_start_utc is not None or event_window_end_utc is not None) else None
-    report = evaluate_offline_zeek_baseline(
-        dataset, include_private_test_trace=include_private_test_trace,
-    )
+    if port_ablation and include_private_test_trace:
+        raise ValueError("Port ablation cannot export individual test predictions")
+    report = (evaluate_zeek_port_ablation(dataset) if port_ablation else
+              evaluate_offline_zeek_baseline(
+                  dataset, include_private_test_trace=include_private_test_trace,
+              ))
     return {
         **report,
         "input_manifest_sha256": manifest_sha256,
@@ -382,6 +389,8 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--output", type=Path, help="New aggregate report JSON (must not exist)")
     mode.add_argument("--trace-output", type=Path,
                       help="New PRIVATE held-out test prediction trace JSON (must not exist)")
+    mode.add_argument("--port-ablation-output", type=Path,
+                      help="New PRIVATE paired full-vs-portless research report; requires pinned manifest, strict gates and CIDR")
     mode.add_argument("--preflight", action="store_true", help="Validate inputs and print aggregate counts; no model or file writes")
     args = parser.parse_args(argv)
     # One explicit opt-in avoids accidentally omitting a research-input gate.
@@ -390,6 +399,10 @@ def main(argv: list[str] | None = None) -> int:
     require_telemetry_quality = args.require_telemetry_quality or args.strict_input_gates
     require_uid_independent_overlap = args.require_uid_independent_overlap or args.strict_input_gates
     try:
+        if args.port_ablation_output is not None and (
+            args.expected_manifest_sha256 is None or not args.strict_input_gates or args.cidr is None
+        ):
+            raise ValueError("Port ablation requires pinned manifest, strict gates and CIDR")
         manifest = args.manifest.resolve(strict=True)
         if args.preflight:
             print(json.dumps(inspect_offline_experiment(
@@ -404,10 +417,10 @@ def main(argv: list[str] | None = None) -> int:
                 event_window_end_utc=args.event_end_utc,
             ), indent=2, ensure_ascii=False, allow_nan=False))
             return 0
-        output = (args.trace_output or args.output).resolve()
+        output = (args.trace_output or args.output or args.port_ablation_output).resolve()
         if not output.is_relative_to(manifest.parent) or output == manifest:
             raise ValueError("Report output must remain inside private manifest directory")
-        if args.trace_output is not None and output.is_relative_to(ROOT):
+        if (args.trace_output is not None or args.port_ablation_output is not None) and output.is_relative_to(ROOT):
             raise ValueError("Private prediction trace must stay outside the Git repository")
         if output.exists():
             raise FileExistsError("Report already exists; refusing overwrite")
@@ -422,6 +435,7 @@ def main(argv: list[str] | None = None) -> int:
             expected_manifest_sha256=args.expected_manifest_sha256,
             event_window_start_utc=args.event_start_utc,
             event_window_end_utc=args.event_end_utc,
+            port_ablation=args.port_ablation_output is not None,
         )
         payload = json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         # Exclusive creation: no partial report is written if validation or fit fails.
@@ -430,6 +444,8 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "Private held-out test prediction trace written; no model, alerts or live capture created."
             if args.trace_output is not None else
+            "Private paired Zeek port ablation report written; no model, alerts or live capture created."
+            if args.port_ablation_output is not None else
             "Offline Zeek research report written. No model, alerts or live capture created."
         )
         return 0
