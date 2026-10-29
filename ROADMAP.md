@@ -953,3 +953,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9, Windows offline Zeek and real-Zeek synthetic smoke CI; merge only after green checks and a conflict-free PR. Reject malformed/duplicate/late #open or #set_separator before manual SOC writes; preserve minimal legacy fixtures.
 - [ ] Student tests unchanged original authorized Windows 11/VMware Host-only PCAP/Zeek with separately recorded SHA-256, Zeek version, network/clock isolation and independent annotations; use malformed copies for negative tests.
 - [ ] Collect genuine multi-host/session labeled holdout and measured event-to-AI-alert-to-SOC-case timing. Parser metadata validation is not proof of source authenticity, operational detection or physical isolation.
+
+
+## Blue Team — Zeek #open/#set_separator metadata gate verified (#207, 29/10/2026)
+
+- [x] PR #207 (https://github.com/tbao4151/DA_CNTT/pull/207) merged as c3839d0418c96b25e1dbf0242bc8aee1b18fc784 after final-head Ubuntu CI #40866881807 (936 passed, 2 skipped), Windows CI #40866881735 (151 Zeek + 46 Red Team passed) and real-Zeek synthetic CI #40866881683 (success). Supersedes the pending feature-merge item above; post-merge main CI remains a separate check.
+- [ ] Student verifies the original authorized Windows 11/VMware Host-only PCAP/Zeek privately with pinned SHA-256, Zeek version, actual isolation/clock evidence and independent labels. Do not modify source captures for tests.
+- [ ] Obtain genuine held-out host/session-disjoint detection evidence and measured event-to-AI-alert-to-SOC-case latency. Software metadata consistency does not establish operational detection, authenticated provenance or an active Red Team kill switch.
