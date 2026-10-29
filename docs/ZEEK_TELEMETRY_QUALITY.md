@@ -85,3 +85,44 @@ parser and `--strict-input-gates` bundle keep their previous behavior unless
 this **separate** flag is specified. A forged header can pass this software
 check; Zeek execution, independent labels and physical isolation must still
 be verified separately.
+
+
+## Optional operator-declared UTC event-start window (29/10/2026)
+
+For a **single** independently pinned private `conn.log`, the quality CLI can
+also check that **every parsed Zeek `ts` (connection start)** falls inside an
+operator-declared inclusive UTC window. Supply **both** `--event-start-utc`
+and `--event-end-utc` in canonical `YYYY-MM-DDTHH:MM:SSZ` format. The
+gate refuses incomplete, ambiguous, invalid, reversed or out-of-window
+boundaries **before writing** the quality report. No flags means unchanged
+legacy behavior. Use a window recorded separately in the private lab notebook
+before examining results; do not widen the window to make a failed capture pass.
+
+~~~powershell
+py -3.12 scripts/inspect_zeek_telemetry_quality.py `
+  --log "C:/DA005-private/capture-001/conn.log" `
+  --expected-log-sha256 "<INDEPENDENT_LOG_SHA256>" `
+  --cidr "192.168.56.0/24" `
+  --require-zeek-types `
+  --event-start-utc "2026-10-29T01:00:00Z" `
+  --event-end-utc "2026-10-29T01:15:00Z" `
+  --output "C:/DA005-private/capture-001/window-quality.json"
+~~~
+
+The timestamps above are **illustrative**, not observations. The JSON records
+`operator_event_window_checked` but does **not** publish the operator's
+bounds or raw UIDs/IPs. A successful check only constrains timestamps
+**declared inside the log**; a forged/replayed log can still pass. It does not
+authenticate actual capture start/end, the Windows or VM clock, Host-only
+isolation, independent labels, or event-to-alert/SOC latency. Zeek `ts` is
+the **connection start time**, not the alert creation time or necessarily the
+packet-capture start. Long-lived connections can legitimately start before
+a capture window; investigate and document rather than silently modifying
+evidence. This gate is currently for the single-log quality CLI, **not** an
+experiment-wide manifest constraint.
+
+Synthetic-only regression:
+
+~~~powershell
+py -3.12 -m pytest -q tests/test_zeek_event_window.py
+~~~
