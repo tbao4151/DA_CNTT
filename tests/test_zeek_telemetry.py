@@ -202,3 +202,39 @@ def test_zeek_metadata_mismatch_and_duplicates_fail_closed(metadata, expected):
 def test_late_zeek_metadata_cannot_redefine_existing_flows(metadata, expected):
     with pytest.raises(ValueError, match=expected):
         parse_zeek_conn_log(log(VALUES) + metadata)
+
+
+def test_zeek_open_and_set_separator_are_optional_but_checked():
+    original = log(VALUES)
+    metadata = b"#set_separator\t,\n#open\t2026-10-29-17-00-00\n"
+    declared = original.replace(b"#fields\t", metadata + b"#fields\t", 1)
+    assert parse_zeek_conn_log(declared)[0]["uid"] == "C123"
+    assert parse_zeek_conn_log(original)[0]["uid"] == "C123"
+
+
+@pytest.mark.parametrize("metadata,expected", [
+    (b"#set_separator\t;\n", "set_separator"),
+    (b"#set_separator\n", "set_separator"),
+    (b"#set_separator\t,\n#set_separator\t,\n", "set_separator"),
+    (b"#open\n", "open marker"),
+    (b"#open\t2026-02-30-17-00-00\n", "open marker timestamp"),
+    (b"#open\t2026-10-29-17-00-00\n#open\t2026-10-29-17-00-01\n", "open marker"),
+])
+def test_noncanonical_or_duplicate_open_and_set_metadata_refused(metadata, expected):
+    original = log(VALUES)
+    with pytest.raises(ValueError, match=expected):
+        parse_zeek_conn_log(original.replace(b"#fields\t", metadata + b"#fields\t", 1))
+
+
+@pytest.mark.parametrize("metadata,expected", [
+    (b"#set_separator\t,\n", "set_separator"),
+    (b"#open\t2026-10-29-17-00-00\n", "open marker"),
+])
+def test_late_open_and_set_metadata_refused_before_or_after_rows(metadata, expected):
+    original = log(VALUES)
+    for malformed in (
+        original + metadata,
+        original.replace(b"\n1630000000.25", b"\n" + metadata + b"1630000000.25", 1),
+    ):
+        with pytest.raises(ValueError, match=expected):
+            parse_zeek_conn_log(malformed)
