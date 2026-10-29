@@ -860,3 +860,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Ubuntu Python 3.12.9 and Windows offline Zeek CI for opt-in all-group suppression in both port-ablation variants and both VALIDATION/TEST host summaries; merge only if green and conflict-free.
 - [ ] Student validates the private v2 port-ablation JSON on Windows 11 with authorized Host-only evidence. When any group has fewer than 30 flows, `groups` must be empty and `rate_ranges` null for that split; paired TEST cells must also be suppressed. Overall metrics remain visible. This is not differential privacy or a sample-size guarantee.
 - [ ] Collect independent multi-host/session labels, capture and clock provenance, and actual event-to-alert-to-SOC-case timing. Keep Dataset Mode/UNSW baseline unchanged and active Red Team disabled until isolation is independently verified.
+
+
+## Blue Team — cross-section host privacy verified (#193, 29/10/2026)
+
+- [x] [PR #193](https://github.com/tbao4151/DA_CNTT/pull/193) merged as `50538aa373ad9c3b1d029b68da9c274a73edd20c` after final-head [Ubuntu CI #40840318093](https://github.com/tbao4151/DA_CNTT/actions/runs/40840318093) (890 passed, 2 skipped) and [Windows CI #40840318148](https://github.com/tbao4151/DA_CNTT/actions/runs/40840318148) (146 Zeek + 46 Red Team passed). Supersedes the pending merge check above. Post-merge main CI was queued at documentation authoring.
+- [ ] Student tests private port-ablation JSON and redaction behavior on Windows 11 with genuine authorized VMware Host-only Zeek/PCAP, independently pinned labels and host/session split plan. Verify the local capture/clock/isolation evidence separately; GitHub CI is not laptop acceptance.
+- [ ] Evaluate actual multi-host/session detection with independent adjudication and record event-to-AI-alert-to-SOC-case timestamps. No model deployment, automatic attack alert or causal port effect is established by this privacy correction.
