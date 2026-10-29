@@ -899,3 +899,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9, Windows offline Zeek and real-Zeek synthetic CI for shared-parser duplicate UID rejection; merge only if green and conflict-free. Manual offline SOC case creation must reject ambiguous UIDs before creating a database, while distinct UIDs for separate flows remain valid.
 - [ ] On student Windows 11/VMware Host-only, validate original authorized Zeek/PCAP evidence and independent SHA-256, actual network isolation, annotations and host/session partitions. Test duplicate UID refusal without editing the original capture; keep private evidence outside Git.
 - [ ] Measure genuine labeled held-out Precision/Recall/FPR and event-to-AI-alert-to-SOC-case latency only after approved isolated captures and independent adjudication. A parser integrity check does not establish attack detection, authorization or real capture authenticity.
+
+
+## Blue Team — shared parser Zeek UID gate verified (#199, 29/10/2026)
+
+- [x] [PR #199](https://github.com/tbao4151/DA_CNTT/pull/199) merged after final-head [Ubuntu CI #40852673104](https://github.com/tbao4151/DA_CNTT/actions/runs/40852673104) (**908 passed, 2 skipped**), [Windows CI #40852673193](https://github.com/tbao4151/DA_CNTT/actions/runs/40852673193) (**147 Zeek + 46 Red Team passed**) and [real Zeek offline synthetic smoke #40852673066](https://github.com/tbao4151/DA_CNTT/actions/runs/40852673066) (**success**). Earlier diagnostic/fixture test failures were fixed and rerun; the pending feature-merge check above is superseded.
+- [ ] Student independently tests actual Windows 11/VMware Host-only capture and pinned original Zeek/PCAP evidence; verifies UID uniqueness, labels, host/session split, physical isolation and timestamps without editing original files. GitHub synthetic CI is not a laptop acceptance test.
+- [ ] Validate held-out attack-detection Precision/Recall/FPR and real event-to-AI-alert-to-SOC-case latency only with independently adjudicated authorized lab captures. Dataset Mode and active Red Team remain unchanged.
