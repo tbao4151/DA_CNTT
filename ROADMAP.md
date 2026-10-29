@@ -1181,3 +1181,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #237](https://github.com/tbao4151/DA_CNTT/pull/237) merged at `a12325107692b027d27262f353dcae654a5fb95b` after final-head [Ubuntu CI #40942952696](https://github.com/tbao4151/DA_CNTT/actions/runs/40942952696) and [Windows CI #40942952660](https://github.com/tbao4151/DA_CNTT/actions/runs/40942952660) succeeded; no conflicts. The older pending entry above is superseded. Post-merge main CI is separately tracked in PROGRESS.
 - [ ] Run the strict opt-in CLI on authorized, independently pinned private PCAP/Zeek evidence from the student's Windows 11 VMware Host-only environment. Record physical isolation, consent, scenario, Zeek version and original file hashes separately. A synthetic CI pass does not verify a live capture.
 - [ ] Build independently annotated, host/session-disjoint held-out Zeek evaluation and measure genuine telemetry-ready → AI decision → alert → SOC case latency. Preserve Dataset Mode metrics and never infer live detection from checksum validation.
+
+
+## Cyber Lab — optional pinned guest-flow presence (30/10/2026)
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 quality CI and Windows offline Zeek CI for the optional `--require-guest-endpoint` gate; merge only after both succeed and the PR is conflict-free. The check must be opt-in, require strict original PCAP/Zeek pins and never leak private guest IPs in the JSON report.
+- [ ] On the student-owned Windows 11/VMware Host-only environment, retain separate original hashes and NIC/route evidence, and run the optional guest-flow gate only for scenarios where the guest is expected to be a traffic endpoint. A passive sensor observing other VMs must not be failed on this criterion.
+- [ ] Independently label authorized host/session-disjoint genuine captures and measure held-out Zeek-specific Precision/Recall/FPR and event-to-alert-to-SOC latency. An IP match cannot prove capture authenticity or isolation; keep Red Team active traffic disabled and UNSW official benchmark unchanged.
