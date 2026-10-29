@@ -1726,3 +1726,24 @@
 - Final-head Ubuntu Python 3.12.9 CI #40866881807 (https://github.com/tbao4151/DA_CNTT/actions/runs/40866881807) succeeded with 936 passed, 2 skipped, 2 warnings; Windows Server 2022 Python 3.12.9 CI #40866881735 (https://github.com/tbao4151/DA_CNTT/actions/runs/40866881735) succeeded with 151 offline Zeek and 46 Red Team tests passed; real-Zeek offline synthetic smoke #40866881683 (https://github.com/tbao4151/DA_CNTT/actions/runs/40866881683) succeeded. Counts were read from completed GitHub job logs.
 - Optional canonical #set_separator and calendar-valid #open headers are now checked by the common parser, with malformed, duplicate and late declarations rejected before manual SQLite SOC writes. Minimal fixtures remain compatible; no UNSW benchmark, model, existing SQLite records, active Red Team or network traffic changed.
 - Post-merge main CI #40867686433 was queued when this note was prepared. Student Windows 11/VMware Host-only capture and independent labels, measured held-out Precision/Recall/FPR, physical isolation and event-to-SOC latency remain unverified. Parser metadata is not authenticated capture provenance.
+
+
+## 2026-10-29 — Pinned declared partition exclusion at NEW-log scoring boundary (feature pending)
+
+- Added optional paired `--manifest` / `--expected-manifest-sha256` flags to
+  `scripts/score_zeek_new_log.py`. When enabled, scoring re-reads a pinned
+  private manifest and original TRAIN/VALIDATION/TEST logs, requires
+  `labels_sha256` for each annotation, validates the labeled dataset and
+  screens exact-byte plus normalized UID/time/five-tuple overlap against
+  the new log **before** creating output. The existing unpinned invocation
+  and prediction report schema remain unchanged.
+- Added synthetic-only CLI tests in
+  `tests/test_zeek_new_log_scoring_partition_gate.py` for valid screening,
+  reserved TEST reuse, changed bytes with reused flow identity, modified
+  manifest/labels/model and missing paired flags.
+- **Status: feature branch; CI and PR merge NOT YET verified in this entry.**
+  Do not claim these tests passed or that this was run on student Windows.
+- Limitations: the screen depends on operator-declared historical captures
+  and labels. It does not authenticate their origin, prove the absence of
+  undeclared reused flows, verify physical Host-only isolation, generate
+  operational alerts, or establish detection performance.
