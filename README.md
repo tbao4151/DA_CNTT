@@ -241,3 +241,16 @@ inventory SHA-256 in a private notebook, then run
 See [Windows host preflight instructions](docs/WINDOWS_HOST_NETWORK_PREFLIGHT.md).
 This verifies only original file integrity, **not** VMware isolation, attack
 detection, or student-laptop acceptance. Do not commit private host outputs.
+
+
+### Optional declared-partition check during private Zeek scoring
+
+`scripts/score_zeek_new_log.py` accepts paired `--manifest` and
+`--expected-manifest-sha256` options to revalidate pinned
+TRAIN/VALIDATION/TEST sources, label-file hashes and normalized flow
+identity **before** writing a new-log research prediction report. The
+declared manifest must contain `labels_sha256` for every capture. This is
+an optional fail-closed screen against the *declared* partitions, not proof
+of independent capture history or real-world attack detection; the JSON
+prediction schema and offline-only semantics are unchanged. See
+[the scoring instructions](docs/ZEEK_NEW_LOG_OFFLINE_INFERENCE.md).

@@ -110,3 +110,41 @@ py -3.12 -m pytest -q tests/test_offline_pcap_scoring_gate.py
 A student must still execute **real** `zeek -r` on an authorized PCAP
 inside a Linux VM, inspect Host-only adapters/routes and retain a signed-off
 scenario notebook before interpreting any result as lab evidence.
+
+
+## Optional pinned TRAIN/VALIDATION/TEST exclusion at the scoring boundary (29/10/2026)
+
+The new-log scoring CLI can now perform the **existing declared partition
+non-reuse checks inside the scoring command**, before any prediction JSON is
+created. This avoids treating a separately executed preflight as sufficient
+evidence for a later scoring operation. Supply **both** additional flags:
+
+```powershell
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" `
+  --expected-manifest-sha256 "<independently recorded 64 lowercase hex SHA-256>"
+```
+
+This optional gate requires `labels_sha256` in **every** capture entry of the
+operator-declared manifest. Preserve those annotation digests independently
+before the run. The CLI reopens the original TRAIN/VALIDATION/TEST logs and
+labels, checks the manifest digest and labeled dataset contract, verifies that
+the model belongs to that manifest, rejects exact-byte reuse of **any** split
+(including reserved TEST), and screens normalized UID/time/five-tuple overlap
+against all original declared captures. Missing or partial flags, modified
+annotations, inconsistent model provenance, or reused flow identities fail
+before the output file is created. The model and capture still require their
+own independent SHA-256 pins and the declared private CIDR.
+
+The **existing prediction JSON schema remains unchanged**, including
+`test_partition_exclusion_verified: false`: the software only checks the
+operator-supplied, pinned **declared** partition set, not the completeness or
+authenticity of historical captures. Successful CLI output prints a separate
+confirmation of this declared screen; it does **not** mean independent history,
+ground truth, real detection, Host-only isolation or operational alerts have
+been verified. The older CLI invocation without the two flags remains
+compatible and performs no declared TEST exclusion check. For research claims,
+prefer the pinned mode and retain the private original inputs and lab notebook.
+
+Synthetic-only regression:
+`py -3.12 -m pytest -q tests/test_zeek_new_log_scoring_partition_gate.py`.
+CI results must not be presented as Windows laptop experiments.
