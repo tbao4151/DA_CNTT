@@ -126,3 +126,23 @@ def test_single_zeek_types_header_accepted_but_duplicate_or_late_refused():
         parse_zeek_conn_log(original + declaration)
     with pytest.raises(ValueError, match="Zeek types header"):
         parse_zeek_conn_log(typed + declaration)
+
+def test_zeek_close_is_optional_but_terminal():
+    original = log(VALUES)
+    closed = original + b"#close\t2026-10-29-17-00-00\n"
+    assert len(parse_zeek_conn_log(original)) == 1
+    assert len(parse_zeek_conn_log(closed)) == 1
+
+    second = list(VALUES)
+    second[1] = "C124"
+    second_row = ("\t".join(second) + "\n").encode()
+    for invalid in (
+        closed + second_row,
+        closed + b"#close\t2026-10-29-17-01-00\n",
+        closed + b"#fields\tts\n",
+        original.replace(b"#fields\t", b"#close\t2026-10-29-17-00-00\n#fields\t", 1),
+        original + b"#separator \\x09\n",
+        original + b"#close\n",
+    ):
+        with pytest.raises(ValueError, match="Zeek (content after close|close marker|separator)"):
+            parse_zeek_conn_log(invalid)
