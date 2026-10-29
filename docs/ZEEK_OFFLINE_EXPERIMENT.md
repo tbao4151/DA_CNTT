@@ -649,3 +649,28 @@ windows separately in the lab notebook and do not infer time independence.
 A valid Zeek timestamp inside an operator-entered window cannot authenticate
 clock accuracy, Host-only isolation, ground-truth labels or detection timing.
 All automated regression fixtures are synthetic, not student VMware evidence.
+
+
+## Small-host disclosure guard for baseline aggregate report v5 (29/10/2026)
+
+The separate baseline report previously exposed anonymous per-host confusion
+cells and rate ranges even for groups containing one or two flows. This could
+bypass the suppression in the port-feature ablation report when both reports
+were generated from the same private manifest. **Baseline aggregate report v5**
+now explicitly opts into the existing `suppress_small_groups=True` policy for
+both VALIDATION and TEST. If **any** operator-declared host group in a split
+contains fewer than 30 flows, all per-group rows and rate ranges for that
+split are withheld (`groups: []`, `rate_ranges: null`,
+`all_group_counts_suppressed: true`). Group count, warning flags and overall
+confusion/uncertainty/probability diagnostics remain available. When every
+group contains at least 30 flows, anonymous per-group summaries remain visible.
+
+This changes the aggregate report schema version from **4 to 5**; readers must
+accept the new suppression fields and nullable `rate_ranges`. The generic
+host summarizer still defaults to its prior behavior for other callers; the
+separate **explicitly private** test-flow trace still contains sensitive
+per-flow records and must never be shared publicly. This is not differential
+privacy, forensic authentication, independently verified ground truth or
+scientific evidence of attack detection. Other aggregate fields, train-only
+fitting, validation-only threshold selection and official UNSW-NB15 benchmark
+are unchanged. CI fixtures do not replace the student's Windows/VMware lab.
