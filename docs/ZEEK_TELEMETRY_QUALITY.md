@@ -198,3 +198,23 @@ Run the synthetic regressions with
 A matching metadata header does not prove original PCAP provenance, physical
 Host-only isolation, independent attack labels, or model performance.
 Do not edit the original lab capture to satisfy this gate.
+
+
+## Optional Zeek ASCII open/set metadata integrity (29/10/2026)
+
+The shared offline conn.log parser validates optional #set_separator and #open
+metadata rather than silently ignoring them. A declared #set_separator must
+use the canonical comma and occur only once before #fields. A declared #open
+must be unique, precede #fields, and contain a calendar-valid
+YYYY-MM-DD-HH-MM-SS timestamp. Malformed, duplicate and late declarations
+are rejected before manual SOC case creation. Minimal legacy fixtures
+without these headers remain accepted.
+
+This is structural validation of strings in a file, NOT authentication of
+the Zeek process, capture start time, VM clocks, Host-only isolation,
+attack labels or AI accuracy. Do not infer event-to-alert latency from
+#open. Preserve original private PCAP and conn.log with SHA-256 and test
+malformed copies rather than editing source evidence.
+
+Windows Python 3.12.9 regression:
+py -3.12 -m pytest -q tests/test_zeek_telemetry.py tests/test_zeek_manual_triage.py
