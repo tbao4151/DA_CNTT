@@ -146,3 +146,59 @@ def test_zeek_close_is_optional_but_terminal():
     ):
         with pytest.raises(ValueError, match="Zeek (content after close|close marker|separator)"):
             parse_zeek_conn_log(invalid)
+
+
+def test_canonical_zeek_ascii_sentinels_preserve_missing_vs_empty_service():
+    # Zeek's default ASCII metadata is optional for minimal fixtures, but
+    # when present it must describe the parser's actual missing-value rules.
+    original = log(VALUES)
+    metadata = (
+        b"#set_separator\\t,\\n"
+        b"#empty_field\\t(empty)\\n"
+        b"#unset_field\\t-\\n"
+        b"#path\\tconn\\n"
+        b"#open\\t2026-10-29-17-00-00\\n"
+    )
+    declared = original.replace(b"#fields\\t", metadata + b"#fields\\t", 1)
+    assert parse_zeek_conn_log(declared)[0]["service"] == "ssl"
+
+    empty = list(VALUES)
+    empty[7] = "(empty)"
+    empty_log = log(empty).replace(b"#fields\\t", metadata + b"#fields\\t", 1)
+    assert parse_zeek_conn_log(empty_log)[0]["service"] == ""
+    # No declaration means the literal string remains unchanged for legacy
+    # minimal logs: do not silently reinterpret arbitrary source values.
+    assert parse_zeek_conn_log(log(empty))[0]["service"] == "(empty)"
+
+    unset = list(VALUES)
+    unset[7] = "-"
+    unset_log = log(unset).replace(b"#fields\\t", metadata + b"#fields\\t", 1)
+    assert parse_zeek_conn_log(unset_log)[0]["service"] is None
+
+
+@pytest.mark.parametrize("metadata,expected", [
+    (b"#unset_field\\t?\\n", "unset_field"),
+    (b"#unset_field\\n", "unset_field"),
+    (b"#empty_field\\t?\\n", "empty_field"),
+    (b"#empty_field\\n", "empty_field"),
+    (b"#path\\tdns\\n", "conn path"),
+    (b"#path\\n", "conn path"),
+    (b"#unset_field\\t-\\n#unset_field\\t-\\n", "unset_field"),
+    (b"#empty_field\\t(empty)\\n#empty_field\\t(empty)\\n", "empty_field"),
+    (b"#path\\tconn\\n#path\\tconn\\n", "conn path"),
+])
+def test_zeek_metadata_mismatch_and_duplicates_fail_closed(metadata, expected):
+    original = log(VALUES)
+    malformed = original.replace(b"#fields\\t", metadata + b"#fields\\t", 1)
+    with pytest.raises(ValueError, match=expected):
+        parse_zeek_conn_log(malformed)
+
+
+@pytest.mark.parametrize("metadata,expected", [
+    (b"#unset_field\\t-\\n", "unset_field"),
+    (b"#empty_field\\t(empty)\\n", "empty_field"),
+    (b"#path\\tconn\\n", "conn path"),
+])
+def test_late_zeek_metadata_cannot_redefine_existing_flows(metadata, expected):
+    with pytest.raises(ValueError, match=expected):
+        parse_zeek_conn_log(log(VALUES) + metadata)
