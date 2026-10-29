@@ -853,3 +853,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #191](https://github.com/tbao4151/DA_CNTT/pull/191) merged conflict-free as `7eca980b461024a18b4e105d4e53e81684987b61` after [Ubuntu PR CI #40837169345](https://github.com/tbao4151/DA_CNTT/actions/runs/40837169345) (**886 passed, 2 skipped**) and [Windows PR CI #40837169308](https://github.com/tbao4151/DA_CNTT/actions/runs/40837169308) (**145 Zeek + 46 Red Team passed**) succeeded. Supersedes the feature-merge pending item above. These are synthetic software tests, not student laptop/VMware acceptance.
 - [ ] Student preserves original authorized Host-only PCAP/Zeek/annotation hashes, isolation and clock evidence privately, preregisters host/session-disjoint splits and fixed variants, then runs the optional private report on Windows 11. If any TEST host group has fewer than 30 flows, all paired per-host cells are intentionally suppressed; do not disable this guard to expose small groups.
 - [ ] Validate independent labels, actual multi-host/session held-out performance and event-to-AI-alert-to-SOC-case latency before scientific claims. Paired correctness remains descriptive, not a cluster-adjusted significance test, causal port-effect estimate or deployed-model selection rule.
+
+
+## Blue Team — cross-section host privacy correction (29/10/2026)
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 and Windows offline Zeek CI for opt-in all-group suppression in both port-ablation variants and both VALIDATION/TEST host summaries; merge only if green and conflict-free.
+- [ ] Student validates the private v2 port-ablation JSON on Windows 11 with authorized Host-only evidence. When any group has fewer than 30 flows, `groups` must be empty and `rate_ranges` null for that split; paired TEST cells must also be suppressed. Overall metrics remain visible. This is not differential privacy or a sample-size guarantee.
+- [ ] Collect independent multi-host/session labels, capture and clock provenance, and actual event-to-alert-to-SOC-case timing. Keep Dataset Mode/UNSW baseline unchanged and active Red Team disabled until isolation is independently verified.
