@@ -1125,3 +1125,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #229](https://github.com/tbao4151/DA_CNTT/pull/229) merged as `f6feebef1278ff1bf587564f8de396ad783cb0f9` after [Ubuntu #40923565551](https://github.com/tbao4151/DA_CNTT/actions/runs/40923565551) (**1045 passed, 2 skipped**) and [Windows #40923565545](https://github.com/tbao4151/DA_CNTT/actions/runs/40923565545) (**mocked host PowerShell privacy regression and other offline suites passed**). This supersedes the pending feature CI/merge gate above; post-merge main CI is separate.
 - [ ] Student collects private host/guest snapshots with independent hashes, inspects VMware VMnet/NICs/routes and written authorization; the collector's path guard is not an isolation or junction-security guarantee.
 - [ ] Obtain real authorized PCAP/Zeek captures and independently labeled holdout; measure Precision/Recall/FPR and event-to-alert-to-SOC latency without conflating synthetic CI with lab evidence.
+
+
+## Cyber Lab — atomic private NEW-log research report publication (30/10/2026)
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 and Windows Server 2022 CI, including new atomic filesystem regressions; merge only if all required checks pass and main is conflict-free. Current feature change is **not** student-laptop acceptance.
+- [ ] Student tests strict pinned NEW-log scoring in a private local NTFS directory on Windows 11, preserves source/model/manifest/report SHA-256 independently, and confirms existing reports cannot be overwritten. Avoid unsupported network/FAT filesystems; inspect leftover hidden staging files after abrupt interruptions.
+- [ ] Collect real authorized VMware Host-only PCAP/Zeek with independent ground truth and host/session-disjoint holdout, then measure true event-to-AI-to-SOC timing. Atomic report publication alone does not establish detection quality, capture authenticity, or network isolation.
