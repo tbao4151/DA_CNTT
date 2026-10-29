@@ -43,3 +43,29 @@ On the student's machine, also retain VMware Virtual Network Editor screenshots,
 For a research acceptance check, add `--require-independent-original-pins` as shown above. The command now **refuses** a missing pair of independently recorded original PCAP and Zeek SHA-256 pins, rather than returning success with the weaker `independent_original_pcap_zeek_pins_verified=false` status. Successful strict output explicitly sets `independent_original_pcap_zeek_pins_required=true` and `independent_original_pcap_zeek_pins_verified=true`. The flag does not change existing invocations: omitting it retains the earlier optional paired-pin behavior and reports `independent_original_pcap_zeek_pins_required=false`.
 
 Strict checking verifies only the supplied byte digests and consistency with the pinned import report. It cannot prove the hashes were recorded independently, that VMware was isolated, that traffic was authorized, or that attacks were detected. Do not describe a strict PASS as a live-lab acceptance or SOC detection result. Synthetic regression: `py -3.12 -m pytest -q tests/test_lab_evidence_chain.py`.
+
+
+## Optional guest-endpoint presence check (30/10/2026)
+
+When the research question specifically requires traffic involving the declared
+Windows guest, add `--require-guest-endpoint` **alongside**
+`--require-independent-original-pins` and both original PCAP/Zeek digests.
+The read-only verifier rechecks the Zeek file SHA-256 against the already
+verified offline import and requires at least one Zeek flow with the guest's
+validated IPv4 address as source **or** destination. It fails closed when the
+guest is absent, when the log changed during verification, or when strict
+original pins are not enabled.
+
+The sanitized JSON distinguishes
+`guest_endpoint_presence_required` and
+`guest_endpoint_observed_in_verified_log`. Both are `false` when the
+optional check was not requested; `true` indicates only a matching address
+in verified log bytes. Neither the guest address nor any flow identifiers are
+printed. This check is **not appropriate** for passive monitoring guests that
+only observe traffic between other VMs. It does not prove that the PCAP
+originated on the declared guest, that its IP was not spoofed, that a packet
+capture and Zeek log are independently authenticated, or that VMware is
+physically isolated. Confirm NIC assignments, isolation, authorization,
+capture origin and independent labels outside this software gate.
+
+Synthetic regression: `py -3.12 -m pytest -q tests/test_lab_evidence_chain.py`.
