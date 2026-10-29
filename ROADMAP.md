@@ -1077,3 +1077,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify feature-head Ubuntu full-suite and Windows offline workflow (including mocked PowerShell collector), confirm no conflicting PRs and merge only after CI succeeds. This is a host-side configuration preflight, **not** VMware isolation attestation.
 - [ ] Student runs the read-only adapter collector and pinned offline checker on their own Windows 11 laptop; stores original snapshot/hash privately. Independently inspects VMware Virtual Network Editor Host-only/NAT/bridging, every guest NIC and guest routes, authorized scope and physical egress before any traffic.
 - [ ] Collect original authorized PCAP and Zeek conn.log with independent labels; evaluate held-out Precision/Recall/FPR and genuine event-to-alert-to-SOC-case timing. Neither synthetic CI nor a passing host adapter check proves isolation or attack detection.
+
+## Cyber Lab — Windows host adapter preflight verified (#223, 29/10/2026)
+
+- [x] [PR #223](https://github.com/tbao4151/DA_CNTT/pull/223) merged at `d37075adf856f0e39fafc8b9ad08c2ce714e2383` after final-head Ubuntu #40904586073 (**997 passed, 2 skipped**) and Windows #40904586299 (**200 Zeek + 21 preflight + 46 Red Team tests passed**, mocked PowerShell smoke success). This supersedes the pending CI/merge gate above.
+- [ ] Student runs private read-only Windows host adapter collection, independently pins its SHA-256, and validates with the offline checker; physically inspects VMware Host-only mode, disabled NAT/bridging, every guest NIC/route and written test authorization. A passing snapshot check does **not** establish network isolation.
+- [ ] Collect authorized real PCAP/Zeek captures and independent labels; report held-out Precision/Recall/FPR and actual event-to-alert-to-SOC-case latency. Synthetic GitHub CI is not student Windows/VMware experimental evidence.
