@@ -648,3 +648,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [x] PR #163 earlier head `edf587bfc492b1619c5a6f313dae2375be0b1dca`: [Windows CI #40795902419](https://github.com/tbao4151/DA_CNTT/actions/runs/40795902419) **74 passed**; [Ubuntu CI #40795902460](https://github.com/tbao4151/DA_CNTT/actions/runs/40795902460) **786 passed, 2 skipped**.
 - [ ] Recheck final documentation head and clean mergeability before merging PR #163. GitHub-hosted Windows acceptance is software-only; real student Windows/VMware validation and independently labeled Zeek detection research remain open.
+
+## Cyber Lab — Windows offline CI final-head verified and merged (#163, 29/10/2026)
+
+- [x] [PR #163](https://github.com/tbao4151/DA_CNTT/pull/163) merged after final-head [Windows CI #40796453742](https://github.com/tbao4151/DA_CNTT/actions/runs/40796453742) **74 passed** and [Ubuntu CI #40796453732](https://github.com/tbao4151/DA_CNTT/actions/runs/40796453732) **786 passed, 2 skipped**. This supersedes earlier pending verification entries; the checked workflows are synthetic/offline software tests only.
+- [ ] Student runs the same offline regression on their Windows 11 Python 3.12.9 laptop, then separately validates VMware Host-only adapter/routes, runs Zeek in Linux VM, archives authorized PCAP/conn.log and independently pinned hashes. GitHub Windows CI is not local hardware acceptance.
+- [ ] Establish independently labeled host/session-disjoint Zeek captures, calculate Precision/Recall/FPR and event-to-SOC latency with explicit measurement boundaries. Do not use synthetic CI model or artificial candidate selection for detection claims. Preserve official UNSW-NB15 benchmark and keep Red Team active network actions disabled.
