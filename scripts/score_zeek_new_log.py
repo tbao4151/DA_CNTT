@@ -58,7 +58,7 @@ def _write_new_report_atomically(output: Path, payload: str) -> None:
         prefix=".da005-new-log-", suffix=".tmp", dir=output.parent,
     )
     try:
-        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\\n") as stream:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
