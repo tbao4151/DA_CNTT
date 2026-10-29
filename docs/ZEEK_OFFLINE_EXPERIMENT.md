@@ -486,3 +486,28 @@ real-world AI accuracy. No live network access or Red Team action occurs.
 Synthetic-only regression: `py -3.12 -m pytest -q tests/test_zeek_lab_cli.py`.
 The students must separately collect authorized Host-only logs, record original
 SHA-256 and isolation evidence, and retain independent annotations/holdout.
+
+
+## Optional UID-independent cross-split overlap screen (29/10/2026)
+
+The existing research input guard rejects byte-identical logs and reused normalized
+UID/time/five-tuples. A regenerated Zeek log can change UIDs without changing
+an event's timestamp and five-tuple. For an additional conservative offline
+check, append `--require-uid-independent-overlap` to either `--preflight`,
+`--output` or `--trace-output` in `scripts/evaluate_zeek_lab.py`.
+
+The opt-in compares normalized event timestamp, source/destination IP and port,
+and protocol across TRAIN, VALIDATION and TEST, deliberately excluding UID.
+A cross-split match refuses the experiment **before model fitting or report
+creation**, even if each file's SHA-256 and UID differ. A passing report adds
+only an aggregate `uid_independent_overlap_screen` with the number of screened
+flows and zero cross-split matches; no raw addresses, UIDs or timestamps are
+exported. Without the flag, the existing CLI output and behavior are unchanged.
+
+This exact screen is conservative: distinct connections can share a timestamp
+and five-tuple, especially with coarse timestamps, so a rejection requires
+private analyst investigation rather than rewriting timestamps or hashes to
+force a pass. Conversely, changing timestamps/ports can evade this screen.
+It cannot authenticate capture independence, operator-assigned host groups,
+labels, authorization or VMware Host-only isolation. Never tune TEST or claim
+real detection accuracy from synthetic fixtures.
