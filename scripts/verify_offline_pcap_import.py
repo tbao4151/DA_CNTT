@@ -18,12 +18,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pcap", required=True, type=Path)
     parser.add_argument("--log", required=True, type=Path)
     parser.add_argument("--cidr", action="append", required=True)
+    parser.add_argument("--require-pcap-framing", action="store_true",
+                        help="Opt-in strict classic PCAP record/header framing check")
     args = parser.parse_args(argv)
     try:
         result = verify_offline_pcap_import(
             args.report,
             expected_report_sha256=args.expected_report_sha256,
             pcap_path=args.pcap, log_path=args.log, lab_cidrs=args.cidr,
+            require_pcap_framing=args.require_pcap_framing,
         )
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError):
         print("Pinned offline PCAP import verification refused; inspect private originals.",
@@ -32,7 +35,9 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"Verified original PCAP, Zeek conn.log and report for "
         f"{result['flow_count']} offline flows. "
-        "VMware isolation, capture authenticity, ground truth and AI detection NOT verified."
+        + (f"Classic PCAP framing checked for {result['pcap_packet_count']} packet records. "
+           if result["pcap_framing_verified"] else "PCAP packet framing NOT checked. ")
+        + "VMware isolation, capture authenticity, ground truth and AI detection NOT verified."
     )
     return 0
 
