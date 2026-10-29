@@ -93,7 +93,7 @@ def test_changed_bytes_with_reused_uid_time_and_five_tuple_are_rejected(tmp_path
     assert not output.exists()
 
 
-@pytest.mark.parametrize("change", ["manifest", "labels", "model_manifest", "missing_flag"])
+@pytest.mark.parametrize("change", ["manifest", "labels", "missing_label_pin", "model_manifest", "missing_flag"])
 def test_tampering_or_partial_pins_fail_before_output(tmp_path, change):
     manifest, model_file, new, output = _setup(tmp_path)
     command = _command(manifest, model_file, new, output)
@@ -102,6 +102,15 @@ def test_tampering_or_partial_pins_fail_before_output(tmp_path, change):
     elif change == "labels":
         label_file = manifest.parent / "host-0-labels.json"
         label_file.write_bytes(label_file.read_bytes() + b"\n")
+    elif change == "missing_label_pin":
+        spec = json.loads(manifest.read_text(encoding="utf-8"))
+        del spec["captures"][0]["labels_sha256"]
+        manifest.write_text(json.dumps(spec), encoding="utf-8")
+        model = json.loads(model_file.read_text(encoding="utf-8"))
+        model["input_manifest_sha256"] = _sha(manifest.read_bytes())
+        model_file.write_text(json.dumps(model), encoding="utf-8")
+        command[command.index("--expected-manifest-sha256") + 1] = _sha(manifest.read_bytes())
+        command[command.index("--expected-model-sha256") + 1] = _sha(model_file.read_bytes())
     elif change == "model_manifest":
         model = json.loads(model_file.read_text(encoding="utf-8"))
         model["input_manifest_sha256"] = "f" * 64
