@@ -146,6 +146,7 @@ def _summarize_telemetry_quality(
 def load_experiment_manifest(
     manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
     require_label_sha256: bool = False,
+    expected_manifest_sha256: str | None = None,
 ) -> tuple[list[dict[str, object]], str]:
     """Resolve bounded inputs from one private manifest directory, no network I/O."""
     manifest = Path(manifest_path).resolve(strict=True)
@@ -157,6 +158,10 @@ def load_experiment_manifest(
     if len(manifest_raw) > MAX_MANIFEST_BYTES:
         raise ValueError("Manifest exceeds size limit")
     manifest_digest = hashlib.sha256(manifest_raw).hexdigest()
+    if expected_manifest_sha256 is not None:
+        expected = _sha256(expected_manifest_sha256)
+        if manifest_digest != expected:
+            raise ValueError("Experiment manifest SHA-256 mismatch")
     spec = json.loads(
         manifest_raw.decode("utf-8"), object_pairs_hook=_no_duplicate_keys,
         parse_constant=_invalid_constant,
@@ -212,6 +217,7 @@ def inspect_offline_experiment(
     manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
     require_label_sha256: bool = False, require_telemetry_quality: bool = False,
     require_uid_independent_overlap: bool = False,
+    expected_manifest_sha256: str | None = None,
 ) -> dict[str, object]:
     """Validate a private experiment's inputs without fitting or scoring a model.
 
@@ -224,6 +230,7 @@ def inspect_offline_experiment(
         raise ValueError("Telemetry quality screening requires explicit lab CIDRs")
     captures, manifest_sha256 = load_experiment_manifest(
         manifest_path, lab_cidrs=lab_cidrs, require_label_sha256=require_label_sha256,
+        expected_manifest_sha256=expected_manifest_sha256,
     )
     dataset = build_labeled_lab_dataset(captures)
     overlap = (
@@ -255,6 +262,7 @@ def inspect_offline_experiment(
     return {
         "mode": "offline_zeek_structural_preflight_only",
         "input_manifest_sha256": manifest_sha256,
+        **({"manifest_sha256_pin_verified": True} if expected_manifest_sha256 is not None else {}),
         "capture_count": len(captures),
         "partitions": partitions,
         "structural_validation_passed": True,
@@ -283,11 +291,13 @@ def run_offline_experiment(
     include_private_test_trace: bool = False,
     require_label_sha256: bool = False, require_telemetry_quality: bool = False,
     require_uid_independent_overlap: bool = False,
+    expected_manifest_sha256: str | None = None,
 ) -> dict[str, object]:
     if require_telemetry_quality and lab_cidrs is None:
         raise ValueError("Telemetry quality screening requires explicit lab CIDRs")
     captures, manifest_sha256 = load_experiment_manifest(
         manifest_path, lab_cidrs=lab_cidrs, require_label_sha256=require_label_sha256,
+        expected_manifest_sha256=expected_manifest_sha256,
     )
     dataset = build_labeled_lab_dataset(captures)
     overlap = (
@@ -301,6 +311,7 @@ def run_offline_experiment(
     return {
         **report,
         "input_manifest_sha256": manifest_sha256,
+        **({"manifest_sha256_pin_verified": True} if expected_manifest_sha256 is not None else {}),
         "all_annotation_sha256_pins_required": require_label_sha256,
         "annotation_chain_verified": False,
         "declared_scope_screened": lab_cidrs is not None,
@@ -323,6 +334,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Opt in to aggregate quality screening for EVERY capture; requires --cidr")
     parser.add_argument("--require-uid-independent-overlap", action="store_true",
                         help="Refuse cross-split reuse of timestamp/five-tuple even if Zeek UID differs")
+    parser.add_argument("--expected-manifest-sha256", type=str,
+                        help="Optional independently recorded lowercase SHA-256 of exact manifest bytes; refuse changes before parsing/fitting")
     parser.add_argument("--strict-input-gates", action="store_true",
                         help="Bundle label SHA-256 pinning, per-capture quality and UID-independent split-overlap checks; requires --cidr")
     mode = parser.add_mutually_exclusive_group(required=True)
@@ -344,6 +357,7 @@ def main(argv: list[str] | None = None) -> int:
                 require_label_sha256=require_label_sha256,
                 require_telemetry_quality=require_telemetry_quality,
                 require_uid_independent_overlap=require_uid_independent_overlap,
+                expected_manifest_sha256=args.expected_manifest_sha256,
             ), indent=2, ensure_ascii=False, allow_nan=False))
             return 0
         output = (args.trace_output or args.output).resolve()
@@ -359,6 +373,7 @@ def main(argv: list[str] | None = None) -> int:
             require_label_sha256=require_label_sha256,
             require_telemetry_quality=require_telemetry_quality,
             require_uid_independent_overlap=require_uid_independent_overlap,
+            expected_manifest_sha256=args.expected_manifest_sha256,
         )
         payload = json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         # Exclusive creation: no partial report is written if validation or fit fails.
