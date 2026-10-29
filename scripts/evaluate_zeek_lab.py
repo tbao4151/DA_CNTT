@@ -80,6 +80,7 @@ def _sha256(value: object) -> str:
 
 def _summarize_telemetry_quality(
     captures: list[dict[str, object]], lab_cidrs: Sequence[str] | None,
+    *, require_zeek_types: bool = False,
 ) -> dict[str, object]:
     """Screen every already-pinned log before fitting; export fixed aggregates only.
 
@@ -109,7 +110,7 @@ def _summarize_telemetry_quality(
             raise ValueError("Expected pinned Zeek log bytes")
         quality = inspect_zeek_telemetry_quality(
             raw, expected_sha256=hashlib.sha256(raw).hexdigest(),
-            lab_cidrs=lab_cidrs,
+            lab_cidrs=lab_cidrs, require_zeek_types=require_zeek_types,
         )
         split = capture["split"]
         if split not in partitions:
@@ -128,6 +129,7 @@ def _summarize_telemetry_quality(
     return {
         "mode": "offline_pinned_zeek_manifest_quality_only",
         "screened_captures": len(captures),
+        **({"zeek_declared_types_checked_captures": len(captures)} if require_zeek_types else {}),
         "partitions": partitions,
         "declared_cidr_membership_checked": True,
         "host_only_isolation_verified": False,
@@ -217,6 +219,7 @@ def inspect_offline_experiment(
     manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
     require_label_sha256: bool = False, require_telemetry_quality: bool = False,
     require_uid_independent_overlap: bool = False,
+    require_zeek_types: bool = False,
     expected_manifest_sha256: str | None = None,
 ) -> dict[str, object]:
     """Validate a private experiment's inputs without fitting or scoring a model.
@@ -226,7 +229,7 @@ def inspect_offline_experiment(
     Only aggregate counts and the manifest digest are returned, never raw UIDs,
     IPs, host identifiers, paths, or evidence-reference strings.
     """
-    if require_telemetry_quality and lab_cidrs is None:
+    if (require_telemetry_quality or require_zeek_types) and lab_cidrs is None:
         raise ValueError("Telemetry quality screening requires explicit lab CIDRs")
     captures, manifest_sha256 = load_experiment_manifest(
         manifest_path, lab_cidrs=lab_cidrs, require_label_sha256=require_label_sha256,
@@ -237,7 +240,9 @@ def inspect_offline_experiment(
         screen_uid_independent_cross_split_overlap(captures)
         if require_uid_independent_overlap else None
     )
-    quality = _summarize_telemetry_quality(captures, lab_cidrs) if require_telemetry_quality else None
+    quality = _summarize_telemetry_quality(
+        captures, lab_cidrs, require_zeek_types=require_zeek_types,
+    ) if (require_telemetry_quality or require_zeek_types) else None
     partitions: dict[str, dict[str, int]] = {}
     warnings: list[str] = []
     for split in SPLITS:
@@ -291,9 +296,10 @@ def run_offline_experiment(
     include_private_test_trace: bool = False,
     require_label_sha256: bool = False, require_telemetry_quality: bool = False,
     require_uid_independent_overlap: bool = False,
+    require_zeek_types: bool = False,
     expected_manifest_sha256: str | None = None,
 ) -> dict[str, object]:
-    if require_telemetry_quality and lab_cidrs is None:
+    if (require_telemetry_quality or require_zeek_types) and lab_cidrs is None:
         raise ValueError("Telemetry quality screening requires explicit lab CIDRs")
     captures, manifest_sha256 = load_experiment_manifest(
         manifest_path, lab_cidrs=lab_cidrs, require_label_sha256=require_label_sha256,
@@ -304,7 +310,9 @@ def run_offline_experiment(
         screen_uid_independent_cross_split_overlap(captures)
         if require_uid_independent_overlap else None
     )
-    quality = _summarize_telemetry_quality(captures, lab_cidrs) if require_telemetry_quality else None
+    quality = _summarize_telemetry_quality(
+        captures, lab_cidrs, require_zeek_types=require_zeek_types,
+    ) if (require_telemetry_quality or require_zeek_types) else None
     report = evaluate_offline_zeek_baseline(
         dataset, include_private_test_trace=include_private_test_trace,
     )
@@ -332,6 +340,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Require independently recorded labels_sha256 for EVERY capture before fit")
     parser.add_argument("--require-telemetry-quality", action="store_true",
                         help="Opt in to aggregate quality screening for EVERY capture; requires --cidr")
+    parser.add_argument("--require-zeek-types", action="store_true",
+                        help="Opt-in Zeek #fields/#types check on all captures; requires --cidr")
     parser.add_argument("--require-uid-independent-overlap", action="store_true",
                         help="Refuse cross-split reuse of timestamp/five-tuple even if Zeek UID differs")
     parser.add_argument("--expected-manifest-sha256", type=str,
@@ -357,6 +367,7 @@ def main(argv: list[str] | None = None) -> int:
                 require_label_sha256=require_label_sha256,
                 require_telemetry_quality=require_telemetry_quality,
                 require_uid_independent_overlap=require_uid_independent_overlap,
+                require_zeek_types=args.require_zeek_types,
                 expected_manifest_sha256=args.expected_manifest_sha256,
             ), indent=2, ensure_ascii=False, allow_nan=False))
             return 0
@@ -373,6 +384,7 @@ def main(argv: list[str] | None = None) -> int:
             require_label_sha256=require_label_sha256,
             require_telemetry_quality=require_telemetry_quality,
             require_uid_independent_overlap=require_uid_independent_overlap,
+            require_zeek_types=args.require_zeek_types,
             expected_manifest_sha256=args.expected_manifest_sha256,
         )
         payload = json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n"

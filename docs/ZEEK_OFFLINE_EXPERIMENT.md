@@ -599,3 +599,14 @@ ground truth, genuine capture, or model validity. Anyone who can replace both
 the manifest and the separately recorded pin can bypass it. The test fixture
 and CI results are synthetic and do not substitute for student-run Windows/
 VMware evidence or measured attack-detection performance.
+
+
+## Optional strict Zeek ASCII header typing (29/10/2026)
+
+Use `--require-zeek-types` with `--cidr` for **both** preflight and final
+report when the private TRAIN/VALIDATION/TEST sources are real Zeek ASCII
+`conn.log` files. This checks `#fields` and `#types` for all declared
+captures before model fitting; missing or incompatible declarations fail.
+The flag is deliberately independent of `--strict-input-gates` to preserve
+existing synthetic/minimal fixtures. It does not authenticate a capture,
+independent labels, physical Host-only isolation or a real attack.
