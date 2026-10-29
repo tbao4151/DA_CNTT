@@ -106,7 +106,7 @@ def test_single_zeek_types_header_accepted_but_duplicate_or_late_refused():
     # Real Zeek ASCII includes #types; legacy minimal fixtures may omit it.
     types = ("time", "string", "addr", "port", "addr", "port", "enum",
              "string", "interval", "count", "count", "count", "count")
-    declaration = ("#types\\t" + "\\t".join(types) + "\\n").encode()
+    declaration = ("#types\t" + "\t".join(types) + "\n").encode()
     original = log(VALUES)
     header = original.splitlines(keepends=True)[1]
     typed = original.replace(header, header + declaration, 1)
