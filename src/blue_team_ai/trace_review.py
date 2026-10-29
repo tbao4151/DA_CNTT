@@ -57,7 +57,10 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
         trace_data.decode("utf-8"), object_pairs_hook=_unique_keys,
         parse_constant=_invalid_constant,
     )
-    if not isinstance(report, dict) or report.get("report_version") != 4 or report.get("mode") != "offline_labeled_zeek_research_only":
+    if (not isinstance(report, dict)
+            or type(report.get("report_version")) is not int
+            or report["report_version"] not in (4, 5)
+            or report.get("mode") != "offline_labeled_zeek_research_only"):
         raise ValueError("Unsupported offline Zeek research report")
     if not _digest(report.get("input_manifest_sha256")):
         raise ValueError("Missing private manifest provenance digest")

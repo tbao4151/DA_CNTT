@@ -674,3 +674,14 @@ privacy, forensic authentication, independently verified ground truth or
 scientific evidence of attack detection. Other aggregate fields, train-only
 fitting, validation-only threshold selection and official UNSW-NB15 benchmark
 are unchanged. CI fixtures do not replace the student's Windows/VMware lab.
+
+
+### Private trace reviewer compatibility (v4/v5)
+
+The read-only `review_private_zeek_trace` contract accepts both existing
+baseline report **v4** and the new redacted baseline **v5**, while retaining
+the same exact private trace v1, source/UID coverage, SHA-256, probability,
+threshold and confusion checks. Other report versions are refused. The
+private trace still contains sensitive per-flow evidence and must not be
+uploaded to GitHub. This is a compatibility check, not independent model or
+label authentication.
