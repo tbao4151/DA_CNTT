@@ -1118,3 +1118,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify Windows mocked PowerShell host collector regression and Ubuntu quality gates on the final feature PR head, check conflict-free base and competing PRs, then merge only if CI succeeds. No VMware claim from mocked tests.
 - [ ] On Windows 11, store host/guest JSON and independently recorded SHA-256 outside Git; avoid junction/reparse-point paths; manually confirm VMware Host-only mode, NICs/routes and authorization before any permitted traffic.
 - [ ] Preserve genuine authorized PCAP/Zeek and independently adjudicated labels to assess held-out Precision/Recall/FPR and event-to-alert-to-SOC timing. Never substitute synthetic CI for student lab evidence.
+
+
+## Cyber Lab — verified host private output-path guard (#229, 30/10/2026)
+
+- [x] [PR #229](https://github.com/tbao4151/DA_CNTT/pull/229) merged as `f6feebef1278ff1bf587564f8de396ad783cb0f9` after [Ubuntu #40923565551](https://github.com/tbao4151/DA_CNTT/actions/runs/40923565551) (**1045 passed, 2 skipped**) and [Windows #40923565545](https://github.com/tbao4151/DA_CNTT/actions/runs/40923565545) (**mocked host PowerShell privacy regression and other offline suites passed**). This supersedes the pending feature CI/merge gate above; post-merge main CI is separate.
+- [ ] Student collects private host/guest snapshots with independent hashes, inspects VMware VMnet/NICs/routes and written authorization; the collector's path guard is not an isolation or junction-security guarantee.
+- [ ] Obtain real authorized PCAP/Zeek captures and independently labeled holdout; measure Precision/Recall/FPR and event-to-alert-to-SOC latency without conflating synthetic CI with lab evidence.
