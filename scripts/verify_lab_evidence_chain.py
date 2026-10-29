@@ -6,6 +6,7 @@ provenance checks. It neither collects traffic nor certifies network isolation.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import hmac
 import json
 import re
@@ -17,6 +18,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
 from blue_team_ai.paired_network_preflight import assess_paired_network_snapshots
+from blue_team_ai.zeek import MAX_LOG_BYTES, parse_zeek_conn_log
 from check_paired_network_preflight import _load_private_pinned_snapshot
 
 
@@ -44,6 +46,8 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         guest_adapter=args.guest_adapter,
         expected_cidr=args.cidr,
     )
+    if args.require_guest_endpoint and not args.require_independent_original_pins:
+        raise ValueError("Guest flow presence requires the strict original-pin gate")
     original_pins = (args.expected_pcap_sha256, args.expected_log_sha256)
     if args.require_independent_original_pins and not all(
         pin is not None for pin in original_pins
@@ -65,6 +69,20 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         if (not hmac.compare_digest(imported["pcap_sha256"], args.expected_pcap_sha256)
                 or not hmac.compare_digest(imported["zeek_conn_sha256"], args.expected_log_sha256)):
             raise ValueError("Original evidence does not match independent pins")
+    # Optional research-readiness check: the declared guest must actually
+    # occur in at least one *verified* Zeek flow. This does not establish
+    # that the capture originated from the guest or that the PCAP is authentic.
+    if args.require_guest_endpoint:
+        with args.log.open("rb") as source:
+            log_bytes = source.read(MAX_LOG_BYTES + 1)
+        if (len(log_bytes) > MAX_LOG_BYTES or not hmac.compare_digest(
+                hashlib.sha256(log_bytes).hexdigest(), imported["zeek_conn_sha256"])):
+            raise ValueError("Zeek evidence changed after provenance verification")
+        guest_nic = next(nic for nic in guest["adapters"] if nic["status"] == "Up")
+        guest_ip = guest_nic["ipv4"][0]["address"]
+        if not any(guest_ip in (flow["src_ip"], flow["dst_ip"])
+                   for flow in parse_zeek_conn_log(log_bytes)):
+            raise ValueError("Declared guest is absent from the verified Zeek flows")
     if not (paired["host_configuration_passed"]
             and paired["guest_configuration_passed"]
             and paired["declared_subnet_consistent"]
@@ -76,6 +94,8 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         "mode": "offline_private_lab_evidence_consistency_only",
         "configuration_snapshots_consistent": True,
         "offline_pcap_zeek_import_consistent": True,
+        "guest_endpoint_presence_required": args.require_guest_endpoint,
+        "guest_endpoint_observed_in_verified_log": args.require_guest_endpoint,
         "independent_original_pcap_zeek_pins_verified": all(
             pin is not None for pin in original_pins
         ),
@@ -120,6 +140,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-import-report-sha256", required=True)
     parser.add_argument("--expected-pcap-sha256", help="Optional independently recorded original PCAP SHA-256; requires Zeek pin")
     parser.add_argument("--expected-log-sha256", help="Optional independently recorded original conn.log SHA-256; requires PCAP pin")
+    parser.add_argument(
+        "--require-guest-endpoint", action="store_true",
+        help="With strict original pins, require a verified Zeek flow involving the declared guest IPv4",
+    )
     parser.add_argument(
         "--require-independent-original-pins", action="store_true",
         help="Fail closed unless both independently recorded original PCAP and Zeek SHA-256 pins are supplied",
