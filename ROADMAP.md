@@ -832,3 +832,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Obtain independently adjudicated host/session-disjoint replicated captures and report class supports, uncertainty and limitations; paired flow counts are descriptive and not an independence-valid significance test. Measure event-to-alert/SOC delay separately; active Red Team remains disabled.
 
 - [ ] PR #188 reconciled with #187/#189 on merged-base tree; verify new final-head Ubuntu and Windows CI before merging. Keep report v2 host summaries and add paired TEST counts without replacing earlier research results.
+
+
+## Blue Team — paired Zeek correctness merged and verified (#188, 29/10/2026)
+
+- [x] Reconciled PR #188 with merged host diagnostics #187/#189, preserved v2 report and existing tests, and squash-merged as `f9ef8ef511e60a263ef6434dbd2a9fcc7d27e43d` after [Ubuntu CI #40834231739](https://github.com/tbao4151/DA_CNTT/actions/runs/40834231739) (**876 passed, 2 skipped**) and [Windows CI #40834231718](https://github.com/tbao4151/DA_CNTT/actions/runs/40834231718) (**135 Zeek + 46 Red Team passed**) succeeded. These are GitHub-runner software tests, not student laptop or VMware acceptance.
+- [ ] Student independently verifies VMware Host-only isolation, records actual Zeek PCAP/conn.log/annotation hashes and clocks, preregisters fixed variants and host/session-disjoint TRAIN/VALIDATION/TEST splits, then runs private `--strict-input-gates --port-ablation-output` on Windows 11. Do not commit sensitive captures or tune on held-out TEST.
+- [ ] Collect independently adjudicated multi-session/multi-host test data, report per-class Precision/Recall/FPR and dependence-aware uncertainty, and measure actual event-to-AI-alert-to-SOC-case delay. Paired correctness counts and anonymous host diagnostics remain descriptive; no real-world detection or operational SOC performance is established by this PR.
