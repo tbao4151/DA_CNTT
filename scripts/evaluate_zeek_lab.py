@@ -323,20 +323,27 @@ def main(argv: list[str] | None = None) -> int:
                         help="Opt in to aggregate quality screening for EVERY capture; requires --cidr")
     parser.add_argument("--require-uid-independent-overlap", action="store_true",
                         help="Refuse cross-split reuse of timestamp/five-tuple even if Zeek UID differs")
+    parser.add_argument("--strict-input-gates", action="store_true",
+                        help="Bundle label SHA-256 pinning, per-capture quality and UID-independent split-overlap checks; requires --cidr")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--output", type=Path, help="New aggregate report JSON (must not exist)")
     mode.add_argument("--trace-output", type=Path,
                       help="New PRIVATE held-out test prediction trace JSON (must not exist)")
     mode.add_argument("--preflight", action="store_true", help="Validate inputs and print aggregate counts; no model or file writes")
     args = parser.parse_args(argv)
+    # One explicit opt-in avoids accidentally omitting a research-input gate.
+    # It does NOT certify capture authenticity, label truth or Host-only isolation.
+    require_label_sha256 = args.require_label_sha256 or args.strict_input_gates
+    require_telemetry_quality = args.require_telemetry_quality or args.strict_input_gates
+    require_uid_independent_overlap = args.require_uid_independent_overlap or args.strict_input_gates
     try:
         manifest = args.manifest.resolve(strict=True)
         if args.preflight:
             print(json.dumps(inspect_offline_experiment(
                 manifest, lab_cidrs=args.cidr,
-                require_label_sha256=args.require_label_sha256,
-                require_telemetry_quality=args.require_telemetry_quality,
-                require_uid_independent_overlap=args.require_uid_independent_overlap,
+                require_label_sha256=require_label_sha256,
+                require_telemetry_quality=require_telemetry_quality,
+                require_uid_independent_overlap=require_uid_independent_overlap,
             ), indent=2, ensure_ascii=False, allow_nan=False))
             return 0
         output = (args.trace_output or args.output).resolve()
@@ -349,9 +356,9 @@ def main(argv: list[str] | None = None) -> int:
         report = run_offline_experiment(
             manifest, lab_cidrs=args.cidr,
             include_private_test_trace=args.trace_output is not None,
-            require_label_sha256=args.require_label_sha256,
-            require_telemetry_quality=args.require_telemetry_quality,
-            require_uid_independent_overlap=args.require_uid_independent_overlap,
+            require_label_sha256=require_label_sha256,
+            require_telemetry_quality=require_telemetry_quality,
+            require_uid_independent_overlap=require_uid_independent_overlap,
         )
         payload = json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         # Exclusive creation: no partial report is written if validation or fit fails.

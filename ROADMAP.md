@@ -668,3 +668,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #165](https://github.com/tbao4151/DA_CNTT/pull/165) merged after final-head [Ubuntu Python 3.12.9 #40798459769](https://github.com/tbao4151/DA_CNTT/actions/runs/40798459769) (**788 passed, 2 skipped**) and [Windows Python 3.12.9 #40798459757](https://github.com/tbao4151/DA_CNTT/actions/runs/40798459757) (**76 passed**) succeeded; conflict-free. Supersedes the pending feature gate above.
 - [ ] Student runs strict preflight on genuine, separately pinned, authorized Zeek captures on Windows 11 and privately investigates any exact timestamp/five-tuple collisions. GitHub CI is synthetic software verification, not local capture evidence.
 - [ ] Verify VMware Host-only isolation independently, obtain independent labels and host/session-disjoint holdout, then measure Zeek-specific Precision/Recall/FPR and event-to-SOC latency. Preserve UNSW benchmark and keep active Red Team network-disabled.
+
+
+## Cyber Lab — one-switch strict offline research input gates (29/10/2026)
+
+- [ ] Verify final PR-head Ubuntu Python 3.12.9 quality gates and Windows offline Zeek CI, then merge the `--strict-input-gates` convenience option only if both pass and GitHub reports no conflicts. This bundles existing label SHA-256, telemetry quality and UID-independent cross-split overlap screens; it is not a new model or live sensor.
+- [ ] Student runs strict `--preflight` with an independently established Host-only CIDR and fully pinned private Zeek/label files, then only after review runs held-out research evaluation. Archive separate checksums, scenario notes, independent annotations and VMware/Zeek evidence outside public GitHub.
+- [ ] Evaluate genuine independently labeled, host/session-disjoint lab captures and measured event-to-SOC latency. A passing strict preflight is only internal consistency, not verified isolation, attack detection or scientific accuracy. Keep Red Team active traffic disabled and preserve the UNSW-NB15 official benchmark.

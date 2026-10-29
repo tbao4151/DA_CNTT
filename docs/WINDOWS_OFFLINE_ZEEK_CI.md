@@ -29,7 +29,7 @@ From the repository root in PowerShell, with Python 3.12.9 installed:
 
 ```powershell
 py -3.12 -m pip install -r requirements-app.txt
-py -3.12 -m pytest -q tests/test_zeek_lab_cli.py tests/test_zeek_telemetry_quality.py tests/test_offline_pcap_import.py tests/test_offline_pcap_scoring_gate.py tests/test_offline_pcap_soc_triage_gate.py tests/test_zeek_new_log_inference.py tests/test_zeek_manual_triage.py
+py -3.12 -m pytest -q tests/test_zeek_lab_cli.py tests/test_zeek_telemetry_quality.py tests/test_offline_pcap_import.py tests/test_offline_pcap_scoring_gate.py tests/test_offline_pcap_soc_triage_gate.py tests/test_zeek_new_log_inference.py tests/test_zeek_manual_triage.py tests/test_zeek_strict_input_gates.py
 ```
 
 Record `py -3.12 --version`, the command, exit code and screenshots locally.
@@ -40,3 +40,9 @@ captures can support Precision/Recall/FPR and event-to-SOC latency research.
 
 No change to Dataset Mode's official UNSW-NB15 benchmark, trained models,
 operational alert policy or active Red Team execution is introduced here.
+
+The targeted Windows suite also exercises the opt-in `--strict-input-gates` CLI
+with synthetic private manifests: it checks pinned annotation bytes, declared
+CIDR/telemetry quality, UID-independent split-overlap rejection and no output
+on invalid inputs. These checks do not authenticate labels or physical lab
+isolation, and are not a student laptop acceptance test.
