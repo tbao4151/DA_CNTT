@@ -887,3 +887,8 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [ ] Verify final-head Ubuntu Python 3.12.9 and Windows offline Zeek CI for strict model-input port/count typing; merge only if checks pass and PR is conflict-free. Both baseline training and data-only model scoring must reject forged fractional/absent ports and fractional packet/byte counts while retaining missing optional fields.
 - [ ] Run genuine Windows 11/VMware Host-only Zeek capture with independently pinned log/label evidence and test the new model-input gate; CI synthetic tests are not physical isolation, independent labels, live alerts or measured event-to-SOC latency. Keep Dataset Mode official UNSW-NB15 benchmark unchanged.
+
+## Blue Team — Zeek numeric feature type gate verified (#197, 29/10/2026)
+
+- [x] [PR #197](https://github.com/tbao4151/DA_CNTT/pull/197) merged as `9a878faa900b1fe4257a291249fcbfc6ed56676d` after final-head [Ubuntu CI #40847919697](https://github.com/tbao4151/DA_CNTT/actions/runs/40847919697) (906 passed, 2 skipped) and [Windows CI #40847919907](https://github.com/tbao4151/DA_CNTT/actions/runs/40847919907) (146 Zeek + 46 Red Team passed), plus [real Zeek synthetic smoke #40847919837](https://github.com/tbao4151/DA_CNTT/actions/runs/40847919837) (success). Supersedes the pending feature-merge check above; post-merge main CI remains separate.
+- [ ] Verify the unchanged model-input v1 contract on genuine student Windows 11/VMware Host-only capture and retain independent original PCAP/Zeek hashes, authorized isolation evidence, labels and split plan. No CI metric is live attack detection or event-to-SOC latency.
