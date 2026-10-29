@@ -16,6 +16,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
+from blue_team_ai.partition_guard import verify_declared_partition_exclusion
+from evaluate_zeek_lab import load_experiment_manifest
 from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
 from blue_team_ai.new_log_inference import score_new_zeek_log
 from blue_team_ai.trusted_model import load_pinned_zeek_research_model
@@ -58,6 +61,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="Independent SHA-256 of the original import report")
     parser.add_argument("--offline-import-pcap", type=Path,
                         help="Original private classic PCAP for provenance verification")
+    parser.add_argument("--manifest", type=Path,
+                        help="Optional private TRAIN/VALIDATION/TEST manifest; requires pinned labels")
+    parser.add_argument("--expected-manifest-sha256",
+                        help="Independent manifest SHA-256 (required with --manifest)")
     parser.add_argument("--output", required=True, type=Path,
                         help="NEW private prediction JSON alongside the capture")
     args = parser.parse_args(argv)
@@ -66,6 +73,11 @@ def main(argv: list[str] | None = None) -> int:
         log_path = _private_file(args.log)
         if model_path == log_path:
             raise ValueError("Model and capture must be different")
+        if (args.manifest is None) != (args.expected_manifest_sha256 is None):
+            raise ValueError("Manifest and independent digest must be supplied together")
+        manifest_path = _private_file(args.manifest) if args.manifest is not None else None
+        if manifest_path is not None and manifest_path in (model_path, log_path):
+            raise ValueError("Manifest must differ from model and new capture")
         output = args.output.absolute()
         if (
             output.name in ("", ".", "..") or output.suffix.lower() != ".json"
@@ -95,6 +107,22 @@ def main(argv: list[str] | None = None) -> int:
             model_path, expected_sha256=args.expected_model_sha256,
         )
         raw = _read_bounded_capture(log_path)
+        if manifest_path is not None:
+            # A separate preflight is not sufficient: re-read the pinned
+            # original TRAIN/VALIDATION/TEST captures at the scoring boundary.
+            captures, manifest_sha = load_experiment_manifest(
+                manifest_path, lab_cidrs=args.cidr,
+                require_label_sha256=True,
+                expected_manifest_sha256=args.expected_manifest_sha256,
+            )
+            dataset = build_labeled_lab_dataset(captures)
+            partition_gate = verify_declared_partition_exclusion(
+                model, dataset, manifest_sha256=manifest_sha,
+                new_capture_sha256=args.expected_log_sha256,
+                declared_captures=captures, new_source_data=raw,
+            )
+            if partition_gate["declared_flow_identity_nonreuse_checked"] is not True:
+                raise ValueError("Original capture identity screen did not run")
         report = score_new_zeek_log(
             raw, model,
             expected_log_sha256=args.expected_log_sha256,
@@ -111,6 +139,9 @@ def main(argv: list[str] | None = None) -> int:
     print("Private offline Zeek research predictions written (NOT operational alerts).")
     print("flow_count=" + str(report["flow_count"]))
     print("research_candidate_count=" + str(report["research_candidate_count"]))
+    if manifest_path is not None:
+        print("Pinned declared TRAIN/VALIDATION/TEST and flow identity non-reuse screened.")
+        print("This does NOT independently verify capture history or label truth.")
     print("No SOC case, network traffic, label evaluation or live detection performed.")
     return 0
 
