@@ -63,6 +63,7 @@ def parse_zeek_conn_log(
     if not lines or lines[0] != "#separator \\x09":
         raise ValueError("Expected Zeek ASCII tab separator header")
     fields: list[str] | None = None
+    seen_types = False
     seen_data = False
     digest = hashlib.sha256(data).hexdigest()
     events: list[dict] = []
@@ -76,8 +77,13 @@ def parse_zeek_conn_log(
                 raise ValueError("Invalid or incomplete Zeek conn.log fields")
             continue
         if line.startswith("#types\t"):
-            if fields is None or len(line.split("\t")) - 1 != len(fields):
-                raise ValueError("Zeek types do not match fields")
+            # A declared schema cannot change after records begin. Keep the
+            # historical optional #types behavior for minimal offline fixtures;
+            # strict field-type validation remains an explicit quality gate.
+            if (fields is None or seen_types or seen_data
+                    or len(line.split("\t")) - 1 != len(fields)):
+                raise ValueError("Duplicate, late or mismatched Zeek types header")
+            seen_types = True
             continue
         if line.startswith("#") or not line:
             continue
