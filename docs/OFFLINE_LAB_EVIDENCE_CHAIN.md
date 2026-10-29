@@ -18,8 +18,12 @@ py -3.12 scripts/verify_lab_evidence_chain.py `
   --pcap 'C:\DA005-private\capture\original.pcap' `
   --log 'C:\DA005-private\capture\zeek-output\conn.log' `
   --import-report 'C:\DA005-private\capture\zeek-output\offline_import_report.json' `
-  --expected-import-report-sha256 '<IMPORT_REPORT_SHA256>'
+  --expected-import-report-sha256 '<IMPORT_REPORT_SHA256>' `
+  --expected-pcap-sha256 '<INDEPENDENT_ORIGINAL_PCAP_SHA256>' `
+  --expected-log-sha256 '<INDEPENDENT_ORIGINAL_CONN_LOG_SHA256>'
 ```
+
+For stronger original-evidence checking, supply **both** `--expected-pcap-sha256` and `--expected-log-sha256`, recorded separately when the original files were archived. These options are backward compatible and optional as a pair; supplying only one, malformed digests or a mismatch fails closed. The output field `independent_original_pcap_zeek_pins_verified` is `true` only when both independently supplied digests match the original bytes already verified against the pinned import report; otherwise it is `false`. Hashes are consistency evidence, not signatures or proof of independent recording, genuine capture origin or attack labels.
 
 The import report and `conn.log` must be in the same directory and must be the original products of the offline import workflow. The command requires five **distinct absolute, private files** and compares all pins with their original bytes; the host and guest snapshots must match the same declared subnet, have distinct IPv4 addresses, and pass their existing strict offline validators. The import verifier rechecks PCAP and Zeek bytes, declared endpoints and flow count. The output is sanitized JSON on stdout, containing SHA-256 digests and a flow count but no IPs, paths or UIDs. Failure returns exit code 1 with a generic error and no partial JSON.
 
