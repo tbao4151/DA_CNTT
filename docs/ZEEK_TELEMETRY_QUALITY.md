@@ -159,3 +159,19 @@ not assert capture authenticity, isolation, independent labels or attack
 detection, and does not create traffic or SOC cases.
 
 On Windows run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py`.
+
+## Shared parser terminal Zeek #close boundary (29/10/2026)
+
+The offline Zeek parser now treats an optional `#close<TAB>...` marker as
+terminal. It rejects additional flow rows, headers or comments after the
+marker, duplicate close markers, premature/empty close markers, and a second
+`#separator` directive. Legacy minimal fixtures without `#close` remain
+accepted. This prevents a concatenated or appended log segment from being
+silently interpreted as one coherent Zeek source/UID namespace. It does not
+authenticate the close timestamp, prove completeness, or establish capture
+authenticity, VMware isolation, labels or detection accuracy.
+
+On Windows Python 3.12.9 run
+`py -3.12 -m pytest -q tests/test_zeek_telemetry.py tests/test_zeek_manual_triage.py`.
+Preserve the original authorized Zeek file and its independently pinned
+SHA-256; test malformed copies, not the original evidence.
