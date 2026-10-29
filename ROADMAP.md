@@ -1167,3 +1167,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #235](https://github.com/tbao4151/DA_CNTT/pull/235) merged at `b4dd17b3ca6ff22a66c23a7ee9115042bf8bfb21` after [Ubuntu CI #40937218888](https://github.com/tbao4151/DA_CNTT/actions/runs/40937218888) (**1064 passed, 2 skipped**) and [Windows CI #40937218922](https://github.com/tbao4151/DA_CNTT/actions/runs/40937218922) (**14 integrated synthetic tests and existing offline suites passed**). This supersedes the pending feature merge gate above; post-merge main CI is separate.
 - [ ] Student independently pins original authorized PCAP and Zeek conn.log on Windows 11, runs the paired-pin option in the integrated offline checker, and preserves private original evidence; manually validates VMware isolation and approved scope.
 - [ ] Establish independently labeled held-out evaluation and instrument genuine event → AI decision → alert → SOC case timing. CI and hash checks alone do not demonstrate real attack detection.
+
+
+## Cyber Lab — strict original PCAP/Zeek pin requirement (30/10/2026; feature PR pending)
+
+- [ ] Verify and merge the optional strict `--require-independent-original-pins` offline evidence gate after final-head Ubuntu and Windows Python 3.12.9 CI and conflict-free PR review; check post-merge main separately. Existing weaker invocation must remain compatible and clearly flagged.
+- [ ] Student records original PCAP and Zeek SHA-256 values separately at acquisition, runs strict preflight with genuine privately archived Host-only evidence, and manually confirms isolation, authorization and independent labels. Software checks do not certify these claims.
+- [ ] Preserve untouched UNSW-NB15 benchmark and separately evaluate held-out Zeek AI detection and event-to-alert-to-SOC timing only after real authorized lab data exists.

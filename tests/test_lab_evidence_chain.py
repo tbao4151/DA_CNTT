@@ -151,3 +151,27 @@ def test_re_pinned_import_report_cannot_replace_independent_pcap_pin(tmp_path, i
     assert result.returncode == 1
     assert result.stdout == ""
     assert "refused" in result.stderr
+
+
+def test_strict_gate_refuses_missing_independent_original_pins(tmp_path, imported):
+    def strict(args, hp, gp):
+        args.append("--require-independent-original-pins")
+
+    result = _run(tmp_path, imported, changes=strict)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert str(tmp_path) not in result.stderr
+
+
+def test_strict_gate_accepts_verified_original_pins(tmp_path, imported):
+    def strict(args, hp, gp):
+        args.append("--require-independent-original-pins")
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=strict)
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report["independent_original_pcap_zeek_pins_verified"] is True
+    assert report["independent_original_pcap_zeek_pins_required"] is True
+    assert report["vmware_isolation_verified"] is False
+    assert report["independent_labels_verified"] is False

@@ -45,6 +45,10 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         expected_cidr=args.cidr,
     )
     original_pins = (args.expected_pcap_sha256, args.expected_log_sha256)
+    if args.require_independent_original_pins and not all(
+        pin is not None for pin in original_pins
+    ):
+        raise ValueError("Strict lab gate requires both independent original pins")
     if any(pin is not None for pin in original_pins):
         if not all(pin is not None for pin in original_pins):
             raise ValueError("Original PCAP and Zeek SHA-256 pins must be paired")
@@ -74,6 +78,9 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         "offline_pcap_zeek_import_consistent": True,
         "independent_original_pcap_zeek_pins_verified": all(
             pin is not None for pin in original_pins
+        ),
+        "independent_original_pcap_zeek_pins_required": (
+            args.require_independent_original_pins
         ),
         "host_snapshot_sha256": args.expected_host_sha256,
         "guest_snapshot_sha256": args.expected_guest_sha256,
@@ -113,6 +120,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-import-report-sha256", required=True)
     parser.add_argument("--expected-pcap-sha256", help="Optional independently recorded original PCAP SHA-256; requires Zeek pin")
     parser.add_argument("--expected-log-sha256", help="Optional independently recorded original conn.log SHA-256; requires PCAP pin")
+    parser.add_argument(
+        "--require-independent-original-pins", action="store_true",
+        help="Fail closed unless both independently recorded original PCAP and Zeek SHA-256 pins are supplied",
+    )
     args = parser.parse_args(argv)
     try:
         result = verify_chain(args)
