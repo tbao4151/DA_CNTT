@@ -92,21 +92,21 @@ def parse_zeek_conn_log(
         # service values into model categories or corrupt feature missingness.
         # Legacy minimal fixtures may omit these optional metadata headers.
         if line.startswith("#unset_field"):
-            if seen_unset_field or seen_data or line != "#unset_field\\t-":
+            if seen_unset_field or seen_data or line != "#unset_field\t-":
                 raise ValueError("Invalid, duplicate or late Zeek unset_field marker")
             seen_unset_field = True
             continue
         if line.startswith("#empty_field"):
-            if seen_empty_field or seen_data or line != "#empty_field\\t(empty)":
+            if seen_empty_field or seen_data or line != "#empty_field\t(empty)":
                 raise ValueError("Invalid, duplicate or late Zeek empty_field marker")
             seen_empty_field = True
             continue
         if line.startswith("#path"):
-            if seen_path or seen_data or line != "#path\\tconn":
+            if seen_path or seen_data or line != "#path\tconn":
                 raise ValueError("Invalid, duplicate or late Zeek conn path marker")
             seen_path = True
             continue
-        if line.startswith("#fields\\t"):
+        if line.startswith("#fields\t"):
             if fields is not None or seen_data:
                 raise ValueError("Duplicate Zeek fields header")
             fields = line.split("\t")[1:]
