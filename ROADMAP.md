@@ -824,3 +824,11 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #187](https://github.com/tbao4151/DA_CNTT/pull/187) merged conflict-free after final-head [Ubuntu CI #40830565924](https://github.com/tbao4151/DA_CNTT/actions/runs/40830565924) (**873 passed, 2 skipped**) and [Windows CI #40830565922](https://github.com/tbao4151/DA_CNTT/actions/runs/40830565922) (**132 Zeek + 46 Red Team passed**) succeeded. Supersedes the earlier pending merge gate. No student laptop or real capture was tested.
 - [ ] Student obtains independently labeled authorized VMware Host-only PCAP/Zeek sessions, pins original evidence and manifest, preregisters host/session-disjoint splits and both variants, and privately runs the pinned ablation on Windows 11. Review per-host supports and disagreements without tuning on TEST.
 - [ ] Confirm scientific Precision/Recall/FPR and host/session variability with independently adjudicated multi-host evidence and measure actual event-to-alert/SOC timing. The anonymized summaries are descriptive, not authenticated hosts or cluster-adjusted confidence intervals. Dataset Mode, SOC and Red Team active-network-disabled state remain unchanged.
+
+## Blue Team — Paired Zeek held-out correctness analysis (29/10/2026)
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 full suite and Windows offline Zeek CI for the aggregate paired TEST correctness report, and merge only if green and conflict-free. No synthetic score is a genuine attack-detection result.
+- [ ] On student Windows 11/VMware, preserve original authorized PCAP/Zeek/annotation hashes and physical Host-only isolation evidence, preregister the same fixed variants/splits, and run the private port-ablation report without selecting a winner on TEST.
+- [ ] Obtain independently adjudicated host/session-disjoint replicated captures and report class supports, uncertainty and limitations; paired flow counts are descriptive and not an independence-valid significance test. Measure event-to-alert/SOC delay separately; active Red Team remains disabled.
+
+- [ ] PR #188 reconciled with #187/#189 on merged-base tree; verify new final-head Ubuntu and Windows CI before merging. Keep report v2 host summaries and add paired TEST counts without replacing earlier research results.

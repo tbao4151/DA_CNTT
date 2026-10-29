@@ -94,3 +94,20 @@ py -3.12 -m pytest -q tests/test_zeek_port_ablation.py
 Passing GitHub Ubuntu/Windows CI is **not** acceptance on the student's
 Windows 11/VMware lab. Keep the local output and lab notebook privately for
 GVHD review; do not publish sensitive evidence in this public repository.
+
+## Paired TEST correctness contingency (29/10/2026)
+
+The optional JSON now includes `paired_test_correctness`: aggregate counts of
+`both_correct`, `full_only_correct`, `without_ports_only_correct`, and
+`neither_correct` for **the same held-out TEST rows**, plus breakdowns by
+operator-supplied normal/attack labels. Both prediction vectors are computed
+after their own TRAIN-only fit and VALIDATION-only threshold selection; the
+report never stores row-level predictions, IPs, UIDs or timestamps.
+
+This is useful because two variants can have similar aggregate F1 yet make
+different errors. Counts are descriptive only: neither paired rows nor their
+labels are independently authenticated, flows may be correlated within
+sessions, and no p-value, confidence interval, statistical significance,
+causal port importance, or deployment winner is asserted. Do not use TEST to
+retune either variant. Validate on separately captured host/session-disjoint
+data before any scientific performance claim.
