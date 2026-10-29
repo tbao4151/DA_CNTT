@@ -511,3 +511,40 @@ force a pass. Conversely, changing timestamps/ports can evade this screen.
 It cannot authenticate capture independence, operator-assigned host groups,
 labels, authorization or VMware Host-only isolation. Never tune TEST or claim
 real detection accuracy from synthetic fixtures.
+
+
+## One-switch strict offline input gates (29/10/2026)
+
+For an independently prepared **private** Zeek research manifest, the new
+`--strict-input-gates` option combines the three existing opt-in checks:
+`--require-label-sha256`, `--require-telemetry-quality`, and
+`--require-uid-independent-overlap`. It requires at least one explicit
+`--cidr` for the operator-declared Host-only lab scope. Every capture must
+have a separately recorded `labels_sha256` and pinned `source_sha256`.
+The exact same checks apply to `--preflight`, `--output`, and
+`--trace-output`; no network capture or active Red Team action is enabled.
+
+Run **preflight first** on Windows 11 PowerShell:
+
+```powershell
+py -3.12 scripts/evaluate_zeek_lab.py \`
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" \`
+  --cidr "192.168.56.0/24" \`
+  --strict-input-gates \`
+  --preflight
+```
+
+Use the actual independently checked Host-only CIDR, not the example unless it
+matches the lab. After reviewing the private preflight and freezing labels,
+replace `--preflight` with `--output "C:/DA005-private/zeek-experiment/strict-report.json"`
+(or a new private `--trace-output` path) without dropping the flags.
+Outputs retain the existing aggregate quality, label-pin and overlap fields;
+legacy commands and output schemas are unchanged when the flag is omitted.
+
+This is a **convenience safety gate, not a scientific certificate**: a
+conservative exact timestamp/five-tuple collision can reject independent
+flows; a clean result cannot establish physical isolation, authentic capture,
+independent annotation, host/session provenance, ground-truth accuracy or
+operational attack detection. Do not edit evidence to force a pass. Keep
+original PCAP, Zeek logs, independent checksums and annotation decisions
+outside the public repository. Regression tests use synthetic fixtures only.
