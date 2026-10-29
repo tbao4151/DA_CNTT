@@ -171,3 +171,15 @@ def test_private_trace_accepts_genuine_synthetic_experiment_provenance(tmp_path)
     reviewed = review_private_zeek_trace(raw, _encode(report))
     assert reviewed["source_join_verified"] is True
     assert reviewed["model_provenance_authenticated"] is False
+
+
+def test_private_trace_accepts_legacy_v4_and_current_v5_but_refuses_other_versions(tmp_path):
+    raw, report = _fixture(tmp_path)
+    assert report["report_version"] == 5
+    current = review_private_zeek_trace(raw, _encode(report))
+    report["report_version"] = 4  # Existing private traces must remain readable.
+    assert review_private_zeek_trace(raw, _encode(report)) == current
+    for invalid in (3, 6, True, 5.0, "5"):
+        report["report_version"] = invalid
+        with pytest.raises(ValueError, match="Unsupported offline Zeek research report"):
+            review_private_zeek_trace(raw, _encode(report))

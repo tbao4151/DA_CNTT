@@ -44,7 +44,7 @@ def test_baseline_reports_real_synthetic_fit_without_identity_or_labels():
     assert report["feature_columns"] == list(dataset.feature_columns)
     assert report["selected_threshold"] in (0.25, 0.40, 0.50, 0.60, 0.75)
     assert report["validation_metrics"]["support"] == 2
-    assert report["report_version"] == 4
+    assert report["report_version"] == 5
     assert report["validation_probability_diagnostics"]["sample_size"] == 2
     assert report["test_probability_diagnostics"]["sample_size"] == 2
     for split in ("validation", "test"):
@@ -59,9 +59,11 @@ def test_baseline_reports_real_synthetic_fit_without_identity_or_labels():
         assert grouped["group_count"] == 1
         assert grouped["single_group_warning"] is True
         assert grouped["small_group_warning"] is True
-        assert sum(group["support"] for group in grouped["groups"]) == 2
-        for key in ("tp", "fp", "tn", "fn"):
-            assert sum(group[key] for group in grouped["groups"]) == report[f"{split}_metrics"][key]
+        assert grouped["minimum_support_per_group"] == 30
+        assert grouped["all_group_counts_suppressed"] is True
+        assert grouped["groups"] == []
+        assert grouped["rate_ranges"] is None
+        assert sum(report[f"{split}_metrics"][key] for key in ("tp", "fp", "tn", "fn")) == 2
     for split in ("validation", "test"):
         uncertainty = report[f"{split}_detection_uncertainty"]
         assert uncertainty["attack_recall"]["trials"] == 1
@@ -91,7 +93,8 @@ def test_test_labels_do_not_change_fit_validation_or_selected_threshold():
     assert baseline["test_probability_diagnostics"] != result["test_probability_diagnostics"]
     assert baseline["validation_detection_uncertainty"] == result["validation_detection_uncertainty"]
     assert baseline["validation_host_variability"] == result["validation_host_variability"]
-    assert baseline["test_host_variability"] != result["test_host_variability"]
+    # Tiny host-group cells are intentionally hidden, even when TEST labels change.
+    assert baseline["test_host_variability"] == result["test_host_variability"]
     assert baseline["test_metrics"] != result["test_metrics"]
 
 
@@ -127,3 +130,23 @@ def test_refuses_numeric_column_entirely_missing_from_training():
         row["orig_bytes"] = None
     with pytest.raises(ValueError, match="measured training value"):
         evaluate_offline_zeek_baseline(dataset)
+
+
+def test_baseline_and_port_ablation_do_not_reexpose_tiny_host_groups():
+    """Regression: a separate baseline report must not bypass ablation redaction."""
+    from blue_team_ai.port_ablation import evaluate_zeek_port_ablation
+
+    dataset = _dataset()
+    baseline = evaluate_offline_zeek_baseline(dataset)
+    ablation = evaluate_zeek_port_ablation(dataset)
+    for split in ("validation", "test"):
+        reports = [baseline[f"{split}_host_variability"]]
+        reports += [ablation["variants"][variant][f"{split}_host_variability"]
+                    for variant in ("full", "without_ports")]
+        for summary in reports:
+            assert summary["group_count"] == 1
+            assert summary["all_group_counts_suppressed"] is True
+            assert summary["groups"] == []
+            assert summary["rate_ranges"] is None
+    assert baseline["test_metrics"] == ablation["variants"]["full"]["test_metrics"]
+    assert baseline["validation_metrics"] == ablation["variants"]["full"]["validation_metrics"]

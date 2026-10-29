@@ -867,3 +867,12 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #193](https://github.com/tbao4151/DA_CNTT/pull/193) merged as `50538aa373ad9c3b1d029b68da9c274a73edd20c` after final-head [Ubuntu CI #40840318093](https://github.com/tbao4151/DA_CNTT/actions/runs/40840318093) (890 passed, 2 skipped) and [Windows CI #40840318148](https://github.com/tbao4151/DA_CNTT/actions/runs/40840318148) (146 Zeek + 46 Red Team passed). Supersedes the pending merge check above. Post-merge main CI was queued at documentation authoring.
 - [ ] Student tests private port-ablation JSON and redaction behavior on Windows 11 with genuine authorized VMware Host-only Zeek/PCAP, independently pinned labels and host/session split plan. Verify the local capture/clock/isolation evidence separately; GitHub CI is not laptop acceptance.
 - [ ] Evaluate actual multi-host/session detection with independent adjudication and record event-to-AI-alert-to-SOC-case timestamps. No model deployment, automatic attack alert or causal port effect is established by this privacy correction.
+
+
+## Blue Team — baseline/ablation small-host privacy consistency (29/10/2026)
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 and Windows offline Zeek CI for the baseline aggregate report v5 all-host suppression; merge only when checks pass and the PR is conflict-free. The previous baseline v4 could reveal tiny-host confusion cells even when the paired ablation report suppressed them.
+- [ ] On the student Windows 11/VMware Host-only lab, collect independently authorized PCAP/Zeek logs and adjudicated labels; pin original hashes and session/host splits, keep all reports and private per-flow traces outside public Git, and verify both report types redact groups below 30 flows. Do not treat the 30-flow threshold as statistical sufficiency or the suppression as differential privacy.
+- [ ] Independently measure held-out detection accuracy and actual event-to-alert/SOC latency before reporting scientific performance. Dataset Mode UNSW benchmark and active Red Team traffic remain unchanged.
+
+- [ ] Resolve initial Ubuntu CI failure in private trace review by validating the new baseline report v5 alongside legacy v4, then rerun **both** final-head Ubuntu and Windows CI; do not merge using earlier passing Windows/Zeek runs. Preserve private trace v1 integrity checks and backward compatibility.
