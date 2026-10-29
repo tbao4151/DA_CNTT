@@ -85,8 +85,23 @@ def test_ablation_refuses_invalid_research_inputs(mutation):
 def _pinned_manifest(tmp_path):
     manifest = _lab_files(tmp_path / "private")
     spec = json.loads(manifest.read_text(encoding="utf-8"))
-    for entry in spec["captures"]:
+    # The generic CLI fixture deliberately repeats identical flow tuples
+    # across splits; strict ablation input gates must reject those. Give each
+    # synthetic session distinct source ports and repin BOTH log and labels.
+    for index, entry in enumerate(spec["captures"]):
+        log = manifest.parent / entry["log_path"]
+        raw = log.read_bytes().replace(
+            b"\\t52344\\t", f"\\t{52344 + 10 * index}\\t".encode(),
+        ).replace(
+            b"\\t52345\\t", f"\\t{52345 + 10 * index}\\t".encode(),
+        )
+        log.write_bytes(raw)
+        digest = hashlib.sha256(raw).hexdigest()
+        entry["source_sha256"] = digest
         labels = manifest.parent / entry["labels_path"]
+        annotation = json.loads(labels.read_text(encoding="utf-8"))
+        annotation["source_sha256"] = digest
+        labels.write_text(json.dumps(annotation), encoding="utf-8")
         entry["labels_sha256"] = hashlib.sha256(labels.read_bytes()).hexdigest()
     manifest.write_text(json.dumps(spec), encoding="utf-8")
     return manifest
