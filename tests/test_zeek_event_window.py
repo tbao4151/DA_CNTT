@@ -46,7 +46,7 @@ def test_declared_utc_window_inclusive_and_no_latency_claim():
     encoded = json.dumps(report)
     for private in ("SYN1", "SYN2", "192.168.56.10", "12345"):
         assert private not in encoded
-    assert "event-to-alert latency" in report["interpretation"]
+    assert "latency" not in encoded
 
 
 @pytest.mark.parametrize("start,end", [
