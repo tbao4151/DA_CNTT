@@ -16,6 +16,8 @@ def summarize_host_variability(
     probabilities: Sequence[float],
     host_groups: Sequence[str],
     threshold: float,
+    *,
+    suppress_small_groups: bool = False,
 ) -> dict[str, object]:
     """Summarize fixed-threshold confusion counts and rates per host group.
 
@@ -27,6 +29,8 @@ def summarize_host_variability(
         truth, scores, groups = list(labels), list(probabilities), list(host_groups)
     except TypeError as exc:
         raise ValueError("Expected aligned offline sequences") from exc
+    if type(suppress_small_groups) is not bool:
+        raise ValueError("Small-group suppression flag must be boolean")
     if not truth or len(truth) != len(scores) or len(truth) != len(groups):
         raise ValueError("Host variability inputs must align and be nonempty")
     if any(type(y) is not int or y not in (0, 1) for y in truth):
@@ -70,7 +74,7 @@ def summarize_host_variability(
             "macro_mean": sum(observed) / len(observed) if observed else None,
             "defined_groups": len(observed),
         }
-    return {
+    result: dict[str, object] = {
         "unit_of_grouping": "operator_declared_host_group",
         "group_count": len(summaries),
         "groups": summaries,
@@ -79,3 +83,19 @@ def summarize_host_variability(
         "small_group_warning": any(row["small_group_warning"] for row in summaries),
         "interpretation": "descriptive_only_not_cluster_adjusted_not_ground_truth_verified",
     }
+    if suppress_small_groups:
+        # Suppress *every* group if even one has <30 flows: otherwise a small
+        # group's counts could be recovered by subtracting visible groups
+        # from aggregate confusion counts in the same ablation report.
+        # Rate ranges/macro means must also be removed; they can disclose
+        # a small group's performance even when its row is hidden.
+        suppressed = any(row["small_group_warning"] for row in summaries)
+        result["minimum_support_per_group"] = 30
+        result["all_group_counts_suppressed"] = suppressed
+        if suppressed:
+            result["groups"] = []
+            result["rate_ranges"] = None
+            result["interpretation"] = (
+                "descriptive_only_small_groups_suppressed_no_ground_truth_verification"
+            )
+    return result
