@@ -1065,3 +1065,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Student runs pinned read-only SOC case verification on original, authorized Windows 11/VMware Host-only evidence; record per-stage and total processing milliseconds with hardware, Zeek version, source size, independently preserved SHA-256 and network isolation evidence outside Git. Repeat runs under controlled load.
 - [ ] Independently instrument and validate actual **network event → log available → AI decision → alert delivered → SOC case created** timestamps. The existing-case verifier's processing time, which recomputes evidence, must not be relabeled as detection latency or SOC case creation time.
 - [ ] Obtain independently adjudicated held-out labels and report Precision, Recall, FPR and false negatives; keep UNSW-NB15 historical metrics separate from lab-capture findings.
+
+## Blue Team — offline SOC processing timing CI verified (#221, 29/10/2026)
+
+- [x] PR #221 merged as `dafc089d32e6936670e9fb79553991effe29f049` after final-head [Ubuntu CI #40899359256](https://github.com/tbao4151/DA_CNTT/actions/runs/40899359256) (**976 passed, 2 skipped**) and [Windows CI #40899359119](https://github.com/tbao4151/DA_CNTT/actions/runs/40899359119) (**200 Zeek + 46 Red Team passed**). This supersedes the pending feature merge gate above; post-merge main CI is separate.
+- [ ] Student performs private, authorized Windows 11/VMware Host-only capture and independently records SHA-256, hardware/Zeek metadata, network isolation and repeated software verification stage timings. Do not use CI runner timings as student measurements.
+- [ ] Add trustworthy instrumented timestamps for genuine event → log availability → AI decision → alert → SOC case creation. This is distinct from read-only existing-case verification overhead and requires independent ground truth/operational evidence.
