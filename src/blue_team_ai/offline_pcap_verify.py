@@ -14,6 +14,7 @@ from typing import Sequence
 
 from .lab_scope import inspect_zeek_lab_scope
 from .offline_pcap import MAX_PCAP_BYTES, PCAP_MAGICS, _private_path
+from .pcap_structure import inspect_classic_pcap_framing
 from .zeek import MAX_LOG_BYTES
 
 MAX_REPORT_BYTES = 64 * 1024
@@ -68,6 +69,7 @@ def verify_offline_pcap_import(
     pcap_path: str | Path,
     log_path: str | Path,
     lab_cidrs: Sequence[str],
+    require_pcap_framing: bool = False,
 ) -> dict[str, object]:
     """Recompute original-file hashes and scope against a separately pinned report.
 
@@ -75,6 +77,8 @@ def verify_offline_pcap_import(
     The pin MUST be recorded separately before verification; a digest taken
     from the report being checked does not provide independent provenance.
     """
+    if type(require_pcap_framing) is not bool:
+        raise ValueError("Invalid PCAP framing requirement")
     if not _digest(expected_report_sha256):
         raise ValueError("Require an independently recorded lowercase report SHA-256")
     report_file = Path(report_path)
@@ -128,6 +132,7 @@ def verify_offline_pcap_import(
             or report["zeek_conn_size_bytes"] != len(conn)
             or not hmac.compare_digest(hashlib.sha256(conn).hexdigest(), report["zeek_conn_sha256"])):
         raise ValueError("Original Zeek conn.log differs from the pinned import report")
+    framing = inspect_classic_pcap_framing(pcap) if require_pcap_framing else None
     scope = inspect_zeek_lab_scope(conn, lab_cidrs)
     if (type(report["flow_count"]) is not int
             or report["flow_count"] != scope["flow_count"]
@@ -141,6 +146,9 @@ def verify_offline_pcap_import(
         "zeek_conn_sha256": report["zeek_conn_sha256"],
         "flow_count": scope["flow_count"],
         "original_files_verified": 2,
+        "pcap_framing_required": require_pcap_framing,
+        "pcap_framing_verified": framing is not None,
+        "pcap_packet_count": framing["packet_count"] if framing else None,
         "host_only_isolation_verified": False,
         "capture_authenticity_verified": False,
         "authorization_verified": False,

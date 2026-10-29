@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -163,3 +164,61 @@ def test_cli_verifies_without_network_or_writes(imported):
     assert "refused" in failed.stderr
     assert str(imported["pcap"]) not in failed.stderr
     assert all(imported[key].read_bytes() == data for key, data in before.items())
+
+
+def test_strict_framing_refuses_header_only_legacy_fixture(imported):
+    # Legacy mock fixture has only a magic and 20 zero bytes; its report
+    # can pass byte-consistency checks but not a structural packet check.
+    raw = bytes.fromhex("d4c3b2a1") + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+    imported["pcap"].write_bytes(raw)
+    report = json.loads(imported["report"].read_text())
+    report["pcap_sha256"] = hashlib.sha256(raw).hexdigest()
+    report["pcap_size_bytes"] = len(raw)
+    repin(imported, report)
+    assert check(imported)["pcap_framing_verified"] is False
+    with pytest.raises(ValueError, match="no packet"):
+        check(imported, require_pcap_framing=True)
+
+
+def test_strict_framing_accepts_well_formed_pinned_packet_records(imported):
+    # No packet-to-Zeek semantic match is asserted by this synthetic fixture.
+    raw = (bytes.fromhex("d4c3b2a1")
+           + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+           + struct.pack("<IIII", 100, 123, 4, 4) + b"test")
+    imported["pcap"].write_bytes(raw)
+    report = json.loads(imported["report"].read_text())
+    report["pcap_sha256"] = hashlib.sha256(raw).hexdigest()
+    report["pcap_size_bytes"] = len(raw)
+    repin(imported, report)
+    result = check(imported, require_pcap_framing=True)
+    assert result["pcap_framing_required"] is True
+    assert result["pcap_framing_verified"] is True
+    assert result["pcap_packet_count"] == 1
+    assert result["capture_authenticity_verified"] is False
+    assert result["ai_inference_performed"] is False
+
+    cmd = [
+        sys.executable, str(ROOT / "scripts" / "verify_offline_pcap_import.py"),
+        "--report", str(imported["report"]),
+        "--expected-report-sha256", imported["pin"],
+        "--pcap", str(imported["pcap"]),
+        "--log", str(imported["log"]),
+        "--cidr", CIDR[0], "--require-pcap-framing",
+    ]
+    completed = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    assert completed.returncode == 0, completed.stderr
+    assert "1 packet records" in completed.stdout
+    assert "NOT verified" in completed.stdout
+
+
+def test_strict_framing_rejects_pinned_truncated_packet(imported):
+    raw = (bytes.fromhex("d4c3b2a1")
+           + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+           + struct.pack("<IIII", 100, 123, 5, 5) + b"abcd")
+    imported["pcap"].write_bytes(raw)
+    report = json.loads(imported["report"].read_text())
+    report["pcap_sha256"] = hashlib.sha256(raw).hexdigest()
+    report["pcap_size_bytes"] = len(raw)
+    repin(imported, report)
+    with pytest.raises(ValueError, match="packet"):
+        check(imported, require_pcap_framing=True)
