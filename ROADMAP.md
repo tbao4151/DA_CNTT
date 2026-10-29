@@ -1132,3 +1132,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Ubuntu Python 3.12.9 and Windows Server 2022 CI, including new atomic filesystem regressions; merge only if all required checks pass and main is conflict-free. Current feature change is **not** student-laptop acceptance.
 - [ ] Student tests strict pinned NEW-log scoring in a private local NTFS directory on Windows 11, preserves source/model/manifest/report SHA-256 independently, and confirms existing reports cannot be overwritten. Avoid unsupported network/FAT filesystems; inspect leftover hidden staging files after abrupt interruptions.
 - [ ] Collect real authorized VMware Host-only PCAP/Zeek with independent ground truth and host/session-disjoint holdout, then measure true event-to-AI-to-SOC timing. Atomic report publication alone does not establish detection quality, capture authenticity, or network isolation.
+
+
+## Cyber Lab — verified atomic NEW-log report publication (#231, 30/10/2026)
+
+- [x] [PR #231](https://github.com/tbao4151/DA_CNTT/pull/231) merged as `5160b28cc68af10abf6959fdb0d463f54a9e41ad` after [Ubuntu CI #40929024137](https://github.com/tbao4151/DA_CNTT/actions/runs/40929024137) (**1050 passed, 2 skipped**), [Windows CI #40929023842](https://github.com/tbao4151/DA_CNTT/actions/runs/40929023842) (**205 Zeek, 21 host, 31 guest, 17 paired, 46 Red Team tests passed**) and [real Zeek synthetic smoke #40929023992](https://github.com/tbao4151/DA_CNTT/actions/runs/40929023992) (success). This supersedes the pending CI checkbox above; post-merge main CI is tracked separately.
+- [ ] Student validates the pinned new-log CLI on private Windows 11 NTFS and records report SHA-256, with original PCAP/Zeek and model/manifest pins; CI is not a substitute for Windows laptop acceptance.
+- [ ] Collect genuine authorized Host-only captures and independent labels, verify held-out Zeek AI Precision/Recall/FPR, and measure event-to-AI-to-SOC timing without confusing offline processing time with live detection latency.
