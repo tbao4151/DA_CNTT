@@ -110,7 +110,15 @@ def test_single_zeek_types_header_accepted_but_duplicate_or_late_refused():
     original = log(VALUES)
     header = original.splitlines(keepends=True)[1]
     typed = original.replace(header, header + declaration, 1)
-    assert parse_zeek_conn_log(typed) == parse_zeek_conn_log(original)
+    typed_event = parse_zeek_conn_log(typed)[0]
+    minimal_event = parse_zeek_conn_log(original)[0]
+    # The source digest must differ because the exact bytes differ.
+    assert typed_event["source_sha256"] != minimal_event["source_sha256"]
+    assert {key: value for key, value in typed_event.items()
+            if key != "source_sha256"} == {
+                key: value for key, value in minimal_event.items()
+                if key != "source_sha256"
+            }
 
     with pytest.raises(ValueError, match="Zeek types header"):
         parse_zeek_conn_log(typed.replace(declaration, declaration * 2, 1))
