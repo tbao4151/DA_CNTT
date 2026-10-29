@@ -1153,3 +1153,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #233](https://github.com/tbao4151/DA_CNTT/pull/233) merged as `eca23157d377c738e5473554a3133135d560e88f` after [Ubuntu CI #40933723686](https://github.com/tbao4151/DA_CNTT/actions/runs/40933723686) (**1058 passed, 2 skipped**) and [Windows CI #40933723728](https://github.com/tbao4151/DA_CNTT/actions/runs/40933723728) (**8 integrated synthetic tests and existing offline suites passed**). This supersedes the pending feature gate above; post-merge main CI must be checked independently.
 - [ ] Student executes the new pinned read-only gate with genuine authorized Windows 11/VMware Host-only snapshots, PCAP and Zeek import report, retaining original evidence and SHA-256 privately. Synthetic CI cannot verify physical isolation or authenticity.
 - [ ] Independently adjudicate labels, establish held-out evaluation and measure real event-to-AI-alert-to-SOC case latency. Do not reinterpret the new gate as AI attack detection.
+
+
+## Cyber Lab — independently pinned original PCAP/Zeek at integrated evidence gate (30/10/2026)
+
+- [ ] Confirm final-head Ubuntu Python 3.12.9 and Windows offline CI, verify no competing PR/conflicts, and merge only if green. Synthetic tests must not be reported as real VMware acceptance.
+- [ ] Student independently records SHA-256 for original private PCAP and Zeek conn.log **before** verification; supply both optional original pins alongside the host/guest/import-report pins and archive the sanitized consistency result outside Git. An absent pair remains explicitly unverified.
+- [ ] Manually inspect VMware Host-only isolation and authorized scope; acquire independent ground-truth labels, then evaluate held-out Zeek detection and genuine event-to-alert-to-SOC timing. Independent hash matching is not capture authentication or attack detection.
