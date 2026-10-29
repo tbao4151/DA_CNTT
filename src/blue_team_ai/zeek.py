@@ -65,10 +65,25 @@ def parse_zeek_conn_log(
     fields: list[str] | None = None
     seen_types = False
     seen_data = False
+    closed = False
     digest = hashlib.sha256(data).hexdigest()
     events: list[dict] = []
     seen_uids: set[str] = set()
     for line in lines[1:]:
+        if not line:
+            continue
+        # Zeek writes #close when the ASCII log ends. Never merge appended
+        # records or a second log segment into one source/UID namespace.
+        if closed:
+            raise ValueError("Zeek content after close marker")
+        if line.startswith("#close"):
+            if (not line.startswith("#close\t") or not line[len("#close\t"):]
+                    or fields is None or not seen_data):
+                raise ValueError("Invalid or premature Zeek close marker")
+            closed = True
+            continue
+        if line.startswith("#separator"):
+            raise ValueError("Duplicate Zeek separator header")
         if line.startswith("#fields\t"):
             if fields is not None or seen_data:
                 raise ValueError("Duplicate Zeek fields header")
