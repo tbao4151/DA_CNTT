@@ -1188,3 +1188,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Ubuntu Python 3.12.9 quality CI and Windows offline Zeek CI for the optional `--require-guest-endpoint` gate; merge only after both succeed and the PR is conflict-free. The check must be opt-in, require strict original PCAP/Zeek pins and never leak private guest IPs in the JSON report.
 - [ ] On the student-owned Windows 11/VMware Host-only environment, retain separate original hashes and NIC/route evidence, and run the optional guest-flow gate only for scenarios where the guest is expected to be a traffic endpoint. A passive sensor observing other VMs must not be failed on this criterion.
 - [ ] Independently label authorized host/session-disjoint genuine captures and measure held-out Zeek-specific Precision/Recall/FPR and event-to-alert-to-SOC latency. An IP match cannot prove capture authenticity or isolation; keep Red Team active traffic disabled and UNSW official benchmark unchanged.
+
+
+## Cyber Lab — guest-flow presence gate merged (#239, 30/10/2026)
+
+- [x] [PR #239](https://github.com/tbao4151/DA_CNTT/pull/239) merged at `b509693db8a1b9b9cc5f127820d9a13546d16206` after final-head [Ubuntu CI #40950725108](https://github.com/tbao4151/DA_CNTT/actions/runs/40950725108) and [Windows CI #40950725439](https://github.com/tbao4151/DA_CNTT/actions/runs/40950725439) succeeded; this supersedes the pending CI/merge item above.
+- [ ] Student validates opt-in guest-flow presence only for scenarios in which the declared guest is expected to send/receive traffic, using independently pinned private Host-only evidence and manually checked VMnet/NIC isolation and authorization. A matching IP is not proof of capture authenticity or isolation.
+- [ ] Prioritize offline end-to-end Zeek telemetry → Zeek-schema AI inference → research alert → SQLite SOC case, with reproducible stage timings and independent held-out labels. Keep official UNSW-NB15 metrics separate and do not claim live detection from synthetic CI.
