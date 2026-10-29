@@ -725,3 +725,80 @@ def test_manifest_zeek_types_opt_in_refuses_missing_header_before_fit(tmp_path):
     ], capture_output=True, text=True)
     assert proc.returncode == 1
     assert not output.exists()
+
+
+# Synthetic-only regression for opt-in manifest-wide Zeek connection-start UTC bounds.
+# These checks do not attest to the real capture clock or measure alert timing.
+@pytest.mark.parametrize("mode", ["preflight", "output"])
+def test_manifest_wide_utc_event_start_gate_accepts_pinned_fixture(tmp_path, mode):
+    from evaluate_zeek_lab import inspect_offline_experiment, run_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    start, end = "2021-08-26T17:46:40Z", "2021-08-26T17:46:42Z"
+    kwargs = dict(lab_cidrs=["192.168.56.0/24"],
+                  event_window_start_utc=start, event_window_end_utc=end)
+    result = (inspect_offline_experiment(manifest, **kwargs) if mode == "preflight"
+              else run_offline_experiment(manifest, **kwargs))
+    assert result["telemetry_quality"]["operator_event_window_checked"] is True
+    assert result["telemetry_quality"]["screened_captures"] == 3
+    assert result["telemetry_quality"]["host_only_isolation_verified"] is False
+    serialized = json.dumps(result)
+    assert start not in serialized and end not in serialized
+    assert "private-operator-note" not in serialized and "192.168.56." not in serialized
+    args = ["--preflight"] if mode == "preflight" else ["--output", str(manifest.parent / "utc-report.json")]
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--cidr", "192.168.56.0/24",
+        "--event-start-utc", start, "--event-end-utc", end, *args,
+    ], capture_output=True, text=True, check=False)
+    assert proc.returncode == 0, proc.stderr
+    if mode == "preflight":
+        assert json.loads(proc.stdout)["telemetry_quality"]["operator_event_window_checked"] is True
+        assert not (manifest.parent / "utc-report.json").exists()
+    else:
+        assert json.loads((manifest.parent / "utc-report.json").read_text(encoding="utf-8"))["telemetry_quality"]["operator_event_window_checked"] is True
+
+
+@pytest.mark.parametrize("start,end", [
+    ("2021-08-26T17:46:40Z", None),
+    (None, "2021-08-26T17:46:42Z"),
+    ("2021-08-26T17:46:42Z", "2021-08-26T17:46:40Z"),
+    ("2021-08-26T17:46:41Z", "2021-08-26T17:46:42Z"),
+    ("2021-08-26T17:46:40+00:00", "2021-08-26T17:46:42Z"),
+    ("2021-02-30T00:00:00Z", "2021-08-26T17:46:42Z"),
+])
+def test_manifest_wide_utc_event_start_gate_refuses_before_output(tmp_path, start, end):
+    from evaluate_zeek_lab import inspect_offline_experiment, run_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    kwargs = dict(lab_cidrs=["192.168.56.0/24"],
+                  event_window_start_utc=start, event_window_end_utc=end)
+    with pytest.raises(ValueError):
+        inspect_offline_experiment(manifest, **kwargs)
+    with pytest.raises(ValueError):
+        run_offline_experiment(manifest, **kwargs)
+    output = manifest.parent / "refused-utc.json"
+    args = []
+    if start is not None:
+        args.extend(["--event-start-utc", start])
+    if end is not None:
+        args.extend(["--event-end-utc", end])
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--cidr", "192.168.56.0/24",
+        *args, "--output", str(output),
+    ], capture_output=True, text=True, check=False)
+    assert proc.returncode == 1
+    assert not output.exists()
+    assert "192.168.56." not in proc.stderr
+    assert "private-operator-note" not in proc.stderr
+
+
+def test_manifest_wide_utc_event_window_requires_cidr_and_legacy_unchanged(tmp_path):
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    with pytest.raises(ValueError, match="requires explicit lab CIDRs"):
+        inspect_offline_experiment(
+            manifest, event_window_start_utc="2021-08-26T17:46:40Z",
+            event_window_end_utc="2021-08-26T17:46:42Z",
+        )
+    legacy = inspect_offline_experiment(manifest)
+    assert "telemetry_quality" not in legacy
