@@ -7,6 +7,7 @@ attack confirmation, forensic signature or event-to-SOC latency measurement.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -33,6 +34,64 @@ def _reject_nonfinite(value: str) -> None:
     raise ValueError("Non-finite stored SOC evidence")
 
 
+
+def _verify_creation_note(
+    note: object, *,
+    prefix: str,
+    expected_manifest_sha256: str | None,
+    expected_import_report_sha256: str | None,
+    expected_pcap_sha256: str | None,
+) -> None:
+    """Require the complete canonical creation note, not scattered substrings.
+
+    The optional digest pins bind the stored operator-declared manifest/PCAP
+    claims to the independently supplied evidence checked by the CLI.
+    """
+    ending = "Authorization, Host-only isolation and ground truth are unverified."
+    if not isinstance(note, str) or not note.startswith(prefix) or not note.endswith(ending):
+        raise ValueError("Initial SOC audit does not match pinned research inference")
+    remaining = note[len(prefix):-len(ending)]
+
+    attestation = "TRAIN/VALIDATION/TEST exclusion is an operator attestation only. "
+    if remaining.startswith(attestation):
+        manifest_digest = None
+        remaining = remaining[len(attestation):]
+    else:
+        declared = re.match(
+            r"Declared exact-byte TRAIN/VALIDATION/TEST exclusion checked against "
+            r"pinned manifest_sha256=([0-9a-f]{64}); "
+            r"(?:Normalized UID/time/five-tuple identity overlap also checked; |"
+            r"Normalized flow identity overlap NOT checked; )"
+            r"historical completeness and semantic flow non-reuse unverified\. ",
+            remaining,
+        )
+        if declared is None:
+            raise ValueError("Invalid declared partition claim in SOC audit")
+        manifest_digest = declared.group(1)
+        remaining = remaining[declared.end():]
+    if expected_manifest_sha256 is not None and manifest_digest != expected_manifest_sha256:
+        raise ValueError("SOC audit manifest pin differs from verified manifest")
+
+    if remaining == "Original PCAP provenance NOT software-checked. ":
+        import_digest = pcap_digest = None
+    else:
+        imported = re.fullmatch(
+            r"Pinned original PCAP/import report/Zeek byte integrity and declared "
+            r"scope rechecked: import_report_sha256=([0-9a-f]{64}); "
+            r"pcap_sha256=([0-9a-f]{64})\. ",
+            remaining,
+        )
+        if imported is None:
+            raise ValueError("Invalid PCAP provenance claim in SOC audit")
+        import_digest, pcap_digest = imported.groups()
+    if ((expected_import_report_sha256 is None) != (expected_pcap_sha256 is None)
+            or (expected_import_report_sha256 is not None
+                and import_digest != expected_import_report_sha256)
+            or (expected_pcap_sha256 is not None
+                and pcap_digest != expected_pcap_sha256)):
+        raise ValueError("SOC audit PCAP pins differ from verified import")
+
+
 def verify_new_log_soc_case_link(
     db_path: str | Path, *,
     source_data: bytes,
@@ -43,6 +102,9 @@ def verify_new_log_soc_case_link(
     lab_cidrs: Sequence[str],
     record_index: int,
     case_id: int,
+    expected_manifest_sha256: str | None = None,
+    expected_import_report_sha256: str | None = None,
+    expected_pcap_sha256: str | None = None,
 ) -> dict[str, object]:
     """Verify one existing case against original NEW-log bytes without writes.
 
@@ -115,21 +177,25 @@ def verify_new_log_soc_case_link(
         raise ValueError("SOC evidence snapshot differs from original Zeek flow")
 
     old_state, new_state, initial_note = initial
-    required_note_parts = (
-        "NEW-log OFFLINE research candidate",
-        "NOT a verified attack",
-        f"source_sha256={expected_log_sha256};",
-        f"model_sha256={model_sha256};",
-        f"report_sha256={review['report_sha256']};",
-        f"scope_sha256={recomputed['declared_scope_sha256']};",
-        f"zeek_uid={prediction['uid']};",
-        f"research_attack_probability={prediction['attack_probability']:.8f};",
-        f"validation_threshold={recomputed['selected_validation_threshold']:.8f}.",
+    if old_state is not None or new_state != "New":
+        raise ValueError("Initial SOC audit state does not match case creation")
+    note_prefix = (
+        "Analyst-selected NEW-log OFFLINE research candidate; NOT a verified "
+        "attack or operational AI alert. "
+        f"source_sha256={expected_log_sha256}; "
+        f"model_sha256={model_sha256}; "
+        f"report_sha256={review['report_sha256']}; "
+        f"scope_sha256={recomputed['declared_scope_sha256']}; "
+        f"zeek_uid={prediction['uid']}; "
+        f"research_attack_probability={prediction['attack_probability']:.8f}; "
+        f"validation_threshold={recomputed['selected_validation_threshold']:.8f}. "
     )
-    if (old_state is not None or new_state != "New"
-            or not isinstance(initial_note, str)
-            or not all(part in initial_note for part in required_note_parts)):
-        raise ValueError("Initial SOC audit does not match pinned research inference")
+    _verify_creation_note(
+        initial_note, prefix=note_prefix,
+        expected_manifest_sha256=expected_manifest_sha256,
+        expected_import_report_sha256=expected_import_report_sha256,
+        expected_pcap_sha256=expected_pcap_sha256,
+    )
 
     return {
         "report_version": 1,
