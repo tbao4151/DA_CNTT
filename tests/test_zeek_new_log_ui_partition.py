@@ -25,6 +25,13 @@ CIDR = ["192.168.56.0/24"]
 
 def _prepared(tmp_path, *, source_data=None):
     manifest, dataset, model, new_log = _inputs(tmp_path)
+    # SOC writes require every private annotation to be pinned independently.
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    for capture in spec["captures"]:
+        labels = manifest.parent / capture["labels_path"]
+        capture["labels_sha256"] = hashlib.sha256(labels.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    model["input_manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
     model["selected_threshold"] = 0.000001  # synthetic UI fixture only
     model_path = manifest.parent / "ui-model.json"
     model_path.write_text(json.dumps(model, allow_nan=False), encoding="utf-8")
