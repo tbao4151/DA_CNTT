@@ -892,3 +892,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [x] [PR #197](https://github.com/tbao4151/DA_CNTT/pull/197) merged as `9a878faa900b1fe4257a291249fcbfc6ed56676d` after final-head [Ubuntu CI #40847919697](https://github.com/tbao4151/DA_CNTT/actions/runs/40847919697) (906 passed, 2 skipped) and [Windows CI #40847919907](https://github.com/tbao4151/DA_CNTT/actions/runs/40847919907) (146 Zeek + 46 Red Team passed), plus [real Zeek synthetic smoke #40847919837](https://github.com/tbao4151/DA_CNTT/actions/runs/40847919837) (success). Supersedes the pending feature-merge check above; post-merge main CI remains separate.
 - [ ] Verify the unchanged model-input v1 contract on genuine student Windows 11/VMware Host-only capture and retain independent original PCAP/Zeek hashes, authorized isolation evidence, labels and split plan. No CI metric is live attack detection or event-to-SOC latency.
+
+
+## Blue Team — shared Zeek UID identity fail-closed gate (29/10/2026)
+
+- [ ] Verify final feature-head Ubuntu Python 3.12.9, Windows offline Zeek and real-Zeek synthetic CI for shared-parser duplicate UID rejection; merge only if green and conflict-free. Manual offline SOC case creation must reject ambiguous UIDs before creating a database, while distinct UIDs for separate flows remain valid.
+- [ ] On student Windows 11/VMware Host-only, validate original authorized Zeek/PCAP evidence and independent SHA-256, actual network isolation, annotations and host/session partitions. Test duplicate UID refusal without editing the original capture; keep private evidence outside Git.
+- [ ] Measure genuine labeled held-out Precision/Recall/FPR and event-to-AI-alert-to-SOC-case latency only after approved isolated captures and independent adjudication. A parser integrity check does not establish attack detection, authorization or real capture authenticity.
