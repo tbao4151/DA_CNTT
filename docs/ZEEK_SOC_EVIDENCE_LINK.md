@@ -14,9 +14,7 @@ It opens the existing SQLite file in read-only mode; missing files are refused
 without creating a database. Returned metadata contains hashes and booleans,
 not source/destination IPs or raw flow evidence.
 
-This is a **library verification contract**, not a new CLI or UI feature.
-A future step may expose it in the SOC interface after integrating the pinned
-private manifest and PCAP import checks. The helper does not independently
+The library contract also has an **offline, read-only CLI** that requires a\nseparately SHA-256-pinned TRAIN/VALIDATION/TEST manifest, every annotation\ndigest, a pinned model, original Zeek log and research report, and an existing\nprivate SQLite case. It screens declared partition non-reuse and recomputes\nthe original inference before comparing the stored snapshot and creation audit.\nOptional original PCAP import provenance requires all three import options.\nThe CLI never creates a case, changes SQLite, or emits individual IPs/UIDs. The helper does not independently
 verify the declared TRAIN/VALIDATION/TEST partition, ground-truth labels,
 VMware Host-only isolation, model authorship, attack detection or end-to-end
 latency. The initial audit note is stored in a locally mutable SQLite database,
@@ -33,3 +31,37 @@ On the student's Windows machine, preserve the original PCAP, Zeek
 independently recorded SHA-256 values outside Git. Record actual network
 isolation and timestamps separately. Do not use this check to claim
 operational alerts or measured event-to-SOC delay.
+
+
+## Strict private CLI (Windows PowerShell)
+
+The case must already exist from the **manual, authorized** NEW-log triage
+workflow. Replace every placeholder with independently recorded values.
+The private manifest must include `labels_sha256` for every capture.
+
+```powershell
+py -3.12 scripts/verify_zeek_soc_case_link.py `
+  --model "C:/DA005-private/model.json" `
+  --expected-model-sha256 "<PINNED_MODEL_SHA256>" `
+  --log "C:/DA005-private/new/conn.log" `
+  --expected-log-sha256 "<PINNED_LOG_SHA256>" `
+  --report "C:/DA005-private/new/predictions.json" `
+  --manifest "C:/DA005-private/experiment/manifest.json" `
+  --expected-manifest-sha256 "<PINNED_MANIFEST_SHA256>" `
+  --cidr "<HOST_ONLY_CIDR>" `
+  --db "C:/DA005-private/soc/cases.sqlite3" `
+  --case-id 1 --record-index 0
+```
+
+For a separately pinned offline PCAP import, additionally provide
+`--offline-import-report`, `--expected-offline-import-report-sha256`
+and `--offline-import-pcap` together. A successful check only establishes
+consistency with **operator-declared** sources and an editable local SQLite
+audit. It does not establish complete capture history, trusted labels,
+physical isolation, verified attacks or real event-to-case latency.
+No JSON report is written; failures produce a generic message without
+private evidence details.
+
+```powershell
+py -3.12 -m pytest -q tests/test_zeek_soc_case_link_cli.py
+```
