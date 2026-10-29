@@ -64,6 +64,9 @@ def parse_zeek_conn_log(
         raise ValueError("Expected Zeek ASCII tab separator header")
     fields: list[str] | None = None
     seen_types = False
+    seen_unset_field = False
+    seen_empty_field = False
+    seen_path = False
     seen_data = False
     closed = False
     digest = hashlib.sha256(data).hexdigest()
@@ -84,6 +87,25 @@ def parse_zeek_conn_log(
             continue
         if line.startswith("#separator"):
             raise ValueError("Duplicate Zeek separator header")
+        # Zeek ASCII can declare how missing and empty string values are
+        # encoded. Silently ignoring non-default sentinels would turn missing
+        # service values into model categories or corrupt feature missingness.
+        # Legacy minimal fixtures may omit these optional metadata headers.
+        if line.startswith("#unset_field"):
+            if seen_unset_field or seen_data or line != "#unset_field\t-":
+                raise ValueError("Invalid, duplicate or late Zeek unset_field marker")
+            seen_unset_field = True
+            continue
+        if line.startswith("#empty_field"):
+            if seen_empty_field or seen_data or line != "#empty_field\t(empty)":
+                raise ValueError("Invalid, duplicate or late Zeek empty_field marker")
+            seen_empty_field = True
+            continue
+        if line.startswith("#path"):
+            if seen_path or seen_data or line != "#path\tconn":
+                raise ValueError("Invalid, duplicate or late Zeek conn path marker")
+            seen_path = True
+            continue
         if line.startswith("#fields\t"):
             if fields is not None or seen_data:
                 raise ValueError("Duplicate Zeek fields header")
@@ -135,7 +157,9 @@ def parse_zeek_conn_log(
             "dst_ip": _ip(row["id.resp_h"], "destination IP"),
             "dst_port": _port(row["id.resp_p"], "destination port"),
             "proto": proto,
-            "service": None if row.get("service", "-") == "-" else row["service"],
+            "service": (None if row.get("service", "-") == "-" else
+                        "" if seen_empty_field and row["service"] == "(empty)" else
+                        row["service"]),
             "duration_s": _number(row.get("duration", "-"), "duration"),
             "orig_bytes": _number(row.get("orig_bytes", "-"), "orig_bytes", integer=True),
             "resp_bytes": _number(row.get("resp_bytes", "-"), "resp_bytes", integer=True),
