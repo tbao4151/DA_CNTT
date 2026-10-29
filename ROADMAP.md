@@ -773,3 +773,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Ubuntu Python 3.12.9 full suite and Windows offline Zeek CI for opt-in `evaluate_zeek_lab.py --event-start-utc ... --event-end-utc ...` across every manifest capture; merge only if checks pass and the PR is conflict-free. This extends the previously merged single-log check, without changing Dataset Mode.
 - [ ] Student records independent approved UTC capture windows, PCAP/log hashes, Zeek/VMware versions, network isolation and host clock evidence for genuine Host-only sessions; test the new gate on Windows 11 and retain private reports. A single broad window is not proof that sessions are independent.
 - [ ] Obtain genuine, independently labeled host/session-disjoint Zeek data and measure actual event-to-alert/SOC timing. Operator-declared Zeek start times cannot establish authentic capture or detection performance; Red Team active traffic stays disabled.
+
+
+## Cyber Lab — verified manifest-wide UTC event-start gate (#181, 29/10/2026)
+
+- [x] [PR #181](https://github.com/tbao4151/DA_CNTT/pull/181) merged conflict-free after [Ubuntu CI #40821573729](https://github.com/tbao4151/DA_CNTT/actions/runs/40821573729) (**861 passed, 2 skipped**), [Windows CI #40821573777](https://github.com/tbao4151/DA_CNTT/actions/runs/40821573777) (**120 Zeek + 46 Red Team passed**) and [real Zeek synthetic CI #40821573782](https://github.com/tbao4151/DA_CNTT/actions/runs/40821573782) succeeded. Supersedes the feature CI-pending item above; no student VMware experiment is claimed.
+- [ ] Student verifies a genuine approved Host-only experiment on Windows 11 using independently recorded UTC session bounds, original Zeek/PCAP SHA-256, Zeek version, clock and network isolation evidence; run pinned manifest preflight and preserve private output. One broad interval does not prove session independence.
+- [ ] Collect independently adjudicated host/session-disjoint labels, evaluate real held-out Precision/Recall/FPR and independently measure event-to-alert/SOC timing before any detection claim. Active Red Team traffic remains disabled and Dataset Mode benchmark unchanged.
