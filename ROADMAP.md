@@ -1032,3 +1032,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] PR #215 merged at `75b2861fb52fbdec33ba203ad462b2f636e397a7` after final-head Ubuntu CI #40884444439 (**957 passed, 2 skipped**) and Windows offline Zeek CI #40884444416 (**181 Zeek + 46 Red Team passed**). Supersedes the pending CI/merge item above; post-merge main CI is independent.
 - [ ] Expose this read-only case-link check in the SOC workflow only with private pinned manifest/PCAP evidence and explicit "research-only" labeling. Do not convert it into an automatic operational attack verdict.
 - [ ] Student validates actual authorized Windows 11/VMware Host-only captures, independent annotations, SHA-256 pins, host isolation and genuine held-out Precision/Recall/FPR; separately instrument real event-to-alert-to-SOC-case timing. CI synthetic checks cannot substitute for those measurements.
+
+
+## Blue Team — strict pinned CLI for existing SOC case evidence link (29/10/2026)
+
+- [ ] Verify final feature-head Ubuntu Python 3.12.9 and Windows offline Zeek CI, no competing PR or conflict; merge only after successful checks. The read-only CLI must refuse altered case snapshot/audit, model/log/report/manifest/annotation pins and missing SQLite without creating or changing cases.
+- [ ] Student runs the strict CLI on a real, authorized Windows 11/VMware Host-only capture with independently preserved model, manifest, annotation, Zeek/PCAP hashes, actual network isolation evidence and separately adjudicated labels; test refusal on copies, never edit originals.
+- [ ] Measure genuine held-out attack Precision/Recall/FPR and event-to-AI-alert-to-SOC-case timing separately. A consistent SQLite note and declared non-reuse screen are not independent forensic authentication or operational detection.
