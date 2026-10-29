@@ -6,7 +6,7 @@ This is a **host-side configuration snapshot and fail-closed preflight**, not pr
 
 Before using any lab traffic, configure the VMware virtual network as **Host-only**, with NAT/bridged connectivity disabled for the selected VMnet; verify each guest has only the approved lab NIC and no egress/default route, and obtain permission for the test scope. These are **manual checks**; the script cannot establish them. Do not run active Red Team operations based only on this report.
 
-From the repository root, choose the **actual** VMware Host-only Windows adapter name and the **actual** approved RFC1918 subnet. Store snapshots outside Git, e.g. `C:\DA005-private\network\`. The directory must already exist. The collector refuses to overwrite an existing snapshot.
+From the repository root, choose the **actual** VMware Host-only Windows adapter name and the **actual** approved RFC1918 subnet. Store snapshots outside Git, e.g. `C:\DA005-private\network\`. The directory must already exist. The collector now refuses relative output paths and ordinary resolved output directories inside the Git repository, as well as existing snapshots. Keep the private directory outside Git; inspect junctions/reparse points manually because this path check is not a filesystem security boundary.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/collect_windows_hostonly_snapshot.ps1 `
