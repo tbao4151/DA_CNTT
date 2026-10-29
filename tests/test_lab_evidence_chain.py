@@ -175,3 +175,46 @@ def test_strict_gate_accepts_verified_original_pins(tmp_path, imported):
     assert report["independent_original_pcap_zeek_pins_required"] is True
     assert report["vmware_isolation_verified"] is False
     assert report["independent_labels_verified"] is False
+
+
+
+def test_guest_endpoint_presence_accepts_strictly_pinned_matching_flow(tmp_path, imported):
+    def enable(args, hp, gp):
+        args.extend(["--require-independent-original-pins", "--require-guest-endpoint"])
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report["guest_endpoint_presence_required"] is True
+    assert report["guest_endpoint_observed_in_verified_log"] is True
+    assert report["vmware_isolation_verified"] is False
+    assert report["capture_authenticity_verified"] is False
+    assert "192.168.56" not in result.stdout
+
+
+def test_guest_endpoint_presence_requires_strict_original_pins(tmp_path, imported):
+    def enable(args, hp, gp):
+        args.append("--require-guest-endpoint")
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+
+
+def test_guest_endpoint_presence_refuses_unrelated_in_scope_flow(tmp_path, imported):
+    def enable(args, hp, gp):
+        args.extend(["--require-independent-original-pins", "--require-guest-endpoint"])
+        guest_snapshot = json.loads(gp.read_text(encoding="utf-8"))
+        # Still a valid distinct, in-scope guest address; absent from the log.
+        guest_snapshot["adapters"][0]["ipv4"][0]["address"] = "192.168.56.30"
+        new_bytes = json.dumps(guest_snapshot).encode()
+        gp.write_bytes(new_bytes)
+        args[args.index("--expected-guest-sha256") + 1] = hashlib.sha256(new_bytes).hexdigest()
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert "192.168.56" not in result.stderr
+    assert str(tmp_path) not in result.stderr
