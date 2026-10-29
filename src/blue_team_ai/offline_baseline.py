@@ -18,7 +18,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION
+from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION, validate_zeek_model_features
 from .labeled_dataset import LabeledLabDataset, SPLITS
 from .host_variability import summarize_host_variability
 from .probability_diagnostics import summarize_probability_quality
@@ -50,21 +50,9 @@ def _validate_dataset(dataset: LabeledLabDataset) -> None:
         if any(type(label) is not int or label not in (0, 1) for label in labels) or set(labels) != {0, 1}:
             raise ValueError("Each split needs independently labeled binary classes")
         for row, meta in zip(rows, provenance):
-            if not isinstance(row, Mapping) or set(row) != set(LAB_FEATURE_COLUMNS):
-                raise ValueError("Unexpected Zeek feature columns")
+            validate_zeek_model_features(row)
             if not isinstance(meta, Mapping) or set(meta) != _PROVENANCE_FIELDS:
                 raise ValueError("Missing Zeek provenance fields")
-            for field in CATEGORICAL:
-                value = row[field]
-                if value is not None and (not isinstance(value, str) or len(value) > 256):
-                    raise ValueError("Invalid categorical Zeek feature")
-            for field in NUMERIC:
-                value = row[field]
-                if value is not None and (
-                    isinstance(value, bool) or not isinstance(value, (int, float))
-                    or not math.isfinite(value) or value < 0 or value > 1e12
-                ):
-                    raise ValueError("Invalid numeric Zeek feature")
             for field in _PROVENANCE_FIELDS:
                 value = meta[field]
                 if not isinstance(value, str) or not value or len(value) > 256:
