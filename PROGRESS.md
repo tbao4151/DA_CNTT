@@ -1765,3 +1765,10 @@
   preserve independent model/log/manifest/annotation digests and isolation
   evidence outside Git. No live attack detection, real latency or independent
   label verification has been established.
+
+## 2026-10-29 — Require pinned annotation digests at NEW-log SOC triage boundary (feature PR)
+
+- Inspected `main` at `c8444beec800b91b61600f2a77dfd44618462754`, README, PROGRESS, ROADMAP, source tree, open PRs (none), recent Actions and the existing NEW-log scoring/triage paths. Scoring already required `labels_sha256` for all declared TRAIN/VALIDATION/TEST annotations, but the later CLI/UI SOC boundary did not require it.
+- Updated `scripts/triage_zeek_new_log.py` to require every declared annotation digest and re-check the manifest hash at both CLI and UI SOC boundaries. Added synthetic regression tests for modified annotations and missing pins; refreshed synthetic UI/CLI fixtures to use pinned annotations. Existing unpinned CLI mode remains available and explicitly unverified.
+- No UNSW-NB15 benchmark, model training, original capture, SQLite database, network traffic, active Red Team or public deployment was changed.
+- **Verification status at authoring: feature branch; GitHub CI and PR merge not yet verified.** These are source/annotation byte-consistency checks, not proof of independent label truth, physical isolation, real attack detection or student Windows/VMware testing. Verify final-head Ubuntu/Windows CI and mergeability before merging.
