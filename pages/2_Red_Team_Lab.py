@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -11,7 +12,11 @@ sys.path.insert(0, str(ROOT / "src"))
 import pandas as pd
 import streamlit as st
 
-from red_team_ai.scenario_policy import MAX_FEEDBACK, SCENARIOS, choose_scenario, summarize_feedback
+from red_team_ai.scenario_policy import SCENARIOS, choose_scenario, summarize_feedback
+from red_team_ai.planning_audit import (
+    MAX_PROPOSALS, append_manual_feedback, append_proposal,
+    export_planning_audit, extract_manual_feedback,
+)
 from red_team_ai.synthetic_benchmark import compare_synthetic_policies
 
 st.set_page_config(page_title="DA005 | Red Team Lab", page_icon=None, layout="wide")
@@ -32,10 +37,14 @@ st.warning(
     "Phản hồi do người dùng nhập chưa được xác minh bằng log hoặc bằng chứng SOC."
 )
 
-if "red_team_feedback" not in st.session_state:
-    st.session_state["red_team_feedback"] = []
+if "red_team_audit_events" not in st.session_state:
+    st.session_state["red_team_audit_events"] = []
 
-feedback = st.session_state["red_team_feedback"]
+# Derive policy observations from linked proposals; never accept arbitrary IDs.
+audit = export_planning_audit(st.session_state["red_team_audit_events"])
+feedback = extract_manual_feedback(st.session_state["red_team_audit_events"])
+st.session_state["red_team_feedback"] = feedback
+pending_id = audit["pending_proposal_id"]
 summary = summarize_feedback(feedback)
 col1, col2, col3 = st.columns(3)
 col1.metric("Kịch bản offline", len(SCENARIOS))
@@ -59,10 +68,19 @@ strategy = st.radio(
     format_func=lambda v: "UCB1 (exploration/exploitation)" if v == "ucb1" else "Random baseline",
 )
 seed = st.number_input("Seed của random baseline", min_value=0, max_value=1_000_000, value=42, disabled=strategy != "random")
-if st.button("Đề xuất kịch bản (không thực thi)", type="primary"):
-    st.session_state["red_team_last_plan"] = choose_scenario(feedback, strategy=strategy, seed=int(seed))
+if st.button(
+    "Đề xuất kịch bản (không thực thi)", type="primary",
+    disabled=pending_id is not None or audit["proposals"] >= MAX_PROPOSALS,
+):
+    plan_choice = choose_scenario(feedback, strategy=strategy, seed=int(seed))
+    st.session_state["red_team_audit_events"] = append_proposal(
+        st.session_state["red_team_audit_events"], plan_choice,
+        seed=int(seed), recorded_at_utc=datetime.now(timezone.utc).isoformat(),
+    )
+    st.session_state["red_team_last_plan"] = plan_choice
+    st.rerun()
 
-plan = st.session_state.get("red_team_last_plan")
+plan = st.session_state.get("red_team_last_plan") if pending_id is not None else None
 if plan is not None:
     st.success(f"Đề xuất: {plan['title']} ({plan['scenario_id']})")
     st.caption(plan["rationale"])
@@ -80,13 +98,23 @@ st.caption(
     "Không tự động đánh giá Blue Team; không lưu xuống đĩa."
 )
 with st.form("manual_red_team_feedback", clear_on_submit=True):
-    chosen_id = st.selectbox("Kịch bản đã được xem xét ngoại tuyến", [s.scenario_id for s in SCENARIOS])
+    chosen_id = st.selectbox(
+        "Kịch bản đã được đề xuất (chỉ phản hồi cho đề xuất đang chờ)",
+        [plan["scenario_id"]] if plan is not None else [s.scenario_id for s in SCENARIOS],
+        disabled=plan is None,
+    )
     blue_flagged = st.radio("Trong quan sát thủ công, Blue Team có đánh dấu?", [True, False],
                             format_func=lambda v: "Có (flagged)" if v else "Không (unflagged)")
     confirm = st.checkbox("Tôi xác nhận đây là phản hồi thủ công, chưa được kiểm chứng.")
-    submitted = st.form_submit_button("Thêm phản hồi", disabled=not confirm or len(feedback) >= MAX_FEEDBACK)
-if submitted:
-    st.session_state["red_team_feedback"] = [*feedback, {"scenario_id": chosen_id, "blue_flagged": blue_flagged}]
+    submitted = st.form_submit_button("Thêm phản hồi", disabled=plan is None)
+if submitted and pending_id is not None and not confirm:
+    st.error("Cần xác nhận đây là quan sát thủ công chưa được kiểm chứng.")
+if submitted and pending_id is not None and confirm:
+    st.session_state["red_team_audit_events"] = append_manual_feedback(
+        st.session_state["red_team_audit_events"],
+        proposal_id=pending_id, blue_flagged=blue_flagged,
+        recorded_at_utc=datetime.now(timezone.utc).isoformat(),
+    )
     st.session_state.pop("red_team_last_plan", None)
     st.rerun()
 
@@ -94,9 +122,27 @@ if summary["total"]:
     st.dataframe(pd.DataFrame(summary["scenarios"]), hide_index=True, use_container_width=True)
     st.caption("Unflagged fraction là phản hồi tự nhập, không phải attack success rate hoặc AI recall.")
 
+st.markdown("### Timeline đề xuất và phản hồi ngoại tuyến")
+st.caption(
+    "Chỉ lưu trong phiên Streamlit: proposal ID, chính sách, seed, UTC và phản hồi tự nhập. "
+    "Không có thời điểm phát traffic, AI alert hay xác nhận Blue Team. "
+    "JSON không có chữ ký số và có thể chỉnh sửa sau khi xuất."
+)
+if audit["events"]:
+    st.dataframe(pd.DataFrame(audit["events"]), hide_index=True, use_container_width=True)
+    st.download_button(
+        "Xuất timeline JSON (operator-entered, chưa xác minh)",
+        data=json.dumps(audit, ensure_ascii=False, indent=2, allow_nan=False),
+        file_name="red_team_offline_planning_audit.json", mime="application/json",
+    )
+else:
+    st.info("Chưa có đề xuất hoặc phản hồi nào trong phiên lập kế hoạch.")
+
 if st.button("Dừng phiên lập kế hoạch và xóa phản hồi", type="secondary"):
+    st.session_state["red_team_audit_events"] = []
     st.session_state["red_team_feedback"] = []
     st.session_state.pop("red_team_last_plan", None)
+    st.session_state.pop("red_team_synthetic_comparison", None)
     st.rerun()
 
 st.info("Không có tiến trình tấn công để dừng. Tính năng kill switch cho traffic thật chưa được triển khai.")
