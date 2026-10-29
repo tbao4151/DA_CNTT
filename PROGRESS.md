@@ -1555,9 +1555,24 @@
 - **Post-merge main CI #40829543357 was queued when checked, not claimed passed.** GitHub Windows CI is not student Windows 11/VMware acceptance. Synthetic fixture scores are not empirical attack-detection results. Student must independently pin real authorized Host-only PCAP/Zeek/annotation evidence, preregister variants/splits and report actual held-out class supports and uncertainty before drawing scientific conclusions.
 
 
+## 2026-10-29 — Paired Zeek ablation: anonymized host-group variability (feature; CI pending)
+
+- Reviewed current `main` at `90a30ce2cc11ff44d180295d5c74b4c4c9bccd34`, README/PROGRESS/ROADMAP, source tree, recently merged #185/#186, recent Actions and open PRs (none at inspection). Existing post-merge quality CI for #185 completed successfully; no new student capture or model evidence was present.
+- Extended the **offline-only** paired full-nine-feature versus portless-seven-feature Zeek experiment to include existing anonymized host-group confusion/rate summaries for VALIDATION and held-out TEST **for both variants**. Report schema version increases from 1 to 2; the existing CLI flag, default Dataset Mode, trained models, SOC cases, benchmark and safety boundaries are unchanged. These are descriptive host-group diagnostics; they are not cluster-adjusted uncertainty estimates or independently authenticated host identities.
+- Added synthetic regression tests for aggregate-to-host confusion consistency, privacy/no raw host IDs, small/single-group warnings, and held-out label changes not affecting validation-selected thresholds or validation host summaries. Updated the private Windows research guide.
+- **At feature authoring, PR-head Ubuntu/Windows CI, merge and student Windows 11/VMware acceptance remain unverified.** Synthetic labels and declared host groups are not evidence of actual attack detection, physical isolation, or real event-to-alert/SOC latency. Next: verify CI and conflict-free merge, then student collects authorized independently labeled Host-only captures and privately examines host-level variation without selecting a winner on TEST.
+
+
+## 2026-10-29 — Paired Zeek host-group diagnostics verified and merged (#187)
+
+- [PR #187](https://github.com/tbao4151/DA_CNTT/pull/187) squash-merged at `8cba08a1809f39e0840e1cd93f92f9253058a807` after final feature head `7ecf8233fb20e746f72051b6e67d1dfc819f30dd` was conflict-free against unchanged `main`. [Ubuntu Python 3.12.9 quality CI #40830565924](https://github.com/tbao4151/DA_CNTT/actions/runs/40830565924) **passed: 873 passed, 2 skipped, 2 warnings**; [Windows Server 2022 Python 3.12.9 offline CI #40830565922](https://github.com/tbao4151/DA_CNTT/actions/runs/40830565922) **passed: 132 Zeek + 46 Red Team tests**. Counts were checked from completed job logs.
+- The opt-in private port-feature ablation report v2 now provides anonymized VALIDATION/TEST host-group confusion counts, rates and small/single-group warnings for both prespecified variants. Existing thresholds remain validation-selected; held-out TEST is descriptive only. No model artifact, benchmark, SOC case, network activity or Red Team execution changed.
+- **Post-merge main CI and student Windows 11/VMware acceptance were not verified when this documentation was authored.** CI synthetic fixtures do not authenticate operator labels, actual physical isolation, host identities or event-to-SOC latency. Students must retain authorized original PCAP/log/annotation hashes and host/session evidence privately and avoid selecting a variant using held-out TEST.
 
 ## 2026-10-29 — Paired Zeek port-ablation TEST correctness (feature PR pending)
 
 - Added an aggregate per-row paired correctness contingency for the two already-prespecified full/portless Zeek research variants, including operator-label class breakdowns. It reuses the identical held-out TEST order after TRAIN-only fitting and VALIDATION-only threshold selection; does not expose per-flow predictions or add a significance claim.
 - Added synthetic unit/regression tests for confusion-matrix consistency, input refusal and test-label invariance of the two validation-selected thresholds. CI/PR merge and student Windows 11/VMware experiment are **pending at authoring**; do not treat local fixtures as real detection evidence.
 - No change to official UNSW-NB15 benchmark, active Red Team traffic, operational alerts, SOC database, or model deployment. Next: verify final-head Ubuntu and Windows CI, then preregister a genuine independently labeled Host-only evaluation with multiple independent sessions.
+
+- Reconciled this feature with merged #187 and #189 on current `main` while preserving host-group diagnostics and report schema v2. Earlier green CI #40830683345 (Ubuntu) and #40830683244 (Windows) was for the pre-reconciliation head only; **new merged-head CI must pass before merge**.

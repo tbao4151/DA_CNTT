@@ -15,8 +15,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION
-from .paired_disagreement import summarize_paired_zeek_test
 from .labeled_dataset import LabeledLabDataset, SPLITS
+from .host_variability import summarize_host_variability
+from .paired_disagreement import summarize_paired_zeek_test
 from .offline_baseline import (
     CATEGORICAL, NUMERIC, THRESHOLDS, _frame, _scores, _validate_dataset,
     make_zeek_research_pipeline,
@@ -68,6 +69,14 @@ def _fit_one(dataset: LabeledLabDataset, model: Pipeline, columns: tuple[str, ..
         "selected_validation_threshold": selected,
         "validation_metrics": candidates[selected],
         "test_metrics": _scores(dataset.labels["test"], test, selected),
+        "validation_host_variability": summarize_host_variability(
+            dataset.labels["validation"], validation,
+            [p["host_group"] for p in dataset.provenance["validation"]], selected,
+        ),
+        "test_host_variability": summarize_host_variability(
+            dataset.labels["test"], test,
+            [p["host_group"] for p in dataset.provenance["test"]], selected,
+        ),
     }, [bool(probability >= selected) for probability in test]
 
 
@@ -95,7 +104,7 @@ def evaluate_zeek_port_ablation(dataset: LabeledLabDataset) -> dict[str, object]
         for split in SPLITS
     }
     return {
-        "report_version": 1,
+        "report_version": 2,
         "mode": "offline_zeek_port_feature_ablation_research_only",
         "feature_schema_version": LAB_FEATURE_SCHEMA_VERSION,
         "label_authenticity": "operator_supplied_not_verified",
@@ -109,6 +118,7 @@ def evaluate_zeek_port_ablation(dataset: LabeledLabDataset) -> dict[str, object]
         "provenance": sources,
         "test_metrics_used_for_model_selection": False,
         "causal_feature_effect_established": False,
+        "host_group_variability_is_descriptive_only": True,
         "host_only_isolation_verified": False,
         "independent_ground_truth_verified": False,
         "live_capture": False,

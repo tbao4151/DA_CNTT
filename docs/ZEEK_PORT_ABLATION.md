@@ -69,9 +69,20 @@ both variants; the command uses the same input split automatically.
 The private aggregate JSON contains validation and held-out TEST confusion
 counts, Precision, Recall, F1, FPR, validation-selected thresholds, a signed
 delta (`without_ports - full`), and source hashes/counts. It intentionally
-omits raw IPs, Zeek UIDs, host identifiers and label references. It does not
-verify the authenticity of operator labels, actual Host-only isolation or
-capture provenance. No live collection, automatic alert, operational attack
+omits raw IPs, Zeek UIDs, host identifiers and label references. Report
+schema version 2 also includes `validation_host_variability` and
+`test_host_variability` for **each** variant, reusing the existing
+anonymized host-group summarizer. Each group has confusion counts, class-rate
+denominators through counts, undefined rates as `null`, and warnings for
+fewer than 30 flows or only one declared host group. The anonymous group
+numbers are sorted consistently within each variant for a given split, but
+are **not authenticated host identities** and must not be joined to other
+experiments. Aggregate confusion counts must equal the sum across groups.
+Do not use TEST host-level diagnostics to choose features or thresholds.
+
+These descriptive summaries are not cluster-adjusted confidence intervals
+and cannot verify the authenticity of operator labels, actual Host-only
+isolation or capture provenance. No live collection, automatic alert, operational attack
 detection, SOC case creation or event-to-SOC latency is measured.
 
 Synthetic software regression:
@@ -83,7 +94,6 @@ py -3.12 -m pytest -q tests/test_zeek_port_ablation.py
 Passing GitHub Ubuntu/Windows CI is **not** acceptance on the student's
 Windows 11/VMware lab. Keep the local output and lab notebook privately for
 GVHD review; do not publish sensitive evidence in this public repository.
-
 
 ## Paired TEST correctness contingency (29/10/2026)
 
