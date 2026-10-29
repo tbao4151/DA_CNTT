@@ -745,3 +745,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify and merge the optional `--require-zeek-types` quality/manifest gate only after final-head Ubuntu, Windows and network-disabled real Zeek synthetic CI pass without conflict. Missing, conflicting, duplicate or late `#types` must fail before experiment output.
 - [ ] On Windows 11/VMware, run the private typed-header gate on a genuine authorized Zeek `conn.log`, recording PCAP/log SHA-256, Zeek version and Host-only isolation proof separately. Header correctness alone does not establish capture authenticity or label validity.
 - [ ] Continue independently labeled host/session-disjoint experiments, measured event-to-alert/SOC latency and held-out Zeek Precision/Recall/FPR. No synthetic metric is real detection evidence. Red Team active traffic stays disabled; Dataset Mode remains unchanged.
+
+
+## Cyber Lab — declared Zeek types gate verified (#177, 29/10/2026)
+
+- [x] [PR #177](https://github.com/tbao4151/DA_CNTT/pull/177) merged after final-head [Ubuntu CI #40816621940](https://github.com/tbao4151/DA_CNTT/actions/runs/40816621940) (**839 passed, 2 skipped**), [Windows CI #40816621786](https://github.com/tbao4151/DA_CNTT/actions/runs/40816621786) (**98 Zeek + 46 Red Team passed**) and [real Zeek synthetic CI #40816621990](https://github.com/tbao4151/DA_CNTT/actions/runs/40816621990) passed. Supersedes the pending CI/merge item above. No student laptop experiment was performed.
+- [ ] Student independently pins and validates genuine authorized Zeek `conn.log` headers on Windows 11/VMware Host-only, preserving original PCAP/log, Zeek version, network isolation screenshots, ground truth and session/host split evidence privately. Use `--require-zeek-types` for both preflight and evaluation when appropriate.
+- [ ] Measure held-out Zeek Precision/Recall/FPR and event-to-SOC latency on genuine independently labeled captures; passing declared type checks cannot establish scientific validity, live collection or attack detection. Red Team active network execution remains disabled.
