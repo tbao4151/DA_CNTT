@@ -630,3 +630,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Python 3.12.9 CI for the feature branch implementing `--require-telemetry-quality` in `scripts/evaluate_zeek_lab.py`; merge only if green and conflict-free. The opt-in must require explicit `--cidr`, screen **every** pinned capture before fitting, and expose only fixed aggregate quality counters by split; legacy reports must remain unchanged.
 - [ ] Student independently verifies VMware Host-only adapters/routes, captures authorized genuine traffic, records separate PCAP/Zeek SHA-256, and runs both private quality preflight and independent host/session-disjoint annotation evaluation on Windows. Warnings are not attack labels or proof of isolation; no real detection performance or event-to-SOC latency has been measured.
 - [ ] Continue trustworthy lab-specific model evaluation and measured SOC workflow before operational alerts. Preserve UNSW official benchmark and keep active Red Team traffic disabled.
+
+
+## Cyber Lab — verified opt-in manifest quality gate (#161, 29/10/2026)
+
+- [x] [PR #161](https://github.com/tbao4151/DA_CNTT/pull/161) merged after final-head [Python 3.12.9 CI #40792521743](https://github.com/tbao4151/DA_CNTT/actions/runs/40792521743) passed (**786 passed, 2 skipped**); previous pending merge item superseded. Post-merge main CI #40792986576 was still running when this entry was authored.
+- [ ] Students validate private Windows/VMware Host-only captures with separately recorded SHA-256, adapter/routes evidence and independently assigned labels. Then run `--require-telemetry-quality --cidr ... --preflight` and held-out evaluation. Missing-value warnings cannot be used as labels or to tune held-out test metrics.
+- [ ] Independently evaluate real Zeek-specific Precision/Recall/FPR and event-to-SOC latency before operational alerts or active Red Team. Preserve official UNSW benchmark.
