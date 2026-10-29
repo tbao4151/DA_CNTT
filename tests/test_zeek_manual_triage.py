@@ -96,3 +96,15 @@ def test_appended_record_after_zeek_close_never_creates_soc_case(tmp_path):
     with pytest.raises(ValueError, match="Zeek content after close"):
         create_offline_review_case(db, source_data=forged, record_index=0)
     assert not db.exists()
+
+
+def test_noncanonical_zeek_unset_marker_cannot_create_manual_soc_case(tmp_path):
+    db = tmp_path / "cyber.sqlite3"
+    # A custom missing-value marker must not silently become an AI category
+    # or be persisted as a supposedly well-understood Zeek source.
+    forged = sample_log().replace(
+        b"#fields\t", b"#unset_field\t?\n#fields\t", 1
+    )
+    with pytest.raises(ValueError, match="Zeek unset_field marker"):
+        create_offline_review_case(db, source_data=forged, record_index=0)
+    assert not db.exists()
