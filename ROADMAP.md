@@ -946,3 +946,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #205](https://github.com/tbao4151/DA_CNTT/pull/205) merged as `15dc10bb9c544e6b79b0c10df660591d6df7c6e0` after final-head [Ubuntu CI #40864002492](https://github.com/tbao4151/DA_CNTT/actions/runs/40864002492) (**925 passed, 2 skipped**), [Windows CI #40864002574](https://github.com/tbao4151/DA_CNTT/actions/runs/40864002574) (**149 Zeek + 46 Red Team passed**) and [real Zeek synthetic CI #40864002469](https://github.com/tbao4151/DA_CNTT/actions/runs/40864002469) (**success**). Supersedes the pending feature-merge check above; post-merge main CI is separate.
 - [ ] Student verifies unchanged original authorized VMware Host-only PCAP/Zeek, independent SHA-256, Zeek version, actual isolation, labels and held-out splits on Windows 11 Python 3.12.9. Check malformed copies, not original evidence. CI synthetic regression is not student hardware acceptance.
 - [ ] Evaluate independent multi-host/session held-out attack detection and actual event-to-AI-alert-to-SOC-case delay. Metadata consistency does not establish capture authenticity, model accuracy, physical isolation or operational Red Team controls.
+
+
+## Blue Team — optional Zeek #open/#set_separator metadata integrity (29/10/2026)
+
+- [ ] Verify final feature-head Ubuntu Python 3.12.9, Windows offline Zeek and real-Zeek synthetic smoke CI; merge only after green checks and a conflict-free PR. Reject malformed/duplicate/late #open or #set_separator before manual SOC writes; preserve minimal legacy fixtures.
+- [ ] Student tests unchanged original authorized Windows 11/VMware Host-only PCAP/Zeek with separately recorded SHA-256, Zeek version, network/clock isolation and independent annotations; use malformed copies for negative tests.
+- [ ] Collect genuine multi-host/session labeled holdout and measured event-to-AI-alert-to-SOC-case timing. Parser metadata validation is not proof of source authenticity, operational detection or physical isolation.
