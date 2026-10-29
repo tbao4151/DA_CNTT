@@ -84,3 +84,37 @@ def test_wrong_pinned_inputs_or_missing_case_refuse_without_db_writes(tmp_path, 
     with pytest.raises(ValueError, match="Existing regular SQLite"):
         _verify(tmp_path / "missing.sqlite3", evidence, case_id=case_id)
     assert not (tmp_path / "missing.sqlite3").exists()
+
+
+@pytest.mark.parametrize("mutation", [
+    "append_claim", "prepend_claim", "insert_claim", "alter_canonical_phrase",
+])
+def test_creation_audit_rejects_extra_or_reworded_claims(tmp_path, evidence, mutation):
+    """A note containing all the old required substrings is not sufficient."""
+    db = tmp_path / "research.sqlite3"
+    case_id = create_new_log_candidate_case(db, **_args(evidence))
+    with sqlite3.connect(db) as conn:
+        note = conn.execute(
+            "SELECT note FROM case_events WHERE case_id=? ORDER BY event_id LIMIT 1",
+            (case_id,),
+        ).fetchone()[0]
+        if mutation == "append_claim":
+            altered = note + " Attack independently confirmed."
+        elif mutation == "prepend_claim":
+            altered = "Verified attack. " + note
+        elif mutation == "insert_claim":
+            altered = note.replace(
+                "Authorization, Host-only isolation",
+                "Verified attack. Authorization, Host-only isolation",
+            )
+        else:
+            altered = note.replace(
+                "NOT a verified attack", "NOT a verified attack (yet)",
+            )
+        assert altered != note
+        conn.execute(
+            "UPDATE case_events SET note=? WHERE case_id=?",
+            (altered, case_id),
+        )
+    with pytest.raises(ValueError):
+        _verify(db, evidence, case_id=case_id)

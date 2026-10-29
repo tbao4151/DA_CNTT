@@ -1046,3 +1046,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #217](https://github.com/tbao4151/DA_CNTT/pull/217) merged as `9372a33e90298490a1fd67c1dd93157fc6e7b112` after final-head [Ubuntu CI #40889546406](https://github.com/tbao4151/DA_CNTT/actions/runs/40889546406) (**968 passed, 2 skipped**) and [Windows CI #40889546209](https://github.com/tbao4151/DA_CNTT/actions/runs/40889546209) (**192 Zeek + 46 Red Team passed**). This supersedes the pending feature merge gate above. Post-merge main CI is separate.
 - [ ] Student validates the read-only CLI on independently pinned authorized Windows 11/VMware Host-only PCAP/Zeek, manifest/annotations/model/report, original SOC case and isolation evidence. Record screenshots and original SHA-256 privately; verify no DB changes and refuse tampered copies.
 - [ ] Collect independently adjudicated held-out data and measure actual event-to-AI-alert-to-SOC-case delay. A consistent stored Unclassified research case does not constitute a confirmed attack or operational alert.
+
+## Blue Team — canonical SOC creation-audit gate (29/10/2026)
+
+- [ ] Verify final feature-head Ubuntu Python 3.12.9 and Windows offline Zeek CI, confirm no competing PR/conflict, then merge only after green checks. The pinned case-link CLI must reject injected attack claims, noncanonical notes and stored manifest/PCAP digests inconsistent with verified inputs.
+- [ ] Student runs read-only verification on authorized Windows 11/VMware Host-only original evidence, tests malformed copies without changing original SQLite/PCAP/Zeek, and records independent SHA-256 and isolation evidence outside Git.
+- [ ] Obtain independently adjudicated labeled captures and real event-to-AI-alert-to-SOC-case timing. Editable SQLite note consistency is neither forensic authentication nor live detection evidence.
