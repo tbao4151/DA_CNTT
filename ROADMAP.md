@@ -913,3 +913,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9 and Windows offline Zeek CI; merge only when green and conflict-free. The common parser must reject duplicate/late `#types` headers without requiring the optional strict declared-type gate or breaking legacy minimal fixtures.
 - [ ] Student validates original authorized Windows 11/VMware Host-only Zeek `conn.log`, pinned hashes, version, actual isolation and independent labels; confirm genuine logs with one well-positioned `#types` parse, and test malformed copies without editing originals.
 - [ ] Obtain independently adjudicated held-out detection evidence and actual event-to-AI-alert-to-SOC-case timing. Parser header checks do not establish these outcomes; Dataset Mode and active Red Team remain unchanged.
+
+
+## Blue Team — shared Zeek #types ordering verified (#201, 29/10/2026)
+
+- [x] [PR #201](https://github.com/tbao4151/DA_CNTT/pull/201) merged conflict-free after final-head [Ubuntu CI #40855635345](https://github.com/tbao4151/DA_CNTT/actions/runs/40855635345) (**909 passed, 2 skipped**), [Windows CI #40855635327](https://github.com/tbao4151/DA_CNTT/actions/runs/40855635327) (**147 Zeek + 46 Red Team passed**) and [real Zeek synthetic CI #40855635368](https://github.com/tbao4151/DA_CNTT/actions/runs/40855635368) (**success**). Earlier test-only source-hash assertion failure was fixed before final verification.
+- [ ] Student checks actual Windows 11/VMware Host-only Zeek original PCAP/`conn.log` and separately pinned SHA-256, authorization, physical network isolation and independent labels. CI and parser type-header checks are not genuine attack-detection or event-to-SOC timing evidence.
+- [ ] Verify post-merge `main` CI independently, then prioritize independent held-out capture evaluation and measured event-to-AI-alert-to-SOC-case timing; do not claim operational alerts or Red Team active traffic.
