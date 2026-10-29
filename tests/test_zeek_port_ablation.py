@@ -296,7 +296,7 @@ def test_paired_host_discordance_suppresses_all_groups_against_differencing():
     ["only-one"],
     [""] * 60,
     [" invalid"] * 60,
-    ["bad\\nline"] * 60,
+    ["bad\nline"] * 60,
     [123] * 60,
     ["x" * 257] * 60,
 ])
