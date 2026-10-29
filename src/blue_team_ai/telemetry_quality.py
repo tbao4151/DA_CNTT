@@ -191,6 +191,6 @@ def inspect_zeek_telemetry_quality(
             "A valid SHA-256, CIDR match or complete feature row cannot establish "
             "genuine VMware Host-only capture, independent labels or detection accuracy. "
             "Operator-declared event windows only constrain logged start times, not "
-            "actual capture time or event-to-alert latency."
+            "actual capture or alert timing."
         ),
     }
