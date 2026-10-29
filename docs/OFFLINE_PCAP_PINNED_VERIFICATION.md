@@ -30,3 +30,36 @@ python3 -m pytest -q tests/test_offline_pcap_verify.py
 ```
 
 Fixture PCAP và Zeek tổng hợp; Zeek import trong fixture dùng **mock subprocess**, không chạy Zeek thật. Kết quả GitHub CI chỉ chứng minh đường đi kiểm tra checksum/schema/scope và điều kiện từ chối trên runner, không thay thế nghiệm thu laptop/VMware.
+
+
+## Optional strict classic-PCAP record framing (30/10/2026)
+
+For a stronger **structural** check, append `--require-pcap-framing` to
+`scripts/verify_offline_pcap_import.py`. This opt-in mode re-reads the same
+bounded, SHA-256-pinned PCAP bytes and validates classic-PCAP v2.4 global
+header, four byte-order/timestamp-resolution magic variants, nonzero
+snapshot length, packet-record headers, timestamp fractions, captured
+versus original/snapshot lengths, and exact record boundaries. At least
+one nonempty packet record is required. A successful run reports the
+number of framed records; without the flag the CLI explicitly states
+that packet framing was **not** checked. Existing import/verification
+calls remain backward compatible.
+
+Example (append to the existing private command):
+
+```bash
+  --require-pcap-framing
+```
+
+This does **not** decode Ethernet/IP/TCP, compare individual PCAP packets
+to Zeek flows, validate Zeek's semantic correctness, or establish
+capture authenticity, isolation, authorization, independent attack labels,
+AI alerts or live detection latency. A valid packet count is not expected
+to equal Zeek flow count. The existing offline importer still accepts
+header-only synthetic test fixtures; the stricter check is a separate
+opt-in research acceptance gate, not a retrospective claim about old data.
+
+Synthetic regression: `python -m pytest -q tests/test_pcap_structure.py tests/test_offline_pcap_verify.py`.
+Student acceptance requires a genuine privately stored classic PCAP
+from an authorized Host-only lab, separately pinned original SHA-256,
+a Zeek `conn.log` and the import report. Do not publish private captures.
