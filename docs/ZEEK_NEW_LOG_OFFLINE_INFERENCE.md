@@ -59,10 +59,21 @@ separate manual analyst-to-SOC review, follow the existing research triage
 workflow; this CLI deliberately does not create a case.
 
 CI tests use synthetic Zeek fixtures only. Windows laptop execution and
-physical Host-only isolation have not been verified by CI. If output writing
-is interrupted, inspect the partial file privately; a rerun must use a new
-output filename rather than overwrite evidence.
+physical Host-only isolation have not been verified by CI.
 
+Prediction JSON publication now stages UTF-8 bytes in a private temporary file
+in the same directory, flushes them to storage, then uses a no-overwrite
+hard link to expose only the complete file. It never replaces an existing
+report, including one created concurrently. The staging file is removed on
+ordinary success/failure. If the filesystem does not support hard links, the
+command fails closed; use a local NTFS directory on Windows rather than
+weakening this guarantee. An abrupt process or power failure may leave a
+private dot-prefixed staging file; inspect it without treating it as a
+published report. This is not a cryptographic signature, multi-file
+transaction or guarantee against a malicious administrator.
+
+Synthetic filesystem regression:
+`py -3.12 -m pytest -q tests/test_zeek_new_log_atomic_output.py`.
 
 ## Optional pinned PCAP provenance gate (29/10/2026)
 
