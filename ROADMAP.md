@@ -1025,3 +1025,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9 CI and Windows offline Zeek regression (where configured); merge only after checks pass and no conflicts exist. Verify original Zeek flow, research prediction and first SOC audit note agree without writing SQLite.
 - [ ] Integrate the read-only checker into the existing SOC UI/CLI only after confirming how to pin private manifest and PCAP evidence at that boundary; do not present a matching SQLite note as independent forensic authentication.
 - [ ] Student must run on actual authorized Windows 11/VMware Host-only captures with original PCAP/Zeek, separately pinned model/report/manifest/annotation bytes, real isolation evidence and independently adjudicated labels. Measure held-out detection and actual event-to-alert-to-SOC-case timing separately; synthetic CI is not that experiment.
+
+
+## Blue Team — verified NEW-log SOC evidence-link regression (#215, 29/10/2026)
+
+- [x] PR #215 merged at `75b2861fb52fbdec33ba203ad462b2f636e397a7` after final-head Ubuntu CI #40884444439 (**957 passed, 2 skipped**) and Windows offline Zeek CI #40884444416 (**181 Zeek + 46 Red Team passed**). Supersedes the pending CI/merge item above; post-merge main CI is independent.
+- [ ] Expose this read-only case-link check in the SOC workflow only with private pinned manifest/PCAP evidence and explicit "research-only" labeling. Do not convert it into an automatic operational attack verdict.
+- [ ] Student validates actual authorized Windows 11/VMware Host-only captures, independent annotations, SHA-256 pins, host isolation and genuine held-out Precision/Recall/FPR; separately instrument real event-to-alert-to-SOC-case timing. CI synthetic checks cannot substitute for those measurements.
