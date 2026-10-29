@@ -77,10 +77,16 @@ if st.button(
         st.session_state["red_team_audit_events"], plan_choice,
         seed=int(seed), recorded_at_utc=datetime.now(timezone.utc).isoformat(),
     )
-    st.session_state["red_team_last_plan"] = plan_choice
     st.rerun()
 
-plan = st.session_state.get("red_team_last_plan") if pending_id is not None else None
+# Reconstruct the pending display from the validated chronology, not a second
+# mutable session-state cache that can be stale after navigation or reruns.
+plan = None
+if pending_id is not None:
+    pending_event = audit["events"][-1]  # replay has verified this is a proposal
+    plan = choose_scenario(
+        feedback, strategy=pending_event["strategy"], seed=pending_event["seed"],
+    )
 if plan is not None:
     st.success(f"Đề xuất: {plan['title']} ({plan['scenario_id']})")
     st.caption(plan["rationale"])
@@ -115,7 +121,6 @@ if submitted and pending_id is not None and confirm:
         proposal_id=pending_id, blue_flagged=blue_flagged,
         recorded_at_utc=datetime.now(timezone.utc).isoformat(),
     )
-    st.session_state.pop("red_team_last_plan", None)
     st.rerun()
 
 if summary["total"]:
