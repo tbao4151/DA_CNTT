@@ -1355,3 +1355,10 @@
 - Proposed `--require-telemetry-quality` in the **existing** offline Zeek research CLI. With explicit `--cidr`, every already SHA-256-pinned TRAIN/VALIDATION/TEST capture is screened using the existing private Zeek quality contract before model fitting. Only fixed per-split aggregates are included in opt-in preflight/research output; missingness/timestamp warnings are descriptive, not labels or automatic exclusions. Legacy output remains unchanged without the flag.
 - Added synthetic regression tests and Windows guidance. At authoring, **PR-head CI, merge, post-merge CI and laptop acceptance are NOT yet verified**. No operational alert, authentic Host-only capture, attack detection or measured latency is claimed; official UNSW-NB15, model/SQLite artifacts and active Red Team behavior are untouched.
 - Next: confirm Python 3.12.9 PR-head CI and conflict-free merge; students run private pinned, host/session-disjoint research inputs only after genuine authorized capture and independent labeling.
+
+
+## 2026-10-29: Manifest-wide Zeek telemetry quality gate merged (#161)
+
+- [PR #161](https://github.com/tbao4151/DA_CNTT/pull/161) squash-merged at `1de58dffcc766c65cab82da2e66a07a3c9d2f31d` after final-head [Python 3.12.9 quality gates #40792521743](https://github.com/tbao4151/DA_CNTT/actions/runs/40792521743) **passed** (**786 passed, 2 skipped, 2 pre-existing warnings**). No conflicting open PR existed at merge. This supersedes the earlier feature PR pending item.
+- With explicit `--require-telemetry-quality --cidr`, the production offline experiment CLI now screens all manifest captures and records only fixed aggregate quality counters by TRAIN/VALIDATION/TEST. Legacy behavior is unchanged without opt-in; synthetic tests cover privacy, missing-scope refusal, tampering and all CLI modes.
+- **Post-merge main CI #40792986576 was still running at this documentation authoring point.** No Windows/VMware student capture, independent attack ground truth, real detection accuracy, operational alert or event-to-SOC latency has been verified. This is a research-input gate, not proof of lab isolation.
