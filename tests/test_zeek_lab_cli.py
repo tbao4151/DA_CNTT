@@ -709,11 +709,11 @@ def test_manifest_zeek_types_opt_in_refuses_missing_header_before_fit(tmp_path):
     manifest = _lab_files(tmp_path / "private")
     with pytest.raises(ValueError, match="requires explicit lab CIDRs"):
         inspect_offline_experiment(manifest, require_zeek_types=True)
-    with pytest.raises(ValueError, match="Zeek #fields and #types"):
+    with pytest.raises(ValueError, match="Zeek types must precede flow records"):
         inspect_offline_experiment(
             manifest, lab_cidrs=["192.168.56.0/24"], require_zeek_types=True,
         )
-    with pytest.raises(ValueError, match="Zeek #fields and #types"):
+    with pytest.raises(ValueError, match="Zeek types must precede flow records"):
         run_offline_experiment(
             manifest, lab_cidrs=["192.168.56.0/24"], require_zeek_types=True,
         )
