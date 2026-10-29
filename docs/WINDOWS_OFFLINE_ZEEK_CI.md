@@ -29,7 +29,7 @@ From the repository root in PowerShell, with Python 3.12.9 installed:
 
 ```powershell
 py -3.12 -m pip install -r requirements-app.txt
-py -3.12 -m pytest -q tests/test_zeek_lab_cli.py tests/test_zeek_telemetry_quality.py tests/test_offline_pcap_import.py tests/test_offline_pcap_scoring_gate.py tests/test_offline_pcap_soc_triage_gate.py tests/test_zeek_new_log_inference.py tests/test_zeek_manual_triage.py tests/test_zeek_strict_input_gates.py
+py -3.12 -m pytest -q tests/test_zeek_lab_cli.py tests/test_zeek_telemetry_quality.py tests/test_offline_pcap_import.py tests/test_offline_pcap_scoring_gate.py tests/test_offline_pcap_soc_triage_gate.py tests/test_zeek_new_log_inference.py tests/test_zeek_manual_triage.py tests/test_zeek_strict_input_gates.py tests/test_zeek_originator_split.py
 ```
 
 Record `py -3.12 --version`, the command, exit code and screenshots locally.
@@ -46,3 +46,9 @@ with synthetic private manifests: it checks pinned annotation bytes, declared
 CIDR/telemetry quality, UID-independent split-overlap rejection and no output
 on invalid inputs. These checks do not authenticate labels or physical lab
 isolation, and are not a student laptop acceptance test.
+
+The optional `--require-originator-ip-disjoint` manifest gate is covered by
+`tests/test_zeek_originator_split.py` on the Windows runner. It conservatively
+refuses originator addresses reused across train/validation/test, while
+allowing a shared destination server; it does not authenticate host identity.
+See [the private acceptance procedure](ZEEK_ORIGINATOR_SPLIT_SCREEN.md).
