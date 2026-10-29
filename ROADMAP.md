@@ -939,3 +939,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9, Windows offline Zeek and real-Zeek synthetic smoke CI, and merge only when conflict-free. Optional `#unset_field`, `#empty_field` and `#path` metadata must be canonical, unique and before flow records; explicitly declared empty service must remain distinct from missing service.
 - [ ] Student runs the parser and manual SOC refusal regressions on Windows 11 Python 3.12.9, then checks unchanged original authorized VMware Host-only PCAP/`conn.log` with independent SHA-256, Zeek version, actual network isolation, and labeling evidence. Preserve private data outside Git.
 - [ ] Collect independently adjudicated multi-host/session captures and actual event-to-AI-alert-to-SOC-case timing. Parser metadata integrity does not establish real detection, capture authenticity, physical isolation or an active Red Team kill switch.
+
+
+## Blue Team — Zeek ASCII sentinel gate verified (#205, 29/10/2026)
+
+- [x] [PR #205](https://github.com/tbao4151/DA_CNTT/pull/205) merged as `15dc10bb9c544e6b79b0c10df660591d6df7c6e0` after final-head [Ubuntu CI #40864002492](https://github.com/tbao4151/DA_CNTT/actions/runs/40864002492) (**925 passed, 2 skipped**), [Windows CI #40864002574](https://github.com/tbao4151/DA_CNTT/actions/runs/40864002574) (**149 Zeek + 46 Red Team passed**) and [real Zeek synthetic CI #40864002469](https://github.com/tbao4151/DA_CNTT/actions/runs/40864002469) (**success**). Supersedes the pending feature-merge check above; post-merge main CI is separate.
+- [ ] Student verifies unchanged original authorized VMware Host-only PCAP/Zeek, independent SHA-256, Zeek version, actual isolation, labels and held-out splits on Windows 11 Python 3.12.9. Check malformed copies, not original evidence. CI synthetic regression is not student hardware acceptance.
+- [ ] Evaluate independent multi-host/session held-out attack detection and actual event-to-AI-alert-to-SOC-case delay. Metadata consistency does not establish capture authenticity, model accuracy, physical isolation or operational Red Team controls.
