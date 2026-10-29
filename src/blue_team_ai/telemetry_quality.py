@@ -6,6 +6,8 @@ No raw IPs, UIDs, ports, paths or free-text protocol/service values are exported
 from __future__ import annotations
 
 import hashlib
+import re
+from datetime import datetime, timezone
 from collections import Counter
 from collections.abc import Sequence
 
@@ -15,6 +17,18 @@ from .zeek import MAX_LOG_BYTES, parse_zeek_conn_log
 
 OPTIONAL_FIELDS = ("service", "duration_s", "orig_bytes", "resp_bytes", "orig_pkts", "resp_pkts")
 PROTOCOL_BUCKETS = ("tcp", "udp", "icmp", "other")
+
+
+def _declared_utc_boundary(value: str) -> datetime:
+    """Require an unambiguous operator-declared UTC second, not local time."""
+    if not isinstance(value, str) or re.fullmatch(
+        r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", value,
+    ) is None:
+        raise ValueError("Expected canonical UTC event-window boundary")
+    try:
+        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except ValueError as exc:
+        raise ValueError("Invalid UTC event-window boundary") from exc
 
 # Real Zeek ASCII conn.log type declarations, separate from UNSW-NB15.
 # Extra columns are allowed; only parser/model-relevant columns are checked.
@@ -84,6 +98,8 @@ def inspect_zeek_declared_types(raw: bytes) -> dict[str, object]:
 def inspect_zeek_telemetry_quality(
     raw: bytes, *, expected_sha256: str, lab_cidrs: Sequence[str],
     require_zeek_types: bool = False,
+    event_window_start_utc: str | None = None,
+    event_window_end_utc: str | None = None,
 ) -> dict[str, object]:
     """Fail closed on byte mismatch, out-of-scope endpoints and repeated UIDs.
 
@@ -102,8 +118,22 @@ def inspect_zeek_telemetry_quality(
     if type(require_zeek_types) is not bool:
         raise ValueError("Require Zeek types must be boolean")
     declared_types = inspect_zeek_declared_types(raw) if require_zeek_types else None
+    if (event_window_start_utc is None) != (event_window_end_utc is None):
+        raise ValueError("Both UTC event-window boundaries are required")
+    window = None
+    if event_window_start_utc is not None:
+        start = _declared_utc_boundary(event_window_start_utc)
+        end = _declared_utc_boundary(event_window_end_utc)
+        if end < start:
+            raise ValueError("UTC event-window end precedes start")
+        window = (start, end)
     scope = inspect_zeek_lab_scope(raw, lab_cidrs)
     events = parse_zeek_conn_log(raw)
+    if window is not None and any(
+        not window[0] <= datetime.fromisoformat(event["event_time_utc"]) <= window[1]
+        for event in events
+    ):
+        raise ValueError("Zeek event timestamp outside declared UTC window")
     uids = [event["uid"] for event in events]
     if len(set(uids)) != len(uids):
         raise ValueError("Duplicate Zeek UID in source capture")
@@ -137,6 +167,8 @@ def inspect_zeek_telemetry_quality(
         "feature_schema_version": LAB_FEATURE_SCHEMA_VERSION,
         "feature_columns": list(LAB_FEATURE_COLUMNS),
         "flow_count": len(events),
+        "operator_event_window_checked": window is not None,
+        "event_window_capture_authenticity_verified": False,
         "first_event_utc": scope["first_event_utc"],
         "last_event_utc": scope["last_event_utc"],
         "unique_source_ip_count": scope["unique_source_ip_count"],
@@ -157,6 +189,8 @@ def inspect_zeek_telemetry_quality(
         "interpretation": (
             "Descriptive quality screen of operator-supplied offline Zeek bytes only. "
             "A valid SHA-256, CIDR match or complete feature row cannot establish "
-            "genuine VMware Host-only capture, independent labels or detection accuracy."
+            "genuine VMware Host-only capture, independent labels or detection accuracy. "
+            "Operator-declared event windows only constrain logged start times, not "
+            "actual capture or alert timing."
         ),
     }

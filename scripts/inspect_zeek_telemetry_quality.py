@@ -23,6 +23,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--require-zeek-types", action="store_true",
                         help="Require compatible Zeek #fields/#types headers (opt-in)")
+    parser.add_argument("--event-start-utc", help="Optional inclusive UTC Zeek start-time lower bound, YYYY-MM-DDTHH:MM:SSZ")
+    parser.add_argument("--event-end-utc", help="Optional inclusive UTC Zeek start-time upper bound, YYYY-MM-DDTHH:MM:SSZ")
     args = parser.parse_args(argv)
     try:
         if args.log.is_symlink() or args.output.is_symlink():
@@ -44,6 +46,8 @@ def main(argv: list[str] | None = None) -> int:
         report = inspect_zeek_telemetry_quality(
             raw, expected_sha256=args.expected_log_sha256, lab_cidrs=args.cidr,
             require_zeek_types=args.require_zeek_types,
+            event_window_start_utc=args.event_start_utc,
+            event_window_end_utc=args.event_end_utc,
         )
         payload = json.dumps(report, indent=2, allow_nan=False) + "\n"
         with destination.open("x", encoding="utf-8", newline="\n") as stream:
