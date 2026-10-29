@@ -882,3 +882,8 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [x] [PR #195](https://github.com/tbao4151/DA_CNTT/pull/195) merged as `f21dcb95ad3610c8cd0fafad7ce1e2a583ae269c` after final-head [Ubuntu CI #40844461501](https://github.com/tbao4151/DA_CNTT/actions/runs/40844461501) (**892 passed, 2 skipped, 2 warnings**), [Windows CI #40844461634](https://github.com/tbao4151/DA_CNTT/actions/runs/40844461634) (**146 Zeek + 46 Red Team passed**) and [real Zeek synthetic smoke #40844461607](https://github.com/tbao4151/DA_CNTT/actions/runs/40844461607) (**success**). This supersedes the pending merge/compatibility items above; the initial v4-only private reviewer regression was fixed before final CI.
 - [ ] Verify post-merge `main` CI for PR #195 independently. Run genuine Windows 11/VMware Host-only acceptance with pinned PCAP/Zeek hashes, independent labels, split plan and offline reports. No local capture, independent attack-detection score, causal ablation conclusion or event-to-SOC latency has been demonstrated by these CI checks.
+
+## Blue Team — Zeek v1 numeric feature type parity (29/10/2026)
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 and Windows offline Zeek CI for strict model-input port/count typing; merge only if checks pass and PR is conflict-free. Both baseline training and data-only model scoring must reject forged fractional/absent ports and fractional packet/byte counts while retaining missing optional fields.
+- [ ] Run genuine Windows 11/VMware Host-only Zeek capture with independently pinned log/label evidence and test the new model-input gate; CI synthetic tests are not physical isolation, independent labels, live alerts or measured event-to-SOC latency. Keep Dataset Mode official UNSW-NB15 benchmark unchanged.
