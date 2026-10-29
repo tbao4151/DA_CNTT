@@ -1,6 +1,7 @@
 """Synthetic-only end-to-end CLI regressions for pinned NEW-log SOC evidence links."""
 from __future__ import annotations
 
+import re
 import sqlite3
 import subprocess
 import sys
@@ -55,6 +56,7 @@ def test_pinned_case_cli_rechecks_without_modifying_database(tmp_path):
 @pytest.mark.parametrize("change", [
     "case", "audit", "annotation", "manifest", "report", "missing_db",
     "wrong_model_pin", "wrong_log_pin", "partial_pcap", "invalid_case_id",
+    "audit_extra_claim", "audit_manifest_pin",
 ])
 def test_pinned_case_cli_fails_closed_without_private_details(tmp_path, change):
     manifest, db, case_id, verify = _case_and_command(tmp_path)
@@ -66,6 +68,29 @@ def test_pinned_case_cli_fails_closed_without_private_details(tmp_path, change):
             else:
                 conn.execute("UPDATE case_events SET note=? WHERE case_id=?",
                              ("tampered", case_id))
+    elif change in ("audit_extra_claim", "audit_manifest_pin"):
+        with sqlite3.connect(db) as conn:
+            note = conn.execute(
+                "SELECT note FROM case_events WHERE case_id=? ORDER BY event_id LIMIT 1",
+                (case_id,),
+            ).fetchone()[0]
+            if change == "audit_extra_claim":
+                altered = note.replace(
+                    "Authorization, Host-only isolation",
+                    "Independently verified attack. Authorization, Host-only isolation",
+                )
+            else:
+                altered = re.sub(
+                    r"manifest_sha256=[0-9a-f]{64}",
+                    "manifest_sha256=" + "0" * 64,
+                    note,
+                    count=1,
+                )
+            assert altered != note
+            conn.execute(
+                "UPDATE case_events SET note=? WHERE case_id=?",
+                (altered, case_id),
+            )
     elif change == "annotation":
         labels = manifest.parent / "host-0-labels.json"
         labels.write_bytes(labels.read_bytes() + b"\n")
