@@ -1052,3 +1052,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9 and Windows offline Zeek CI, confirm no competing PR/conflict, then merge only after green checks. The pinned case-link CLI must reject injected attack claims, noncanonical notes and stored manifest/PCAP digests inconsistent with verified inputs.
 - [ ] Student runs read-only verification on authorized Windows 11/VMware Host-only original evidence, tests malformed copies without changing original SQLite/PCAP/Zeek, and records independent SHA-256 and isolation evidence outside Git.
 - [ ] Obtain independently adjudicated labeled captures and real event-to-AI-alert-to-SOC-case timing. Editable SQLite note consistency is neither forensic authentication nor live detection evidence.
+
+## Blue Team — canonical SOC audit gate verified (#219, 29/10/2026)
+
+- [x] PR #219 merged as ab849977ce390ed0853a0eb809ed603e3314d048 after final-head Ubuntu #40894021102 (974 passed, 2 skipped) and Windows #40894021188 (198 Zeek + 46 Red Team passed); no conflicts. This supersedes the feature CI/merge item above.
+- [ ] Student validates original authorized Windows 11/VMware Host-only evidence, separate SHA-256 pins and the read-only CLI; preserve original SQLite/PCAP/Zeek, and test refusal only on copies.
+- [ ] Independently adjudicate labels, collect held-out captures and measure event-to-AI-alert-to-SOC-case latency. Synthetic CI and mutable SQLite cannot establish operational detection or forensic authenticity.
