@@ -1867,9 +1867,10 @@
 - No original PCAP, Zeek log, model, UNSW benchmark, SOC SQLite, VM configuration or network traffic was changed. Independently verify VMware Virtual Network Editor, guest NICs/routes, scope authorization and real capture evidence on the student's laptop.
 
 
-## 2026-10-29 — Windows guest network configuration preflight (feature branch; CI pending)
+## 2026-10-29 — Windows guest network configuration preflight (PR #225; CI pending)
 
 - Inspected current `main` at `5ed18dca39a5aaadfc5f3a08d754c7954cec4a91`, README/PROGRESS/ROADMAP, repository tree, merged #223/#224, latest CI and open PRs (none). Avoided modifying existing host-only collector, model, benchmark, SOC SQLite and active Red Team modules.
+- Opened [PR #225](https://github.com/tbao4151/DA_CNTT/pull/225) on feature branch; do not merge until final-head Ubuntu and Windows CI pass and base remains conflict-free.
 - Added a **read-only Windows guest** PowerShell inventory of NICs, IPv4/IPv6 addresses, all IPv4/IPv6 default routes and DNS servers, written once to a private JSON snapshot with SHA-256. Added a separate bounded, independently pinned offline checker that refuses extra active adapters, non-RFC1918/mismatched IPv4, global IPv6, default routes, DNS, duplicate JSON keys and changed bytes. Output explicitly marks physical isolation and authorization as unverified.
 - Added synthetic Python regression and mocked PowerShell Windows smoke, plus Windows CI coverage and private-use documentation. **Local isolated Python 3.13.5 regression: 31 passed**; PowerShell not available in the local container, so Windows smoke/PR CI are **not yet verified** at feature authoring. No genuine VMware, student Windows 11 or network traffic tested.
 - This verifies only a supplied configuration snapshot, not its authenticity/completeness, actual guest egress, VMware Host-only mode, authorization, attack detection or event-to-SOC latency. The student must inspect every host/guest NIC and route and retain private screenshots and SHA-256 evidence.
