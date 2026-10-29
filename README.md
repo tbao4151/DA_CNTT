@@ -254,3 +254,8 @@ an optional fail-closed screen against the *declared* partitions, not proof
 of independent capture history or real-world attack detection; the JSON
 prediction schema and offline-only semantics are unchanged. See
 [the scoring instructions](docs/ZEEK_NEW_LOG_OFFLINE_INFERENCE.md).
+
+
+## Cyber Lab — Windows guest network snapshot (offline, research only)
+
+A Windows **guest-side** read-only NIC/IPv4/IPv6/default-route/DNS snapshot collector and SHA-256-pinned offline checker complement the host adapter preflight. Both require independent VMware Virtual Network Editor inspection and written authorization; neither establishes physical Host-only isolation or enables Red Team traffic. See [docs/WINDOWS_GUEST_NETWORK_PREFLIGHT.md](docs/WINDOWS_GUEST_NETWORK_PREFLIGHT.md). The synthetic regression is not a student laptop experiment.

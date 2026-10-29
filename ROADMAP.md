@@ -1083,3 +1083,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #223](https://github.com/tbao4151/DA_CNTT/pull/223) merged at `d37075adf856f0e39fafc8b9ad08c2ce714e2383` after final-head Ubuntu #40904586073 (**997 passed, 2 skipped**) and Windows #40904586299 (**200 Zeek + 21 preflight + 46 Red Team tests passed**, mocked PowerShell smoke success). This supersedes the pending CI/merge gate above.
 - [ ] Student runs private read-only Windows host adapter collection, independently pins its SHA-256, and validates with the offline checker; physically inspects VMware Host-only mode, disabled NAT/bridging, every guest NIC/route and written test authorization. A passing snapshot check does **not** establish network isolation.
 - [ ] Collect authorized real PCAP/Zeek captures and independent labels; report held-out Precision/Recall/FPR and actual event-to-alert-to-SOC-case latency. Synthetic GitHub CI is not student Windows/VMware experimental evidence.
+
+
+## Cyber Lab — Windows guest NIC/route preflight (29/10/2026)
+
+- [ ] Verify final feature-head Ubuntu Python 3.12.9 full-suite and Windows offline Zeek CI, including mocked PowerShell guest collector; merge only if green, conflict-free and no competing PR. Local synthetic Python tests: 31 passed, not a VMware test.
+- [ ] On the student's owned Windows guest, collect the original private NIC/IPv4/IPv6/default-route/DNS snapshot, independently record SHA-256, run the pinned offline checker and preserve host/guest/VMware screenshots. Confirm no extra guest adapters, NAT/bridging or unintended egress and document authorized scope **manually**; passing software checks do not prove isolation.
+- [ ] After independent isolation and permission, capture genuine PCAP/Zeek logs, adjudicate labels and measure held-out detection and event-to-alert-to-SOC latency. Do not relabel CI/synthetic snapshots as real lab evidence.
