@@ -108,3 +108,15 @@ def test_noncanonical_zeek_unset_marker_cannot_create_manual_soc_case(tmp_path):
     with pytest.raises(ValueError, match="Zeek unset_field marker"):
         create_offline_review_case(db, source_data=forged, record_index=0)
     assert not db.exists()
+
+
+@pytest.mark.parametrize("metadata", [
+    b"#set_separator\t;\n",
+    b"#open\t2026-02-30-17-00-00\n",
+])
+def test_invalid_zeek_open_or_set_metadata_cannot_create_soc_case(tmp_path, metadata):
+    db = tmp_path / "cyber.sqlite3"
+    forged = sample_log().replace(b"#fields\t", metadata + b"#fields\t", 1)
+    with pytest.raises(ValueError, match="Zeek (set_separator|open marker)"):
+        create_offline_review_case(db, source_data=forged, record_index=0)
+    assert not db.exists()
