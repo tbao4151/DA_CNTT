@@ -43,6 +43,43 @@ def test_portless_excludes_both_ports_and_full_matches_existing_baseline():
     assert "N0" not in json.dumps(report)
 
 
+
+def test_paired_ablation_reports_anonymous_host_variability_with_matching_counts():
+    dataset = _dataset()
+    # A second operator-declared TEST group makes host-level variation visible.
+    dataset.provenance["test"][1]["host_group"] = "private-second-test-host"
+    report = evaluate_zeek_port_ablation(dataset)
+    assert report["report_version"] == 2
+    assert report["host_group_variability_is_descriptive_only"] is True
+    for variant in ("full", "without_ports"):
+        result = report["variants"][variant]
+        for split in ("validation", "test"):
+            summary = result[f"{split}_host_variability"]
+            assert summary["unit_of_grouping"] == "operator_declared_host_group"
+            assert summary["group_count"] == (2 if split == "test" else 1)
+            assert summary["small_group_warning"] is True
+            assert summary["single_group_warning"] is (split == "validation")
+            assert sum(group["support"] for group in summary["groups"]) == result[f"{split}_metrics"]["support"]
+            for key in ("tp", "fp", "tn", "fn"):
+                assert sum(group[key] for group in summary["groups"]) == result[f"{split}_metrics"][key]
+            assert [g["anonymous_group_number"] for g in summary["groups"]] == list(range(1, summary["group_count"] + 1))
+    serialized = json.dumps(report)
+    for forbidden in ("private-second-test-host", "host-validation", "host-test", "192.168.56.", "operator-note"):
+        assert forbidden not in serialized
+
+
+def test_heldout_labels_change_host_diagnostics_but_not_validation_selection():
+    dataset = _dataset()
+    before = evaluate_zeek_port_ablation(dataset)
+    altered = copy.deepcopy(dataset)
+    altered.labels["test"] = [1, 0]
+    after = evaluate_zeek_port_ablation(altered)
+    for variant in ("full", "without_ports"):
+        a, b = before["variants"][variant], after["variants"][variant]
+        assert a["selected_validation_threshold"] == b["selected_validation_threshold"]
+        assert a["validation_host_variability"] == b["validation_host_variability"]
+        assert a["test_host_variability"] != b["test_host_variability"]
+
 def test_portless_is_invariant_to_port_values_across_all_splits():
     dataset = _dataset()
     baseline = evaluate_zeek_port_ablation(dataset)["variants"]["without_ports"]
