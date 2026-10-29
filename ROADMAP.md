@@ -1214,3 +1214,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9 quality CI and Windows Server 2022 offline tests, including new synthetic parser/CLI regressions; merge only if green, no conflict and no competing PR. The isolated parser unit test passed 16 cases locally, but this is not full CI or a real capture.
 - [ ] Student runs the strict `--require-pcap-framing` read-only verifier on an independently SHA-256-pinned, authorized classic PCAP from their private Windows 11/VMware Host-only lab. Archive original PCAP, Zeek `conn.log`, report, version, isolation/authorization evidence and actual command outputs outside Git.
 - [ ] Investigate packet-to-Zeek flow semantic linkage separately; record framing does not establish packet/flow correspondence or genuine AI detection. Independently adjudicate held-out labels and measure event-to-candidate-to-manual-SOC latency without substituting synthetic CI.
+
+## Cyber Lab — classic-PCAP framing gate verified (#243, 30/10/2026)
+
+- [x] [PR #243](https://github.com/tbao4151/DA_CNTT/pull/243) merged at `6c2169cba1a4566394162b04feb7c8306716ca7a` after final-head [Ubuntu CI #40968094559](https://github.com/tbao4151/DA_CNTT/actions/runs/40968094559) and [Windows CI #40968094551](https://github.com/tbao4151/DA_CNTT/actions/runs/40968094551) passed. This supersedes the earlier pending-merge item; post-merge main CI is tracked separately.
+- [ ] Student validates an independently pinned private classic PCAP in authorized Windows 11/VMware Host-only, archiving capture/Zeek versions, original checksums, network-isolation proof and command outputs outside Git. Framing does not prove PCAP-to-Zeek flow semantics or capture origin.
+- [ ] Next prioritize verified offline research candidate → explicit manual SOC case handoff and stage timing, then genuine independently labeled held-out Zeek evaluation. Do not represent synthetic CI as live detection.
