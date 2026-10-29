@@ -1058,3 +1058,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] PR #219 merged as ab849977ce390ed0853a0eb809ed603e3314d048 after final-head Ubuntu #40894021102 (974 passed, 2 skipped) and Windows #40894021188 (198 Zeek + 46 Red Team passed); no conflicts. This supersedes the feature CI/merge item above.
 - [ ] Student validates original authorized Windows 11/VMware Host-only evidence, separate SHA-256 pins and the read-only CLI; preserve original SQLite/PCAP/Zeek, and test refusal only on copies.
 - [ ] Independently adjudicate labels, collect held-out captures and measure event-to-AI-alert-to-SOC-case latency. Synthetic CI and mutable SQLite cannot establish operational detection or forensic authenticity.
+
+## Blue Team — offline existing-case verification stage timing (29/10/2026)
+
+- [ ] Verify final feature-head Ubuntu Python 3.12.9 full-suite and Windows offline Zeek CI; merge only if successful, no conflicting open PRs, and base/head remain compatible. The optional `--timing-json` output must be aggregate-only, read-only and absent on failed evidence checks.
+- [ ] Student runs pinned read-only SOC case verification on original, authorized Windows 11/VMware Host-only evidence; record per-stage and total processing milliseconds with hardware, Zeek version, source size, independently preserved SHA-256 and network isolation evidence outside Git. Repeat runs under controlled load.
+- [ ] Independently instrument and validate actual **network event → log available → AI decision → alert delivered → SOC case created** timestamps. The existing-case verifier's processing time, which recomputes evidence, must not be relabeled as detection latency or SOC case creation time.
+- [ ] Obtain independently adjudicated held-out labels and report Precision, Recall, FPR and false negatives; keep UNSW-NB15 historical metrics separate from lab-capture findings.
