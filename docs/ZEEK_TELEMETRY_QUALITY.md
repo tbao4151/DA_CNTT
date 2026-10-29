@@ -143,3 +143,19 @@ Run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py tests/test_zeek_manual_t
 on Windows 11. GitHub synthetic CI verifies the software contract only; it
 does not authenticate Zeek capture, Host-only isolation, labels, detection
 accuracy or event-to-SOC timing.
+
+
+## Shared parser Zeek #types ordering consistency (29/10/2026)
+
+The common offline `parse_zeek_conn_log` now rejects a second `#types`
+declaration or a `#types` declaration that appears after the first flow row.
+Previously a duplicated or late header could be silently accepted by callers
+that did not opt in to the declared-type quality screen. Exactly one
+well-positioned `#types` header is accepted; omission remains compatible
+with existing minimal synthetic fixtures and legacy parser clients. Semantic
+field/type matching still requires the **separate** `--require-zeek-types`
+quality option, which is recommended for real Zeek evidence. The change does
+not assert capture authenticity, isolation, independent labels or attack
+detection, and does not create traffic or SOC cases.
+
+On Windows run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py`.
