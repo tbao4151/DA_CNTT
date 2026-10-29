@@ -548,3 +548,54 @@ independent annotation, host/session provenance, ground-truth accuracy or
 operational attack detection. Do not edit evidence to force a pass. Keep
 original PCAP, Zeek logs, independent checksums and annotation decisions
 outside the public repository. Regression tests use synthetic fixtures only.
+
+
+## Optional independent manifest byte pin (29/10/2026)
+
+The existing report records `input_manifest_sha256`, but that hash is calculated
+from the manifest **at evaluation time**. It cannot reveal that someone changed
+split assignments, session/host declarations or annotation references after
+the analyst reviewed preflight. The optional
+`--expected-manifest-sha256 <64 lowercase hex>` checks the **exact manifest
+JSON bytes** against a separately recorded digest *before* parsing inputs,
+training or creating a report. The option works with `--preflight`,
+`--output` and private `--trace-output`, and may be combined with
+`--strict-input-gates`. Without the option, CLI behavior and report schema
+remain unchanged. With it, the aggregate result includes
+`"manifest_sha256_pin_verified": true` (no manifest contents or private
+identifiers are exported).
+
+After preparing the manifest and reviewing the intended TRAIN, VALIDATION
+and untouched TEST assignments, record the digest in an **independent private
+lab notebook** (not in the manifest itself):
+
+```powershell
+$manifest = "C:/DA005-private/zeek-experiment/manifest.json"
+$pin = (Get-FileHash -Algorithm SHA256 $manifest).Hash.ToLowerInvariant()
+$pin # Record this value outside the repository and preserve the original manifest.
+```
+
+Use that *previously recorded* value for both preflight and final evaluation:
+
+```powershell
+py -3.12 scripts/evaluate_zeek_lab.py `
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" `
+  --expected-manifest-sha256 "<PREVIOUSLY_RECORDED_LOWERCASE_SHA256>" `
+  --cidr "<ACTUAL_HOST_ONLY_CIDR>" `
+  --strict-input-gates `
+  --preflight
+```
+
+After analyst approval, repeat the **same pin and flags**, replacing
+`--preflight` with a **new** private `--output` report path (or
+`--trace-output` for a private held-out trace). If any manifest byte changes
+(including whitespace), the old pin fails; investigate and document the
+change instead of silently replacing the recorded digest. A changed log or
+label file remains subject to its own independent SHA-256 pin.
+
+This is a byte-consistency control, **not** a digital signature, immutable
+timestamp, proof of preregistration, physical Host-only isolation, independent
+ground truth, genuine capture, or model validity. Anyone who can replace both
+the manifest and the separately recorded pin can bypass it. The test fixture
+and CI results are synthetic and do not substitute for student-run Windows/
+VMware evidence or measured attack-detection performance.
