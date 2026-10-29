@@ -1071,3 +1071,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] PR #221 merged as `dafc089d32e6936670e9fb79553991effe29f049` after final-head [Ubuntu CI #40899359256](https://github.com/tbao4151/DA_CNTT/actions/runs/40899359256) (**976 passed, 2 skipped**) and [Windows CI #40899359119](https://github.com/tbao4151/DA_CNTT/actions/runs/40899359119) (**200 Zeek + 46 Red Team passed**). This supersedes the pending feature merge gate above; post-merge main CI is separate.
 - [ ] Student performs private, authorized Windows 11/VMware Host-only capture and independently records SHA-256, hardware/Zeek metadata, network isolation and repeated software verification stage timings. Do not use CI runner timings as student measurements.
 - [ ] Add trustworthy instrumented timestamps for genuine event → log availability → AI decision → alert → SOC case creation. This is distinct from read-only existing-case verification overhead and requires independent ground truth/operational evidence.
+
+## Cyber Lab — Windows host-only adapter evidence preflight (29/10/2026)
+
+- [ ] Verify feature-head Ubuntu full-suite and Windows offline workflow (including mocked PowerShell collector), confirm no conflicting PRs and merge only after CI succeeds. This is a host-side configuration preflight, **not** VMware isolation attestation.
+- [ ] Student runs the read-only adapter collector and pinned offline checker on their own Windows 11 laptop; stores original snapshot/hash privately. Independently inspects VMware Virtual Network Editor Host-only/NAT/bridging, every guest NIC and guest routes, authorized scope and physical egress before any traffic.
+- [ ] Collect original authorized PCAP and Zeek conn.log with independent labels; evaluate held-out Precision/Recall/FPR and genuine event-to-alert-to-SOC-case timing. Neither synthetic CI nor a passing host adapter check proves isolation or attack detection.
