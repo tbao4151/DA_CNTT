@@ -1039,3 +1039,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9 and Windows offline Zeek CI, no competing PR or conflict; merge only after successful checks. The read-only CLI must refuse altered case snapshot/audit, model/log/report/manifest/annotation pins and missing SQLite without creating or changing cases.
 - [ ] Student runs the strict CLI on a real, authorized Windows 11/VMware Host-only capture with independently preserved model, manifest, annotation, Zeek/PCAP hashes, actual network isolation evidence and separately adjudicated labels; test refusal on copies, never edit originals.
 - [ ] Measure genuine held-out attack Precision/Recall/FPR and event-to-AI-alert-to-SOC-case timing separately. A consistent SQLite note and declared non-reuse screen are not independent forensic authentication or operational detection.
+
+
+## Blue Team — strict SOC case-link CLI verified (#217, 29/10/2026)
+
+- [x] [PR #217](https://github.com/tbao4151/DA_CNTT/pull/217) merged as `9372a33e90298490a1fd67c1dd93157fc6e7b112` after final-head [Ubuntu CI #40889546406](https://github.com/tbao4151/DA_CNTT/actions/runs/40889546406) (**968 passed, 2 skipped**) and [Windows CI #40889546209](https://github.com/tbao4151/DA_CNTT/actions/runs/40889546209) (**192 Zeek + 46 Red Team passed**). This supersedes the pending feature merge gate above. Post-merge main CI is separate.
+- [ ] Student validates the read-only CLI on independently pinned authorized Windows 11/VMware Host-only PCAP/Zeek, manifest/annotations/model/report, original SOC case and isolation evidence. Record screenshots and original SHA-256 privately; verify no DB changes and refuse tampered copies.
+- [ ] Collect independently adjudicated held-out data and measure actual event-to-AI-alert-to-SOC-case delay. A consistent stored Unclassified research case does not constitute a confirmed attack or operational alert.
