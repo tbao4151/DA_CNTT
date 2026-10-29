@@ -111,3 +111,19 @@ def test_history_is_not_mutated_by_append():
     later = append_manual_feedback(initial, proposal_id=1, blue_flagged=False, recorded_at_utc=T1)
     assert json.dumps(initial) == snapshot
     assert len(later) == 2
+
+
+def test_red_team_page_records_proposal_in_session_only():
+    """Streamlit integration smoke; does not simulate an attack or Blue Team."""
+    from streamlit.testing.v1 import AppTest
+
+    page = Path(__file__).resolve().parents[1] / "pages/2_Red_Team_Lab.py"
+    app = AppTest.from_file(str(page), default_timeout=45).run()
+    assert not app.exception, [str(e.message) for e in app.exception]
+    proposal_buttons = [button for button in app.button if "Đề xuất kịch bản" in button.label]
+    assert len(proposal_buttons) == 1
+    proposal_buttons[0].click().run()
+    assert not app.exception, [str(e.message) for e in app.exception]
+    assert len(app.session_state["red_team_audit_events"]) == 1
+    assert app.session_state["red_team_audit_events"][0]["execution_enabled"] is False
+    assert app.session_state["red_team_feedback"] == []
