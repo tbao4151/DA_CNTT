@@ -70,6 +70,15 @@ def test_invalid_log_does_not_create_database(tmp_path):
     assert not db.exists()
 
 
+def test_duplicate_uid_fails_before_manual_soc_database_write(tmp_path):
+    db = tmp_path / "cyber.sqlite3"
+    # Two different source rows claiming the same connection UID are ambiguous.
+    ambiguous = sample_log().replace(b"\tC124\t", b"\tC123\t", 1)
+    with pytest.raises(ValueError, match="Duplicate Zeek UID"):
+        create_offline_review_case(db, source_data=ambiguous, record_index=0)
+    assert not db.exists()
+
+
 def test_same_selection_creates_case_only_on_explicit_invocation(tmp_path):
     db = tmp_path / "cyber.sqlite3"
     assert not db.exists()
