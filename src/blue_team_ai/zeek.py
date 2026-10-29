@@ -98,7 +98,7 @@ def parse_zeek_conn_log(
         # A single conn.log must identify each connection unambiguously. Check
         # the entire source before any downstream UI/SOC writer can select it.
         if uid in seen_uids:
-            raise ValueError("Duplicate Zeek UID in source capture")
+            raise ValueError("Duplicate Zeek UIDs in source capture")
         seen_uids.add(uid)
         try:
             utc_time = datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
