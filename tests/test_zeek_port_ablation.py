@@ -91,9 +91,9 @@ def _pinned_manifest(tmp_path):
     for index, entry in enumerate(spec["captures"]):
         log = manifest.parent / entry["log_path"]
         raw = log.read_bytes().replace(
-            b"\\t52344\\t", f"\\t{52344 + 10 * index}\\t".encode(),
+            b"\t52344\t", f"\t{52344 + 10 * index}\t".encode(),
         ).replace(
-            b"\\t52345\\t", f"\\t{52345 + 10 * index}\\t".encode(),
+            b"\t52345\t", f"\t{52345 + 10 * index}\t".encode(),
         )
         log.write_bytes(raw)
         digest = hashlib.sha256(raw).hexdigest()
