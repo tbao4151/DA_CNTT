@@ -731,3 +731,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Ubuntu Python 3.12.9 full quality gates and Windows offline Red Team/AppTest checks for pending-scenario reconstruction from the audited strategy/seed; merge only when both pass and the PR is conflict-free. The separate stale UI cache must never determine which scenario the operator sees.
 - [ ] Student tests Red Team proposal, Streamlit rerun/navigation, pending feedback, JSON export and stop/reset on their own Windows 11 laptop; retain screenshots privately. GitHub-hosted tests are not local acceptance.
 - [ ] Independently collect authorized VMware Host-only Zeek evidence, adjudicated labels and measured event-to-SOC latency before comparing UCB1 with random using real Blue Team outcomes. The offline planner does not send traffic; preserve UNSW-NB15 official benchmark.
+
+
+## Red Team — pending-plan UI reconstruction merged (#175, 29/10/2026)
+
+- [x] [PR #175](https://github.com/tbao4151/DA_CNTT/pull/175) merged after final-head [Ubuntu CI #40813579884](https://github.com/tbao4151/DA_CNTT/actions/runs/40813579884) (**828 passed, 2 skipped**) and [Windows CI #40813579774](https://github.com/tbao4151/DA_CNTT/actions/runs/40813579774) (**87 Zeek + 46 Red Team passed**) succeeded; mergeability and unchanged base were checked. This supersedes the earlier pending PR verification checklist.
+- [ ] Student tests Red Team pending proposal and manual feedback after rerun/navigation on their own Windows 11 machine, exports a private audit and independently records SHA-256. GitHub-hosted Windows CI does not prove laptop acceptance.
+- [ ] Build independently labeled, authorized VMware Host-only Zeek experiments and measure genuine Blue Team outcomes and event-to-SOC latency before any AI-vs-AI effectiveness claim. Offline Red Team execution remains disabled and official UNSW-NB15 benchmark unchanged.
