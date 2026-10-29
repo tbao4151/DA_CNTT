@@ -637,3 +637,14 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #161](https://github.com/tbao4151/DA_CNTT/pull/161) merged after final-head [Python 3.12.9 CI #40792521743](https://github.com/tbao4151/DA_CNTT/actions/runs/40792521743) passed (**786 passed, 2 skipped**); previous pending merge item superseded. Post-merge main CI #40792986576 was still running when this entry was authored.
 - [ ] Students validate private Windows/VMware Host-only captures with separately recorded SHA-256, adapter/routes evidence and independently assigned labels. Then run `--require-telemetry-quality --cidr ... --preflight` and held-out evaluation. Missing-value warnings cannot be used as labels or to tune held-out test metrics.
 - [ ] Independently evaluate real Zeek-specific Precision/Recall/FPR and event-to-SOC latency before operational alerts or active Red Team. Preserve official UNSW benchmark.
+
+## Cyber Lab — Windows offline contract CI acceptance (29/10/2026; PR #163)
+
+- [ ] Verify final PR-head Windows Server 2022 / Python 3.12.9 offline test job and Ubuntu quality gates; check that PR #163 is mergeable and main has not advanced incompatibly before merge. Record actual run links and test counts; do not infer CI success from workflow creation.
+- [ ] Student runs the documented offline tests on their own Windows 11 Python 3.12.9 machine and retains console output/screenshots. Separately verify VMware Host-only adapters/routes and execute real Zeek on authorized captures in a Linux VM.
+- [ ] Obtain independently labeled, host/session-disjoint genuine Zeek captures before measuring Precision/Recall/FPR and event-to-SOC latency. Windows synthetic CI is not attack-detection evidence; preserve official UNSW-NB15 benchmark and keep active Red Team network actions disabled.
+
+### Windows offline CI — observed green checks, final-head gate pending
+
+- [x] PR #163 earlier head `edf587bfc492b1619c5a6f313dae2375be0b1dca`: [Windows CI #40795902419](https://github.com/tbao4151/DA_CNTT/actions/runs/40795902419) **74 passed**; [Ubuntu CI #40795902460](https://github.com/tbao4151/DA_CNTT/actions/runs/40795902460) **786 passed, 2 skipped**.
+- [ ] Recheck final documentation head and clean mergeability before merging PR #163. GitHub-hosted Windows acceptance is software-only; real student Windows/VMware validation and independently labeled Zeek detection research remain open.
