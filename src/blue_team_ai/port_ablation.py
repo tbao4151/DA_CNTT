@@ -15,6 +15,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION
+from .paired_disagreement import summarize_paired_zeek_test
 from .labeled_dataset import LabeledLabDataset, SPLITS
 from .offline_baseline import (
     CATEGORICAL, NUMERIC, THRESHOLDS, _frame, _scores, _validate_dataset,
@@ -46,7 +47,7 @@ def _portless_pipeline() -> Pipeline:
     ])
 
 
-def _fit_one(dataset: LabeledLabDataset, model: Pipeline, columns: tuple[str, ...]) -> dict[str, object]:
+def _fit_one(dataset: LabeledLabDataset, model: Pipeline, columns: tuple[str, ...]) -> tuple[dict[str, object], list[bool]]:
     train = _frame(dataset.features["train"])
     model.fit(train, dataset.labels["train"])
     classes = list(model.named_steps["classifier"].classes_)
@@ -67,7 +68,7 @@ def _fit_one(dataset: LabeledLabDataset, model: Pipeline, columns: tuple[str, ..
         "selected_validation_threshold": selected,
         "validation_metrics": candidates[selected],
         "test_metrics": _scores(dataset.labels["test"], test, selected),
-    }
+    }, [bool(probability >= selected) for probability in test]
 
 
 def evaluate_zeek_port_ablation(dataset: LabeledLabDataset) -> dict[str, object]:
@@ -77,8 +78,9 @@ def evaluate_zeek_port_ablation(dataset: LabeledLabDataset) -> dict[str, object]
     Both variants see the same TRAIN/VALIDATION/TEST rows and supplied labels.
     """
     _validate_dataset(dataset)
-    full = _fit_one(dataset, make_zeek_research_pipeline(), LAB_FEATURE_COLUMNS)
-    portless = _fit_one(dataset, _portless_pipeline(), PORTLESS_COLUMNS)
+    full, full_predictions = _fit_one(dataset, make_zeek_research_pipeline(), LAB_FEATURE_COLUMNS)
+    portless, portless_predictions = _fit_one(dataset, _portless_pipeline(), PORTLESS_COLUMNS)
+    paired = summarize_paired_zeek_test(dataset.labels["test"], full_predictions, portless_predictions)
     deltas = {
         name: portless["test_metrics"][name] - full["test_metrics"][name]
         for name in ("precision", "recall", "f1", "false_positive_rate")
@@ -103,6 +105,7 @@ def evaluate_zeek_port_ablation(dataset: LabeledLabDataset) -> dict[str, object]
         "excluded_port_features": sorted(PORT_FEATURES),
         "variants": {"full": full, "without_ports": portless},
         "test_delta_without_ports_minus_full": deltas,
+        "paired_test_correctness": paired,
         "provenance": sources,
         "test_metrics_used_for_model_selection": False,
         "causal_feature_effect_established": False,
@@ -114,7 +117,8 @@ def evaluate_zeek_port_ablation(dataset: LabeledLabDataset) -> dict[str, object]
         "interpretation": (
             "Paired software-only sensitivity analysis of two prespecified models. "
             "TEST is evaluated once per variant after validation threshold selection; "
-            "differences are descriptive, not causal, and must not be used to select "
+            "differences and paired correctness counts are descriptive, not causal, "
+            "and must not be used to select "
             "a deployed variant on held-out TEST. Supplied labels and physical lab "
             "isolation require independent verification."
         ),
