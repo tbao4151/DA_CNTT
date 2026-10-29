@@ -20,7 +20,8 @@ py -3.12 scripts/verify_lab_evidence_chain.py `
   --import-report 'C:\DA005-private\capture\zeek-output\offline_import_report.json' `
   --expected-import-report-sha256 '<IMPORT_REPORT_SHA256>' `
   --expected-pcap-sha256 '<INDEPENDENT_ORIGINAL_PCAP_SHA256>' `
-  --expected-log-sha256 '<INDEPENDENT_ORIGINAL_CONN_LOG_SHA256>'
+  --expected-log-sha256 '<INDEPENDENT_ORIGINAL_CONN_LOG_SHA256>' `
+  --require-independent-original-pins
 ```
 
 For stronger original-evidence checking, supply **both** `--expected-pcap-sha256` and `--expected-log-sha256`, recorded separately when the original files were archived. These options are backward compatible and optional as a pair; supplying only one, malformed digests or a mismatch fails closed. The output field `independent_original_pcap_zeek_pins_verified` is `true` only when both independently supplied digests match the original bytes already verified against the pinned import report; otherwise it is `false`. Hashes are consistency evidence, not signatures or proof of independent recording, genuine capture origin or attack labels.
@@ -36,3 +37,9 @@ py -3.12 -m pytest -q tests/test_lab_evidence_chain.py
 ```
 
 On the student's machine, also retain VMware Virtual Network Editor screenshots, every guest NIC/route inventory, the approval/scope record, PCAP and Zeek version/command, hashes captured independently, the test-label adjudication protocol and any genuine event-to-alert/SOC timestamps. Record Dataset Mode UNSW-NB15 benchmark separately from Cyber Lab findings. Never report CI synthetic results as real attack-detection performance.
+
+## Strict original-evidence gate (30/10/2026)
+
+For a research acceptance check, add `--require-independent-original-pins` as shown above. The command now **refuses** a missing pair of independently recorded original PCAP and Zeek SHA-256 pins, rather than returning success with the weaker `independent_original_pcap_zeek_pins_verified=false` status. Successful strict output explicitly sets `independent_original_pcap_zeek_pins_required=true` and `independent_original_pcap_zeek_pins_verified=true`. The flag does not change existing invocations: omitting it retains the earlier optional paired-pin behavior and reports `independent_original_pcap_zeek_pins_required=false`.
+
+Strict checking verifies only the supplied byte digests and consistency with the pinned import report. It cannot prove the hashes were recorded independently, that VMware was isolated, that traffic was authorized, or that attacks were detected. Do not describe a strict PASS as a live-lab acceptance or SOC detection result. Synthetic regression: `py -3.12 -m pytest -q tests/test_lab_evidence_chain.py`.
