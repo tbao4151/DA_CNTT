@@ -48,6 +48,8 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
     )
     if args.require_guest_endpoint and not args.require_independent_original_pins:
         raise ValueError("Guest flow presence requires the strict original-pin gate")
+    if args.require_pcap_framing and not args.require_independent_original_pins:
+        raise ValueError("PCAP framing requires the strict original-pin gate")
     original_pins = (args.expected_pcap_sha256, args.expected_log_sha256)
     if args.require_independent_original_pins and not all(
         pin is not None for pin in original_pins
@@ -64,6 +66,7 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         pcap_path=args.pcap,
         log_path=args.log,
         lab_cidrs=[args.cidr],
+        require_pcap_framing=args.require_pcap_framing,
     )
     if all(pin is not None for pin in original_pins):
         if (not hmac.compare_digest(imported["pcap_sha256"], args.expected_pcap_sha256)
@@ -94,6 +97,9 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         "mode": "offline_private_lab_evidence_consistency_only",
         "configuration_snapshots_consistent": True,
         "offline_pcap_zeek_import_consistent": True,
+        "pcap_framing_required": args.require_pcap_framing,
+        "pcap_framing_verified": imported["pcap_framing_verified"],
+        "pcap_packet_count": imported["pcap_packet_count"],
         "guest_endpoint_presence_required": args.require_guest_endpoint,
         "guest_endpoint_observed_in_verified_log": args.require_guest_endpoint,
         "independent_original_pcap_zeek_pins_verified": all(
@@ -140,6 +146,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-import-report-sha256", required=True)
     parser.add_argument("--expected-pcap-sha256", help="Optional independently recorded original PCAP SHA-256; requires Zeek pin")
     parser.add_argument("--expected-log-sha256", help="Optional independently recorded original conn.log SHA-256; requires PCAP pin")
+    parser.add_argument(
+        "--require-pcap-framing", action="store_true",
+        help="With strict original pins, require valid bounded classic-PCAP packet record framing",
+    )
     parser.add_argument(
         "--require-guest-endpoint", action="store_true",
         help="With strict original pins, require a verified Zeek flow involving the declared guest IPv4",
