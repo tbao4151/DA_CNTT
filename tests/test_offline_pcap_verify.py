@@ -169,6 +169,12 @@ def test_cli_verifies_without_network_or_writes(imported):
 def test_strict_framing_refuses_header_only_legacy_fixture(imported):
     # Legacy mock fixture has only a magic and 20 zero bytes; its report
     # can pass byte-consistency checks but not a structural packet check.
+    raw = bytes.fromhex("d4c3b2a1") + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+    imported["pcap"].write_bytes(raw)
+    report = json.loads(imported["report"].read_text())
+    report["pcap_sha256"] = hashlib.sha256(raw).hexdigest()
+    report["pcap_size_bytes"] = len(raw)
+    repin(imported, report)
     assert check(imported)["pcap_framing_verified"] is False
     with pytest.raises(ValueError, match="no packet"):
         check(imported, require_pcap_framing=True)
