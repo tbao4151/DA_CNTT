@@ -5,6 +5,22 @@ param(
     [Parameter(Mandatory = $true)][string]$OutputPath
 )
 $ErrorActionPreference = 'Stop'
+# Validate the output destination before querying any network configuration.
+# This is a privacy boundary for ordinary paths, not an isolation attestation.
+$parent = Split-Path -Parent $OutputPath
+if (-not [System.IO.Path]::IsPathRooted($OutputPath) -or
+    -not $parent -or -not (Test-Path -LiteralPath $parent -PathType Container)) {
+    throw 'Use an absolute private output path in an existing directory.'
+}
+$resolvedParent = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $parent).ProviderPath)
+$repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$repoPrefix = $repoRoot.TrimEnd([char[]]@('\\', '/'))
+$parentPath = $resolvedParent.TrimEnd([char[]]@('\\', '/'))
+if ($parentPath.Equals($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase) -or
+    $parentPath.StartsWith($repoPrefix + [System.IO.Path]::DirectorySeparatorChar,
+        [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Host evidence must be stored outside the Git repository.'
+}
 if (Test-Path -LiteralPath $OutputPath) {
     throw 'Refusing to overwrite an existing evidence snapshot.'
 }
@@ -24,10 +40,6 @@ $snapshot = @{
     adapter_ipv4 = $ipv4
     adapter_default_routes = $defaultRoutes
     adapter_dns_servers = $dnsServers
-}
-$parent = Split-Path -Parent $OutputPath
-if (-not $parent -or -not (Test-Path -LiteralPath $parent -PathType Container)) {
-    throw 'Output parent directory must already exist (use a private path outside Git).'
 }
 $jsonBytes = [System.Text.UTF8Encoding]::new($false).GetBytes(($snapshot | ConvertTo-Json -Depth 5))
 # CreateNew is atomic: never overwrite original evidence even if the path
