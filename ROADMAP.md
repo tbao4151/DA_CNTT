@@ -724,3 +724,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #173](https://github.com/tbao4151/DA_CNTT/pull/173) merged cleanly after final-head [Ubuntu Python 3.12.9 #40811105273](https://github.com/tbao4151/DA_CNTT/actions/runs/40811105273) (**827 passed, 2 skipped**) and [Windows Python 3.12.9 #40811105170](https://github.com/tbao4151/DA_CNTT/actions/runs/40811105170) (**87 Zeek + 45 Red Team passed**) succeeded. Post-merge [main CI #40811595051](https://github.com/tbao4151/DA_CNTT/actions/runs/40811595051) succeeded. Supersedes the preceding pending CI/merge checklist.
 - [ ] Student validates private exported JSON on their Windows 11 machine using an independently preserved SHA-256, including tampering with a copy to verify rejection. Preserve the source and screenshot privately; GitHub-hosted Windows CI is not laptop acceptance.
 - [ ] Independently establish authorized VMware Host-only capture provenance, adjudicated Blue Team labels, session/host-separated evaluation and event-to-SOC latency before claiming genuine detection or AI-vs-AI advantage. Planning feedback remains unverified, no active Red Team traffic, official UNSW benchmark unchanged.
+
+
+## Red Team — pending-proposal UI audit consistency (29/10/2026)
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 full quality gates and Windows offline Red Team/AppTest checks for pending-scenario reconstruction from the audited strategy/seed; merge only when both pass and the PR is conflict-free. The separate stale UI cache must never determine which scenario the operator sees.
+- [ ] Student tests Red Team proposal, Streamlit rerun/navigation, pending feedback, JSON export and stop/reset on their own Windows 11 laptop; retain screenshots privately. GitHub-hosted tests are not local acceptance.
+- [ ] Independently collect authorized VMware Host-only Zeek evidence, adjudicated labels and measured event-to-SOC latency before comparing UCB1 with random using real Blue Team outcomes. The offline planner does not send traffic; preserve UNSW-NB15 official benchmark.

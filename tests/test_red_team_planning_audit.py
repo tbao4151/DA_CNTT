@@ -127,3 +127,28 @@ def test_red_team_page_records_proposal_in_session_only():
     assert len(app.session_state["red_team_audit_events"]) == 1
     assert app.session_state["red_team_audit_events"][0]["execution_enabled"] is False
     assert app.session_state["red_team_feedback"] == []
+
+
+def test_red_team_page_rehydrates_pending_proposal_without_trusting_stale_cache():
+    """A rerun must show the audited pending scenario, never an unrelated cache."""
+    from streamlit.testing.v1 import AppTest
+
+    page = Path(__file__).resolve().parents[1] / "pages/2_Red_Team_Lab.py"
+    app = AppTest.from_file(str(page), default_timeout=45).run()
+    assert not app.exception, [str(e.message) for e in app.exception]
+    events = _propose(strategy="random", seed=987)
+    expected_id = events[-1]["scenario_id"]
+    app.session_state["red_team_audit_events"] = events
+    app.session_state["red_team_last_plan"] = {
+        "scenario_id": "not_an_audited_proposal", "title": "Stale UI cache",
+    }
+    app.run()
+    assert not app.exception, [str(e.message) for e in app.exception]
+    assert list(app.selectbox[0].options) == [expected_id]
+    assert app.session_state["red_team_audit_events"] == events
+
+    # A missing cache after navigation must not make pending feedback inaccessible.
+    app.session_state["red_team_last_plan"] = None
+    app.run()
+    assert not app.exception, [str(e.message) for e in app.exception]
+    assert list(app.selectbox[0].options) == [expected_id]

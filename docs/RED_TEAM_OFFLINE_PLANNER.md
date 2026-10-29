@@ -36,3 +36,14 @@ py -3.12 -m pytest -q tests/test_red_team_planning_audit.py tests/test_red_team_
 ```
 
 To check the actual UI, run `streamlit run app.py`, navigate to **Red Team Lab**, propose one offline scenario, record an explicitly unverified observation, review the timeline, export JSON and clear the session. Keep the exported planning notes private. For a future scientific UCB1/random comparison, separately establish authorized lab observations, a predefined protocol, independent Blue Team outcomes and time measurements; this session log is not that evidence.
+
+
+### Pending proposal display after a Streamlit rerun (29/10/2026)
+
+The pending proposal shown in the Red Team page is reconstructed from the
+validated, ordered planning-audit events using the recorded strategy and seed.
+It no longer relies on the separate `red_team_last_plan` session cache, which
+could be missing after navigation or stale relative to the audited proposal.
+The pending scenario selector therefore reflects the reproducible audit record.
+This does not persist sessions, authenticate operator feedback, or enable any
+network execution. The stop button still only clears local planning state.
