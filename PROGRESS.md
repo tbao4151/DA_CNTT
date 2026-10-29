@@ -1747,3 +1747,21 @@
   and labels. It does not authenticate their origin, prove the absence of
   undeclared reused flows, verify physical Host-only isolation, generate
   operational alerts, or establish detection performance.
+
+
+## 2026-10-29 — Verified NEW-log pinned declared partition scoring (#209)
+
+- [x] [PR #209](https://github.com/tbao4151/DA_CNTT/pull/209) merged as
+  `e8ee5f836c586875ed1a8f6e12e7a7b89ecb4577` after final-head
+  [Ubuntu CI #40871455246](https://github.com/tbao4151/DA_CNTT/actions/runs/40871455246)
+  (**945 passed, 2 skipped, 2 warnings**),
+  [Windows CI #40871455253](https://github.com/tbao4151/DA_CNTT/actions/runs/40871455253)
+  (**160 Zeek + 46 Red Team passed**), and
+  [real Zeek synthetic CI #40871455362](https://github.com/tbao4151/DA_CNTT/actions/runs/40871455362)
+  (**success**). The final PR was conflict-free; these are GitHub runner results,
+  not student Windows/VMware acceptance. Supersedes the pending feature status.
+- [ ] Student runs pinned manifest scoring on authorized Windows 11/VMware
+  Host-only captures and verifies refusal of a copied reserved TEST capture;
+  preserve independent model/log/manifest/annotation digests and isolation
+  evidence outside Git. No live attack detection, real latency or independent
+  label verification has been established.
