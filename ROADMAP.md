@@ -1174,3 +1174,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify and merge the optional strict `--require-independent-original-pins` offline evidence gate after final-head Ubuntu and Windows Python 3.12.9 CI and conflict-free PR review; check post-merge main separately. Existing weaker invocation must remain compatible and clearly flagged.
 - [ ] Student records original PCAP and Zeek SHA-256 values separately at acquisition, runs strict preflight with genuine privately archived Host-only evidence, and manually confirms isolation, authorization and independent labels. Software checks do not certify these claims.
 - [ ] Preserve untouched UNSW-NB15 benchmark and separately evaluate held-out Zeek AI detection and event-to-alert-to-SOC timing only after real authorized lab data exists.
+
+
+## Cyber Lab — strict independent original pins verified (#237, 30/10/2026)
+
+- [x] [PR #237](https://github.com/tbao4151/DA_CNTT/pull/237) merged at `a12325107692b027d27262f353dcae654a5fb95b` after final-head [Ubuntu CI #40942952696](https://github.com/tbao4151/DA_CNTT/actions/runs/40942952696) and [Windows CI #40942952660](https://github.com/tbao4151/DA_CNTT/actions/runs/40942952660) succeeded; no conflicts. The older pending entry above is superseded. Post-merge main CI is separately tracked in PROGRESS.
+- [ ] Run the strict opt-in CLI on authorized, independently pinned private PCAP/Zeek evidence from the student's Windows 11 VMware Host-only environment. Record physical isolation, consent, scenario, Zeek version and original file hashes separately. A synthetic CI pass does not verify a live capture.
+- [ ] Build independently annotated, host/session-disjoint held-out Zeek evaluation and measure genuine telemetry-ready → AI decision → alert → SOC case latency. Preserve Dataset Mode metrics and never infer live detection from checksum validation.
