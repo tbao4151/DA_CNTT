@@ -15,7 +15,7 @@ from test_paired_network_preflight import guest, host
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _run(tmp_path, evidence, *, changes=None):
+def _run(tmp_path, evidence, *, changes=None, independent_pins=False):
     # The existing synthetic Zeek fixture uses 192.168.56.0/24; align
     # the separate host/guest synthetic snapshots with that declared scope.
     h, g = host(), guest()
@@ -39,6 +39,11 @@ def _run(tmp_path, evidence, *, changes=None):
         "--import-report", str(evidence["report"]),
         "--expected-import-report-sha256", evidence["pin"],
     ]
+    if independent_pins:
+        args += [
+            "--expected-pcap-sha256", hashlib.sha256(evidence["pcap"].read_bytes()).hexdigest(),
+            "--expected-log-sha256", hashlib.sha256(evidence["log"].read_bytes()).hexdigest(),
+        ]
     if changes:
         changes(args, hp, gp)
     return subprocess.run(args, capture_output=True, text=True)
@@ -53,6 +58,7 @@ def test_synthetic_integrated_evidence_passes_without_claiming_detection(tmp_pat
     assert obj["configuration_snapshots_consistent"] is True
     assert obj["offline_pcap_zeek_import_consistent"] is True
     assert obj["zeek_flow_count"] == 1
+    assert obj["independent_original_pcap_zeek_pins_verified"] is False
     assert all(obj[k] is False for k in (
         "vmware_isolation_verified", "capture_authenticity_verified",
         "traffic_authorized", "independent_labels_verified",
@@ -94,3 +100,54 @@ def test_synthetic_integrated_evidence_fails_closed(tmp_path, imported, kind):
     assert "refused" in result.stderr
     assert "192.168" not in result.stderr
     assert str(tmp_path) not in result.stderr
+
+
+def test_independently_pinned_originals_are_verified(tmp_path, imported):
+    result = _run(tmp_path, imported, independent_pins=True)
+    assert result.returncode == 0, result.stderr
+    obj = json.loads(result.stdout)
+    assert obj["independent_original_pcap_zeek_pins_verified"] is True
+    assert obj["pcap_sha256"] == hashlib.sha256(imported["pcap"].read_bytes()).hexdigest()
+    assert obj["zeek_conn_sha256"] == hashlib.sha256(imported["log"].read_bytes()).hexdigest()
+    assert obj["capture_authenticity_verified"] is False
+
+
+@pytest.mark.parametrize("kind", ["missing_log_pin", "wrong_pcap_pin", "wrong_log_pin", "invalid_pcap_pin"])
+def test_independent_original_pins_fail_closed(tmp_path, imported, kind):
+    def change(args, hp, gp):
+        if kind == "missing_log_pin":
+            i = args.index("--expected-log-sha256")
+            del args[i:i + 2]
+        elif kind == "wrong_pcap_pin":
+            args[args.index("--expected-pcap-sha256") + 1] = "0" * 64
+        elif kind == "wrong_log_pin":
+            args[args.index("--expected-log-sha256") + 1] = "0" * 64
+        elif kind == "invalid_pcap_pin":
+            args[args.index("--expected-pcap-sha256") + 1] = "A" * 64
+    result = _run(tmp_path, imported, independent_pins=True, changes=change)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert str(tmp_path) not in result.stderr
+
+
+def test_re_pinned_import_report_cannot_replace_independent_pcap_pin(tmp_path, imported):
+    original_digest = hashlib.sha256(imported["pcap"].read_bytes()).hexdigest()
+
+    def change(args, hp, gp):
+        # Simulate a modified original and a matching, re-pinned import report.
+        raw = bytearray(imported["pcap"].read_bytes())
+        raw[-1] ^= 1  # Keep the classic PCAP magic and file length intact.
+        imported["pcap"].write_bytes(raw)
+        report = json.loads(imported["report"].read_text(encoding="utf-8"))
+        report["pcap_sha256"] = hashlib.sha256(raw).hexdigest()
+        imported["report"].write_text(json.dumps(report), encoding="utf-8")
+        args[args.index("--expected-import-report-sha256") + 1] = hashlib.sha256(
+            imported["report"].read_bytes()
+        ).hexdigest()
+        args[args.index("--expected-pcap-sha256") + 1] = original_digest
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=change)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr

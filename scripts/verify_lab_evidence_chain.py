@@ -6,7 +6,9 @@ provenance checks. It neither collects traffic nor certifies network isolation.
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -42,6 +44,12 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         guest_adapter=args.guest_adapter,
         expected_cidr=args.cidr,
     )
+    original_pins = (args.expected_pcap_sha256, args.expected_log_sha256)
+    if any(pin is not None for pin in original_pins):
+        if not all(pin is not None for pin in original_pins):
+            raise ValueError("Original PCAP and Zeek SHA-256 pins must be paired")
+        if any(re.fullmatch(r"[0-9a-f]{64}", pin) is None for pin in original_pins):
+            raise ValueError("Original pins must be lowercase SHA-256 digests")
     imported = verify_offline_pcap_import(
         args.import_report,
         expected_report_sha256=args.expected_import_report_sha256,
@@ -49,6 +57,10 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         log_path=args.log,
         lab_cidrs=[args.cidr],
     )
+    if all(pin is not None for pin in original_pins):
+        if (not hmac.compare_digest(imported["pcap_sha256"], args.expected_pcap_sha256)
+                or not hmac.compare_digest(imported["zeek_conn_sha256"], args.expected_log_sha256)):
+            raise ValueError("Original evidence does not match independent pins")
     if not (paired["host_configuration_passed"]
             and paired["guest_configuration_passed"]
             and paired["declared_subnet_consistent"]
@@ -60,6 +72,9 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         "mode": "offline_private_lab_evidence_consistency_only",
         "configuration_snapshots_consistent": True,
         "offline_pcap_zeek_import_consistent": True,
+        "independent_original_pcap_zeek_pins_verified": all(
+            pin is not None for pin in original_pins
+        ),
         "host_snapshot_sha256": args.expected_host_sha256,
         "guest_snapshot_sha256": args.expected_guest_sha256,
         "import_report_sha256": imported["report_sha256"],
@@ -96,6 +111,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--log", required=True, type=Path)
     parser.add_argument("--import-report", required=True, type=Path)
     parser.add_argument("--expected-import-report-sha256", required=True)
+    parser.add_argument("--expected-pcap-sha256", help="Optional independently recorded original PCAP SHA-256; requires Zeek pin")
+    parser.add_argument("--expected-log-sha256", help="Optional independently recorded original conn.log SHA-256; requires PCAP pin")
     args = parser.parse_args(argv)
     try:
         result = verify_chain(args)
