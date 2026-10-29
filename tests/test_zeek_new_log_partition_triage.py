@@ -22,6 +22,12 @@ CIDR = "192.168.56.0/24"
 
 def _setup(tmp_path):
     manifest, dataset, model, new_log = _inputs(tmp_path)
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    for capture in spec["captures"]:
+        labels = manifest.parent / capture["labels_path"]
+        capture["labels_sha256"] = hashlib.sha256(labels.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    model["input_manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
     # Synthetic-only threshold for deterministic candidate coverage, NOT a
     # scientifically selected operational threshold.
     model["selected_threshold"] = 0.000001
