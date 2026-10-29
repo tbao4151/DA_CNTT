@@ -133,3 +133,31 @@ when large, cannot establish generalization. This is descriptive analysis:
 flows may be dependent within host/session, group assignments and labels
 remain operator-supplied, and no p-value, confidence interval or deployment
 winner is asserted. Do not tune using held-out TEST.
+
+
+## Cross-section small-host privacy correction (29/10/2026)
+
+The paired TEST section already suppresses all per-host correctness cells when
+any TEST group contains fewer than 30 flows. However, the same v2 JSON also
+contained per-variant VALIDATION/TEST host confusion rows and per-host rate
+ranges, which could still expose a small group's labels or predictions.
+Suppressing only the paired section was insufficient.
+
+The port-ablation exporter now enables **the same opt-in all-group suppression
+for both variants and both splits**. When any group in a split contains fewer
+than 30 flows, that split's `validation_host_variability` or
+`test_host_variability` returns `groups: []`,
+`rate_ranges: null`, `all_group_counts_suppressed: true`, and
+`minimum_support_per_group: 30`. The group count, warning flags, and
+**overall** validation/TEST metrics remain available. When every group has
+at least 30 flows, per-group summaries and rate ranges remain visible.
+The generic host-variability function keeps its previous behavior unless
+explicitly called with `suppress_small_groups=True`; other callers are not
+silently changed. Report schema remains v2, but downstream consumers must
+handle `rate_ranges: null` for redacted splits.
+
+This is a best-effort small-group disclosure guard, not differential privacy:
+aggregate metrics, known external information, repeated overlapping reports,
+or data access outside this JSON can still reveal sensitive facts. Keep all
+lab evidence and individual labels private. No model, threshold, UNSW baseline,
+SQLite case, network activity, or live detection claim changes.
