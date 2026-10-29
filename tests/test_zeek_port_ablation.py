@@ -59,10 +59,12 @@ def test_paired_ablation_reports_anonymous_host_variability_with_matching_counts
             assert summary["group_count"] == (2 if split == "test" else 1)
             assert summary["small_group_warning"] is True
             assert summary["single_group_warning"] is (split == "validation")
-            assert sum(group["support"] for group in summary["groups"]) == result[f"{split}_metrics"]["support"]
-            for key in ("tp", "fp", "tn", "fn"):
-                assert sum(group[key] for group in summary["groups"]) == result[f"{split}_metrics"][key]
-            assert [g["anonymous_group_number"] for g in summary["groups"]] == list(range(1, summary["group_count"] + 1))
+            # Even though paired TEST cells are suppressed, the per-variant
+            # confusion rows and macro ranges would reveal tiny host groups.
+            assert summary["minimum_support_per_group"] == 30
+            assert summary["all_group_counts_suppressed"] is True
+            assert summary["groups"] == []
+            assert summary["rate_ranges"] is None
     serialized = json.dumps(report)
     for forbidden in ("private-second-test-host", "host-validation", "host-test", "192.168.56.", "operator-note"):
         assert forbidden not in serialized
@@ -79,7 +81,8 @@ def test_heldout_labels_change_host_diagnostics_but_not_validation_selection():
         a, b = before["variants"][variant], after["variants"][variant]
         assert a["selected_validation_threshold"] == b["selected_validation_threshold"]
         assert a["validation_host_variability"] == b["validation_host_variability"]
-        assert a["test_host_variability"] != b["test_host_variability"]
+        assert a["test_host_variability"] == b["test_host_variability"]
+        assert a["test_metrics"] != b["test_metrics"]
 
 def test_portless_is_invariant_to_port_values_across_all_splits():
     dataset = _dataset()
@@ -316,3 +319,16 @@ def test_ablation_paired_host_diagnostics_do_not_disclose_tiny_fixture_rows():
     assert host["all_group_counts_suppressed"] is True
     assert host["groups"] == []
     assert host["single_group_warning"] is True
+
+
+def test_ablation_all_splits_and_variants_suppress_small_group_cells():
+    report = evaluate_zeek_port_ablation(_dataset())
+    for variant in ("full", "without_ports"):
+        for split in ("validation", "test"):
+            summary = report["variants"][variant][f"{split}_host_variability"]
+            assert summary["all_group_counts_suppressed"] is True
+            assert summary["groups"] == []
+            assert summary["rate_ranges"] is None
+    assert report["paired_test_correctness"]["by_anonymous_host_group"]["groups"] == []
+    # Aggregate model metrics remain available for legitimate research.
+    assert report["variants"]["full"]["test_metrics"]["support"] == 2

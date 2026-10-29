@@ -72,10 +72,12 @@ def _fit_one(dataset: LabeledLabDataset, model: Pipeline, columns: tuple[str, ..
         "validation_host_variability": summarize_host_variability(
             dataset.labels["validation"], validation,
             [p["host_group"] for p in dataset.provenance["validation"]], selected,
+            suppress_small_groups=True,
         ),
         "test_host_variability": summarize_host_variability(
             dataset.labels["test"], test,
             [p["host_group"] for p in dataset.provenance["test"]], selected,
+            suppress_small_groups=True,
         ),
     }, [bool(probability >= selected) for probability in test]
 

@@ -73,3 +73,41 @@ def test_threshold_is_fixed_and_boundary_inclusive():
 def test_invalid_inputs_fail_closed(labels, probs, groups, threshold):
     with pytest.raises(ValueError):
         summarize_host_variability(labels, probs, groups, threshold)
+
+
+def test_opt_in_small_group_suppression_hides_all_groups_and_rate_ranges():
+    result = summarize_host_variability(
+        [0, 1] * 30,
+        [0.2, 0.8] * 30,
+        ["private-small"] * 29 + ["private-large"] * 31,
+        0.5,
+        suppress_small_groups=True,
+    )
+    assert result["group_count"] == 2
+    assert result["small_group_warning"] is True
+    assert result["all_group_counts_suppressed"] is True
+    assert result["minimum_support_per_group"] == 30
+    assert result["groups"] == []
+    assert result["rate_ranges"] is None
+    assert "private-small" not in json.dumps(result)
+
+
+def test_opt_in_large_groups_preserve_aggregate_diagnostics():
+    result = summarize_host_variability(
+        [0, 1] * 30,
+        [0.2, 0.8] * 30,
+        ["private-one"] * 30 + ["private-two"] * 30,
+        0.5,
+        suppress_small_groups=True,
+    )
+    assert result["all_group_counts_suppressed"] is False
+    assert [g["support"] for g in result["groups"]] == [30, 30]
+    assert result["rate_ranges"]["attack_recall"]["defined_groups"] == 2
+    assert sum(g["tp"] for g in result["groups"]) == 30
+
+
+def test_small_group_suppression_requires_boolean():
+    with pytest.raises(ValueError, match="boolean"):
+        summarize_host_variability(
+            [0], [0.5], ["private"], 0.5, suppress_small_groups=1,
+        )
