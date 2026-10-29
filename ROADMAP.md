@@ -1146,3 +1146,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Validate final feature-head Ubuntu Python 3.12.9 and Windows offline CI for the integrated five-file SHA-256-pinned host/guest/PCAP/Zeek/import-report consistency gate. Merge only after required checks pass and no conflicting PR remains. Synthetic regression is not real VMware acceptance.
 - [ ] Student obtains authorized Host-only configuration and real PCAP, original Zeek `conn.log`, independent SHA-256 pins, host/guest snapshots and offline import report **outside Git**; runs `scripts/verify_lab_evidence_chain.py` on Windows 11 and archives the sanitized result privately.
 - [ ] Independently verify VMware VMnet/NIC/routes/egress and approval, adjudicate labels on held-out captures, then measure genuine event-to-AI-alert-to-SOC latency and Precision/Recall/FPR. The new gate verifies only supplied file consistency and does not create alerts or cases.
+
+
+## Cyber Lab — verified integrated private evidence chain (#233, 30/10/2026)
+
+- [x] [PR #233](https://github.com/tbao4151/DA_CNTT/pull/233) merged as `eca23157d377c738e5473554a3133135d560e88f` after [Ubuntu CI #40933723686](https://github.com/tbao4151/DA_CNTT/actions/runs/40933723686) (**1058 passed, 2 skipped**) and [Windows CI #40933723728](https://github.com/tbao4151/DA_CNTT/actions/runs/40933723728) (**8 integrated synthetic tests and existing offline suites passed**). This supersedes the pending feature gate above; post-merge main CI must be checked independently.
+- [ ] Student executes the new pinned read-only gate with genuine authorized Windows 11/VMware Host-only snapshots, PCAP and Zeek import report, retaining original evidence and SHA-256 privately. Synthetic CI cannot verify physical isolation or authenticity.
+- [ ] Independently adjudicate labels, establish held-out evaluation and measure real event-to-AI-alert-to-SOC case latency. Do not reinterpret the new gate as AI attack detection.
