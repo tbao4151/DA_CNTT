@@ -994,3 +994,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Demonstrate independently adjudicated held-out attack detection and
   actual event-to-alert-to-SOC-case timing; the new gate does not provide
   these measurements or operational alerts.
+
+## Blue Team — NEW-log SOC pinned annotation boundary (29/10/2026)
+
+- [ ] Verify final feature-head Ubuntu Python 3.12.9, Windows offline Zeek and applicable synthetic CI; merge only when all required checks are green and no conflict exists. Require `labels_sha256` for every declared annotation in CLI/UI SOC triage, matching the already strict scoring path.
+- [ ] Student independently pins annotation, manifest, model, original Zeek and PCAP hashes; tests modified-label and missing-label-pin refusals on Windows 11 with copies, then preserves genuine authorized Host-only evidence outside Git.
+- [ ] Collect independently adjudicated held-out labels and measured event-to-AI-alert-to-SOC-case timing. Digest checks do not authenticate ground truth, physical isolation or operational detection.

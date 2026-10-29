@@ -167,3 +167,27 @@ py -3.12 -m pytest -q tests/test_offline_pcap_soc_triage_gate.py
 ```
 
 This does **not** replace a Windows/VMware experiment with actual Zeek `-r`.
+
+## Pinned annotation integrity at the manual SOC boundary (29/10/2026)
+
+When a private TRAIN/VALIDATION/TEST manifest is supplied to
+`scripts/triage_zeek_new_log.py`, every capture entry must now include
+`labels_sha256` (lowercase SHA-256 of the **original private annotation
+JSON bytes**). The CLI and the Streamlit UI SOC write helper re-read and
+verify all annotation files and the independently pinned manifest before
+listing candidates or creating an Unclassified case. This aligns the
+SOC triage boundary with the strict pinned scoring CLI. The older unpinned
+CLI invocation remains explicitly available and must **not** be represented
+as partition-verified.
+
+An annotation changed after scoring, or a manifest missing even one
+`labels_sha256`, causes a refusal before any SQLite write. To prepare
+private evidence, compute each annotation SHA-256 on the original file,
+record it in the manifest, then independently pin the resulting manifest
+and exported model hashes. Do not edit the official held-out TEST or
+modify original PCAP/Zeek evidence to satisfy these checks.
+
+This verifies **byte consistency**, not the correctness of human labels,
+physical Host-only isolation, authorization, model authorship or genuine
+attack detection. Regression tests use synthetic fixtures only; actual
+student Windows 11/VMware acceptance is outstanding.

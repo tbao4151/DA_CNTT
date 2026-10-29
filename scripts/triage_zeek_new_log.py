@@ -128,6 +128,8 @@ def create_ui_candidate_case(
         raise ValueError("Pinned manifest SHA-256 mismatch at SOC write boundary")
     captures, manifest_sha = load_experiment_manifest(
         manifest_file, lab_cidrs=lab_cidrs,
+        require_label_sha256=True,
+        expected_manifest_sha256=expected_manifest_sha256,
     )
     if manifest_sha != expected_manifest_sha256:
         raise ValueError("Manifest changed during SOC write validation")
@@ -246,6 +248,8 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError("Independently pinned manifest SHA-256 mismatch")
             captures, manifest_sha = load_experiment_manifest(
                 manifest_path, lab_cidrs=args.cidr,
+                require_label_sha256=True,
+                expected_manifest_sha256=expected_manifest_sha,
             )
             if manifest_sha != expected_manifest_sha:
                 raise ValueError("Manifest changed during validation")
