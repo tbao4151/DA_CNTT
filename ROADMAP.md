@@ -710,3 +710,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #171](https://github.com/tbao4151/DA_CNTT/pull/171) merged conflict-free after final-head [Ubuntu Python 3.12.9 #40807809739](https://github.com/tbao4151/DA_CNTT/actions/runs/40807809739) (**811 passed, 2 skipped**) and [Windows Python 3.12.9 #40807809829](https://github.com/tbao4151/DA_CNTT/actions/runs/40807809829) (**87 Zeek + 29 Red Team passed**). Supersedes the earlier pending CI/merge checklist. All new observations are synthetic/manual and unverified.
 - [ ] Student validates proposal → linked manual feedback → JSON timeline → stop/clear on their own Windows 11 laptop, retaining local screenshots and a private export. Do not interpret UI-action UTC timestamps as network/detection latency or operator-entered feedback as authenticated Blue Team outcomes.
 - [ ] Build authorized VMware Host-only evidence, independent scenario and Blue Team annotation records, holdout by host/session, and real Zeek-specific Precision/Recall/FPR plus event-to-SOC timing before claiming AI-vs-AI performance. Keep Red Team network execution disabled and preserve official UNSW-NB15 benchmark.
+
+
+## Red Team — independently verify offline planning export (29/10/2026)
+
+- [ ] Verify Ubuntu Python 3.12.9 full quality CI and Windows offline Red Team tests for the read-only JSON export verifier; merge only when final-head checks pass and no conflicts.
+- [ ] Student exports the Red Team UI session chronology to a private Windows path, records SHA-256 independently, and runs `scripts/verify_red_team_planning_audit.py --audit ... --expected-sha256 ...`. Test a modified copy to confirm rejection; do not repin the changed copy silently.
+- [ ] Keep operator-entered observations explicitly unverified; acquire independently labeled authorized Host-only Zeek capture, Blue Team outcome and event-to-SOC timing evidence before claiming AI-vs-AI effectiveness. No replay, attack, network access or official UNSW benchmark change is included.
