@@ -10,8 +10,8 @@ if (-not [System.IO.Path]::IsPathRooted($OutputPath) -or
 }
 $resolvedParent = (Resolve-Path -LiteralPath $parent).ProviderPath
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-if ($resolvedParent.TrimEnd('\', '/') -eq $repoRoot.TrimEnd('\', '/') -or
-    $resolvedParent.StartsWith($repoRoot.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+if ($resolvedParent.TrimEnd([char[]]@('\', '/')) -eq $repoRoot.TrimEnd([char[]]@('\', '/')) -or
+    $resolvedParent.StartsWith($repoRoot.TrimEnd([char[]]@('\', '/')) + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw 'Guest evidence must be stored outside the Git repository.'
 }
 $nics = @(Get-NetAdapter -IncludeHidden -ErrorAction Stop)
