@@ -17,6 +17,27 @@ try {
     try { & $collector -AdapterName 'VMware Network Adapter VMnet1' -OutputPath $target | Out-Null }
     catch { $refused = $true }
     if (-not $refused) { throw 'Existing snapshot was overwritten' }
+    # An in-repository absolute path must fail before any sensitive JSON is written.
+    $repoTarget = Join-Path $PSScriptRoot ('da005-hostonly-private-' + [guid]::NewGuid().ToString() + '.json')
+    try {
+        $blocked = $false
+        try { & $collector -AdapterName 'VMware Network Adapter VMnet1' -OutputPath $repoTarget | Out-Null }
+        catch { $blocked = $true }
+        if (-not $blocked -or (Test-Path -LiteralPath $repoTarget)) {
+            throw 'Collector accepted an in-repository evidence destination'
+        }
+    }
+    finally { Remove-Item -LiteralPath $repoTarget -Force -ErrorAction SilentlyContinue }
+    $relativeTarget = '.\\da005-hostonly-relative-' + [guid]::NewGuid().ToString() + '.json'
+    try {
+        $blocked = $false
+        try { & $collector -AdapterName 'VMware Network Adapter VMnet1' -OutputPath $relativeTarget | Out-Null }
+        catch { $blocked = $true }
+        if (-not $blocked -or (Test-Path -LiteralPath $relativeTarget)) {
+            throw 'Collector accepted a relative evidence destination'
+        }
+    }
+    finally { Remove-Item -LiteralPath $relativeTarget -Force -ErrorAction SilentlyContinue }
     Write-Output 'Mocked Windows host adapter snapshot smoke passed; no VMware tested.'
 }
 finally { Remove-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue }
