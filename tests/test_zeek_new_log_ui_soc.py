@@ -130,3 +130,25 @@ def test_ui_write_rejects_database_inside_repository(tmp_path):
     with pytest.raises(ValueError, match="private"):
         create_ui_candidate_case(**args)
     assert not args["db_path"].exists()
+
+@pytest.mark.parametrize("change", ["annotation_modified", "missing_annotation_pin"])
+def test_ui_soc_write_refuses_unpinned_or_changed_annotation(tmp_path, change):
+    args = _ui_args(tmp_path)
+    manifest = args["manifest_path"]
+    if change == "annotation_modified":
+        labels = manifest.parent / "host-0-labels.json"
+        labels.write_bytes(labels.read_bytes() + b"\\n")
+    else:
+        import hashlib
+        spec = json.loads(manifest.read_text(encoding="utf-8"))
+        del spec["captures"][0]["labels_sha256"]
+        manifest.write_text(json.dumps(spec), encoding="utf-8")
+        args["expected_manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
+        model_path = args["model_path"]
+        model = json.loads(model_path.read_text(encoding="utf-8"))
+        model["input_manifest_sha256"] = args["expected_manifest_sha256"]
+        model_path.write_text(json.dumps(model), encoding="utf-8")
+        args["expected_model_sha256"] = hashlib.sha256(model_path.read_bytes()).hexdigest()
+    with pytest.raises(ValueError):
+        create_ui_candidate_case(**args)
+    assert not args["db_path"].exists()
