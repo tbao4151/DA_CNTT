@@ -14,6 +14,7 @@ on:
       - "scripts/inspect_zeek_telemetry_quality.py"
       - "tests/test_zeek_telemetry_quality.py"
       - "tests/test_zeek_declared_types.py"
+      - "tests/test_zeek_lab_cli.py"
       - "tests/test_zeek_real_smoke.py"
       - "tests/ci_real_zeek_scoring.py"
       - "tests/test_ci_real_zeek_scoring.py"
