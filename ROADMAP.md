@@ -876,3 +876,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Independently measure held-out detection accuracy and actual event-to-alert/SOC latency before reporting scientific performance. Dataset Mode UNSW benchmark and active Red Team traffic remain unchanged.
 
 - [ ] Resolve initial Ubuntu CI failure in private trace review by validating the new baseline report v5 alongside legacy v4, then rerun **both** final-head Ubuntu and Windows CI; do not merge using earlier passing Windows/Zeek runs. Preserve private trace v1 integrity checks and backward compatibility.
+
+
+## Blue Team — baseline Zeek host privacy v5 merge verification (29/10/2026)
+
+- [x] [PR #195](https://github.com/tbao4151/DA_CNTT/pull/195) merged as `f21dcb95ad3610c8cd0fafad7ce1e2a583ae269c` after final-head [Ubuntu CI #40844461501](https://github.com/tbao4151/DA_CNTT/actions/runs/40844461501) (**892 passed, 2 skipped, 2 warnings**), [Windows CI #40844461634](https://github.com/tbao4151/DA_CNTT/actions/runs/40844461634) (**146 Zeek + 46 Red Team passed**) and [real Zeek synthetic smoke #40844461607](https://github.com/tbao4151/DA_CNTT/actions/runs/40844461607) (**success**). This supersedes the pending merge/compatibility items above; the initial v4-only private reviewer regression was fixed before final CI.
+- [ ] Verify post-merge `main` CI for PR #195 independently. Run genuine Windows 11/VMware Host-only acceptance with pinned PCAP/Zeek hashes, independent labels, split plan and offline reports. No local capture, independent attack-detection score, causal ablation conclusion or event-to-SOC latency has been demonstrated by these CI checks.
