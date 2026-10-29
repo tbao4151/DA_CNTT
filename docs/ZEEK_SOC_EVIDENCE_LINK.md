@@ -78,3 +78,41 @@ py -3.12 -m pytest -q tests/test_zeek_soc_case_link_cli.py
 The read-only verifier now requires the complete canonical original creation note rather than disconnected substrings. It refuses inserted claims such as verified attack, reordered provenance clauses and trailing text. The strict CLI also compares the stored manifest digest against the independently pinned manifest and (when supplied) import-report/PCAP digests against verified original bytes. Legitimate later analyst updates remain valid.
 
 This is a fail-closed software-consistency check. Older or manually edited noncanonical creation notes may be refused; preserve original evidence rather than rewriting it. SQLite remains mutable, unsigned and unauthenticated. No independent label, isolation, attack detection or latency claim follows. Regression command: py -3.12 -m pytest -q tests/test_zeek_soc_evidence_link.py tests/test_zeek_soc_case_link_cli.py.
+
+## Optional read-only processing-stage timing (feature PR pending, 29/10/2026)
+
+Append `--timing-json` to the **same pinned, existing-case verification command**
+above. On success, stdout contains one aggregate JSON object instead of the
+default human-readable summary. It reports monotonic `perf_counter_ns`
+processing durations in milliseconds for:
+
+1. Private input path validation and optional offline PCAP import verification.
+2. Pinned manifest, annotation, model and NEW-log loading/verification.
+3. Declared TRAIN/VALIDATION/TEST partition and flow-identity non-reuse screen.
+4. Recomputed offline inference plus **read-only** SQLite SOC evidence-link check.
+
+The `total_processing_ms` interval begins after argument parsing and ends
+after the existing case is verified. It includes the file reads and checks
+listed above but excludes process startup, argument parsing and stdout JSON
+serialization. The last stage may recompute the model/report more than once:
+this is **verification overhead**, not a production detector's inference
+latency. The tool does **not** time SOC case creation, human investigation,
+network capture, Zeek log delivery or an operational alert. It never
+calculates delay from Zeek event timestamps, and it creates no case.
+
+Failures emit only the original generic refusal to stderr, with **no partial
+timing JSON**. Output excludes private file paths, IP addresses, UIDs and
+per-flow predictions; preserve aggregate JSON privately if required for a
+student experiment. Results are environment-, workload- and disk-dependent;
+repeat on actual authorized Windows/VMware data with CPU, RAM, Zeek version,
+capture size and original SHA-256 pins recorded. A synthetic CI pass is
+software validation, not a measured student lab run.
+
+Regression:
+
+```powershell
+py -3.12 -m pytest -q tests/test_zeek_soc_case_link_cli.py
+```
+
+The default CLI output and the existing read-only evidence verifier are
+unchanged when `--timing-json` is omitted.

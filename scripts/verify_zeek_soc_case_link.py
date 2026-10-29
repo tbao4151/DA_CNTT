@@ -7,7 +7,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
+import platform
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,7 +43,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--offline-import-report", type=Path)
     parser.add_argument("--expected-offline-import-report-sha256")
     parser.add_argument("--offline-import-pcap", type=Path)
+    parser.add_argument(
+        "--timing-json", action="store_true",
+        help="Print aggregate offline processing-stage timing JSON (no event-to-alert latency)",
+    )
     args = parser.parse_args(argv)
+    started_ns = time.perf_counter_ns()
+    stage_started_ns = started_ns
+    stage_ns: dict[str, int] = {}
     try:
         model_path = _private_file(args.model)
         log_path = _private_file(args.log)
@@ -73,6 +83,10 @@ def main(argv: list[str] | None = None) -> int:
             if imported["zeek_conn_sha256"] != args.expected_log_sha256:
                 raise ValueError("PCAP import does not match independently pinned log")
 
+        stage_ns["private_input_and_optional_pcap_preflight"] = (
+            time.perf_counter_ns() - stage_started_ns
+        )
+        stage_started_ns = time.perf_counter_ns()
         manifest_bytes = _read_bounded(manifest_path, MAX_MANIFEST_BYTES)
         manifest_pin = args.expected_manifest_sha256
         if (len(manifest_pin) != 64
@@ -92,11 +106,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         source_data = _read_bounded(log_path, MAX_LOG_BYTES)
         report_data = _read_bounded(report_path, MAX_NEW_LOG_REPORT_BYTES)
+        stage_ns["pinned_manifest_annotations_model_and_log_load"] = (
+            time.perf_counter_ns() - stage_started_ns
+        )
+        stage_started_ns = time.perf_counter_ns()
         verify_declared_partition_exclusion(
             model, dataset, manifest_sha256=manifest_sha,
             new_capture_sha256=args.expected_log_sha256,
             declared_captures=captures, new_source_data=source_data,
         )
+        stage_ns["declared_partition_nonreuse_screen"] = (
+            time.perf_counter_ns() - stage_started_ns
+        )
+        stage_started_ns = time.perf_counter_ns()
         result = verify_new_log_soc_case_link(
             db_path, source_data=source_data, model=model,
             report_data=report_data,
@@ -112,10 +134,52 @@ def main(argv: list[str] | None = None) -> int:
                 imported["pcap_sha256"] if imported is not None else None
             ),
         )
+        stage_ns["recomputed_inference_and_soc_evidence_link"] = (
+            time.perf_counter_ns() - stage_started_ns
+        )
+        total_ns = time.perf_counter_ns() - started_ns
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError, RecursionError):
         # No private paths, UIDs, IPs, labels or model contents on failure.
         print("Private NEW-log SOC evidence-link verification refused.", file=sys.stderr)
         return 1
+    if args.timing_json:
+        # Monotonic processing times only. No event arrival, capture, alert or
+        # analyst-action clock is observed by this read-only verification CLI.
+        report = {
+            "report_version": 1,
+            "mode": "offline_existing_soc_case_verification_processing_only",
+            "case_id": result["case_id"],
+            "python_version": ".".join(map(str, sys.version_info[:3])),
+            "platform_system": platform.system(),
+            "stage_duration_ms": {
+                name: round(duration / 1_000_000, 6)
+                for name, duration in stage_ns.items()
+            },
+            "total_processing_ms": round(total_ns / 1_000_000, 6),
+            "measurement_boundary": (
+                "After argument parsing through successful read-only verification; "
+                "includes private file reads, optional PCAP provenance, pinned "
+                "manifest/annotations/model checks, declared partition screen, "
+                "recomputed offline inference and existing SQLite case-link check; "
+                "excludes CLI startup, argument parsing and JSON stdout serialization."
+            ),
+            "original_evidence_consistency_verified": True,
+            "sqlite_read_only": True,
+            "new_soc_case_created": False,
+            "operational_alert_verified": False,
+            "attack_ground_truth_verified": False,
+            "physical_host_only_isolation_verified": False,
+            "event_to_alert_latency_measured": False,
+            "event_to_soc_case_latency_measured": False,
+            "live_capture": False,
+            "interpretation": (
+                "Offline verification processing time, not attack detection, "
+                "alert delivery, SOC response, or event-to-case latency. "
+                "Synthetic CI timings are not student Windows/VMware measurements."
+            ),
+        }
+        print(json.dumps(report, ensure_ascii=False, allow_nan=False, indent=2))
+        return 0
     print(f"case_id={result['case_id']} offline_soc_evidence_link_verified=true")
     print("report_sha256=" + str(result["report_sha256"]))
     print("pinned_declared_partitions_screened=true (not complete historical proof)")
