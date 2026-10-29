@@ -14,7 +14,7 @@ from collections.abc import Mapping, Sequence
 import numpy as np
 import pandas as pd
 
-from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION
+from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION, validate_zeek_model_features
 from .labeled_dataset import LabeledLabDataset
 from .offline_baseline import (
     CATEGORICAL, NUMERIC, THRESHOLDS, _frame, _scores,
@@ -212,6 +212,7 @@ def score_zeek_research_rows(
     for row in rows:
         if not isinstance(row, Mapping) or set(row) != set(LAB_FEATURE_COLUMNS):
             raise ValueError("Unexpected Zeek research scoring feature schema")
+        validate_zeek_model_features(row)
         logit = float(artifact["intercept"])
         for field in CATEGORICAL:
             value = row[field]
