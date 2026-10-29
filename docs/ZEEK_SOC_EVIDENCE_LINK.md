@@ -14,7 +14,14 @@ It opens the existing SQLite file in read-only mode; missing files are refused
 without creating a database. Returned metadata contains hashes and booleans,
 not source/destination IPs or raw flow evidence.
 
-The library contract also has an **offline, read-only CLI** that requires a\nseparately SHA-256-pinned TRAIN/VALIDATION/TEST manifest, every annotation\ndigest, a pinned model, original Zeek log and research report, and an existing\nprivate SQLite case. It screens declared partition non-reuse and recomputes\nthe original inference before comparing the stored snapshot and creation audit.\nOptional original PCAP import provenance requires all three import options.\nThe CLI never creates a case, changes SQLite, or emits individual IPs/UIDs. The helper does not independently
+The library contract also has an **offline, read-only CLI** that requires a
+separately SHA-256-pinned TRAIN/VALIDATION/TEST manifest, every annotation
+digest, a pinned model, original Zeek log and research report, and an existing
+private SQLite case. It screens declared partition non-reuse and recomputes
+the original inference before comparing the stored snapshot and creation audit.
+Optional original PCAP import provenance requires all three import options.
+The CLI never creates a case, changes SQLite, or emits individual IPs/UIDs.
+The underlying library helper does not independently
 verify the declared TRAIN/VALIDATION/TEST partition, ground-truth labels,
 VMware Host-only isolation, model authorship, attack detection or end-to-end
 latency. The initial audit note is stored in a locally mutable SQLite database,
