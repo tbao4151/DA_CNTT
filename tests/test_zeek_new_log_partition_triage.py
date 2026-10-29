@@ -148,3 +148,33 @@ def test_direct_case_api_rechecks_declared_partition_evidence(tmp_path):
             declared_dataset=dataset, declared_manifest_sha256="f" * 64,
         )
     assert not db.exists()
+
+@pytest.mark.parametrize("change", ["annotation_modified", "missing_annotation_pin"])
+def test_cli_soc_refuses_unpinned_or_changed_annotation_before_write(tmp_path, change):
+    manifest, _, _, _, _, index, base, pinned = _setup(tmp_path)
+    if change == "annotation_modified":
+        labels = manifest.parent / "host-0-labels.json"
+        labels.write_bytes(labels.read_bytes() + b"\\n")
+    else:
+        spec = json.loads(manifest.read_text(encoding="utf-8"))
+        del spec["captures"][0]["labels_sha256"]
+        manifest.write_text(json.dumps(spec), encoding="utf-8")
+        model_path = Path(base[base.index("--model") + 1])
+        model = json.loads(model_path.read_text(encoding="utf-8"))
+        model["input_manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
+        model_path.write_text(json.dumps(model), encoding="utf-8")
+        base[base.index("--expected-model-sha256") + 1] = hashlib.sha256(
+            model_path.read_bytes()
+        ).hexdigest()
+        pinned[-1] = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    db = manifest.parent / "cases.sqlite3"
+    for action in (
+        ["--list-candidates"],
+        ["--record-index", str(index), "--db", str(db),
+         "--confirm-reviewed", "--confirm-authorized", "--confirm-new-capture"],
+    ):
+        refused = _run(base + pinned + action)
+        assert refused.returncode == 1
+        assert not db.exists()
+        assert str(manifest) not in refused.stderr
+        assert "192.168.56" not in refused.stderr
