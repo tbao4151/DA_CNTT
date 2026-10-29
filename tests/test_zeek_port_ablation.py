@@ -70,6 +70,7 @@ def test_paired_ablation_reports_anonymous_host_variability_with_matching_counts
 
 def test_heldout_labels_change_host_diagnostics_but_not_validation_selection():
     dataset = _dataset()
+    dataset.provenance["test"][1]["host_group"] = "private-second-test-host"
     before = evaluate_zeek_port_ablation(dataset)
     altered = copy.deepcopy(dataset)
     altered.labels["test"] = [1, 0]
