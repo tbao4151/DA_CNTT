@@ -65,7 +65,9 @@ def test_fixture_contract_rejects_unrelated_in_scope_flow(tmp_path, index, chang
 
 def test_fixture_contract_rejects_multiple_flows(tmp_path):
     path = tmp_path / "conn.log"
-    path.write_bytes(log(_fixture_row(), _fixture_row()))
+    second = list(_fixture_row())
+    second[1] = "CFIXTURE2"  # Two distinct connections, not an invalid duplicate UID.
+    path.write_bytes(log(_fixture_row(), tuple(second)))
     with pytest.raises(ValueError, match="exactly one"):
         zeek_smoke._verify_fixture_flow(path)
 
