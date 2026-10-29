@@ -1090,3 +1090,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu Python 3.12.9 full-suite and Windows offline Zeek CI, including mocked PowerShell guest collector; merge only if green, conflict-free and no competing PR. Local synthetic Python tests: 31 passed, not a VMware test.
 - [ ] On the student's owned Windows guest, collect the original private NIC/IPv4/IPv6/default-route/DNS snapshot, independently record SHA-256, run the pinned offline checker and preserve host/guest/VMware screenshots. Confirm no extra guest adapters, NAT/bridging or unintended egress and document authorized scope **manually**; passing software checks do not prove isolation.
 - [ ] After independent isolation and permission, capture genuine PCAP/Zeek logs, adjudicate labels and measure held-out detection and event-to-alert-to-SOC latency. Do not relabel CI/synthetic snapshots as real lab evidence.
+
+
+## Cyber Lab — verified Windows guest preflight merge (#225, 29/10/2026)
+
+- [x] [PR #225](https://github.com/tbao4151/DA_CNTT/pull/225) merged at `0cb865f2b23937d813271fa0e38477bc223be2f9`. Final-head [Ubuntu CI #40909968852](https://github.com/tbao4151/DA_CNTT/actions/runs/40909968852) **1028 passed, 2 skipped**; [Windows CI #40909968472](https://github.com/tbao4151/DA_CNTT/actions/runs/40909968472) **200 Zeek + 21 host + 31 guest + 46 Red Team passed**, mocked host/guest PowerShell smoke passed. Supersedes the pending PR merge gate above. Post-merge main CI #40914048171 was queued when documented.
+- [ ] Student runs the pinned offline guest checker on original privately stored Windows 11 guest evidence, preserves independent SHA-256 and manually verifies VMware Virtual Network Editor, host/guest NIC inventory, default routes, absence of unintended egress and approved scope. Synthetic CI does not attest network isolation.
+- [ ] Collect independently authorized PCAP and Zeek logs, adjudicate held-out labels and measure genuine event-to-AI-alert-to-SOC-case timing, Precision, Recall and FPR; keep these separate from UNSW-NB15 metrics and CI runtime.
