@@ -1160,3 +1160,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Confirm final-head Ubuntu Python 3.12.9 and Windows offline CI, verify no competing PR/conflicts, and merge only if green. Synthetic tests must not be reported as real VMware acceptance.
 - [ ] Student independently records SHA-256 for original private PCAP and Zeek conn.log **before** verification; supply both optional original pins alongside the host/guest/import-report pins and archive the sanitized consistency result outside Git. An absent pair remains explicitly unverified.
 - [ ] Manually inspect VMware Host-only isolation and authorized scope; acquire independent ground-truth labels, then evaluate held-out Zeek detection and genuine event-to-alert-to-SOC timing. Independent hash matching is not capture authentication or attack detection.
+
+
+## Cyber Lab — independent original pins verified (#235, 30/10/2026)
+
+- [x] [PR #235](https://github.com/tbao4151/DA_CNTT/pull/235) merged at `b4dd17b3ca6ff22a66c23a7ee9115042bf8bfb21` after [Ubuntu CI #40937218888](https://github.com/tbao4151/DA_CNTT/actions/runs/40937218888) (**1064 passed, 2 skipped**) and [Windows CI #40937218922](https://github.com/tbao4151/DA_CNTT/actions/runs/40937218922) (**14 integrated synthetic tests and existing offline suites passed**). This supersedes the pending feature merge gate above; post-merge main CI is separate.
+- [ ] Student independently pins original authorized PCAP and Zeek conn.log on Windows 11, runs the paired-pin option in the integrated offline checker, and preserves private original evidence; manually validates VMware isolation and approved scope.
+- [ ] Establish independently labeled held-out evaluation and instrument genuine event → AI decision → alert → SOC case timing. CI and hash checks alone do not demonstrate real attack detection.
