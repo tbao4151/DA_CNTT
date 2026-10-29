@@ -87,3 +87,12 @@ def test_same_selection_creates_case_only_on_explicit_invocation(tmp_path):
     second = create_offline_review_case(db, source_data=sample_log(), record_index=0)
     assert second != first
     assert len(list_cases(db)) == 2
+
+def test_appended_record_after_zeek_close_never_creates_soc_case(tmp_path):
+    db = tmp_path / "cyber.sqlite3"
+    rows = sample_log().splitlines(keepends=True)
+    # A valid terminal marker must not permit a second segment or row.
+    forged = b"".join(rows[:-1]) + b"#close\t2026-10-29-17-00-00\n" + rows[-1]
+    with pytest.raises(ValueError, match="Zeek content after close"):
+        create_offline_review_case(db, source_data=forged, record_index=0)
+    assert not db.exists()
