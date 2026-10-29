@@ -1890,3 +1890,10 @@
 - Added a new read-only, private, SHA-256-pinned **paired** host/guest snapshot checker that reuses both existing validators and rejects host/guest IPv4 collisions on one explicitly declared RFC1918 CIDR. Rejects changed bytes, symlinks, duplicate keys, oversized files and private evidence inside Git; returns only sanitized flags and SHA pins.
 - Added synthetic regression, Windows Python 3.12.9 CI step and a private Windows workflow guide. Local isolated Python syntax compilation succeeded; complete integration tests and GitHub CI are **not yet verified** at authoring. No real student Windows/VMware snapshot or network operation was performed.
 - This checks only two operator-supplied configurations. Physical Host-only isolation, snapshot authenticity/completeness, authorization, capture provenance, independent attack labels, operational AI alerts and event-to-SOC latency remain unverified. No UNSW benchmark, model, SQLite case or Red Team traffic was changed.
+
+
+## 2026-10-30 — Pinned Windows host/guest configuration pair verified and merged (#227)
+
+- [PR #227](https://github.com/tbao4151/DA_CNTT/pull/227) squash-merged as `c6170fd05b0f5e8b040aba3118454edf408a217d` after final-head `4e4a455a664c9f9cb654e682b474399d9436724e` CI and clean mergeability on unchanged main `c713c2b2a3b6740c222918a72e65a866136f4b3c`.
+- [Ubuntu Python 3.12.9 CI #40918620002](https://github.com/tbao4151/DA_CNTT/actions/runs/40918620002) **success: 1045 passed, 2 skipped, 2 warnings**. [Windows Server 2022 Python 3.12.9 CI #40918620053](https://github.com/tbao4151/DA_CNTT/actions/runs/40918620053) **success: 200 Zeek + 21 host + 31 guest + 17 paired + 46 Red Team tests passed**; mocked PowerShell host/guest snapshot smoke passed. Results were read from completed job logs.
+- The paired checker compares only separately pinned host/guest configuration snapshots and rejects same-subnet IP collision, not physical VMware isolation. No genuine student Windows/VMware run, independent capture/label validation, attack detection or event-to-SOC timing was performed. **Post-merge main CI must be checked separately.**
