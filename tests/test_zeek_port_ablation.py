@@ -148,3 +148,60 @@ def test_cli_private_strict_pinned_ablation_and_refusals(tmp_path):
     altered[altered.index("--port-ablation-output") + 1] = str(bad_output)
     assert subprocess.run(altered, capture_output=True).returncode == 1
     assert not bad_output.exists()
+
+
+def test_paired_test_correctness_matches_both_confusion_matrices():
+    report = evaluate_zeek_port_ablation(_dataset())
+    paired = report["paired_test_correctness"]
+    full = report["variants"]["full"]["test_metrics"]
+    portless = report["variants"]["without_ports"]["test_metrics"]
+    overall = paired["overall"]
+    assert paired["support"] == full["support"] == portless["support"]
+    assert sum(overall.values()) == paired["support"]
+    assert sum(paired["by_operator_supplied_label"]["normal"].values()) == full["tn"] + full["fp"]
+    assert sum(paired["by_operator_supplied_label"]["attack"].values()) == full["tp"] + full["fn"]
+    assert overall["both_correct"] + overall["full_only_correct"] == full["tp"] + full["tn"]
+    assert overall["both_correct"] + overall["without_ports_only_correct"] == portless["tp"] + portless["tn"]
+    assert paired["discordant_correctness_count"] == (
+        overall["full_only_correct"] + overall["without_ports_only_correct"]
+    )
+    assert paired["statistical_significance_test_performed"] is False
+    assert paired["independent_ground_truth_verified"] is False
+    assert "192.168.56." not in json.dumps(paired)
+
+
+def test_paired_summary_rejects_misalignment_and_nonboolean_values():
+    from blue_team_ai.paired_disagreement import summarize_paired_zeek_test
+
+    assert summarize_paired_zeek_test(
+        [0, 1, 0, 1], [False, True, True, False], [False, False, True, True]
+    )["overall"] == {
+        "both_correct": 1,
+        "full_only_correct": 1,
+        "without_ports_only_correct": 1,
+        "neither_correct": 1,
+    }
+    for labels, full, portless in (
+        ([], [], []),
+        ([0], [False, True], [False]),
+        ([0], [False], []),
+        ([True], [False], [False]),
+        ([2], [False], [False]),
+        ([0], [0], [False]),
+        ([0], [False], [1]),
+    ):
+        with pytest.raises(ValueError):
+            summarize_paired_zeek_test(labels, full, portless)
+
+
+def test_paired_predictions_are_stable_when_only_test_labels_change():
+    original = _dataset()
+    reference = evaluate_zeek_port_ablation(original)
+    altered = copy.deepcopy(original)
+    altered.labels["test"] = [1 - value for value in altered.labels["test"]]
+    changed = evaluate_zeek_port_ablation(altered)
+    for variant in ("full", "without_ports"):
+        assert (reference["variants"][variant]["selected_validation_threshold"]
+                == changed["variants"][variant]["selected_validation_threshold"])
+    assert reference["paired_test_correctness"]["support"] == changed["paired_test_correctness"]["support"]
+    assert reference["paired_test_correctness"]["discordant_correctness_count"] == changed["paired_test_correctness"]["discordant_correctness_count"]
