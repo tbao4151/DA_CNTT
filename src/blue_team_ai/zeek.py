@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import math
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -64,6 +65,8 @@ def parse_zeek_conn_log(
         raise ValueError("Expected Zeek ASCII tab separator header")
     fields: list[str] | None = None
     seen_types = False
+    seen_set_separator = False
+    seen_open = False
     seen_unset_field = False
     seen_empty_field = False
     seen_path = False
@@ -91,6 +94,26 @@ def parse_zeek_conn_log(
         # encoded. Silently ignoring non-default sentinels would turn missing
         # service values into model categories or corrupt feature missingness.
         # Legacy minimal fixtures may omit these optional metadata headers.
+        # Optional Zeek ASCII metadata must not redefine set encoding or
+        # claim a second log opening. Omission remains legacy-compatible.
+        if line.startswith("#set_separator"):
+            if (seen_set_separator or fields is not None
+                    or line != "#set_separator\t,"):
+                raise ValueError("Invalid, duplicate or late Zeek set_separator marker")
+            seen_set_separator = True
+            continue
+        if line.startswith("#open"):
+            if (seen_open or fields is not None or not line.startswith("#open\t")):
+                raise ValueError("Invalid, duplicate or late Zeek open marker")
+            opened_at = line[len("#open\t"):]
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}", opened_at):
+                raise ValueError("Invalid Zeek open marker timestamp")
+            try:
+                datetime.strptime(opened_at, "%Y-%m-%d-%H-%M-%S")
+            except ValueError as exc:
+                raise ValueError("Invalid Zeek open marker timestamp") from exc
+            seen_open = True
+            continue
         if line.startswith("#unset_field"):
             if seen_unset_field or seen_data or line != "#unset_field\t-":
                 raise ValueError("Invalid, duplicate or late Zeek unset_field marker")
