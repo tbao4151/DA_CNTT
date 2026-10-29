@@ -1897,3 +1897,11 @@
 - [PR #227](https://github.com/tbao4151/DA_CNTT/pull/227) squash-merged as `c6170fd05b0f5e8b040aba3118454edf408a217d` after final-head `4e4a455a664c9f9cb654e682b474399d9436724e` CI and clean mergeability on unchanged main `c713c2b2a3b6740c222918a72e65a866136f4b3c`.
 - [Ubuntu Python 3.12.9 CI #40918620002](https://github.com/tbao4151/DA_CNTT/actions/runs/40918620002) **success: 1045 passed, 2 skipped, 2 warnings**. [Windows Server 2022 Python 3.12.9 CI #40918620053](https://github.com/tbao4151/DA_CNTT/actions/runs/40918620053) **success: 200 Zeek + 21 host + 31 guest + 17 paired + 46 Red Team tests passed**; mocked PowerShell host/guest snapshot smoke passed. Results were read from completed job logs.
 - The paired checker compares only separately pinned host/guest configuration snapshots and rejects same-subnet IP collision, not physical VMware isolation. No genuine student Windows/VMware run, independent capture/label validation, attack detection or event-to-SOC timing was performed. **Post-merge main CI must be checked separately.**
+
+
+## 2026-10-30 — Host snapshot private output-path boundary (feature PR; CI pending)
+
+- Inspected main at `9041565a447e9a2668a171d92e7ed4184b1a8bef`, README/PROGRESS/ROADMAP, repository tree, open PRs (none), merged #227/#228 and completed Ubuntu main/PR quality gates. The Windows feature workflow from #227 passed; no real student VMware evidence was available.
+- Identified that the Windows **host** collector accepted a relative destination or a destination inside the Git repository, despite the private-evidence requirement; the guest collector already guarded this case. Updated only the host collector, mocked Windows smoke regression and its guide. New preflight refuses ordinary resolved in-repository directories and relative paths before querying adapter data; the existing CreateNew no-overwrite behavior remains.
+- This is a privacy/path-handling fix, not proof of physical isolation, capture authenticity, complete NIC inventory or authorized traffic. Windows mocked smoke and PR CI are **pending** at authoring; no real Windows 11, VMware, PCAP, Zeek or attack detection run is claimed. Junction/reparse-point handling still requires operator care.
+- Dataset Mode UNSW-NB15 benchmark, model, Red Team execution and SOC SQLite were not changed.
