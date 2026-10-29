@@ -14,8 +14,8 @@ if (-not [System.IO.Path]::IsPathRooted($OutputPath) -or
 }
 $resolvedParent = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $parent).ProviderPath)
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$repoPrefix = $repoRoot.TrimEnd([char[]]@('\\', '/'))
-$parentPath = $resolvedParent.TrimEnd([char[]]@('\\', '/'))
+$repoPrefix = $repoRoot.TrimEnd([char[]]@([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar))
+$parentPath = $resolvedParent.TrimEnd([char[]]@([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar))
 if ($parentPath.Equals($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase) -or
     $parentPath.StartsWith($repoPrefix + [System.IO.Path]::DirectorySeparatorChar,
         [System.StringComparison]::OrdinalIgnoreCase)) {
