@@ -1201,3 +1201,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify feature-head Ubuntu Python 3.12.9 and Windows Server 2022 CI for the new pinned offline research-alert bundle and synthetic tamper/no-overwrite regressions. Merge only if checks pass, no conflicts or competing PR.
 - [ ] Student exports a private candidate queue on Windows 11 from genuine authorized Host-only Zeek data with independent model/log/report/manifest/annotation SHA-256 pins; manually triages one original row into exactly one Unclassified SOC case and archives evidence outside Git.
 - [ ] Establish independent capture/ground-truth provenance, untouched held-out Zeek evaluation, actual alert-to-SOC timing and operator-approved isolation before claiming attack detection or moving from research candidates to operational alerts.
+
+## Cyber Lab — verified research alert bundle merged (#241, 30/10/2026)
+
+- [x] [PR #241](https://github.com/tbao4151/DA_CNTT/pull/241) merged at `e119441a7d28487b8d1ee87df8594e3332fab722` after [Ubuntu #40963986710](https://github.com/tbao4151/DA_CNTT/actions/runs/40963986710) (**1076 passed, 2 skipped**) and [Windows #40963986611](https://github.com/tbao4151/DA_CNTT/actions/runs/40963986611) (**212 Zeek + existing offline suites passed**). This supersedes the pending CI/merge checkbox above; post-merge main is a separate check.
+- [ ] On student Windows 11, export a pinned private research candidate bundle from authorized genuine Host-only Zeek capture; manually triage one original candidate row to one Unclassified SOC case, retain original PCAP/log/model/manifest/annotation hashes and screenshot the actual workflow.
+- [ ] Evaluate held-out real-lab detection, operator scope/VMware isolation, false positives and actual event-to-candidate-to-SOC timing. The research queue is not operational alerting and cannot validate labels or physical isolation.
