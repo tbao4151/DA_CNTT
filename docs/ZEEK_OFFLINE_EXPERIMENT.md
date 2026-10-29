@@ -527,10 +527,10 @@ The exact same checks apply to `--preflight`, `--output`, and
 Run **preflight first** on Windows 11 PowerShell:
 
 ```powershell
-py -3.12 scripts/evaluate_zeek_lab.py \`
-  --manifest "C:/DA005-private/zeek-experiment/manifest.json" \`
-  --cidr "192.168.56.0/24" \`
-  --strict-input-gates \`
+py -3.12 scripts/evaluate_zeek_lab.py `
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" `
+  --cidr "192.168.56.0/24" `
+  --strict-input-gates `
   --preflight
 ```
 
