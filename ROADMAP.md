@@ -717,3 +717,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify Ubuntu Python 3.12.9 full quality CI and Windows offline Red Team tests for the read-only JSON export verifier; merge only when final-head checks pass and no conflicts.
 - [ ] Student exports the Red Team UI session chronology to a private Windows path, records SHA-256 independently, and runs `scripts/verify_red_team_planning_audit.py --audit ... --expected-sha256 ...`. Test a modified copy to confirm rejection; do not repin the changed copy silently.
 - [ ] Keep operator-entered observations explicitly unverified; acquire independently labeled authorized Host-only Zeek capture, Blue Team outcome and event-to-SOC timing evidence before claiming AI-vs-AI effectiveness. No replay, attack, network access or official UNSW benchmark change is included.
+
+
+## Red Team — offline planning export verifier verified (#173, 29/10/2026)
+
+- [x] [PR #173](https://github.com/tbao4151/DA_CNTT/pull/173) merged cleanly after final-head [Ubuntu Python 3.12.9 #40811105273](https://github.com/tbao4151/DA_CNTT/actions/runs/40811105273) (**827 passed, 2 skipped**) and [Windows Python 3.12.9 #40811105170](https://github.com/tbao4151/DA_CNTT/actions/runs/40811105170) (**87 Zeek + 45 Red Team passed**) succeeded. Post-merge [main CI #40811595051](https://github.com/tbao4151/DA_CNTT/actions/runs/40811595051) succeeded. Supersedes the preceding pending CI/merge checklist.
+- [ ] Student validates private exported JSON on their Windows 11 machine using an independently preserved SHA-256, including tampering with a copy to verify rejection. Preserve the source and screenshot privately; GitHub-hosted Windows CI is not laptop acceptance.
+- [ ] Independently establish authorized VMware Host-only capture provenance, adjudicated Blue Team labels, session/host-separated evaluation and event-to-SOC latency before claiming genuine detection or AI-vs-AI advantage. Planning feedback remains unverified, no active Red Team traffic, official UNSW benchmark unchanged.
