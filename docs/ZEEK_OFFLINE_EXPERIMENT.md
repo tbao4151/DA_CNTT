@@ -446,3 +446,43 @@ For independently adjudicated labels, run
 `scripts/verify_zeek_final_labels.py` with five independently recorded
 hashes before constructing the frozen experiment manifest. Never commit
 private annotations, hashes linked to sensitive captures, or reports.
+
+
+## Optional manifest-wide Zeek telemetry quality screen (29/10/2026)
+
+The offline research CLI supports an **explicit opt-in** quality gate across
+**every** pinned capture in TRAIN, VALIDATION and TEST, using the existing
+read-only `inspect_zeek_telemetry_quality` contract. The flag requires an
+explicit private RFC1918 `--cidr` (repeat for each approved subnet).
+A valid manifest checksum alone does not establish Host-only isolation.
+
+Run private preflight **before** training or selecting thresholds:
+
+```powershell
+py -3.12 scripts/evaluate_zeek_lab.py `
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" `
+  --require-label-sha256 `
+  --require-telemetry-quality `
+  --cidr "192.168.56.0/24" `
+  --preflight
+```
+
+Once independently approved, repeat the same flags with `--output` for a
+new private aggregate report or `--trace-output` for a new private test trace.
+The optional `telemetry_quality` section aggregates flow counts, fixed
+protocol buckets, six optional-field missing-value counts, timestamp-order
+violations and warning frequencies **per split**. It contains no raw UID,
+host/session ID, IP, port, path or free-text service. Existing CLI modes,
+manifest schema and reports are unchanged **without** this opt-in.
+
+Malformed/changed bytes, out-of-scope endpoints, duplicate UIDs and invalid
+feature projections fail closed before model fitting. Short captures, missing
+optional measurements and out-of-order timestamps are **descriptive warnings**,
+not automatic exclusions, imputations, attack labels or detection-latency
+measurements. All captured inputs remain operator supplied; this screen does
+not independently verify physical isolation, provenance, ground truth, or
+real-world AI accuracy. No live network access or Red Team action occurs.
+
+Synthetic-only regression: `py -3.12 -m pytest -q tests/test_zeek_lab_cli.py`.
+The students must separately collect authorized Host-only logs, record original
+SHA-256 and isolation evidence, and retain independent annotations/holdout.
