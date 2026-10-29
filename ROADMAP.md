@@ -1111,3 +1111,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #227](https://github.com/tbao4151/DA_CNTT/pull/227) merged as `c6170fd05b0f5e8b040aba3118454edf408a217d` after [Ubuntu #40918620002](https://github.com/tbao4151/DA_CNTT/actions/runs/40918620002) (**1045 passed, 2 skipped**) and [Windows #40918620053](https://github.com/tbao4151/DA_CNTT/actions/runs/40918620053) (**17 paired tests and existing Zeek/host/guest/Red Team suites passed**). This supersedes the pending PR gate above. Post-merge main CI is separate.
 - [ ] Student collects original private Windows host/guest snapshots with independent SHA-256, runs paired checker, manually verifies VMware Host-only/NAT/bridging, all adapters/routes and authorized scope. Snapshot consistency is not isolation attestation.
 - [ ] Obtain authorized PCAP and Zeek conn.log, independently adjudicate held-out labels and measure real AI alert and SOC case creation latency.
+
+
+## Cyber Lab — host snapshot output privacy (30/10/2026)
+
+- [ ] Verify Windows mocked PowerShell host collector regression and Ubuntu quality gates on the final feature PR head, check conflict-free base and competing PRs, then merge only if CI succeeds. No VMware claim from mocked tests.
+- [ ] On Windows 11, store host/guest JSON and independently recorded SHA-256 outside Git; avoid junction/reparse-point paths; manually confirm VMware Host-only mode, NICs/routes and authorization before any permitted traffic.
+- [ ] Preserve genuine authorized PCAP/Zeek and independently adjudicated labels to assess held-out Precision/Recall/FPR and event-to-alert-to-SOC timing. Never substitute synthetic CI for student lab evidence.
