@@ -242,3 +242,77 @@ def test_paired_predictions_are_stable_when_only_test_labels_change():
                 == changed["variants"][variant]["selected_validation_threshold"])
     assert reference["paired_test_correctness"]["support"] == changed["paired_test_correctness"]["support"]
     assert reference["paired_test_correctness"]["discordant_correctness_count"] == changed["paired_test_correctness"]["discordant_correctness_count"]
+
+
+
+def test_paired_host_discordance_anonymized_when_all_groups_large():
+    from blue_team_ai.paired_disagreement import summarize_paired_zeek_test
+
+    labels = [0, 1] * 30
+    full = [False, False] * 30
+    without_ports = [False, True] * 30
+    groups = ["private-group-one"] * 30 + ["private-group-two"] * 30
+    report = summarize_paired_zeek_test(
+        labels, full, without_ports, host_groups=groups,
+    )
+    by_host = report["by_anonymous_host_group"]
+    assert by_host["group_count"] == 2
+    assert by_host["all_group_counts_suppressed"] is False
+    assert by_host["single_group_warning"] is False
+    assert [row["support"] for row in by_host["groups"]] == [30, 30]
+    for cell in ("both_correct", "full_only_correct", "without_ports_only_correct", "neither_correct"):
+        assert sum(row[cell] for row in by_host["groups"]) == report["overall"][cell]
+    assert sum(row["discordant_correctness_count"] for row in by_host["groups"]) == report["discordant_correctness_count"]
+    assert "private-group" not in json.dumps(report)
+    assert report["statistical_significance_test_performed"] is False
+
+
+def test_paired_host_discordance_suppresses_all_groups_against_differencing():
+    from blue_team_ai.paired_disagreement import summarize_paired_zeek_test
+
+    labels = [0, 1] * 30
+    full = [False] * 60
+    without_ports = [True] * 60
+    # If the 31-flow group's counts were visible, subtraction from overall
+    # would reveal the 29-flow group's correctness. Suppress both groups.
+    report = summarize_paired_zeek_test(
+        labels, full, without_ports,
+        host_groups=["private-small"] * 29 + ["private-large"] * 31,
+    )
+    by_host = report["by_anonymous_host_group"]
+    assert by_host["group_count"] == 2
+    assert by_host["all_group_counts_suppressed"] is True
+    assert by_host["groups"] == []
+    assert "private-small" not in json.dumps(report)
+    assert "private-large" not in json.dumps(report)
+    # Legacy three-argument calls preserve their previous schema.
+    assert "by_anonymous_host_group" not in summarize_paired_zeek_test(
+        labels, full, without_ports,
+    )
+
+
+@pytest.mark.parametrize("groups", [
+    [],
+    ["only-one"],
+    [""] * 60,
+    [" invalid"] * 60,
+    ["bad\nline"] * 60,
+    [123] * 60,
+    ["x" * 257] * 60,
+])
+def test_paired_host_discordance_refuses_invalid_group_metadata(groups):
+    from blue_team_ai.paired_disagreement import summarize_paired_zeek_test
+
+    with pytest.raises(ValueError, match="host groups"):
+        summarize_paired_zeek_test(
+            [0] * 60, [False] * 60, [False] * 60, host_groups=groups,
+        )
+
+
+def test_ablation_paired_host_diagnostics_do_not_disclose_tiny_fixture_rows():
+    report = evaluate_zeek_port_ablation(_dataset())
+    host = report["paired_test_correctness"]["by_anonymous_host_group"]
+    assert host["group_count"] == 1
+    assert host["all_group_counts_suppressed"] is True
+    assert host["groups"] == []
+    assert host["single_group_warning"] is True
