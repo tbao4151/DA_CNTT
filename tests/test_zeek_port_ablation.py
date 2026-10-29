@@ -141,7 +141,7 @@ def test_cli_private_strict_pinned_ablation_and_refusals(tmp_path):
         rejected = subprocess.run(command, capture_output=True, text=True)
         assert rejected.returncode == 1
         assert not rejected_output.exists()
-        assert str(manifest) not in rejected.stderr.decode("utf-8", errors="replace")
+        assert str(manifest) not in rejected.stderr
     bad_output = manifest.parent / "rejected-bad-pin.json"
     altered = base.copy()
     altered[altered.index("--expected-manifest-sha256") + 1] = "0" * 64
