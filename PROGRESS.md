@@ -1369,3 +1369,9 @@
 - Added `.github/workflows/windows-offline-zeek.yml` and `docs/WINDOWS_OFFLINE_ZEEK_CI.md`. The dedicated GitHub-hosted Windows Server 2022 job pins Python **3.12.9** and exercises existing synthetic-only offline manifest/holdout, Zeek quality, PCAP import/provenance, research inference and analyst-confirmed SQLite SOC regression tests. No new model, dataset, database migration or attack capability.
 - [PR #163](https://github.com/tbao4151/DA_CNTT/pull/163) is open. **At authoring, Windows and Linux PR-head CI, mergeability and merge are not yet verified.** No Windows test success is claimed.
 - This is a Windows GitHub runner, **not** the student's Windows 11 laptop, VMware Host-only acceptance, real Zeek execution on Windows, authentic capture, independent attack labels, attack detection accuracy, operational alerts or measured event-to-SOC latency. Real-Zeek Linux synthetic CI remains separate. Official UNSW-NB15 benchmark and active Red Team behavior unchanged.
+
+### Windows offline CI — first verified PR-head checks (#163)
+
+- PR #163 head `edf587bfc492b1619c5a6f313dae2375be0b1dca` passed [Windows Server 2022 / Python 3.12.9 workflow #40795902419](https://github.com/tbao4151/DA_CNTT/actions/runs/40795902419): **74 passed** on existing synthetic offline Zeek/PCAP/manifest/SOC regression tests. Windows test execution took 118.93 s; real Zeek/VMware was not invoked.
+- The same head passed [Ubuntu Python 3.12.9 full quality gates #40795902460](https://github.com/tbao4151/DA_CNTT/actions/runs/40795902460): **786 passed, 2 skipped, 2 existing pandas warnings**. These results were read from completed Actions job logs, not inferred from a queued status.
+- This documentation commit changes the PR head, so **new final-head CI must be verified before merge**. No student Windows 11, Linux VM Zeek, genuine Host-only capture, real attack detection or latency claim.
