@@ -1104,3 +1104,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Confirm final feature-head Ubuntu Python 3.12.9 and Windows offline CI, ensure no competing PR/conflicts, then merge. Synthetic tests are not student VMware acceptance.
 - [ ] Student collects original private host and guest snapshots on their own Windows/VMware setup, independently pins both SHA-256 digests, runs `scripts/check_paired_network_preflight.py`, and manually verifies VMware Host-only/NAT/bridging, every NIC/route and written authorization. Software consistency is not physical isolation proof.
 - [ ] Obtain independently authorized PCAP/Zeek captures and held-out labels; measure genuine telemetry-to-AI-to-alert-to-SOC-case latency separately from offline verification overhead.
+
+
+## Cyber Lab — paired Windows host/guest preflight verified (#227, 30/10/2026)
+
+- [x] [PR #227](https://github.com/tbao4151/DA_CNTT/pull/227) merged as `c6170fd05b0f5e8b040aba3118454edf408a217d` after [Ubuntu #40918620002](https://github.com/tbao4151/DA_CNTT/actions/runs/40918620002) (**1045 passed, 2 skipped**) and [Windows #40918620053](https://github.com/tbao4151/DA_CNTT/actions/runs/40918620053) (**17 paired tests and existing Zeek/host/guest/Red Team suites passed**). This supersedes the pending PR gate above. Post-merge main CI is separate.
+- [ ] Student collects original private Windows host/guest snapshots with independent SHA-256, runs paired checker, manually verifies VMware Host-only/NAT/bridging, all adapters/routes and authorized scope. Snapshot consistency is not isolation attestation.
+- [ ] Obtain authorized PCAP and Zeek conn.log, independently adjudicate held-out labels and measure real AI alert and SOC case creation latency.
