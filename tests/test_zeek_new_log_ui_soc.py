@@ -137,7 +137,7 @@ def test_ui_soc_write_refuses_unpinned_or_changed_annotation(tmp_path, change):
     manifest = args["manifest_path"]
     if change == "annotation_modified":
         labels = manifest.parent / "host-0-labels.json"
-        labels.write_bytes(labels.read_bytes() + b"\\n")
+        labels.write_bytes(labels.read_bytes() + b"\n")
     else:
         import hashlib
         spec = json.loads(manifest.read_text(encoding="utf-8"))
