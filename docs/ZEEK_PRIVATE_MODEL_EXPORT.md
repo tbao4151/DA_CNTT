@@ -93,3 +93,9 @@ in [score_zeek_new_log.py](../scripts/score_zeek_new_log.py) and documented in
 and post-merge main CI. This does **not** validate actual student Host-only
 capture, independent labels, exclusion of the reserved TEST set, or
 operational detection; no automated SOC alert is produced.
+
+## Zeek v1 numeric type gate (29/10/2026)
+
+The offline TRAIN/VALIDATION/TEST research baseline and direct data-only JSON model scorer now share a strict numeric feature validator. `src_port` and `dst_port` must be exact Python integers in 0..65535; Zeek byte/packet counts must be exact nonnegative integers (or `None` when absent); duration may be a finite nonnegative integer/float (or `None`). The model-input safety ceiling remains 10^12 for counts and duration. Booleans, fractional ports/counts, out-of-range values and non-finite durations fail closed. Optional missing measurements are **not** coerced to zero. No feature order, model weights, validation-selected threshold or UNSW-NB15 benchmark is changed.
+
+This gate protects direct Python API callers from bypassing the original Zeek parser's type contract with manually constructed rows. It does **not** authenticate the source log, independently validate labels, measure real detection accuracy or activate any network/SOC action. Synthetic regression: `py -3.12 -m pytest -q tests/test_zeek_model_feature_types.py tests/test_zeek_model_artifact.py tests/test_zeek_offline_baseline.py`. GitHub CI and student Windows 11/VMware acceptance are tracked separately in PROGRESS.md.
