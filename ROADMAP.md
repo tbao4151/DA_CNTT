@@ -810,3 +810,11 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #185](https://github.com/tbao4151/DA_CNTT/pull/185) merged after final-head [Ubuntu Python 3.12.9 CI #40828870693](https://github.com/tbao4151/DA_CNTT/actions/runs/40828870693) (**871 passed, 2 skipped**) and [Windows Python 3.12.9 CI #40828870679](https://github.com/tbao4151/DA_CNTT/actions/runs/40828870679) (**130 Zeek + 46 Red Team passed**) succeeded. Supersedes the earlier pending feature-merge item; no student laptop run is claimed.
 - [ ] Student independently validates a genuine authorized Host-only Zeek manifest on Windows 11, pins source and annotation hashes, preregisters two variants and split assignments, and runs the private `--strict-input-gates --port-ablation-output` workflow. Preserve PCAP, Zeek version, labels, clock and network-isolation evidence outside Git.
 - [ ] Confirm actual held-out Precision/Recall/FPR with adjudicated labels and host/session-independent replication, then separately measure event-to-alert/SOC latency. The paired port ablation cannot establish causality or justify choosing a variant based on held-out TEST. No active Red Team network, UNSW benchmark or SOC workflow changes.
+
+
+
+## Blue Team — Paired Zeek held-out correctness analysis (29/10/2026)
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 full suite and Windows offline Zeek CI for the aggregate paired TEST correctness report, and merge only if green and conflict-free. No synthetic score is a genuine attack-detection result.
+- [ ] On student Windows 11/VMware, preserve original authorized PCAP/Zeek/annotation hashes and physical Host-only isolation evidence, preregister the same fixed variants/splits, and run the private port-ablation report without selecting a winner on TEST.
+- [ ] Obtain independently adjudicated host/session-disjoint replicated captures and report class supports, uncertainty and limitations; paired flow counts are descriptive and not an independence-valid significance test. Measure event-to-alert/SOC delay separately; active Red Team remains disabled.
