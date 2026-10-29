@@ -69,3 +69,27 @@ physically isolated. Confirm NIC assignments, isolation, authorization,
 capture origin and independent labels outside this software gate.
 
 Synthetic regression: `py -3.12 -m pytest -q tests/test_lab_evidence_chain.py`.
+
+
+## Optional strict classic-PCAP framing in the integrated gate (30/10/2026)
+
+The integrated read-only evidence verifier now accepts `--require-pcap-framing`.
+Add it to the full command above **together with**
+`--require-independent-original-pins` and both independently recorded
+original PCAP/Zeek SHA-256 digests. The integrated verifier delegates to the
+existing bounded classic-PCAP v2.4 packet-record validator. It fails closed
+for missing strict pins, header-only files, invalid packet lengths, truncated
+packet records or malformed timestamps. No packet bytes or private IPs are
+printed. Existing invocations remain compatible and report
+`pcap_framing_required=false`, `pcap_framing_verified=false` and
+`pcap_packet_count=null` when the optional check is not requested.
+
+A strict pass reports `pcap_framing_verified=true` and the structural
+`pcap_packet_count`; it does **not** establish correspondence between those
+packet records and Zeek flows. The parser does not decode protocols or
+authenticate packet contents, timestamps, capture origin, VMware isolation,
+operator authorization, independent attack labels, AI detections or SOC
+latency. PCAPNG is not supported by this strict classic-PCAP gate.
+
+Regression only: `py -3.12 -m pytest -q tests/test_lab_evidence_chain.py`.
+These synthetic tests are not a Windows 11/VMware experiment.
