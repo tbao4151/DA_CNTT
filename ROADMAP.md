@@ -1018,3 +1018,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #213](https://github.com/tbao4151/DA_CNTT/pull/213) merged at `8a1c6eeb16ff3e111b83178a90d3cf4e1da57619` after final-head Ubuntu #40879238610 (**951 passed, 2 skipped**), Windows #40879238646 (**175 Zeek + 46 Red Team passed**) and Ubuntu push #40879213816 (**success**). This supersedes the pending feature merge gate above; post-merge main CI is separate.
 - [ ] Student independently measures actual Windows 11/VMware Host-only offline batch runtime with original pinned annotations, manifest, model and Zeek/PCAP, records CPU/RAM/Zeek version, isolation and clock evidence outside Git.
 - [ ] Obtain independently adjudicated held-out detection metrics and actual event-to-alert-to-SOC-case latency. Software runtime and synthetic CI must not be interpreted as operational detection timing.
+
+
+## Blue Team — read-only NEW-log SOC evidence-link check (29/10/2026)
+
+- [ ] Verify final feature-head Ubuntu Python 3.12.9 CI and Windows offline Zeek regression (where configured); merge only after checks pass and no conflicts exist. Verify original Zeek flow, research prediction and first SOC audit note agree without writing SQLite.
+- [ ] Integrate the read-only checker into the existing SOC UI/CLI only after confirming how to pin private manifest and PCAP evidence at that boundary; do not present a matching SQLite note as independent forensic authentication.
+- [ ] Student must run on actual authorized Windows 11/VMware Host-only captures with original PCAP/Zeek, separately pinned model/report/manifest/annotation bytes, real isolation evidence and independently adjudicated labels. Measure held-out detection and actual event-to-alert-to-SOC-case timing separately; synthetic CI is not that experiment.
