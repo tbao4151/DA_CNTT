@@ -1905,3 +1905,10 @@
 - Identified that the Windows **host** collector accepted a relative destination or a destination inside the Git repository, despite the private-evidence requirement; the guest collector already guarded this case. Updated only the host collector, mocked Windows smoke regression and its guide. New preflight refuses ordinary resolved in-repository directories and relative paths before querying adapter data; the existing CreateNew no-overwrite behavior remains.
 - This is a privacy/path-handling fix, not proof of physical isolation, capture authenticity, complete NIC inventory or authorized traffic. Windows mocked smoke and PR CI are **pending** at authoring; no real Windows 11, VMware, PCAP, Zeek or attack detection run is claimed. Junction/reparse-point handling still requires operator care.
 - Dataset Mode UNSW-NB15 benchmark, model, Red Team execution and SOC SQLite were not changed.
+
+
+## 2026-10-30 — Host snapshot private path regression verified (#229)
+
+- [PR #229](https://github.com/tbao4151/DA_CNTT/pull/229) squash-merged as [`f6feebef1278ff1bf587564f8de396ad783cb0f9`](https://github.com/tbao4151/DA_CNTT/commit/f6feebef1278ff1bf587564f8de396ad783cb0f9) after conflict-free final head `cc07923acf8525c7cbbe433e5d7b0279efdc9b21` and unchanged main `9041565a447e9a2668a171d92e7ed4184b1a8bef`.
+- [Ubuntu Python 3.12.9 CI #40923565551](https://github.com/tbao4151/DA_CNTT/actions/runs/40923565551) **success: 1045 passed, 2 skipped, 2 warnings**. [Windows Server 2022 Python 3.12.9 CI #40923565545](https://github.com/tbao4151/DA_CNTT/actions/runs/40923565545) **success: 200 Zeek + 21 host + 31 guest + 17 paired + 46 Red Team tests passed**, including the expanded **mocked host PowerShell smoke**; these results were read from completed job logs.
+- The fix rejects ordinary in-repository/relative host snapshot output destinations before collecting metadata and retains atomic no-overwrite behavior. No genuine Windows 11/VMware collection or isolation proof exists. Post-merge main CI is a separate check and **not yet verified** at documentation time.
