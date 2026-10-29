@@ -21,6 +21,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-log-sha256", required=True)
     parser.add_argument("--cidr", action="append", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--require-zeek-types", action="store_true",
+                        help="Require compatible Zeek #fields/#types headers (opt-in)")
     args = parser.parse_args(argv)
     try:
         if args.log.is_symlink() or args.output.is_symlink():
@@ -41,6 +43,7 @@ def main(argv: list[str] | None = None) -> int:
             raw = stream.read(MAX_LOG_BYTES + 1)
         report = inspect_zeek_telemetry_quality(
             raw, expected_sha256=args.expected_log_sha256, lab_cidrs=args.cidr,
+            require_zeek_types=args.require_zeek_types,
         )
         payload = json.dumps(report, indent=2, allow_nan=False) + "\n"
         with destination.open("x", encoding="utf-8", newline="\n") as stream:
