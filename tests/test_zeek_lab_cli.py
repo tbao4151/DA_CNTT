@@ -701,3 +701,27 @@ def test_manifest_pin_preflight_cli_does_not_write_files(tmp_path):
     assert result["model_fitted"] is False
     assert "private-operator-note" not in proc.stdout
     assert {p.name: p.read_bytes() for p in manifest.parent.iterdir()} == before
+
+
+def test_manifest_zeek_types_opt_in_refuses_missing_header_before_fit(tmp_path):
+    """Legacy minimal fixtures remain accepted unless the new flag is set."""
+    from evaluate_zeek_lab import inspect_offline_experiment, run_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    with pytest.raises(ValueError, match="requires explicit lab CIDRs"):
+        inspect_offline_experiment(manifest, require_zeek_types=True)
+    with pytest.raises(ValueError, match="Zeek #fields and #types"):
+        inspect_offline_experiment(
+            manifest, lab_cidrs=["192.168.56.0/24"], require_zeek_types=True,
+        )
+    with pytest.raises(ValueError, match="Zeek #fields and #types"):
+        run_offline_experiment(
+            manifest, lab_cidrs=["192.168.56.0/24"], require_zeek_types=True,
+        )
+    output = manifest.parent / "should-not-exist.json"
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--cidr", "192.168.56.0/24",
+        "--require-zeek-types", "--output", str(output),
+    ], capture_output=True, text=True)
+    assert proc.returncode == 1
+    assert not output.exists()
