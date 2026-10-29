@@ -613,3 +613,91 @@ def test_uid_independent_overlap_opt_in_accepts_distinct_times_and_reports_only_
     serialized = json.dumps(result)
     assert "192.168.56." not in serialized
     assert "private-operator-note" not in serialized
+
+
+
+def test_independently_pinned_manifest_matches_preflight_and_report(tmp_path):
+    """An external manifest pin binds preflight to the exact experiment plan bytes."""
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    pin = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    legacy = inspect_offline_experiment(manifest)
+    assert "manifest_sha256_pin_verified" not in legacy
+    checked = inspect_offline_experiment(manifest, expected_manifest_sha256=pin)
+    assert checked["manifest_sha256_pin_verified"] is True
+    assert checked["input_manifest_sha256"] == pin
+    assert checked["model_fitted"] is False
+    output = manifest.parent / "pinned-report.json"
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--expected-manifest-sha256", pin,
+        "--output", str(output),
+    ], capture_output=True, text=True, check=False)
+    assert proc.returncode == 0, proc.stderr
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["manifest_sha256_pin_verified"] is True
+    assert report["input_manifest_sha256"] == pin
+    assert report["automated_alerts"] is False
+    assert "192.168.56." not in json.dumps(report)
+    assert "private-operator-note" not in json.dumps(report)
+
+
+def test_manifest_pin_detects_plan_change_between_preflight_and_fit(tmp_path):
+    """Even a valid metadata-only manifest edit must invalidate the old pin."""
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    pin = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    assert inspect_offline_experiment(
+        manifest, expected_manifest_sha256=pin,
+    )["structural_validation_passed"] is True
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    spec["captures"][0]["label_reference"] = "private-operator-note-revised"
+    manifest.write_text(json.dumps(spec), encoding="utf-8")
+    assert inspect_offline_experiment(manifest)["structural_validation_passed"] is True
+    with pytest.raises(ValueError, match="Experiment manifest SHA-256 mismatch"):
+        inspect_offline_experiment(manifest, expected_manifest_sha256=pin)
+    for mode in ("--output", "--trace-output"):
+        output = manifest.parent / ("must-not-write-" + mode[2:] + ".json")
+        proc = subprocess.run([
+            sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+            "--manifest", str(manifest), "--expected-manifest-sha256", pin,
+            mode, str(output),
+        ], capture_output=True, text=True, check=False)
+        assert proc.returncode == 1
+        assert not output.exists()
+        assert str(manifest) not in proc.stderr
+        assert "private-operator-note" not in proc.stderr
+
+
+@pytest.mark.parametrize("pin", ["0" * 63, "A" * 64, "0" * 64 + " ", "", "not-a-sha"])
+def test_manifest_pin_rejects_invalid_or_unmatched_sha(tmp_path, pin):
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    with pytest.raises(ValueError):
+        inspect_offline_experiment(manifest, expected_manifest_sha256=pin)
+    output = manifest.parent / "refused-report.json"
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--expected-manifest-sha256", pin,
+        "--output", str(output),
+    ], capture_output=True, text=True, check=False)
+    assert proc.returncode == 1
+    assert not output.exists()
+    assert "192.168.56." not in proc.stderr
+
+
+def test_manifest_pin_preflight_cli_does_not_write_files(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    pin = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    before = {p.name: p.read_bytes() for p in manifest.parent.iterdir()}
+    proc = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--expected-manifest-sha256", pin,
+        "--preflight",
+    ], capture_output=True, text=True, check=False)
+    assert proc.returncode == 0, proc.stderr
+    result = json.loads(proc.stdout)
+    assert result["manifest_sha256_pin_verified"] is True
+    assert result["model_fitted"] is False
+    assert "private-operator-note" not in proc.stdout
+    assert {p.name: p.read_bytes() for p in manifest.parent.iterdir()} == before
