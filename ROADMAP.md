@@ -1220,3 +1220,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #243](https://github.com/tbao4151/DA_CNTT/pull/243) merged at `6c2169cba1a4566394162b04feb7c8306716ca7a` after final-head [Ubuntu CI #40968094559](https://github.com/tbao4151/DA_CNTT/actions/runs/40968094559) and [Windows CI #40968094551](https://github.com/tbao4151/DA_CNTT/actions/runs/40968094551) passed. This supersedes the earlier pending-merge item; post-merge main CI is tracked separately.
 - [ ] Student validates an independently pinned private classic PCAP in authorized Windows 11/VMware Host-only, archiving capture/Zeek versions, original checksums, network-isolation proof and command outputs outside Git. Framing does not prove PCAP-to-Zeek flow semantics or capture origin.
 - [ ] Next prioritize verified offline research candidate → explicit manual SOC case handoff and stage timing, then genuine independently labeled held-out Zeek evaluation. Do not represent synthetic CI as live detection.
+
+
+## Cyber Lab — integrated strict classic-PCAP framing (30/10/2026)
+
+- [ ] Validate final feature-head Ubuntu Python 3.12.9 quality CI and Windows Server 2022 offline tests, confirm mergeability and no competing PR before merging. The opt-in integrated gate must refuse missing independent original pins, header-only classic PCAP and truncated packet records while accepting a well-formed synthetic PCAP.
+- [ ] Student runs `--require-pcap-framing --require-independent-original-pins` on an authorized, independently SHA-256-pinned private VMware Host-only PCAP/Zeek capture, preserving original evidence and manual isolation proof outside Git.
+- [ ] Study real PCAP packet-to-Zeek flow semantic linkage and independent held-out labels; structural record validity is not evidence of genuine AI detection, authorization, live alerts or event-to-SOC latency.
