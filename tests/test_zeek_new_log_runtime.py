@@ -145,7 +145,7 @@ def test_runtime_cli_refuses_unpinned_or_changed_annotations(tmp_path, tamper):
         model_path.write_text(json.dumps(model), encoding="utf-8")
     else:
         labels = manifest.parent / "host-0-labels.json"
-        labels.write_bytes(labels.read_bytes() + b"\\n")
+        labels.write_bytes(labels.read_bytes() + b"\n")
 
     command = [
         sys.executable, str(ROOT / "scripts" / "benchmark_zeek_new_log_runtime.py"),
