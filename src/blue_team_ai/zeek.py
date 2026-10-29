@@ -66,6 +66,7 @@ def parse_zeek_conn_log(
     seen_data = False
     digest = hashlib.sha256(data).hexdigest()
     events: list[dict] = []
+    seen_uids: set[str] = set()
     for line in lines[1:]:
         if line.startswith("#fields\t"):
             if fields is not None or seen_data:
@@ -94,6 +95,11 @@ def parse_zeek_conn_log(
         proto = row["proto"]
         if timestamp is None or not uid or uid == "-" or len(uid) > 256 or not proto or proto == "-":
             raise ValueError("Zeek record lacks timestamp, UID or protocol")
+        # A single conn.log must identify each connection unambiguously. Check
+        # the entire source before any downstream UI/SOC writer can select it.
+        if uid in seen_uids:
+            raise ValueError("Duplicate Zeek UIDs in source capture")
+        seen_uids.add(uid)
         try:
             utc_time = datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
         except (OverflowError, OSError, ValueError) as exc:

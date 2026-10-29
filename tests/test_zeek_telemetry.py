@@ -64,6 +64,16 @@ def test_wrong_field_count_and_duplicate_header_rejected():
                             b"#fields\tts\n")
 
 
+def test_duplicate_uid_rejected_even_if_endpoints_differ():
+    second = list(VALUES)
+    second[4] = "192.168.56.21"
+    with pytest.raises(ValueError, match="Duplicate Zeek UID"):
+        parse_zeek_conn_log(log(VALUES, second))
+    # Reusing a five-tuple is legitimate when Zeek assigns a distinct UID.
+    second[1] = "C124"
+    assert len(parse_zeek_conn_log(log(VALUES, second))) == 2
+
+
 def test_record_and_size_limits(tmp_path):
     with pytest.raises(ValueError, match="record limit"):
         parse_zeek_conn_log(log(VALUES, VALUES), max_records=1)

@@ -126,3 +126,20 @@ Synthetic-only regression:
 ~~~powershell
 py -3.12 -m pytest -q tests/test_zeek_event_window.py
 ~~~
+
+
+## Shared parser UID uniqueness gate (29/10/2026)
+
+A single offline Zeek `conn.log` is now rejected at the **shared parser** if two
+records declare the same `uid`, even when their IP endpoints, ports or timestamps
+differ. This prevents ambiguous connection identity from reaching manual SOC
+case creation and any downstream quality, research or preview workflow. Reuse
+of a five-tuple with a **different** Zeek UID remains valid. Existing CLI flags
+and the nine-feature Zeek schema are unchanged. For genuine multi-sensor or
+concatenated logs with repeated UIDs, retain the originals and handle source
+separation explicitly rather than silently deduplicating or changing UIDs.
+
+Run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py tests/test_zeek_manual_triage.py`
+on Windows 11. GitHub synthetic CI verifies the software contract only; it
+does not authenticate Zeek capture, Host-only isolation, labels, detection
+accuracy or event-to-SOC timing.
