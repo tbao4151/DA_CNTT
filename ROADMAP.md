@@ -623,3 +623,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #159](https://github.com/tbao4151/DA_CNTT/pull/159) merged after [real Zeek workflow #40788858404](https://github.com/tbao4151/DA_CNTT/actions/runs/40788858404) and [Python 3.12.9 quality gates #40788858348](https://github.com/tbao4151/DA_CNTT/actions/runs/40788858348) passed (**782 passed, 2 skipped**). This supersedes the earlier pending feature checklist; only the synthetic offline integration was verified.
 - [ ] Student collects separate Windows/Linux VMware evidence with independently recorded hashes, Host-only adapter/routes and authorized PCAP; run private quality CLI on genuine `conn.log` before annotation.
 - [ ] Independently label host/session-disjoint real captures and measure Precision/Recall/FPR plus event-to-SOC latency. A synthetic Zeek quality pass is not detection, and active Red Team traffic remains disabled.
+
+
+## Cyber Lab — optional per-split pinned telemetry quality gate (29/10/2026)
+
+- [ ] Verify final-head Python 3.12.9 CI for the feature branch implementing `--require-telemetry-quality` in `scripts/evaluate_zeek_lab.py`; merge only if green and conflict-free. The opt-in must require explicit `--cidr`, screen **every** pinned capture before fitting, and expose only fixed aggregate quality counters by split; legacy reports must remain unchanged.
+- [ ] Student independently verifies VMware Host-only adapters/routes, captures authorized genuine traffic, records separate PCAP/Zeek SHA-256, and runs both private quality preflight and independent host/session-disjoint annotation evaluation on Windows. Warnings are not attack labels or proof of isolation; no real detection performance or event-to-SOC latency has been measured.
+- [ ] Continue trustworthy lab-specific model evaluation and measured SOC workflow before operational alerts. Preserve UNSW official benchmark and keep active Red Team traffic disabled.

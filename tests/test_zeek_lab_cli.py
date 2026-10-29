@@ -449,3 +449,107 @@ def test_repinning_changed_labels_does_not_authenticate_ground_truth(tmp_path):
     assert summary["structural_validation_passed"] is True
     assert summary["annotation_chain_verified"] is False
     assert summary["label_truth_verified"] is False
+
+
+def test_opt_in_quality_screen_covers_all_pinned_splits_without_private_identifiers(tmp_path):
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    _pin_annotation_files(manifest)
+    opts = {
+        "lab_cidrs": ["192.168.56.0/24"],
+        "require_label_sha256": True,
+        "require_telemetry_quality": True,
+    }
+    preflight = inspect_offline_experiment(manifest, **opts)
+    quality = preflight["telemetry_quality"]
+    assert quality["mode"] == "offline_pinned_zeek_manifest_quality_only"
+    assert quality["screened_captures"] == 3
+    assert quality["host_only_isolation_verified"] is False
+    assert quality["independent_ground_truth_verified"] is False
+    assert quality["real_attack_detection_validated"] is False
+    for split in ("train", "validation", "test"):
+        part = quality["partitions"][split]
+        assert part["captures"] == 1
+        assert part["flows"] == 2
+        assert part["protocol_bucket_counts"] == {
+            "tcp": 1, "udp": 1, "icmp": 0, "other": 0,
+        }
+        assert part["missing_optional_feature_counts"] == {
+            "service": 1, "duration_s": 1, "orig_bytes": 0,
+            "resp_bytes": 1, "orig_pkts": 1, "resp_pkts": 1,
+        }
+        assert part["warning_capture_counts"]["fewer_than_30_flows"] == 1
+        assert part["warning_capture_counts"]["optional_feature_measurements_missing"] == 1
+    result = run_offline_experiment(manifest, **opts)
+    assert result["telemetry_quality"] == quality
+    assert result["test_metrics"]["support"] == 2
+    assert result["all_annotation_sha256_pins_required"] is True
+    for forbidden in ("192.168.56.", "private-operator-note", "N0", "A1", "host-train"):
+        assert forbidden not in json.dumps(result)
+        assert forbidden not in json.dumps(preflight)
+    assert "telemetry_quality" not in inspect_offline_experiment(manifest)
+    assert "telemetry_quality" not in run_offline_experiment(manifest)
+
+
+def test_quality_opt_in_requires_explicit_scope_before_preflight_or_fit(tmp_path):
+    from evaluate_zeek_lab import inspect_offline_experiment
+    manifest = _lab_files(tmp_path / "private")
+    with pytest.raises(ValueError, match="requires explicit lab CIDRs"):
+        inspect_offline_experiment(manifest, require_telemetry_quality=True)
+    with pytest.raises(ValueError, match="requires explicit lab CIDRs"):
+        run_offline_experiment(manifest, require_telemetry_quality=True)
+    output = manifest.parent / "blocked-quality.json"
+    base = [
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--require-telemetry-quality",
+    ]
+    for mode in (["--preflight"], ["--output", str(output)],
+                 ["--trace-output", str(output)]):
+        proc = subprocess.run(base + mode, capture_output=True, text=True, check=False)
+        assert proc.returncode == 1
+        assert not proc.stdout
+        assert not output.exists()
+        assert "192.168.56." not in proc.stderr
+        assert str(manifest) not in proc.stderr
+
+
+def test_quality_opt_in_cli_preflight_and_research_output_are_consistent(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    base = [
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--cidr", "192.168.56.0/24",
+        "--require-telemetry-quality",
+    ]
+    preflight = subprocess.run(base + ["--preflight"], capture_output=True, text=True, check=False)
+    assert preflight.returncode == 0, preflight.stderr
+    pre = json.loads(preflight.stdout)
+    output = manifest.parent / "quality-scored.json"
+    run = subprocess.run(base + ["--output", str(output)], capture_output=True, text=True, check=False)
+    assert run.returncode == 0, run.stderr
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["telemetry_quality"] == pre["telemetry_quality"]
+    assert report["telemetry_quality"]["screened_captures"] == 3
+    assert report["automated_alerts"] is False
+    assert report["live_capture"] is False
+    assert "192.168.56." not in json.dumps(report)
+    again = subprocess.run(base + ["--output", str(output)], capture_output=True, text=True, check=False)
+    assert again.returncode == 1
+    assert json.loads(output.read_text(encoding="utf-8")) == report
+
+
+def test_quality_opt_in_rejects_changed_source_even_with_labels_pinned(tmp_path):
+    manifest = _lab_files(tmp_path / "private")
+    _pin_annotation_files(manifest)
+    source = manifest.parent / "host-1.log"
+    source.write_bytes(source.read_bytes() + b"#changed\n")
+    output = manifest.parent / "must-not-create-quality.json"
+    result = subprocess.run([
+        sys.executable, str(ROOT / "scripts" / "evaluate_zeek_lab.py"),
+        "--manifest", str(manifest), "--cidr", "192.168.56.0/24",
+        "--require-telemetry-quality", "--require-label-sha256",
+        "--output", str(output),
+    ], capture_output=True, text=True, check=False)
+    assert result.returncode == 1
+    assert not output.exists()
+    assert "192.168.56." not in result.stderr
+    assert str(manifest) not in result.stderr
