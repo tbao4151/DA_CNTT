@@ -159,3 +159,37 @@ prefer the pinned mode and retain the private original inputs and lab notebook.
 Synthetic-only regression:
 `py -3.12 -m pytest -q tests/test_zeek_new_log_scoring_partition_gate.py`.
 CI results must not be presented as Windows laptop experiments.
+
+
+## Optional PCAP/Zeek timestamp-presence gate at the production scoring boundary (30/10/2026)
+
+When all three pinned `--offline-import-*` inputs above are supplied, an
+additional **opt-in** check can be requested before any research prediction
+JSON is published:
+
+```powershell
+  --require-pcap-zeek-timestamp-corroboration
+```
+
+The scorer first verifies the original import report, PCAP and `conn.log`
+against their pinned bytes and declared private CIDR. It then re-reads the
+bounded originals, confirms the hashes still match the import report, and
+requires each Zeek IPv4 TCP/UDP flow to have a forward/reverse five-tuple
+packet in the original classic Ethernet PCAP within **one second** of the
+recorded Zeek flow start. If the option is set without the complete pinned
+import trio, if timestamps differ, or if the PCAP/Zeek contract is unsupported,
+scoring **refuses before publishing any prediction**. The existing default
+CLI remains unchanged, and the prediction JSON schema is unchanged; the
+success message explicitly notes the extra check.
+
+This is an offline consistency check, **not** packet-to-flow derivation proof,
+VMware isolation evidence, independent labels, attack detection or live
+latency. Only owned authorized captures should be used; never relax the fixed
+window to manufacture acceptance. Original PCAP, Zeek logs, model and private
+reports remain outside GitHub. Synthetic-only regression (mocked Zeek import):
+
+```powershell
+py -3.12 -m pytest -q tests/test_new_log_timestamp_scoring_gate.py
+```
+
+The separate real-Zeek CI smoke is not a student laptop acceptance run.
