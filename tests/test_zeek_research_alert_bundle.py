@@ -244,7 +244,7 @@ def test_opt_in_research_queue_export_runtime_scoped_and_json_deterministic(tmp_
     command, output, manifest, log, report = _fixture(tmp_path)
     timed = _run(command + ["--measure-research-export-runtime"])
     assert timed.returncode == 0, timed.stderr
-    match = re.search(r"^offline_research_queue_export_duration_ms=(\\d+\\.\\d{6})$",
+    match = re.search(r"^offline_research_queue_export_duration_ms=(\d+\.\d{6})$",
                       timed.stdout, re.MULTILINE)
     assert match is not None
     assert float(match.group(1)) >= 0
