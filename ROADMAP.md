@@ -1493,3 +1493,15 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [x] Merge Zeek research dataset provenance consistency guard as [PR #281](https://github.com/tbao4151/DA_CNTT/pull/281), squash commit `2e8c0b95f6cd18e7bbb706af2e1aaad2254c4b10`, with successful exact-head [Ubuntu #41109221783](https://github.com/tbao4151/DA_CNTT/actions/runs/41109221783) and [Windows #41109221887](https://github.com/tbao4151/DA_CNTT/actions/runs/41109221887). Earlier unchecked CI tasks are superseded; post-merge `main` CI remains unverified.
 - [ ] Student Windows 11: run `py -3.12 -m pytest -q tests/test_zeek_offline_baseline.py tests/test_zeek_port_ablation.py`; preserve original authorized VMware Host-only PCAP/Zeek logs, SHA-256 and independently adjudicated labels, and preregister host/session-disjoint holdout. Synthetic CI is not real lab attack-detection evidence.
+
+## 2026-10-31 — Predeclared NEW-log always-Normal research comparator
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 quality CI and Windows offline
+  tests for the additive always-Normal aggregate comparator; merge only after
+  green checks and clean PR mergeability. This policy is fixed before labels,
+  does not fit or tune on NEW data, and is not a useful detector.
+- [ ] On the student's authorized VMware Host-only lab, preserve private
+  PCAP/Zeek SHA-256, independent annotations, pre-registered disjoint
+  train/validation/test hosts and evidence of physical isolation; report
+  genuine held-out metrics and model-vs-reference tradeoffs without claiming
+  synthetic CI performance as real attack detection.

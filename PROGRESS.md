@@ -2293,3 +2293,15 @@
 
 - [PR #281](https://github.com/tbao4151/DA_CNTT/pull/281) was squash-merged into `main` as `2e8c0b95f6cd18e7bbb706af2e1aaad2254c4b10` from exact head `6b62537475758eb3b14ab8b3747a2350cc121ab3`, after GitHub reported mergeable=true and clean mergeability. [Ubuntu quality #41109221783](https://github.com/tbao4151/DA_CNTT/actions/runs/41109221783) and [Windows offline Zeek #41109221887](https://github.com/tbao4151/DA_CNTT/actions/runs/41109221887) both completed successfully with successful jobs on that head. Post-merge `main` CI is **not yet verified**.
 - The merged validator rejects duplicate Zeek source/UID observations, contradictory source/session/host/annotation declarations and cross-split source reuse before research model fitting, preserving the existing leakage diagnostic. Regression fixtures use separate synthetic log sources. No independent attack-label authenticity, VMware Host-only capture, local Windows acceptance, new Precision/Recall/FPR, production alerts or live Red Team activity was verified. UNSW-NB15 official benchmark and SOC SQLite were not modified.
+
+## 2026-10-31 — Fixed always-Normal comparator for private NEW Zeek evaluation (feature PR; CI pending)
+
+- Added a predeclared, non-learning always-Normal aggregate reference to the
+  read-only NEW-log labeled evaluation JSON, including confusion counts,
+  defined/undefined rate handling and descriptive flow-level Wilson intervals.
+  Existing model predictions, selected validation threshold, report version,
+  Dataset Mode benchmark and SQLite storage are unchanged.
+- Added synthetic-only tests for the fixed reference and single-class capture
+  denominators. **No GitHub CI result is claimed at authoring**; no student
+  VMware capture, independent label authenticity or attack-detection result
+  has been verified. The comparator is not a deployable detector.

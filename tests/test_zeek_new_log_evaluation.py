@@ -171,3 +171,44 @@ def test_cli_refuses_reserved_test_and_mismatched_annotation_pin(inputs):
     assert run.returncode == 1
     assert not run.stdout
     assert "192.168.56" not in run.stderr
+
+
+def test_predeclared_always_normal_reference_has_no_model_selection(inputs):
+    result = _evaluate(inputs)
+    observed = result["confusion_matrix"]
+    reference = result["fixed_always_normal_reference"]
+    assert reference["policy"] == "always_normal_fixed_a_priori"
+    assert reference["confusion_matrix"] == {
+        "tp": 0, "fp": 0,
+        "tn": observed["tn"] + observed["fp"],
+        "fn": observed["tp"] + observed["fn"],
+        "support": observed["support"],
+    }
+    assert reference["metrics"]["attack_precision"] is None
+    assert reference["metrics"]["attack_recall"] == (
+        0.0 if observed["tp"] + observed["fn"] else None
+    )
+    assert reference["metrics"]["false_positive_rate"] == (
+        0.0 if observed["fp"] + observed["tn"] else None
+    )
+    assert reference["flow_level_uncertainty"]["unit_of_analysis"] == "network_flow"
+    assert "labels_by_uid" not in json.dumps(reference)
+
+
+@pytest.mark.parametrize("label", [0, 1])
+def test_always_normal_reference_preserves_undefined_single_class_rates(inputs, label):
+    labels = json.loads(inputs["annotation_bytes"])
+    labels["labels_by_uid"] = {
+        uid: label for uid in labels["labels_by_uid"]
+    }
+    data = json.dumps(labels, allow_nan=False).encode("utf-8")
+    result = _evaluate(
+        inputs, annotation_data=data,
+        expected_annotation_sha256=hashlib.sha256(data).hexdigest(),
+    )
+    reference = result["fixed_always_normal_reference"]
+    assert reference["confusion_matrix"]["support"] == len(labels["labels_by_uid"])
+    assert reference["metrics"]["attack_precision"] is None
+    assert reference["metrics"]["attack_recall"] == (None if label == 0 else 0.0)
+    assert reference["metrics"]["false_positive_rate"] == (0.0 if label == 0 else None)
+    assert reference["metrics"]["attack_f1"] == (None if label == 0 else 0.0)

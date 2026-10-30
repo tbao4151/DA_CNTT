@@ -108,6 +108,30 @@ def evaluate_new_log_operator_labels(
     fpr = fp / (fp + tn) if fp + tn else None
     f1 = 2 * tp / (2 * tp + fp + fn) if 2 * tp + fp + fn else None
     confusion = {**counts, "support": support}
+    # Fixed a priori: never choose a majority-class policy using NEW labels.
+    # This reference illustrates the zero-FPR / zero-recall tradeoff; it is
+    # not an alternative model, deployment rule, or evidence of generalization.
+    normal_reference_confusion = {
+        "tp": 0, "fp": 0, "tn": tn + fp, "fn": tp + fn,
+        "support": support,
+    }
+    normal_reference = {
+        "policy": "always_normal_fixed_a_priori",
+        "confusion_matrix": normal_reference_confusion,
+        "metrics": {
+            "attack_precision": None,  # no predicted positives
+            "attack_recall": 0.0 if tp + fn else None,
+            "false_positive_rate": 0.0 if fp + tn else None,
+            "attack_f1": 0.0 if tp + fn else None,
+        },
+        "flow_level_uncertainty": summarize_detection_uncertainty(
+            normal_reference_confusion
+        ),
+        "interpretation": (
+            "fixed_nonlearned_reference_not_selected_from_new_labels; "
+            "zero_alerts_imply_zero_recall_when_attacks_are_present"
+        ),
+    }
     return {
         "report_version": 1,
         "mode": "offline_new_zeek_operator_labeled_descriptive_evaluation_only",
@@ -124,6 +148,7 @@ def evaluate_new_log_operator_labels(
             "attack_f1": f1,
         },
         "flow_level_uncertainty": summarize_detection_uncertainty(confusion),
+        "fixed_always_normal_reference": normal_reference,
         "label_authenticity_verified": False,
         "independent_partition_history_verified": False,
         "physical_host_only_isolation_verified": False,
