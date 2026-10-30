@@ -48,6 +48,7 @@ def import_offline_pcap(
     lab_cidrs: list[str],
     operator_confirmed_offline: bool,
     timeout_seconds: int = 120,
+    zeek_executable: Path | None = None,
 ) -> dict[str, object]:
     """Run Zeek with -r ONLY; validate the generated ASCII conn.log and scope.
 
@@ -81,12 +82,26 @@ def import_offline_pcap(
     from .lab_scope import _networks
     _networks(lab_cidrs)
 
+    # A caller that independently pins the executable must invoke that exact
+    # resolved path, rather than re-resolving the mutable PATH entry at launch.
+    # This is not an atomic filesystem attestation against in-place replacement.
+    zeek_command = "zeek"
+    if zeek_executable is not None:
+        if (not isinstance(zeek_executable, Path) or
+                not zeek_executable.is_absolute() or zeek_executable.is_symlink()):
+            raise ValueError("Pinned Zeek executable requires an absolute non-symlink Path")
+        resolved_executable = zeek_executable.resolve(strict=True)
+        if (resolved_executable != zeek_executable or not resolved_executable.is_file()
+                or not stat.S_ISREG(resolved_executable.stat().st_mode)):
+            raise ValueError("Pinned Zeek executable must be a resolved regular file")
+        zeek_command = str(resolved_executable)
+
     destination.mkdir(exist_ok=False)
     try:
         # -r is an offline file reader, never -i (live network interface).
         # Do not use shell=True or execute user-provided Zeek scripts.
         completed = subprocess.run(
-            ["zeek", "-r", str(source)],
+            [zeek_command, "-r", str(source)],
             cwd=destination, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=timeout_seconds, check=False,
         )
