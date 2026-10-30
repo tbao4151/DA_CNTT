@@ -1463,3 +1463,27 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] [PR #279](https://github.com/tbao4151/DA_CNTT/pull/279) merged as `61887005658800536b58f04174a10b6f4f33c27e` after clean mergeability and successful exact-head [Ubuntu quality #41092083099](https://github.com/tbao4151/DA_CNTT/actions/runs/41092083099), [Windows offline #41092083189](https://github.com/tbao4151/DA_CNTT/actions/runs/41092083189), and [real Zeek synthetic #41092082854](https://github.com/tbao4151/DA_CNTT/actions/runs/41092082854). This supersedes the preceding pending feature-CI item; synthetic re-pinned negative metadata is not authentic provenance. Post-merge main CI must be verified separately.
 - [ ] Student Windows 11 + authorized VMware Host-only Linux VM: independently document network isolation/route checks, original PCAP and Zeek `conn.log` SHA-256, import report/model pins, Zeek version, clocks, exact commands and exit codes; run both production scoring paths with a research model trained only on approved, independently labeled lab data. Keep all capture/evidence files private and outside GitHub.
 - [ ] Scientific priority: collect independently adjudicated benign/approved-test sessions; pre-register host/session-disjoint train/validation/held-out test with no source reuse, report Zeek-schema model Precision/Recall/FPR and per-stage offline latency, then connect research candidates to explicitly analyst-confirmed SOC cases. Do not claim attack-detection accuracy or live operation from CI synthetic fixtures. Keep official UNSW Dataset Mode unchanged and active Red Team disabled until verified isolation and authorization.
+
+## 2026-10-31 — Research provenance consistency before Zeek model fitting
+
+- [ ] Verify exact-head Ubuntu quality CI and regression tests for duplicate
+  `(source_sha256, uid)` rows, conflicting source/session/host/annotation
+  metadata, and valid multiple sessions on one host within the same split.
+  Merge the feature PR only after clean CI and conflict checks.
+- [ ] On the student's authorized, independently isolated VMware Host-only
+  lab, preserve original private Zeek logs and annotation SHA-256; pre-register
+  disjoint train/validation/test hosts and sessions and verify original bytes
+  before the one-time held-out evaluation. Software provenance consistency
+  does not authenticate labels, captures or isolation.
+
+
+## 2026-10-31 — PR #281 CI repair gate
+
+- [ ] Recheck Ubuntu quality and Windows offline Zeek workflows for the repaired PR #281 head (`44488baf0cbe03e366efd6eef23c9ecdc294c2e9`); the previous head `6c153af1ef699210746b773bda18ae383b9cfedb` failed because port-ablation tests forged a second host on the same source log. Merge only with successful exact-head checks and clean mergeability.
+- [ ] Student Windows 11: after merge, run `py -3.12 -m pytest -q tests/test_zeek_offline_baseline.py tests/test_zeek_port_ablation.py` and preserve private, independently labeled Host-only lab captures before reporting any detection metrics.
+
+
+## 2026-10-31 — PR #281 latest Ubuntu regression repair
+
+- [ ] Verify new exact-head Ubuntu full quality suite and Windows offline Zeek checks after commit `5766a95a909cca583dc05bb3a6b2a39e19c26b4e` on PR #281. Prior [Ubuntu #41104325669](https://github.com/tbao4151/DA_CNTT/actions/runs/41104325669) failed only the pre-existing cross-split SHA-256 diagnostic expectation (1 failed, 1213 passed, 2 skipped), while [Windows #41104325609](https://github.com/tbao4151/DA_CNTT/actions/runs/41104325609) passed. Preserve both leakage detection and its established error semantics. Merge only after fresh exact-head green CI and no conflicts.
+- [ ] Continue independent host/session-disjoint labeled VMware Host-only evidence collection on the student's Windows machine; no synthetic fixture metrics count as research attack detection.

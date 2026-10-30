@@ -124,6 +124,50 @@ def test_rejects_tampered_dataset_contract(mutate, match):
         evaluate_offline_zeek_baseline(dataset)
 
 
+
+def test_rejects_duplicate_uid_row_in_mutated_labeled_dataset():
+    """An already-built dataclass must not allow duplicate flow weighting."""
+    dataset = _dataset()
+    dataset.features["train"].append(copy.deepcopy(dataset.features["train"][0]))
+    dataset.labels["train"].append(dataset.labels["train"][0])
+    dataset.provenance["train"].append(copy.deepcopy(dataset.provenance["train"][0]))
+    with pytest.raises(ValueError, match="Duplicate Zeek source UID"):
+        evaluate_offline_zeek_baseline(dataset)
+
+
+@pytest.mark.parametrize("field, replacement", [
+    ("session_id", "forged-session"),
+    ("host_group", "forged-host"),
+    ("label_method", "manual_analyst_review"),
+    ("label_reference", "forged-annotation"),
+])
+def test_rejects_inconsistent_claims_for_same_original_log(field, replacement):
+    dataset = _dataset()
+    dataset.provenance["train"][1][field] = replacement
+    with pytest.raises(ValueError, match="Inconsistent Zeek source provenance"):
+        evaluate_offline_zeek_baseline(dataset)
+
+
+def test_rejects_one_session_reassigned_to_two_different_source_digests():
+    dataset = _dataset()
+    dataset.provenance["train"][0]["source_sha256"] = "f" * 64
+    with pytest.raises(ValueError, match="Zeek session reused across sources"):
+        evaluate_offline_zeek_baseline(dataset)
+
+
+def test_distinct_sessions_on_same_host_within_train_remain_supported():
+    dataset = build_labeled_lab_dataset([
+        _capture("train", 0),
+        _capture("train", 9),
+        _capture("validation", 1),
+        _capture("test", 2),
+    ])
+    report = evaluate_offline_zeek_baseline(dataset)
+    assert report["provenance"]["train"]["sessions"] == 2
+    assert report["provenance"]["train"]["host_groups"] == 1
+    assert report["provenance"]["train"]["flows"] == 4
+
+
 def test_refuses_numeric_column_entirely_missing_from_training():
     dataset = _dataset()
     for row in dataset.features["train"]:
