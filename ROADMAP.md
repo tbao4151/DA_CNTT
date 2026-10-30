@@ -1325,3 +1325,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Ubuntu Python 3.12.9 and Windows Server 2022 CI for `tests/test_zeek_reprocessing_compare.py` and existing suites; merge only after all required checks pass and the PR is conflict-free.
 - [ ] Student records two independent offline Zeek `conn.log` outputs from the same privately SHA-256-pinned authorized Host-only PCAP; compare with and without `--strict-all-fields`, preserve Zeek version, scripts/config, command lines, original hashes, exact outputs and failure cases outside Git.
 - [ ] Document raw formatting sensitivity, additional run-specific columns, absent `#types` and UID-containing fields. A successful full raw comparison still cannot prove PCAP provenance, VMware isolation or ground-truth labels. Preserve UNSW-NB15 benchmark and leave active Red Team disabled pending verified authorization.
+
+
+## Cyber Lab — strict Zeek ASCII comparison merged (#259, 30/10/2026)
+
+- [x] [PR #259](https://github.com/tbao4151/DA_CNTT/pull/259) merged as `133ced93d3c0a56d3af71c4ba2f1cf6775661131` after final-head [Ubuntu CI #41016012203](https://github.com/tbao4151/DA_CNTT/actions/runs/41016012203) and [Windows offline CI #41016012252](https://github.com/tbao4151/DA_CNTT/actions/runs/41016012252) succeeded. This supersedes the pending feature-CI/merge item above; post-merge `main` CI remains a separate check.
+- [ ] Student runs default and `--strict-all-fields` comparisons on two privately SHA-256-pinned offline Zeek `conn.log` outputs from the same authorized VMware Host-only PCAP. Archive original PCAP, version/config/scripts, SHA-256, exact commands, output, exit codes and isolation screenshots outside Git; distinguish synthetic CI from actual Windows 11 acceptance.
+- [ ] Prioritize an auditable PCAP-to-Zeek offline reprocessing protocol and independently adjudicated, host/session-disjoint labeled captures for Blue Team AI → alert → SOC evaluation. Raw-field equality is not PCAP origin proof or attack detection; active Red Team remains disabled until explicit lab authorization and isolation checks.
