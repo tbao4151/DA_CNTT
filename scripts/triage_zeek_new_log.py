@@ -12,6 +12,7 @@ import json
 import os
 import stat
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -186,6 +187,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--confirm-authorized", action="store_true")
     parser.add_argument("--confirm-new-capture", action="store_true",
                         help="Operator attests capture is outside TRAIN/VALIDATION/TEST")
+    parser.add_argument("--measure-manual-soc-runtime", action="store_true",
+                        help="Opt-in software timing of verified SOC handoff; not detection latency")
     args = parser.parse_args(argv)
     try:
         model_path = _private_file(args.model)
@@ -241,6 +244,8 @@ def main(argv: list[str] | None = None) -> int:
         if len(inputs) != expected_inputs or report_path.parent != log_path.parent or report_path.suffix.lower() != ".json":
             raise ValueError("Model, log and report must be separate; report alongside log")
         if args.list_candidates:
+            if args.measure_manual_soc_runtime:
+                raise ValueError("Manual SOC timing requires an explicit selected case write")
             if args.db is not None or any((
                 args.confirm_reviewed, args.confirm_authorized, args.confirm_new_capture,
             )):
@@ -316,6 +321,8 @@ def main(argv: list[str] | None = None) -> int:
             print("No SOC write, operational alert, or real detection verified.")
             return 0
 
+        # Final handoff only: recomputation and SQLite create/reuse; no analyst wait.
+        handoff_start_ns = time.perf_counter_ns() if args.measure_manual_soc_runtime else None
         case_id = create_new_log_candidate_case(
             db_path, source_data=source_data, model=model,
             report_data=report_data,
@@ -337,6 +344,10 @@ def main(argv: list[str] | None = None) -> int:
             research_bundle_sha256=args.expected_research_alert_bundle_sha256,
             research_alert_ref=args.research_alert_ref,
         )
+        handoff_duration_ns = (
+            time.perf_counter_ns() - handoff_start_ns
+            if handoff_start_ns is not None else None
+        )
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError, RecursionError):
         # Never print private IPs, UIDs, paths, model contents or raw evidence.
         print("Private new-log research SOC triage refused.", file=sys.stderr)
@@ -346,6 +357,10 @@ def main(argv: list[str] | None = None) -> int:
         print("offline_pcap_provenance_reverified=true (bytes and scope only)")
     if bundle_path is not None:
         print("pinned_research_bundle_selection_reverified=true")
+    if handoff_duration_ns is not None:
+        print(f"offline_manual_soc_handoff_duration_ms={handoff_duration_ns / 1_000_000:.6f}")
+        print("offline_manual_soc_handoff_boundary=verified_recompute_plus_sqlite_create_or_reuse")
+        print("detection_latency_measured=false; analyst_wait_excluded=true")
     print("Existing source+UID case may have been reused; original audit is preserved.")
     print("No confirmed attack, operational AI alert, or real lab detection verified.")
     return 0
