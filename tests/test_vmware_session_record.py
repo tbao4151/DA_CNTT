@@ -100,7 +100,10 @@ def test_invalid_or_unsupported_evidence_refused_without_leaking_paths(tmp_path,
         elif kind == "symlink":
             original = root / "authorization.txt"
             alias = root / "alias.txt"
-            alias.symlink_to(original)
+            try:
+                alias.symlink_to(original)
+            except (OSError, NotImplementedError):
+                pytest.skip("This Windows runner cannot create symlinks")
             rec = json.loads((root / "record.json").read_text())
             rec["checks"]["authorization"]["path"] = "alias.txt"
             raw = json.dumps(rec).encode()
