@@ -13,6 +13,7 @@ from pathlib import Path
 from .labeled_dataset import LabeledLabDataset
 from .new_log_inference import score_new_zeek_log
 from .partition_guard import verify_declared_partition_exclusion
+from .research_alerts import verify_pinned_research_alert_selection
 from .new_log_review import review_pinned_new_log_report
 from .offline_pcap_verify import verify_offline_pcap_import
 from .triage import create_offline_review_case
@@ -40,6 +41,9 @@ def create_new_log_candidate_case(
     offline_import_report_sha256: str | None = None,
     offline_import_pcap_path: str | Path | None = None,
     offline_import_log_path: str | Path | None = None,
+    research_bundle_data: bytes | None = None,
+    research_bundle_sha256: str | None = None,
+    research_alert_ref: str | None = None,
 ) -> int:
     """Create/reuse one manual Unclassified case for a verified candidate.
 
@@ -79,6 +83,16 @@ def create_new_log_candidate_case(
                 or hashlib.sha256(source_data).hexdigest() != expected_log_sha256):
             raise ValueError("SOC source bytes differ from verified offline PCAP import")
 
+    bundle_options = (research_bundle_data, research_bundle_sha256, research_alert_ref)
+    if any(value is not None for value in bundle_options) and not all(
+        value is not None for value in bundle_options
+    ):
+        raise ValueError("All three pinned research bundle inputs are required")
+    if research_bundle_data is not None and (
+        declared_dataset is None or declared_captures is None
+    ):
+        raise ValueError("Research bundle handoff requires pinned declared split evidence")
+
     if (declared_dataset is None) != (declared_manifest_sha256 is None):
         raise ValueError("Declared dataset and pinned manifest SHA must be supplied together")
     if declared_captures is not None and declared_dataset is None:
@@ -116,6 +130,25 @@ def create_new_log_candidate_case(
     if prediction["uid"] != events[record_index]["uid"]:
         raise ValueError("Selected UID does not match the original Zeek flow")
 
+    verified_bundle_sha = None
+    if research_bundle_data is not None:
+        # Rebuild the saved queue from pinned evidence at the SOC write boundary.
+        verified_bundle_sha = verify_pinned_research_alert_selection(
+            research_bundle_data,
+            expected_bundle_sha256=research_bundle_sha256,
+            research_alert_ref=research_alert_ref,
+            record_index=record_index,
+            source_data=source_data,
+            model=model,
+            report_data=report_data,
+            expected_log_sha256=expected_log_sha256,
+            model_sha256=model_sha256,
+            lab_cidrs=lab_cidrs,
+            manifest_sha256=declared_manifest_sha256,
+            declared_dataset=declared_dataset,
+            declared_captures=declared_captures,
+        )
+
     note = (
         "Analyst-selected NEW-log OFFLINE research candidate; NOT a verified "
         "attack or operational AI alert. "
@@ -142,6 +175,12 @@ def create_new_log_candidate_case(
             f"pcap_sha256={verified_import['pcap_sha256']}. "
             if verified_import is not None else
             "Original PCAP provenance NOT software-checked. "
+        )
+        + (
+            f"Pinned research_bundle_sha256={verified_bundle_sha}; "
+            f"research_alert_ref={research_alert_ref}. "
+            if verified_bundle_sha is not None else
+            "Research alert bundle not independently checked. "
         )
         + "Authorization, Host-only isolation and ground truth are unverified."
     )
