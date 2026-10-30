@@ -20,6 +20,8 @@ on:
       - "tests/test_zeek_lab_cli.py"
       - "tests/test_zeek_real_smoke.py"
       - "tests/ci_real_zeek_scoring.py"
+      - "tests/ci_real_zeek_production_timestamp.py"
+      - "tests/test_ci_real_zeek_production_timestamp.py"
       - "tests/test_ci_real_zeek_scoring.py"
       - "tests/test_ci_real_zeek_soc_contract.py"
       - "scripts/triage_zeek_new_log.py"
