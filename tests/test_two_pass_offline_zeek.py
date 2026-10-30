@@ -33,9 +33,10 @@ def _setup(tmp_path):
 def _fake_import(monkeypatch, *, second_port=80, fail_second=False, wrong_log_pin=False,
                  mutate_pcap=False):
     calls = []
-    def fake(source, output, *, lab_cidrs, operator_confirmed_offline, timeout_seconds):
+    def fake(source, output, *, lab_cidrs, operator_confirmed_offline,
+             timeout_seconds, zeek_executable=None):
         calls.append((source, output, tuple(lab_cidrs), operator_confirmed_offline,
-                      timeout_seconds))
+                      timeout_seconds, zeek_executable))
         output.mkdir()
         index = len(calls)
         data = _log(_row(uid="FIRST" if index == 1 else "SECOND",
@@ -62,7 +63,7 @@ def test_two_distinct_offline_passes_strict_and_tuple_checks(tmp_path, monkeypat
     assert len(calls) == 2
     assert calls[0][0] == calls[1][0] == source
     assert calls[0][1] != calls[1][1]
-    assert all(call[3] is True and call[4] == 120 for call in calls)
+    assert all(call[3] is True and call[4] == 120 and call[5] is None for call in calls)
     assert report["two_zeek_subprocesses_completed"] is True
     assert report["strict_all_non_uid_fields_equivalent"] is True
     assert report["pcap_tuple_presence_for_both_logs"] is True
@@ -156,6 +157,7 @@ def test_optional_pinned_zeek_binary_success_does_not_claim_version(tmp_path, mo
     assert runner.main(args) == 0
     report = json.loads(capsys.readouterr().out)
     assert len(calls) == 2
+    assert all(call[5] == executable.resolve() for call in calls)
     assert report["zeek_binary_sha256_pinned"] is True
     assert report["zeek_binary_sha256"] == digest
     assert report["zeek_binary_version_verified"] is False
