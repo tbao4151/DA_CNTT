@@ -74,3 +74,46 @@ It can detect additional discrepancies but cannot prove a particular PCAP
 produced either log, establish Zeek binary/config provenance, or validate
 isolation, labels, attack detection or latency. The JSON output never includes
 individual flows, IPs or UIDs. No Zeek executable or network is invoked.
+
+
+## Optional three-file PCAP + two Zeek logs corroboration (feature PR, 30/10/2026)
+
+The read-only comparator can additionally verify that **both** independently
+SHA-256-pinned Zeek logs contain only supported IPv4 TCP/UDP 5-tuples present
+in a **third**, independently pinned, private classic Ethernet PCAP. Supply
+`--pcap` and `--expected-pcap-sha256` **together**; either alone is refused.
+This gate is opt-in and can be combined with `--strict-all-fields`.
+Without these arguments, the existing two-log comparison is unchanged.
+
+Example Windows PowerShell command (replace all paths and SHA-256 pins
+with independently recorded values):
+
+```powershell
+py -3.12 scripts/compare_zeek_reprocessing.py `
+  --original-log "C:/DA005-private/capture/zeek-run-1/conn.log" `
+  --expected-original-sha256 "<INDEPENDENT_LOWERCASE_SHA256_1>" `
+  --reprocessed-log "C:/DA005-private/capture/zeek-run-2/conn.log" `
+  --expected-reprocessed-sha256 "<INDEPENDENT_LOWERCASE_SHA256_2>" `
+  --pcap "C:/DA005-private/capture/original.pcap" `
+  --expected-pcap-sha256 "<INDEPENDENT_LOWERCASE_SHA256_PCAP>" `
+  --strict-all-fields
+```
+
+The PCAP must be a distinct absolute private regular file, at most 64 MiB.
+Both logs must independently match their pins. The bounded checker requires
+classic Ethernet PCAP, untagged IPv4, unfragmented TCP/UDP and rejects
+unsupported Zeek protocols, IPv6 flows, VLAN-tagged packets and fragments.
+On success, JSON reports that tuple-presence checks passed for both logs,
+along with counts and explicit false provenance/identity claims. It never
+prints IPs, Zeek UIDs or packet payloads. Any pin, structure or tuple failure
+returns code 2 and **no partial-success JSON**.
+
+**Scientific limitation:** This combines two independently bounded checks,
+not a proof of PCAP-to-Zeek derivation. A single packet tuple can match
+multiple Zeek flows; timestamp, payload, connection state, Zeek binary/scripts,
+operator identity, physical isolation and capture authenticity are not
+authenticated. The student must still execute two separately documented
+`zeek -r` passes in an authorized offline environment, preserve source
+checksums, exact commands, Zeek version, scripts/config and isolation evidence
+outside the public repository. CI synthetic tests are not Windows 11/VMware
+acceptance or independently labeled attack detection.

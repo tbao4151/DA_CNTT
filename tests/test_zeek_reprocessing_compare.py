@@ -196,3 +196,104 @@ def test_cli_strict_mode_and_no_partial_success(tmp_path, capsys):
     args[7] = hashlib.sha256(second.read_bytes()).hexdigest()
     assert main(args) == 2
     assert capsys.readouterr().out == ""
+
+
+# Synthetic classic Ethernet IPv4/TCP evidence for optional PCAP/Zeek gate.
+def _tcp_pcap(*, dport=80, linktype=1):
+    import ipaddress
+    import struct
+
+    transport = struct.pack("!HHIIHHHH", 1234, dport, 0, 0, 0x5000, 0, 0, 0)
+    ipv4 = struct.pack(
+        "!BBHHHBBH4s4s", 0x45, 0, 20 + len(transport), 0, 0, 64, 6, 0,
+        ipaddress.IPv4Address("10.1.1.2").packed,
+        ipaddress.IPv4Address("10.1.1.3").packed,
+    )
+    frame = b"\x00" * 12 + struct.pack("!H", 0x0800) + ipv4 + transport
+    return (bytes.fromhex("d4c3b2a1")
+            + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, linktype)
+            + struct.pack("<IIII", 100, 0, len(frame), len(frame))
+            + frame)
+
+
+def _pinned_compare_args(first, second):
+    return [
+        "--original-log", str(first),
+        "--expected-original-sha256", hashlib.sha256(first.read_bytes()).hexdigest(),
+        "--reprocessed-log", str(second),
+        "--expected-reprocessed-sha256", hashlib.sha256(second.read_bytes()).hexdigest(),
+    ]
+
+
+def test_cli_pinned_pcap_corrob_checks_both_logs_and_preserves_default(tmp_path, capsys, monkeypatch):
+    import compare_zeek_reprocessing as cli
+
+    first = tmp_path / "first.log"
+    second = tmp_path / "second.log"
+    capture = tmp_path / "original.pcap"
+    first.write_bytes(_log(_row()))
+    second.write_bytes(_log(_row(uid="REPLAY")))
+    capture.write_bytes(_tcp_pcap())
+    args = _pinned_compare_args(first, second)
+    assert main(args) == 0
+    assert "pcap_tuple_presence_checked" not in json.loads(capsys.readouterr().out)
+
+    actual = cli.corroborate_pcap_zeek_tuples
+    seen = []
+
+    def observed(pcap_bytes, log_bytes):
+        seen.append(log_bytes)
+        return actual(pcap_bytes, log_bytes)
+
+    monkeypatch.setattr(cli, "corroborate_pcap_zeek_tuples", observed)
+    args += ["--pcap", str(capture), "--expected-pcap-sha256",
+             hashlib.sha256(capture.read_bytes()).hexdigest()]
+    assert main(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert seen == [first.read_bytes(), second.read_bytes()]
+    assert report["pcap_tuple_presence_for_both_logs"] is True
+    assert report["pcap_origin_verified"] is False
+    assert report["packet_to_flow_identity_verified"] is False
+    assert report["pcap_packet_count"] == 1
+    assert "10.1.1." not in json.dumps(report)
+
+
+@pytest.mark.parametrize("failure", [
+    "missing_pin", "missing_pcap", "wrong_pin", "unmatched_tuple",
+    "unsupported_linktype", "same_path",
+])
+def test_cli_pinned_pcap_corrob_refuses_without_partial_success(tmp_path, capsys, failure):
+    first = tmp_path / "first.log"
+    second = tmp_path / "second.log"
+    capture = tmp_path / "original.pcap"
+    first.write_bytes(_log(_row(dport="81" if failure == "unmatched_tuple" else "80")))
+    second.write_bytes(_log(_row(uid="REPLAY", dport="81" if failure == "unmatched_tuple" else "80")))
+    capture.write_bytes(_tcp_pcap(linktype=101 if failure == "unsupported_linktype" else 1))
+    args = _pinned_compare_args(first, second)
+    pcap_path = first if failure == "same_path" else capture
+    if failure != "missing_pcap":
+        args += ["--pcap", str(pcap_path)]
+    if failure != "missing_pin":
+        args += ["--expected-pcap-sha256",
+                 ("0" * 64 if failure == "wrong_pin" else
+                  hashlib.sha256(pcap_path.read_bytes()).hexdigest())]
+    assert main(args) == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert "refused" in output.err.lower()
+
+
+def test_cli_strict_all_fields_combines_with_pinned_pcap(tmp_path, capsys):
+    first = tmp_path / "first.log"
+    second = tmp_path / "second.log"
+    capture = tmp_path / "original.pcap"
+    first.write_bytes(_extra_log())
+    second.write_bytes(_extra_log(uid="REPLAY"))
+    capture.write_bytes(_tcp_pcap())
+    args = _pinned_compare_args(first, second)
+    args += ["--strict-all-fields", "--pcap", str(capture),
+             "--expected-pcap-sha256", hashlib.sha256(capture.read_bytes()).hexdigest()]
+    assert main(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["unparsed_zeek_fields_compared"] is True
+    assert report["pcap_tuple_presence_for_both_logs"] is True
