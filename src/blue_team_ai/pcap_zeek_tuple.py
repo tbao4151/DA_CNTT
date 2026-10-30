@@ -7,20 +7,26 @@ from __future__ import annotations
 
 import ipaddress
 import struct
+from bisect import bisect_left
+from datetime import datetime
 
 from .pcap_structure import MAGIC_FORMATS, inspect_classic_pcap_framing
 from .zeek import parse_zeek_conn_log
 
 
-def corroborate_pcap_zeek_tuples(pcap: bytes, zeek_log: bytes) -> dict[str, object]:
+def corroborate_pcap_zeek_tuples(
+    pcap: bytes, zeek_log: bytes, *, require_timestamp_corroboration: bool = False,
+) -> dict[str, object]:
     """Require every Zeek TCP/UDP IPv4 flow tuple to occur in a classic PCAP.
 
     Supported: Ethernet (DLT_EN10MB), untagged IPv4, nonfragmented TCP/UDP.
     A packet can corroborate multiple Zeek rows with the same tuple; this is
     explicitly an existence check, NOT a one-to-one correspondence proof.
+    Optional timestamp corroboration requires a same-tuple PCAP packet within
+    one second of each Zeek flow start. It still does not prove derivation.
     """
     framing = inspect_classic_pcap_framing(pcap)
-    endian, _fraction_base = MAGIC_FORMATS[pcap[:4]]
+    endian, fraction_base = MAGIC_FORMATS[pcap[:4]]
     linktype = struct.unpack_from(endian + "I", pcap, 20)[0]
     if linktype != 1:
         raise ValueError("Tuple corroboration requires classic Ethernet PCAP linktype 1")
@@ -32,10 +38,11 @@ def corroborate_pcap_zeek_tuples(pcap: bytes, zeek_log: bytes) -> dict[str, obje
             raise ValueError("Tuple corroboration supports only Zeek IPv4 TCP/UDP flows")
 
     tuples: set[tuple[str, int, str, int, str]] = set()
+    packet_times: dict[tuple[str, int, str, int, str], list[float]] = {}
     packet_count = 0
     offset = 24
     while offset < len(pcap):
-        _sec, _frac, captured, _original = struct.unpack_from(endian + "IIII", pcap, offset)
+        sec, fraction, captured, _original = struct.unpack_from(endian + "IIII", pcap, offset)
         offset += 16
         frame = memoryview(pcap)[offset:offset + captured]
         offset += captured
@@ -74,8 +81,15 @@ def corroborate_pcap_zeek_tuples(pcap: bytes, zeek_log: bytes) -> dict[str, obje
         src_ip = str(ipaddress.IPv4Address(bytes(frame[26:30])))
         dst_ip = str(ipaddress.IPv4Address(bytes(frame[30:34])))
         proto = "tcp" if protocol == 6 else "udp"
-        tuples.add((src_ip, src_port, dst_ip, dst_port, proto))
+        key = (src_ip, src_port, dst_ip, dst_port, proto)
+        tuples.add(key)
+        if require_timestamp_corroboration:
+            packet_times.setdefault(key, []).append(sec + fraction / fraction_base)
         packet_count += 1
+
+    if require_timestamp_corroboration:
+        for times in packet_times.values():
+            times.sort()
 
     matched = 0
     for event in events:
@@ -85,6 +99,16 @@ def corroborate_pcap_zeek_tuples(pcap: bytes, zeek_log: bytes) -> dict[str, obje
                    event["src_port"], event["proto"])
         if forward not in tuples and reverse not in tuples:
             raise ValueError("Zeek IPv4 TCP/UDP flow tuple absent from original PCAP")
+        if require_timestamp_corroboration:
+            event_ts = datetime.fromisoformat(event["event_time_utc"]).timestamp()
+            # Sorted timestamp search avoids accepting two distant sessions
+            # merely because they reused the same five-tuple.
+            def near_start(key: tuple[str, int, str, int, str]) -> bool:
+                times = packet_times.get(key, [])
+                index = bisect_left(times, event_ts - 1.0)
+                return index < len(times) and times[index] <= event_ts + 1.0
+            if not near_start(forward) and not near_start(reverse):
+                raise ValueError("Zeek flow start has no same-tuple PCAP packet within one second")
         matched += 1
     return {
         "corroboration": "unordered_bidirectional_ipv4_tcp_udp_5tuple_presence_only",
@@ -93,7 +117,8 @@ def corroborate_pcap_zeek_tuples(pcap: bytes, zeek_log: bytes) -> dict[str, obje
         "zeek_flow_count": len(events),
         "matched_zeek_flow_count": matched,
         "packet_to_flow_identity_verified": False,
-        "timestamps_correlated": False,
+        "timestamps_correlated": require_timestamp_corroboration,
+        "timestamp_corroboration_window_seconds": (1.0 if require_timestamp_corroboration else None),
         "capture_authenticity_verified": False,
         "host_only_isolation_verified": False,
         "ground_truth_verified": False,
