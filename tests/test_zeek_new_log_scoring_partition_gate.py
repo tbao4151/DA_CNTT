@@ -152,7 +152,7 @@ def test_opt_in_score_publication_timing_keeps_report_bytes_identical(tmp_path):
     timed = _run(timed_command + ["--measure-inference-publication-runtime"])
     assert timed.returncode == 0, timed.stderr
     assert timed_output.read_bytes() == untimed_bytes
-    match = re.search(r"^offline_new_log_score_publish_duration_ms=(\\d+\\.\\d{6})$",
+    match = re.search(r"^offline_new_log_score_publish_duration_ms=(\d+\.\d{6})$",
                       timed.stdout, flags=re.MULTILINE)
     assert match and float(match.group(1)) >= 0
     assert "offline_new_log_score_publish_boundary=score_json_atomic_publish" in timed.stdout
