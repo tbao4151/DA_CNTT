@@ -10,11 +10,13 @@ import argparse
 import copy
 import hashlib
 import json
+import struct
 import subprocess
 import sys
 from pathlib import Path
 
 from blue_team_ai.model_artifact import build_zeek_research_artifact, validate_zeek_research_artifact
+from blue_team_ai.pcap_zeek_tuple import corroborate_pcap_zeek_tuples
 from blue_team_ai.zeek_smoke import verify_fixture_feature_projection
 from siem_ai.case_report import export_case_report
 from siem_ai.core import list_cases
@@ -133,6 +135,63 @@ def _command(argv: list[str], *, should_succeed: bool) -> None:
         raise ValueError("CI synthetic scoring/review acceptance failed")
 
 
+
+def verify_synthetic_timestamp_gate_before_scoring(
+    pcap_data: bytes, log_data: bytes,
+) -> dict[str, object]:
+    """CI-only: check real Zeek time alignment before research scoring.
+
+    A timestamp-shifted copy retains the exact packet payload and five-tuples.
+    The legacy tuple check must still pass, but the opt-in time check must
+    refuse it. This is NOT a provenance, isolation or attack-label attestation.
+    """
+    accepted = corroborate_pcap_zeek_tuples(
+        pcap_data, log_data, require_timestamp_corroboration=True,
+    )
+    if (accepted["matched_zeek_flow_count"] != 1
+            or accepted["timestamps_correlated"] is not True
+            or accepted["timestamp_corroboration_window_seconds"] != 1.0):
+        raise ValueError("Real Zeek synthetic timestamp acceptance contract failed")
+
+    # This acceptance fixture is deterministic little-endian classic PCAP.
+    # Shift EVERY packet header; leaving the second packet at +1s would
+    # accidentally satisfy the one-second tolerance.
+    shifted = bytearray(pcap_data)
+    if shifted[:4] != bytes.fromhex("d4c3b2a1"):
+        raise ValueError("CI timestamp mutation requires little-endian microsecond PCAP")
+    offset = 24
+    shifted_count = 0
+    while offset < len(shifted):
+        if offset + 16 > len(shifted):
+            raise ValueError("Truncated CI PCAP packet header")
+        seconds, _fraction, included, _original = struct.unpack_from(
+            "<IIII", shifted, offset,
+        )
+        if included == 0 or offset + 16 + included > len(shifted):
+            raise ValueError("Invalid CI PCAP captured length")
+        if seconds > 0xFFFFFFFF - 120:
+            raise ValueError("CI PCAP timestamp cannot be shifted")
+        struct.pack_into("<I", shifted, offset, seconds + 120)
+        offset += 16 + included
+        shifted_count += 1
+    if shifted_count < 2 or offset != len(shifted):
+        raise ValueError("Expected two or more complete CI fixture packets")
+    shifted_bytes = bytes(shifted)
+    legacy = corroborate_pcap_zeek_tuples(shifted_bytes, log_data)
+    if legacy["matched_zeek_flow_count"] != 1:
+        raise ValueError("Shifted fixture unexpectedly changed its five-tuple")
+    try:
+        corroborate_pcap_zeek_tuples(
+            shifted_bytes, log_data, require_timestamp_corroboration=True,
+        )
+    except ValueError as exc:
+        if "within one second" not in str(exc):
+            raise
+    else:
+        raise ValueError("Timestamp gate accepted the 120-second-shifted fixture")
+    return accepted
+
+
 def run(root: Path) -> dict[str, object]:
     root = root.resolve(strict=True)
     if root.is_relative_to(ROOT) or not root.is_dir():
@@ -144,6 +203,10 @@ def run(root: Path) -> dict[str, object]:
     verify_fixture_feature_projection(log)
     if not pcap.is_file() or not import_report.is_file():
         raise ValueError("Real Zeek production importer evidence is required")
+    # Fail before model fitting, scoring or the disposable manual SOC write.
+    timestamp_gate = verify_synthetic_timestamp_gate_before_scoring(
+        pcap.read_bytes(), log.read_bytes(),
+    )
 
     # This model is fitted on test fixtures with arbitrary synthetic labels.
     # It is NEVER an independently labeled, trusted, deployable research model.
@@ -285,6 +348,11 @@ def run(root: Path) -> dict[str, object]:
         "zeek_conn_sha256": log_sha,
         "offline_import_report_sha256": import_sha,
         "flow_count": report["flow_count"],
+        "pcap_zeek_timestamp_presence_verified_ci_only": True,
+        "pcap_zeek_timestamp_window_seconds": timestamp_gate["timestamp_corroboration_window_seconds"],
+        "shifted_pcap_tuple_only_accepted_ci_only": True,
+        "shifted_pcap_timestamp_gate_rejected_ci_only": True,
+        "pcap_to_zeek_derivation_proven": False,
         "research_scoring_executed": True,
         "independent_prediction_recomputation_passed": True,
         "tampered_probability_rejected": True,

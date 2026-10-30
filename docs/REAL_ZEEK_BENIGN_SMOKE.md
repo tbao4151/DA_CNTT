@@ -181,3 +181,30 @@ execution, actual Host-only isolation, authorized real capture, independent
 labels, held-out evaluation, and event-to-SOC latency remain unverified.
 Run the documented local Zeek smoke separately and **never use the CI-only
 synthetic model for a research claim or deployment**.
+
+
+## CI research scoring: PCAP/Zeek time gate before model and manual SOC (30 October 2026)
+
+The real-Zeek workflow's existing `tests/ci_real_zeek_scoring.py` now calls the
+opt-in one-second PCAP/Zeek timestamp-presence checker **before** fitting the
+CI-only synthetic research model, scoring, report review or manual SQLite case.
+It checks the genuine Zeek `conn.log` produced from the deterministic benign
+UDP PCAP. A second, in-memory copy shifts the timestamp of **every** PCAP
+packet by 120 seconds while leaving five-tuples/payloads unchanged. The
+legacy tuple-only check must accept that shifted copy; the timestamp check
+must reject it. Neither the shifted copy nor the synthetic model is a lab
+capture or a trusted attack detector.
+
+The short-lived `ci_real_zeek_scoring_report.json` records explicit
+`pcap_zeek_timestamp_presence_verified_ci_only`,
+`shifted_pcap_timestamp_gate_rejected_ci_only` and
+`pcap_to_zeek_derivation_proven=false` fields. These claims become verified
+**only after exact-head real-Zeek and quality CI succeed**. The CI check does
+not change the production scoring or SOC CLI, is not a general-purpose
+packet-to-flow derivation proof, and does not attest VMware Host-only
+isolation, independently adjudicated labels or detection latency.
+
+On Windows, run `py -3.12 -m pytest -q tests/test_ci_real_zeek_scoring.py`
+for synthetic regression. Genuine capture acceptance still requires the
+student's private PCAP, matching Zeek log, independent SHA-256 pins, and
+manual isolation/clock documentation. Never upload sensitive captures.
