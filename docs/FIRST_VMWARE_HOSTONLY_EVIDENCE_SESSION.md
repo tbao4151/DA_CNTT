@@ -107,7 +107,12 @@ screenshots (vmware-nics.png), guest routes/NIC screenshots or saved text
 (capture-origin.txt). Include actual operator, time, network scope,
 interface, command and original PCAP/Zeek SHA-256 in the private notes;
 do not commit or publish them. Each supporting file must be nonempty,
-at most 4 MiB, and SHA-256-pinned. For multiple screenshots, combine
+at most 4 MiB, and SHA-256-pinned. Each PASS role must reference a
+**different resolved file path**; reusing one pinned file for multiple
+roles is rejected even if its SHA-256 is valid. Distinct files with
+identical bytes are not automatically rejected: file identity checks
+cannot establish independent human evidence or content relevance.
+For multiple screenshots, combine
 the review into a bounded private PDF or text summary and hash that file;
 the tool checks bytes only, not what the screenshot proves.
 
