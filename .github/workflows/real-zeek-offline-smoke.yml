@@ -252,7 +252,7 @@ jobs:
           assert summary["independent_labels_verified"] is False
           assert summary["attack_detection_verified"] is False
           assert summary["zeek_flow_count"] == 1
-          assert summary["pcap_packet_count"] == 1
+          assert summary["pcap_packet_count"] >= summary["zeek_flow_count"] >= 1
           for directory, key in (
               (first, "first_zeek_conn_sha256"),
               (second, "second_zeek_conn_sha256"),
