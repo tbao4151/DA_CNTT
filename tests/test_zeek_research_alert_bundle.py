@@ -218,7 +218,7 @@ def test_opt_in_manual_soc_runtime_is_scoped_and_not_detection_latency(tmp_path)
     # first-time creation. The timer must not pretend to measure analyst wait.
     timed = _run(command + ["--measure-manual-soc-runtime"])
     assert timed.returncode == 0, timed.stderr
-    match = re.search(r"^offline_manual_soc_handoff_duration_ms=(\\d+\\.\\d{6})$",
+    match = re.search(r"^offline_manual_soc_handoff_duration_ms=(\d+\.\d{6})$",
                       timed.stdout, re.MULTILINE)
     assert match is not None
     assert float(match.group(1)) >= 0
