@@ -41,3 +41,58 @@ def compare_parsed_zeek_reprocessing(original: bytes, reprocessed: bytes) -> dic
         "ground_truth_verified": False,
         "attack_detection_verified": False,
     }
+
+
+def _raw_non_uid_multiset(data: bytes) -> tuple[
+    tuple[str, ...], tuple[tuple[str, str], ...] | None,
+    tuple[tuple[str, str], ...], Counter
+]:
+    """Canonicalize raw ASCII Zeek rows without discarding unknown columns.
+
+    Caller must first validate the entire bounded input with parse_zeek_conn_log.
+    #open/#close timestamps and UID values are run-specific; all other raw
+    values, including missing sentinels, are intentionally format-sensitive.
+    """
+    fields: tuple[str, ...] | None = None
+    types: tuple[str, ...] | None = None
+    sentinels: dict[str, str] = {}
+    rows: list[tuple[str, ...]] = []
+    for line in data.decode("utf-8", errors="strict").splitlines():
+        if line.startswith("#fields\\t"):
+            fields = tuple(line.split("\\t")[1:])
+        elif line.startswith("#types\\t"):
+            types = tuple(line.split("\\t")[1:])
+        elif line.startswith(("#set_separator\\t", "#unset_field\\t", "#empty_field\\t")):
+            key, value = line.split("\\t", 1)
+            sentinels[key] = value
+        elif line and not line.startswith("#"):
+            rows.append(tuple(line.split("\\t")))
+    if fields is None or "uid" not in fields:
+        raise ValueError("Missing required Zeek fields for strict comparison")
+    names = tuple(sorted(name for name in fields if name != "uid"))
+    indexes = tuple(fields.index(name) for name in names)
+    declared_types = (tuple(sorted(zip(fields, types))) if types is not None else None)
+    normalized = Counter(tuple(row[index] for index in indexes) for row in rows)
+    return names, declared_types, tuple(sorted(sentinels.items())), normalized
+
+
+def compare_strict_zeek_reprocessing(original: bytes, reprocessed: bytes) -> dict[str, object]:
+    """Opt-in exact multiset comparison of ALL raw non-UID Zeek ASCII columns.
+
+    This is stricter than parsed-field comparison, not a proof of PCAP origin.
+    Raw numeric formatting and additional Zeek script fields must also agree.
+    """
+    report = compare_parsed_zeek_reprocessing(original, reprocessed)
+    left = _raw_non_uid_multiset(original)
+    right = _raw_non_uid_multiset(reprocessed)
+    if left != right:
+        raise ValueError("Pinned Zeek logs differ in strict non-UID raw fields or schema")
+    report.update({
+        "comparison": "exact_multiset_of_all_non_uid_raw_zeek_fields",
+        "compared_fields": list(left[0]),
+        "unparsed_zeek_fields_compared": True,
+        "declared_types_compared": left[1] is not None,
+        "sentinel_metadata_compared": True,
+        "raw_text_formatting_sensitive": True,
+    })
+    return report
