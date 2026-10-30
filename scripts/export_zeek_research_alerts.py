@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import json
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,6 +48,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-manifest-sha256", required=True)
     parser.add_argument("--cidr", action="append", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--measure-research-export-runtime", action="store_true",
+                        help="Measure only final verified queue recompute and JSON publication")
     args = parser.parse_args(argv)
     try:
         model_path = _private_file(args.model)
@@ -82,6 +85,8 @@ def main(argv: list[str] | None = None) -> int:
             expected_manifest_sha256=manifest_pin,
         )
         dataset = build_labeled_lab_dataset(captures)
+        if args.measure_research_export_runtime:
+            started_ns = time.perf_counter_ns()
         bundle = build_verified_research_alert_bundle(
             source_data, model, report_data,
             expected_log_sha256=log_pin,
@@ -93,6 +98,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         payload = json.dumps(bundle, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         _write_new_report_atomically(output, payload)
+        if args.measure_research_export_runtime:
+            elapsed_ns = time.perf_counter_ns() - started_ns
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError, KeyError, RecursionError):
         print("Private offline research alert-candidate export refused.", file=sys.stderr)
         return 1
@@ -100,6 +107,10 @@ def main(argv: list[str] | None = None) -> int:
     print("research_alert_candidates_exported=" + str(bundle["research_alert_candidates_exported"]))
     print("candidates_outside_manual_triage_window=" + str(bundle["candidates_outside_manual_triage_window"]))
     print("No automatic SOC case, live capture, confirmed attack or operational alert.")
+    if args.measure_research_export_runtime:
+        print(f"offline_research_queue_export_duration_ms={elapsed_ns / 1_000_000:.6f}")
+        print("offline_research_queue_export_boundary=verified_recompute_json_publish")
+        print("detection_latency_measured=false; capture_zeek_analyst_wait_excluded=true")
     return 0
 
 
