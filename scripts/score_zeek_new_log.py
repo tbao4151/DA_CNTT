@@ -12,6 +12,7 @@ import os
 import stat
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -89,6 +90,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Independent manifest SHA-256 (required with --manifest)")
     parser.add_argument("--output", required=True, type=Path,
                         help="NEW private prediction JSON alongside the capture")
+    parser.add_argument("--measure-inference-publication-runtime", action="store_true",
+                        help="Opt-in offline score + JSON publication software timing only")
     args = parser.parse_args(argv)
     try:
         model_path = _private_file(args.model)
@@ -145,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             if partition_gate["declared_flow_identity_nonreuse_checked"] is not True:
                 raise ValueError("Original capture identity screen did not run")
+        started_ns = time.perf_counter_ns() if args.measure_inference_publication_runtime else None
         report = score_new_zeek_log(
             raw, model,
             expected_log_sha256=args.expected_log_sha256,
@@ -153,6 +157,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         payload = (json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
         _write_new_report_atomically(output, payload)
+        elapsed_ns = time.perf_counter_ns() - started_ns if started_ns is not None else None
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError):
         # Avoid leaking private paths, IPs, UIDs or model parameters in shared CI.
         print("Private new-log Zeek inference refused; inspect local evidence.", file=sys.stderr)
@@ -164,6 +169,10 @@ def main(argv: list[str] | None = None) -> int:
         print("Pinned declared TRAIN/VALIDATION/TEST and flow identity non-reuse screened.")
         print("This does NOT independently verify capture history or label truth.")
     print("No SOC case, network traffic, label evaluation or live detection performed.")
+    if elapsed_ns is not None:
+        print(f"offline_new_log_score_publish_duration_ms={elapsed_ns / 1_000_000:.6f}")
+        print("offline_new_log_score_publish_boundary=score_json_atomic_publish")
+        print("detection_latency_measured=false; preflight_capture_zeek_excluded=true")
     return 0
 
 
