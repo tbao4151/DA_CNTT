@@ -138,3 +138,73 @@ def test_pcap_modified_during_first_pass_refused(tmp_path, monkeypatch, capsys):
     assert runner.main(args) == 2
     assert len(calls) == 1
     assert capsys.readouterr().out == ""
+
+
+def _pin_mock_zeek_binary(tmp_path, monkeypatch):
+    """Mock PATH resolution; the Zeek executable is never launched."""
+    executable = tmp_path / "mock-zeek-executable"
+    executable.write_bytes(b"synthetic-zeek-binary-v1")
+    monkeypatch.setattr(runner.shutil, "which", lambda name: str(executable))
+    return executable, hashlib.sha256(executable.read_bytes()).hexdigest()
+
+
+def test_optional_pinned_zeek_binary_success_does_not_claim_version(tmp_path, monkeypatch, capsys):
+    _source, args = _setup(tmp_path)
+    executable, digest = _pin_mock_zeek_binary(tmp_path, monkeypatch)
+    calls = _fake_import(monkeypatch)
+    args += ["--expected-zeek-binary-sha256", digest]
+    assert runner.main(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert len(calls) == 2
+    assert report["zeek_binary_sha256_pinned"] is True
+    assert report["zeek_binary_sha256"] == digest
+    assert report["zeek_binary_version_verified"] is False
+    assert str(executable) not in json.dumps(report)
+
+
+@pytest.mark.parametrize("failure", ["bad_hash", "uppercase_hash", "missing_binary"])
+def test_zeek_binary_pin_refuses_before_any_import(tmp_path, monkeypatch, capsys, failure):
+    _source, args = _setup(tmp_path)
+    _executable, digest = _pin_mock_zeek_binary(tmp_path, monkeypatch)
+    calls = _fake_import(monkeypatch)
+    if failure == "missing_binary":
+        monkeypatch.setattr(runner.shutil, "which", lambda name: None)
+    elif failure == "bad_hash":
+        digest = "0" * 64
+    else:
+        digest = digest.upper()
+    args += ["--expected-zeek-binary-sha256", digest]
+    assert runner.main(args) == 2
+    assert calls == []
+    assert capsys.readouterr().out == ""
+    assert not (tmp_path / "zeek-1").exists()
+
+
+def test_zeek_binary_change_after_first_pass_refuses_without_success(tmp_path, monkeypatch, capsys):
+    _source, args = _setup(tmp_path)
+    executable, digest = _pin_mock_zeek_binary(tmp_path, monkeypatch)
+    calls = _fake_import(monkeypatch)
+    fake_import = runner.import_offline_pcap
+
+    def changed_binary(*a, **kw):
+        report = fake_import(*a, **kw)
+        executable.write_bytes(b"synthetic-zeek-binary-v2")
+        return report
+
+    monkeypatch.setattr(runner, "import_offline_pcap", changed_binary)
+    args += ["--expected-zeek-binary-sha256", digest]
+    assert runner.main(args) == 2
+    assert len(calls) == 1
+    assert (tmp_path / "zeek-1" / "conn.log").exists()
+    assert not (tmp_path / "zeek-2").exists()
+    assert capsys.readouterr().out == ""
+
+
+def test_legacy_two_pass_has_no_binary_fingerprint_claim(tmp_path, monkeypatch, capsys):
+    _source, args = _setup(tmp_path)
+    _fake_import(monkeypatch)
+    assert runner.main(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["zeek_binary_sha256_pinned"] is False
+    assert "zeek_binary_sha256" not in report
+    assert report["zeek_binary_version_verified"] is False
