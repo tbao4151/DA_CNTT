@@ -58,15 +58,15 @@ def _raw_non_uid_multiset(data: bytes) -> tuple[
     sentinels: dict[str, str] = {}
     rows: list[tuple[str, ...]] = []
     for line in data.decode("utf-8", errors="strict").splitlines():
-        if line.startswith("#fields\\t"):
-            fields = tuple(line.split("\\t")[1:])
-        elif line.startswith("#types\\t"):
-            types = tuple(line.split("\\t")[1:])
-        elif line.startswith(("#set_separator\\t", "#unset_field\\t", "#empty_field\\t")):
-            key, value = line.split("\\t", 1)
+        if line.startswith("#fields\t"):
+            fields = tuple(line.split("\t")[1:])
+        elif line.startswith("#types\t"):
+            types = tuple(line.split("\t")[1:])
+        elif line.startswith(("#set_separator\t", "#unset_field\t", "#empty_field\t")):
+            key, value = line.split("\t", 1)
             sentinels[key] = value
         elif line and not line.startswith("#"):
-            rows.append(tuple(line.split("\\t")))
+            rows.append(tuple(line.split("\t")))
     if fields is None or "uid" not in fields:
         raise ValueError("Missing required Zeek fields for strict comparison")
     names = tuple(sorted(name for name in fields if name != "uid"))
