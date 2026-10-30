@@ -2013,3 +2013,10 @@
 - [PR #243](https://github.com/tbao4151/DA_CNTT/pull/243) squash-merged at commit `6c2169cba1a4566394162b04feb7c8306716ca7a` from final head `b6d879cfa78a5e74cf7f5858af5db134a3334102`. Main was `8f379798895a1e5b275e44da769fd7b7bd0ca40d` before merge; the PR was mergeable and was the only open PR.
 - Final-head [Ubuntu Python 3.12.9 CI #40968094559](https://github.com/tbao4151/DA_CNTT/actions/runs/40968094559) and [Windows Server 2022 CI #40968094551](https://github.com/tbao4151/DA_CNTT/actions/runs/40968094551) both completed successfully. Per-test counts were not read from logs. Post-merge main [CI #40970810073](https://github.com/tbao4151/DA_CNTT/actions/runs/40970810073) was still running when checked.
 - Optional strict classic-PCAP framing is an offline structural gate, not packet-to-Zeek correlation, VMware isolation proof, independent ground truth, AI detection or SOC timing. Only synthetic CI was run; no student Windows 11/VMware capture was verified. UNSW-NB15 benchmark, Zeek models, SOC SQLite and Red Team operation unchanged.
+
+
+## 2026-10-30 — Integrated evidence-chain strict PCAP framing (feature PR, CI pending)
+
+- Added an **opt-in** `--require-pcap-framing` to the read-only integrated `scripts/verify_lab_evidence_chain.py`. It requires the pre-existing independent-original-pins strict gate, delegates packet framing to `verify_offline_pcap_import`, and reports a sanitized structural packet count or an explicit unchecked state.
+- Added synthetic regression coverage for missing strict pins, legacy header-only PCAP refusal, a valid one-packet classic PCAP and a truncated record with independently re-pinned import metadata. The existing Windows offline workflow already runs `tests/test_lab_evidence_chain.py`; full GitHub CI results and merge status must be verified separately.
+- **Not yet validated:** GitHub CI for this feature head, student Windows 11/VMware Host-only isolation, original capture, packet-to-Zeek semantic correspondence, independent labels, real detection metrics or event-to-SOC timing. No active traffic, model, benchmark, SQLite or Red Team changes.

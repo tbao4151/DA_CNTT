@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -57,6 +58,9 @@ def test_synthetic_integrated_evidence_passes_without_claiming_detection(tmp_pat
     obj = json.loads(result.stdout)
     assert obj["configuration_snapshots_consistent"] is True
     assert obj["offline_pcap_zeek_import_consistent"] is True
+    assert obj["pcap_framing_required"] is False
+    assert obj["pcap_framing_verified"] is False
+    assert obj["pcap_packet_count"] is None
     assert obj["zeek_flow_count"] == 1
     assert obj["independent_original_pcap_zeek_pins_verified"] is False
     assert all(obj[k] is False for k in (
@@ -217,4 +221,67 @@ def test_guest_endpoint_presence_refuses_unrelated_in_scope_flow(tmp_path, impor
     assert result.stdout == ""
     assert "refused" in result.stderr
     assert "192.168.56" not in result.stderr
+    assert str(tmp_path) not in result.stderr
+
+
+def _repin_integrated_pcap(args, evidence, raw):
+    """Synthetic PCAP edits are accompanied by newly pinned import metadata."""
+    evidence["pcap"].write_bytes(raw)
+    report = json.loads(evidence["report"].read_text(encoding="utf-8"))
+    report["pcap_sha256"] = hashlib.sha256(raw).hexdigest()
+    report["pcap_size_bytes"] = len(raw)
+    evidence["report"].write_text(json.dumps(report), encoding="utf-8")
+    args[args.index("--expected-import-report-sha256") + 1] = hashlib.sha256(
+        evidence["report"].read_bytes()
+    ).hexdigest()
+    args[args.index("--expected-pcap-sha256") + 1] = hashlib.sha256(raw).hexdigest()
+
+
+def test_integrated_framing_requires_strict_independent_pins(tmp_path, imported):
+    def enable(args, hp, gp):
+        args.append("--require-pcap-framing")
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert str(tmp_path) not in result.stderr
+
+
+def test_integrated_framing_rejects_header_only_legacy_pcap(tmp_path, imported):
+    def enable(args, hp, gp):
+        args.extend(["--require-independent-original-pins", "--require-pcap-framing"])
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+
+
+@pytest.mark.parametrize("truncated", [False, True])
+def test_integrated_framing_checks_original_pcap_packet_records(tmp_path, imported, truncated):
+    def enable(args, hp, gp):
+        args.extend(["--require-independent-original-pins", "--require-pcap-framing"])
+        captured = 5 if truncated else 4
+        raw = (bytes.fromhex("d4c3b2a1")
+               + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+               + struct.pack("<IIII", 100, 123, captured, captured)
+               + b"test")
+        _repin_integrated_pcap(args, imported, raw)
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    if truncated:
+        assert result.returncode == 1
+        assert result.stdout == ""
+        assert "refused" in result.stderr
+    else:
+        assert result.returncode == 0, result.stderr
+        report = json.loads(result.stdout)
+        assert report["pcap_framing_required"] is True
+        assert report["pcap_framing_verified"] is True
+        assert report["pcap_packet_count"] == 1
+        assert report["independent_original_pcap_zeek_pins_verified"] is True
+        assert report["vmware_isolation_verified"] is False
+        assert report["ai_inference_performed"] is False
+        assert "192.168.56" not in result.stdout
     assert str(tmp_path) not in result.stderr
