@@ -1526,3 +1526,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu/Windows CI and clean mergeability for the first-session runbook PR before merge. Static contract tests check CLI documentation only, not VMware behavior.
 - [ ] Student follows `docs/FIRST_VMWARE_HOSTONLY_EVIDENCE_SESSION.md` on Windows 11 and owned Host-only guests: record approval, all NICs/routes and Zeek version; independently pin host/guest snapshots and original classic PCAP/Zeek/report; run strict offline evidence chain; retain screenshots, original bytes, command outputs and any failures privately.
 - [ ] Treat the first benign session as evidence-chain acceptance only. Obtain independently adjudicated, host/session-disjoint labeled TRAIN/VALIDATION/TEST sessions before reporting attack Precision/Recall/FPR; separately measure genuine event-to-AI-alert-to-SOC-case latency. Never present CI as a local experiment or alter UNSW-NB15 official metrics.
+
+
+## 2026-10-31 — Private first-session evidence index (feature acceptance pending)
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows CI for the new read-only private session index and 11 synthetic regressions; merge only after all relevant checks pass and the PR is conflict-free.
+- [ ] Student Windows 11: follow the first Host-only runbook, save the original strict offline chain JSON privately, separately pin its SHA-256, record operator authorization, VMware NIC screenshots, guest route review and capture-origin notes, and hash each private supporting file. Create and independently pin a private session-record.json, then run the offline index checker. Exit 0 only means structurally complete hash-matched operator-supplied evidence ready for **human** review; it is not proof of physical isolation or authorization.
+- [ ] Preserve genuine PCAP/Zeek originals, independent ground truth, preregistered host/session-disjoint holdout and stage-level timing for later research. No detection metrics, live capture, Red Team activation or operational SOC case may be claimed from the synthetic index tests. Do not alter official UNSW Dataset Mode.
