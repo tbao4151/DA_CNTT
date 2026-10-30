@@ -71,6 +71,28 @@ def test_valid_synthetic_record_is_only_ready_for_human_review(tmp_path):
     assert str(private) not in result.stdout
 
 
+def test_reused_evidence_path_across_manual_roles_is_refused(tmp_path):
+    private, record, chain = _setup(tmp_path)
+    # A single pinned file cannot substantiate both authorization and NIC review.
+    record["checks"]["vmware_hostonly_adapters"] = dict(record["checks"]["authorization"])
+    result = _run(private, record, chain)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert str(private) not in result.stderr
+
+
+def test_distinct_evidence_paths_with_identical_bytes_remain_accepted(tmp_path):
+    private, record, chain = _setup(tmp_path)
+    # Content equality alone does not prove file-path reuse; enforce identity only.
+    same_bytes = (private / "authorization.txt").read_bytes()
+    (private / "vmware_hostonly_adapters.txt").write_bytes(same_bytes)
+    record["checks"]["vmware_hostonly_adapters"]["sha256"] = _sha(same_bytes)
+    result = _run(private, record, chain)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["manual_evidence_hashes_checked"] == 4
+
+
 def test_not_measured_is_recorded_but_not_accepted(tmp_path):
     private, record, chain = _setup(tmp_path)
     record["checks"]["capture_origin"] = {"status": "NOT_MEASURED"}
