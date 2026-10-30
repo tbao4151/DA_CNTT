@@ -52,7 +52,7 @@ def shift_all_fixture_packet_timestamps(data: bytes, seconds: int = 120) -> byte
 def _score(
     *, model: Path, model_sha: str, log: Path, log_sha: str,
     pcap: Path, import_report: Path, import_sha: str, output: Path,
-    timestamp_gate: bool,
+    timestamp_gate: bool, expect_refusal: bool = False,
 ) -> dict[str, object] | None:
     command = [
         sys.executable, str(ROOT / "scripts" / "score_zeek_new_log.py"),
@@ -69,7 +69,7 @@ def _score(
     completed = subprocess.run(
         command, capture_output=True, text=True, check=False, timeout=60,
     )
-    if timestamp_gate and output.name == "ci_timestamp_negative_refused.json":
+    if expect_refusal:
         if completed.returncode != 1 or output.exists():
             raise ValueError("Production timestamp gate accepted stale synthetic PCAP")
         return None
@@ -125,7 +125,7 @@ def exercise_production_timestamp_gate(
         raise ValueError("Negative fixture changed non-temporal prediction semantics")
     _score(
         **common, output=negative / "ci_timestamp_negative_refused.json",
-        timestamp_gate=True,
+        timestamp_gate=True, expect_refusal=True,
     )
     if any(negative.glob("*.sqlite3")):
         raise ValueError("Synthetic timestamp gate created unexpected SOC state")
