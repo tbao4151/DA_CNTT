@@ -1475,3 +1475,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
   disjoint train/validation/test hosts and sessions and verify original bytes
   before the one-time held-out evaluation. Software provenance consistency
   does not authenticate labels, captures or isolation.
+
+
+## 2026-10-31 — PR #281 CI repair gate
+
+- [ ] Recheck Ubuntu quality and Windows offline Zeek workflows for the repaired PR #281 head (`44488baf0cbe03e366efd6eef23c9ecdc294c2e9`); the previous head `6c153af1ef699210746b773bda18ae383b9cfedb` failed because port-ablation tests forged a second host on the same source log. Merge only with successful exact-head checks and clean mergeability.
+- [ ] Student Windows 11: after merge, run `py -3.12 -m pytest -q tests/test_zeek_offline_baseline.py tests/test_zeek_port_ablation.py` and preserve private, independently labeled Host-only lab captures before reporting any detection metrics.
