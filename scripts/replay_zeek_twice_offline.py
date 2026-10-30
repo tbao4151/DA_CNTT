@@ -107,10 +107,14 @@ def run_two_passes(args: argparse.Namespace) -> dict[str, object]:
                    _verify_pinned_zeek_binary(args.expected_zeek_binary_sha256))
     reports = []
     for destination in (first, second):
-        report = import_offline_pcap(
-            source, destination, lab_cidrs=args.cidr,
-            operator_confirmed_offline=True, timeout_seconds=args.timeout_seconds,
-        )
+        import_kwargs = {
+            "lab_cidrs": args.cidr,
+            "operator_confirmed_offline": True,
+            "timeout_seconds": args.timeout_seconds,
+        }
+        if zeek_binary is not None:
+            import_kwargs["zeek_executable"] = zeek_binary
+        report = import_offline_pcap(source, destination, **import_kwargs)
         if not hmac.compare_digest(report["pcap_sha256"], args.expected_pcap_sha256):
             raise ValueError("Original PCAP changed during a Zeek processing pass")
         if not hmac.compare_digest(_sha256_file(source), args.expected_pcap_sha256):
