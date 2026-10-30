@@ -129,3 +129,22 @@ py -3.12 -m pytest -q tests/test_two_pass_offline_zeek.py
 Windows 11 may run the test above directly; the actual two-pass import
 requires Zeek in a compatible Linux VM or WSL environment. Do not label a
 GitHub Actions Windows test as evidence of a real student VMware capture.
+
+## GitHub real-Zeek two-pass CI acceptance (synthetic fixture only)
+
+The `Real Zeek offline synthetic smoke` workflow now **attempts** an
+integration check of the production two-pass CLI using the deterministic benign
+UDP PCAP and two separate `zeek -r` invocations in a Docker container with
+`--network none`. The check first supplies an incorrect Zeek executable
+SHA-256 and requires refusal before either output directory exists; it then
+runs with a correctly pinned **host-side Docker proxy script**. The pin covers
+the proxy script bytes, **not the Zeek executable inside the container**.
+The CI assertion checks both independently hashed `conn.log` files, strict
+non-UID equality, PCAP tuple presence and explicit false scientific claims.
+
+The workflow uploads `ci_two_pass_real_zeek_report.json` and both private-to-CI
+import directories as short-lived synthetic artifacts **only if the CI job
+succeeds**. This addition is not considered verified until the exact PR-head
+workflow completes successfully. The test does not establish authentic capture
+provenance, student VMware isolation, independent attack labels, model
+performance, real capture-to-alert latency or Windows laptop acceptance.

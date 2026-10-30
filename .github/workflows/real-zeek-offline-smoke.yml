@@ -7,6 +7,9 @@ on:
       - ".github/workflows/real-zeek-offline-smoke.yml"
       - "src/blue_team_ai/zeek_smoke.py"
       - "src/blue_team_ai/offline_pcap.py"
+      - "src/blue_team_ai/zeek_reprocessing_compare.py"
+      - "src/blue_team_ai/pcap_zeek_tuple.py"
+      - "scripts/replay_zeek_twice_offline.py"
       - "src/blue_team_ai/zeek.py"
       - "src/blue_team_ai/features.py"
       - "src/blue_team_ai/lab_scope.py"
@@ -193,6 +196,86 @@ jobs:
           )
           print(json.dumps(result, indent=2))
           PY
+      - name: Exercise production two-pass runner with actual offline Zeek (synthetic only)
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          root = Path(os.environ["SMOKE_DIR"])
+          pcap = root / "benign_synthetic.pcap"
+          wrapper = (root / "bin" / "zeek").resolve(strict=True)
+          wrapper_pin = hashlib.sha256(wrapper.read_bytes()).hexdigest()
+          pcap_pin = hashlib.sha256(pcap.read_bytes()).hexdigest()
+          first = root / "two-pass-real-1"
+          second = root / "two-pass-real-2"
+          assert not first.exists() and not second.exists()
+          cmd = [
+              sys.executable, "scripts/replay_zeek_twice_offline.py",
+              "--pcap", str(pcap),
+              "--expected-pcap-sha256", pcap_pin,
+              "--first-output-dir", str(first),
+              "--second-output-dir", str(second),
+              "--cidr", "192.168.56.0/24",
+              "--confirm-offline-only",
+              "--expected-zeek-binary-sha256", wrapper_pin,
+          ]
+          env = os.environ.copy()
+          env["PATH"] = str(wrapper.parent) + os.pathsep + env["PATH"]
+          bad = cmd.copy()
+          bad[bad.index("--expected-zeek-binary-sha256") + 1] = "0" * 64
+          rejected = subprocess.run(
+              bad, capture_output=True, text=True, env=env, timeout=30, check=False,
+          )
+          assert rejected.returncode == 2, rejected.stderr
+          assert not rejected.stdout
+          assert not first.exists() and not second.exists()
+          accepted = subprocess.run(
+              cmd, capture_output=True, text=True, env=env, timeout=360, check=False,
+          )
+          assert accepted.returncode == 0, accepted.stderr
+          summary = json.loads(accepted.stdout)
+          assert summary["pcap_sha256"] == pcap_pin
+          assert summary["two_zeek_subprocesses_completed"] is True
+          assert summary["strict_all_non_uid_fields_equivalent"] is True
+          assert summary["pcap_tuple_presence_for_both_logs"] is True
+          assert summary["zeek_binary_sha256_pinned"] is True
+          assert summary["zeek_binary_sha256"] == wrapper_pin
+          assert summary["zeek_binary_version_verified"] is False
+          assert summary["pcap_to_log_derivation_proven"] is False
+          assert summary["host_only_isolation_verified"] is False
+          assert summary["capture_authenticity_verified"] is False
+          assert summary["independent_labels_verified"] is False
+          assert summary["attack_detection_verified"] is False
+          assert summary["zeek_flow_count"] == 1
+          assert summary["pcap_packet_count"] == 1
+          for directory, key in (
+              (first, "first_zeek_conn_sha256"),
+              (second, "second_zeek_conn_sha256"),
+          ):
+              log = directory / "conn.log"
+              assert hashlib.sha256(log.read_bytes()).hexdigest() == summary[key]
+              assert (directory / "offline_import_report.json").is_file()
+          assert hashlib.sha256(pcap.read_bytes()).hexdigest() == pcap_pin
+          summary.update({
+              "ci_source_kind": "deterministic_synthetic_benign_udp_pcap",
+              "ci_execution": "two_real_zeek_r_passes_via_network_disabled_docker_proxy",
+              "ci_zeek_image_tag": "zeek/zeek:9.0.1",
+              "ci_sha256_pin_scope": "host_side_proxy_script_only_not_container_zeek_binary",
+              "ci_vmware_capture_performed": False,
+              "ci_independent_attack_labels": False,
+              "ci_soc_case_created": False,
+          })
+          (root / "ci_two_pass_real_zeek_report.json").write_text(
+              json.dumps(summary, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print("Two real offline Zeek passes on synthetic PCAP succeeded; no VMware/attack claim.")
+          PY
       - name: Check production telemetry quality CLI against real Zeek output (synthetic only)
         run: |
           python - <<'PY'
@@ -265,6 +348,11 @@ jobs:
             ${{ env.SMOKE_DIR }}/zeek_version.txt
             ${{ env.SMOKE_DIR }}/ci_smoke_report.json
             ${{ env.SMOKE_DIR }}/ci_importer_real_report.json
+            ${{ env.SMOKE_DIR }}/ci_two_pass_real_zeek_report.json
+            ${{ env.SMOKE_DIR }}/two-pass-real-1/conn.log
+            ${{ env.SMOKE_DIR }}/two-pass-real-1/offline_import_report.json
+            ${{ env.SMOKE_DIR }}/two-pass-real-2/conn.log
+            ${{ env.SMOKE_DIR }}/two-pass-real-2/offline_import_report.json
             ${{ env.SMOKE_DIR }}/ci_real_zeek_telemetry_quality.json
             ${{ env.SMOKE_DIR }}/ci_real_zeek_scoring_report.json
             ${{ env.SMOKE_DIR }}/importer-real/conn.log
