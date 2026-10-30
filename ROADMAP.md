@@ -1481,3 +1481,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [ ] Recheck Ubuntu quality and Windows offline Zeek workflows for the repaired PR #281 head (`44488baf0cbe03e366efd6eef23c9ecdc294c2e9`); the previous head `6c153af1ef699210746b773bda18ae383b9cfedb` failed because port-ablation tests forged a second host on the same source log. Merge only with successful exact-head checks and clean mergeability.
 - [ ] Student Windows 11: after merge, run `py -3.12 -m pytest -q tests/test_zeek_offline_baseline.py tests/test_zeek_port_ablation.py` and preserve private, independently labeled Host-only lab captures before reporting any detection metrics.
+
+
+## 2026-10-31 — PR #281 latest Ubuntu regression repair
+
+- [ ] Verify new exact-head Ubuntu full quality suite and Windows offline Zeek checks after commit `5766a95a909cca583dc05bb3a6b2a39e19c26b4e` on PR #281. Prior [Ubuntu #41104325669](https://github.com/tbao4151/DA_CNTT/actions/runs/41104325669) failed only the pre-existing cross-split SHA-256 diagnostic expectation (1 failed, 1213 passed, 2 skipped), while [Windows #41104325609](https://github.com/tbao4151/DA_CNTT/actions/runs/41104325609) passed. Preserve both leakage detection and its established error semantics. Merge only after fresh exact-head green CI and no conflicts.
+- [ ] Continue independent host/session-disjoint labeled VMware Host-only evidence collection on the student's Windows machine; no synthetic fixture metrics count as research attack detection.
