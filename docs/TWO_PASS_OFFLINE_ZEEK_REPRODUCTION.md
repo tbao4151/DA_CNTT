@@ -86,6 +86,16 @@ JSON includes `zeek_binary_sha256_pinned=true` and the pinned digest; the
 default backward-compatible mode reports `false` without a binary digest.
 No executable path is written to the success JSON.
 
+When a binary pin is supplied, the two-pass runner now passes the verified
+resolved **absolute executable path** to each offline importer. The subprocess
+uses that path directly with `-r`, rather than looking up `zeek` on PATH
+again. Without a pin, the legacy `zeek -r` PATH invocation is unchanged.
+Invalid explicit paths are refused before output directory creation. This
+closes the PATH re-resolution gap but **does not** eliminate in-place binary
+replacement between a checksum check and operating-system execution; it also
+does not pin dynamic libraries, plugins or Zeek scripts. Mocked regression
+checks validate the exact subprocess argv, not real Zeek execution.
+
 **Scope limitation:** Pinning executable bytes does not authenticate the
 binary's origin, record `zeek --version`, or freeze dynamic libraries, Zeek
 scripts, plugins, environment variables or runtime configuration. The report
