@@ -1487,3 +1487,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [ ] Verify new exact-head Ubuntu full quality suite and Windows offline Zeek checks after commit `5766a95a909cca583dc05bb3a6b2a39e19c26b4e` on PR #281. Prior [Ubuntu #41104325669](https://github.com/tbao4151/DA_CNTT/actions/runs/41104325669) failed only the pre-existing cross-split SHA-256 diagnostic expectation (1 failed, 1213 passed, 2 skipped), while [Windows #41104325609](https://github.com/tbao4151/DA_CNTT/actions/runs/41104325609) passed. Preserve both leakage detection and its established error semantics. Merge only after fresh exact-head green CI and no conflicts.
 - [ ] Continue independent host/session-disjoint labeled VMware Host-only evidence collection on the student's Windows machine; no synthetic fixture metrics count as research attack detection.
+
+
+## 2026-10-31 — Verified PR #281 integration; research evidence remains outstanding
+
+- [x] Merge Zeek research dataset provenance consistency guard as [PR #281](https://github.com/tbao4151/DA_CNTT/pull/281), squash commit `2e8c0b95f6cd18e7bbb706af2e1aaad2254c4b10`, with successful exact-head [Ubuntu #41109221783](https://github.com/tbao4151/DA_CNTT/actions/runs/41109221783) and [Windows #41109221887](https://github.com/tbao4151/DA_CNTT/actions/runs/41109221887). Earlier unchecked CI tasks are superseded; post-merge `main` CI remains unverified.
+- [ ] Student Windows 11: run `py -3.12 -m pytest -q tests/test_zeek_offline_baseline.py tests/test_zeek_port_ablation.py`; preserve original authorized VMware Host-only PCAP/Zeek logs, SHA-256 and independently adjudicated labels, and preregister host/session-disjoint holdout. Synthetic CI is not real lab attack-detection evidence.
