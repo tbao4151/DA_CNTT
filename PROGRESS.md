@@ -2260,3 +2260,17 @@
 - [PR #279](https://github.com/tbao4151/DA_CNTT/pull/279) was squash-merged into `main` as `61887005658800536b58f04174a10b6f4f33c27e` from exact feature head `564df13ea9c6e7d705794eee9368f6e36f09e9ae` after GitHub reported mergeable=true. All three exact-head PR workflows completed successfully: [Ubuntu Python 3.12.9 quality #41092083099](https://github.com/tbao4151/DA_CNTT/actions/runs/41092083099), [Windows Server 2022 offline #41092083189](https://github.com/tbao4151/DA_CNTT/actions/runs/41092083189), and [network-disabled real Zeek synthetic #41092082854](https://github.com/tbao4151/DA_CNTT/actions/runs/41092082854). The real-Zeek workflow uploaded artifact `da005-real-zeek-synthetic-smoke` (artifact ID `12993713785`, seven-day retention); this is CI evidence, not a student VMware experiment. Post-merge `main` CI is a separate check and is not claimed verified here.
 - The actual production offline research scorer is now exercised with and without the opt-in PCAP/Zeek timestamp gate against real Zeek-generated synthetic `conn.log`. The accepted path must retain identical predictions. A +120-second packet timestamp shift with deliberately **fabricated, coherently re-pinned CI-only** import metadata must still pass the legacy scorer but be rejected by the timestamp gate before a prediction JSON is published. This verifies the temporal rejection path without misrepresenting the fabricated report as authentic import provenance.
 - This does **not** demonstrate independently authenticated PCAP origin, independent attack labels, held-out Precision/Recall/FPR, VMware Host-only isolation, operational alerting, SOC case latency or Windows laptop acceptance. Dataset Mode official UNSW-NB15 benchmark, persistent SOC database and active Red Team behavior were not changed. Next research milestone: independently adjudicated, host/session-disjoint Zeek lab captures and evaluation.
+
+## 2026-10-31 — Zeek flattened-dataset provenance consistency (feature PR; CI pending)
+
+- Added fail-closed checks in the shared offline Zeek research dataset validator
+  for repeated source/UID observations, contradictory per-source session/host/
+  annotation metadata, and a session assigned to multiple sources. This closes
+  a post-construction dataclass-mutation gap before baseline fit, model export
+  and port-feature ablation. Legitimate multiple sessions on the same host
+  within one declared split remain supported.
+- Added synthetic-only regression cases and documented scientific boundaries.
+  **Feature-head GitHub CI has not yet been verified at authoring.** No student
+  Windows/VMware capture, independent ground truth, new attack metrics or
+  live detection is claimed. No Dataset Mode benchmark/model, SOC SQLite,
+  network operations or Red Team behavior changed.

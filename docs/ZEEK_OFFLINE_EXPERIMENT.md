@@ -685,3 +685,21 @@ threshold and confusion checks. Other report versions are refused. The
 private trace still contains sensitive per-flow evidence and must not be
 uploaded to GitHub. This is a compatibility check, not independent model or
 label authentication.
+
+## Rechecking flattened research provenance before model fitting (31/10/2026)
+
+The public `LabeledLabDataset` dataclass can be edited after the original
+`build_labeled_lab_dataset` raw-log checks. The offline baseline's shared
+`_validate_dataset` now also rejects repeated `(source_sha256, uid)` rows,
+inconsistent per-source session/host/label-method/reference declarations, and
+a session claimed by multiple sources/hosts. This guard is shared by the
+data-only model export and port-feature ablation entrypoints. Multiple distinct
+sessions on the **same host within one split** remain permitted. It does not
+reconstruct original Zeek bytes, authenticate annotations, prove semantic flow
+uniqueness across different source hashes, or validate physical Host-only
+isolation. The aggregate baseline report v5 and UNSW-NB15 benchmark are
+unchanged. Synthetic tests are software regressions, not student lab metrics.
+
+Run `py -3.12 -m pytest -q tests/test_zeek_offline_baseline.py` on Windows
+after this PR is merged; preserve the independently pinned original private
+logs and annotations for actual experiments.

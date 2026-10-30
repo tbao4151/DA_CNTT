@@ -43,6 +43,14 @@ def _validate_dataset(dataset: LabeledLabDataset) -> None:
     seen_sources: dict[str, str] = {}
     seen_hosts: dict[str, str] = {}
     seen_sessions: dict[str, str] = {}
+    # LabeledLabDataset is a public dataclass and may be modified after the
+    # original log/UID validator ran. Recheck flattened provenance before fit.
+    # One original source belongs to exactly one declared session/host/label
+    # record, and one session belongs to exactly one source. A repeated
+    # (source, UID) would count the same observed flow more than once.
+    source_identity: dict[str, tuple[str, str, str, str, str]] = {}
+    session_identity: dict[str, tuple[str, str, str]] = {}
+    seen_source_uids: set[tuple[str, str]] = set()
     for split in SPLITS:
         rows, labels, provenance = dataset.features[split], dataset.labels[split], dataset.provenance[split]
         if not rows or len(rows) != len(labels) or len(rows) != len(provenance):
@@ -60,6 +68,22 @@ def _validate_dataset(dataset: LabeledLabDataset) -> None:
             digest = meta["source_sha256"]
             if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
                 raise ValueError("Invalid Zeek provenance SHA-256")
+            source_claim = (
+                split, meta["session_id"], meta["host_group"],
+                meta["label_method"], meta["label_reference"],
+            )
+            if digest in source_identity and source_identity[digest] != source_claim:
+                raise ValueError("Inconsistent Zeek source provenance within dataset")
+            source_identity[digest] = source_claim
+            session = meta["session_id"]
+            session_claim = (split, digest, meta["host_group"])
+            if session in session_identity and session_identity[session] != session_claim:
+                raise ValueError("Zeek session reused across sources or hosts")
+            session_identity[session] = session_claim
+            source_uid = (digest, meta["uid"])
+            if source_uid in seen_source_uids:
+                raise ValueError("Duplicate Zeek source UID in dataset")
+            seen_source_uids.add(source_uid)
             for field, registry in (
                 ("source_sha256", seen_sources),
                 ("host_group", seen_hosts),
