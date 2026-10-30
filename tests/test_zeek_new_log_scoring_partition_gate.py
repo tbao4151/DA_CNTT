@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -136,3 +137,45 @@ def test_legacy_unpinned_scoring_remains_explicitly_unverified(tmp_path):
     assert "flow identity non-reuse screened" not in result.stdout
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["test_partition_exclusion_verified"] is False
+
+
+def test_opt_in_score_publication_timing_keeps_report_bytes_identical(tmp_path):
+    manifest, model_file, new, untimed_output = _setup(tmp_path)
+    untimed_command = _command(manifest, model_file, new, untimed_output)
+    untimed = _run(untimed_command)
+    assert untimed.returncode == 0, untimed.stderr
+    untimed_bytes = untimed_output.read_bytes()
+    assert "offline_new_log_score_publish_duration_ms=" not in untimed.stdout
+
+    timed_output = untimed_output.with_name("timed-predictions.json")
+    timed_command = _command(manifest, model_file, new, timed_output)
+    timed = _run(timed_command + ["--measure-inference-publication-runtime"])
+    assert timed.returncode == 0, timed.stderr
+    assert timed_output.read_bytes() == untimed_bytes
+    match = re.search(r"^offline_new_log_score_publish_duration_ms=(\d+\.\d{6})$",
+                      timed.stdout, flags=re.MULTILINE)
+    assert match and float(match.group(1)) >= 0
+    assert "offline_new_log_score_publish_boundary=score_json_atomic_publish" in timed.stdout
+    assert "detection_latency_measured=false; preflight_capture_zeek_excluded=true" in timed.stdout
+    assert "duration_ms" not in timed_output.read_text(encoding="utf-8")
+
+
+def test_opt_in_score_publication_timing_never_reports_on_failure(tmp_path):
+    manifest, model_file, new, output = _setup(tmp_path)
+    command = _command(manifest, model_file, new, output)
+    command[command.index("--expected-log-sha256") + 1] = "0" * 64
+    failed = _run(command + ["--measure-inference-publication-runtime"])
+    assert failed.returncode == 1
+    assert not output.exists()
+    assert "offline_new_log_score_publish_duration_ms=" not in failed.stdout
+    assert "offline_new_log_score_publish_boundary=" not in failed.stdout
+    assert str(manifest) not in failed.stderr
+
+    valid = _command(manifest, model_file, new, output)
+    first = _run(valid)
+    assert first.returncode == 0, first.stderr
+    original = output.read_bytes()
+    duplicate = _run(valid + ["--measure-inference-publication-runtime"])
+    assert duplicate.returncode == 1
+    assert output.read_bytes() == original
+    assert "offline_new_log_score_publish_duration_ms=" not in duplicate.stdout

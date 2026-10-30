@@ -179,3 +179,35 @@ Keep exact local output and machine details privately, and report queue-export
 and manual SOC handoff timings as separate stages without adding them as if
 they covered all missing pipeline time. Synthetic GitHub CI is not a student
 Windows 11/VMware measurement.
+
+
+## Optional software timing of NEW-log scoring and report publication
+
+The existing offline `scripts/score_zeek_new_log.py` command accepts
+`--measure-inference-publication-runtime` as an **opt-in** flag. Append it to
+the same independently pinned private NEW-log scoring command used to produce
+`new-predictions.json`; choose a **new** output path for every run. The flag
+prints `offline_new_log_score_publish_duration_ms` (six decimal places) and
+`offline_new_log_score_publish_boundary=score_json_atomic_publish` only after
+the report has been successfully published. It does not change the JSON bytes,
+model, threshold, SQLite, or default CLI output. Failed validation or refused
+publication (including an existing destination) produces no duration line.
+
+The monotonic `perf_counter_ns` interval starts immediately before
+`score_new_zeek_log` and ends after JSON serialization and atomic
+no-overwrite publication. It includes the pinned score function's internal
+validation and model inference, plus JSON serialization and filesystem
+publication; it **excludes** initial model/file loading, declared-partition
+preflight, optional PCAP verification, original packet capture, Zeek parsing
+of the PCAP, human review and manual SOC handoff. It is **not** pure model
+inference latency, live attack detection latency or end-to-end SOC latency.
+For repeated in-memory batch scoring without JSON publication, use the
+separate existing `scripts/benchmark_zeek_new_log_runtime.py` and label
+its measurement boundary separately.
+
+On student Windows 11, record the exact command, private source/model/manifest
+SHA-256, output SHA-256, source size, CPU, Python/Zeek versions and duration
+outside Git. Run an untimed and timed invocation to **different** private
+JSON filenames and compare bytes. GitHub synthetic CI cannot establish
+VMware Host-only isolation, independent labels, real detection metrics or
+physical capture-to-case timing.
