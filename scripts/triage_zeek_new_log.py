@@ -21,6 +21,7 @@ from blue_team_ai.new_log_review import (
     MAX_NEW_LOG_REPORT_BYTES, review_pinned_new_log_report,
 )
 from blue_team_ai.new_log_triage import create_new_log_candidate_case
+from blue_team_ai.research_alerts import MAX_RESEARCH_ALERT_BUNDLE_BYTES
 from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
 from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
 from blue_team_ai.partition_guard import verify_declared_partition_exclusion
@@ -175,6 +176,12 @@ def main(argv: list[str] | None = None) -> int:
     action.add_argument("--list-candidates", action="store_true")
     action.add_argument("--record-index", type=int)
     parser.add_argument("--db", type=Path, help="Private SQLite path for explicit write only")
+    parser.add_argument("--research-alert-bundle", type=Path,
+                        help="Optional private exported research queue for strict manual handoff")
+    parser.add_argument("--expected-research-alert-bundle-sha256",
+                        help="Independent original SHA-256 of exported research queue")
+    parser.add_argument("--research-alert-ref",
+                        help="Original selected 64-character queue reference")
     parser.add_argument("--confirm-reviewed", action="store_true")
     parser.add_argument("--confirm-authorized", action="store_true")
     parser.add_argument("--confirm-new-capture", action="store_true",
@@ -185,6 +192,27 @@ def main(argv: list[str] | None = None) -> int:
         log_path = _private_file(args.log)
         report_path = _private_file(args.report)
         inputs = {model_path, log_path, report_path}
+        bundle_options = (
+            args.research_alert_bundle,
+            args.expected_research_alert_bundle_sha256,
+            args.research_alert_ref,
+        )
+        if any(value is not None for value in bundle_options) and not all(
+            value is not None for value in bundle_options
+        ):
+            raise ValueError("All three pinned research queue flags are required")
+        bundle_path = None
+        if args.research_alert_bundle is not None:
+            if args.list_candidates or args.manifest is None:
+                raise ValueError("Pinned queue handoff requires a selected index and manifest")
+            bundle_path = _private_file(args.research_alert_bundle)
+            if (
+                bundle_path.parent != log_path.parent
+                or bundle_path.suffix.lower() != ".json"
+                or bundle_path in inputs
+            ):
+                raise ValueError("Research queue must be distinct private JSON beside log")
+            inputs.add(bundle_path)
         import_options = (
             args.offline_import_report,
             args.expected_offline_import_report_sha256,
@@ -209,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
             if manifest_path in inputs:
                 raise ValueError("Manifest must be distinct from model/log/report")
             inputs.add(manifest_path)
-        expected_inputs = 3 + (1 if manifest_path is not None else 0) + (2 if import_report_path is not None else 0)
+        expected_inputs = 3 + (1 if manifest_path is not None else 0) + (2 if import_report_path is not None else 0) + (1 if bundle_path is not None else 0)
         if len(inputs) != expected_inputs or report_path.parent != log_path.parent or report_path.suffix.lower() != ".json":
             raise ValueError("Model, log and report must be separate; report alongside log")
         if args.list_candidates:
@@ -235,6 +263,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         source_data = _read_bounded(log_path, MAX_LOG_BYTES)
         report_data = _read_bounded(report_path, MAX_NEW_LOG_REPORT_BYTES)
+        research_bundle_data = (
+            _read_bounded(bundle_path, MAX_RESEARCH_ALERT_BUNDLE_BYTES)
+            if bundle_path is not None else None
+        )
         declared_dataset = None
         declared_captures = None
         if manifest_path is not None:
@@ -301,6 +333,9 @@ def main(argv: list[str] | None = None) -> int:
             offline_import_report_sha256=args.expected_offline_import_report_sha256,
             offline_import_pcap_path=import_pcap_path,
             offline_import_log_path=log_path if import_report_path is not None else None,
+            research_bundle_data=research_bundle_data,
+            research_bundle_sha256=args.expected_research_alert_bundle_sha256,
+            research_alert_ref=args.research_alert_ref,
         )
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError, RecursionError):
         # Never print private IPs, UIDs, paths, model contents or raw evidence.
@@ -309,6 +344,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"case_id={case_id} verdict=Unclassified (manual research review only)")
     if import_report_path is not None:
         print("offline_pcap_provenance_reverified=true (bytes and scope only)")
+    if bundle_path is not None:
+        print("pinned_research_bundle_selection_reverified=true")
     print("Existing source+UID case may have been reused; original audit is preserved.")
     print("No confirmed attack, operational AI alert, or real lab detection verified.")
     return 0

@@ -73,3 +73,59 @@ configuration privately. Confirm that a selected queue record opens exactly
 one Unclassified case through the existing manual SOC workflow and that
 a modified input or existing output is refused. Record local results
 separately from GitHub CI.
+
+
+## Optional strict pinned bundle → manual Unclassified SOC handoff (30/10/2026)
+
+The exporter above does not create SOC cases. For one **explicitly selected**
+candidate, the existing `scripts/triage_zeek_new_log.py` now accepts a
+**three-flag opt-in** pinned bundle gate. This requires the original pinned
+TRAIN/VALIDATION/TEST manifest and all original declared captures/labels; the
+saved bundle is not trusted merely because its own SHA-256 matches.
+
+First record the bundle SHA-256 independently in the private experiment
+notebook (PowerShell `(Get-FileHash ... -Algorithm SHA256).Hash.ToLowerInvariant()`).
+Inspect the private bundle and choose its **original** `record_index` and
+`research_alert_ref`. Then run, from the repository root:
+
+```powershell
+py -3.12 scripts/triage_zeek_new_log.py `
+  --model "C:/DA005-private/zeek-experiment/model.json" `
+  --expected-model-sha256 "<INDEPENDENT_MODEL_SHA256>" `
+  --log "C:/DA005-private/new-capture/conn.log" `
+  --expected-log-sha256 "<INDEPENDENT_LOG_SHA256>" `
+  --report "C:/DA005-private/new-capture/new-predictions.json" `
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" `
+  --expected-manifest-sha256 "<INDEPENDENT_MANIFEST_SHA256>" `
+  --cidr "192.168.56.0/24" `
+  --record-index <ORIGINAL_ZERO_BASED_INDEX> `
+  --db "C:/DA005-private/soc/cyber_lab_cases.sqlite3" `
+  --confirm-reviewed --confirm-authorized --confirm-new-capture `
+  --research-alert-bundle "C:/DA005-private/new-capture/research-alerts.json" `
+  --expected-research-alert-bundle-sha256 "<INDEPENDENT_BUNDLE_SHA256>" `
+  --research-alert-ref "<SELECTED_64_CHARACTER_REF>"
+```
+
+The database parent directory must already exist and be private. All three
+bundle options are required together; listing mode and unpinned-manifest mode
+cannot use them. The CLI refuses changed bytes, duplicate JSON keys,
+non-finite values, a stale/tampered bundle even when it is re-pinned, and
+mismatched selected original row/reference. At the **SOC write boundary** it
+rebuilds the entire expected queue from pinned original model, log, prediction
+report, declared manifest and original labeled captures. Only then may the
+existing manual, idempotent `Unclassified` case be created/reused. The existing canonical SOC creation audit records source/model/report and selected
+Zeek UID, not the bundle SHA-256; preserve the independently recorded bundle
+pin and chosen reference in the **private experiment notebook**. This keeps
+existing strict SOC audit verifiers compatible. Repeated selections reuse the
+same source+UID research case.
+
+The legacy manual triage command remains compatible, but does **not** claim
+pinned-bundle verification. Existing cases retain their original audit note
+when reused; the new bundle pin is not retroactively written. The queue and
+SQLite contain private data and must remain outside Git. Synthetic CI cannot
+prove VMware isolation, authorization, label correctness, packet-to-Zeek
+correspondence, or actual event-to-SOC latency. No operational alert is emitted.
+
+```powershell
+py -3.12 -m pytest -q tests/test_zeek_research_alert_bundle.py
+```

@@ -108,3 +108,100 @@ def test_export_refuses_changed_or_unpinned_inputs_before_publication(tmp_path, 
     assert "refused" in result.stderr or "required" in result.stderr
     assert "192.168.56" not in result.stderr
     assert str(tmp_path) not in result.stderr
+
+
+def _pinned_manual_handoff(tmp_path):
+    command, output, manifest, log, report = _fixture(tmp_path)
+    exported = _run(command)
+    assert exported.returncode == 0, exported.stderr
+    bundle = json.loads(output.read_text(encoding="utf-8"))
+    selected = bundle["research_alerts"][0]
+    model_path = Path(command[command.index("--model") + 1])
+    db = log.parent / "research-cases.sqlite3"
+    triage = [
+        sys.executable, str(ROOT / "scripts/triage_zeek_new_log.py"),
+        "--model", str(model_path),
+        "--expected-model-sha256", _sha(model_path.read_bytes()),
+        "--log", str(log),
+        "--expected-log-sha256", _sha(log.read_bytes()),
+        "--report", str(report),
+        "--manifest", str(manifest),
+        "--expected-manifest-sha256", _sha(manifest.read_bytes()),
+        "--cidr", "192.168.56.0/24",
+        "--record-index", str(selected["record_index"]),
+        "--db", str(db),
+        "--confirm-reviewed", "--confirm-authorized", "--confirm-new-capture",
+        "--research-alert-bundle", str(output),
+        "--expected-research-alert-bundle-sha256", _sha(output.read_bytes()),
+        "--research-alert-ref", selected["research_alert_ref"],
+    ]
+    return triage, output, db, selected
+
+
+def test_pinned_queue_manual_handoff_creates_one_unclassified_case(tmp_path):
+    command, output, db, selected = _pinned_manual_handoff(tmp_path)
+    first = _run(command)
+    assert first.returncode == 0, first.stderr
+    assert "pinned_research_bundle_selection_reverified=true" in first.stdout
+    sys.path.insert(0, str(ROOT / "src"))
+    from siem_ai.core import case_history, list_cases
+    cases = list_cases(db)
+    assert len(cases) == 1
+    row = cases.iloc[0]
+    assert row["verdict"] == "Unclassified"
+    assert row["state"] == "New"
+    assert "NEW-log OFFLINE research candidate" in row["analyst_note"]
+    assert "source_sha256=" in row["analyst_note"]
+    # Preserve the existing canonical creation-audit contract.
+    assert "research_bundle_sha256=" not in row["analyst_note"]
+    second = _run(command)
+    assert second.returncode == 0, second.stderr
+    assert len(list_cases(db)) == 1
+    assert len(case_history(db, row["case_id"])) == 1
+
+
+@pytest.mark.parametrize("change", [
+    "wrong_pin", "wrong_ref", "wrong_index", "missing_pin",
+    "missing_manifest", "tampered_repin", "duplicate_key_repin",
+    "noncanonical_type_repin",
+])
+def test_pinned_queue_handoff_refuses_unverified_selection_without_soc_write(
+    tmp_path, change,
+):
+    command, output, db, selected = _pinned_manual_handoff(tmp_path)
+    if change == "wrong_pin":
+        command[command.index("--expected-research-alert-bundle-sha256") + 1] = "0" * 64
+    elif change == "wrong_ref":
+        command[command.index("--research-alert-ref") + 1] = "0" * 64
+    elif change == "wrong_index":
+        command[command.index("--record-index") + 1] = "499"
+    elif change == "missing_pin":
+        index = command.index("--expected-research-alert-bundle-sha256")
+        del command[index:index + 2]
+    elif change == "missing_manifest":
+        index = command.index("--manifest")
+        del command[index:index + 4]
+    elif change == "tampered_repin":
+        payload = json.loads(output.read_text(encoding="utf-8"))
+        payload["research_alerts"][0]["soc_case_id"] = 99
+        output.write_text(json.dumps(payload), encoding="utf-8")
+    elif change == "duplicate_key_repin":
+        raw = output.read_text(encoding="utf-8")
+        output.write_text(raw.replace('"bundle_version": 1,',
+                                           '"bundle_version": 1, "bundle_version": 1,', 1),
+                          encoding="utf-8")
+    else:
+        payload = json.loads(output.read_text(encoding="utf-8"))
+        # Python True == 1, but the validator must reject JSON type changes.
+        payload["bundle_version"] = True
+        output.write_text(json.dumps(payload), encoding="utf-8")
+    if change in ("tampered_repin", "duplicate_key_repin", "noncanonical_type_repin"):
+        command[command.index("--expected-research-alert-bundle-sha256") + 1] = _sha(
+            output.read_bytes()
+        )
+    result = _run(command)
+    assert result.returncode == 1
+    assert not db.exists()
+    assert "refused" in result.stderr
+    assert "192.168.56" not in result.stderr
+    assert str(tmp_path) not in result.stderr
