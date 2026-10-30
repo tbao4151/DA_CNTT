@@ -148,3 +148,25 @@ succeeds**. This addition is not considered verified until the exact PR-head
 workflow completes successfully. The test does not establish authentic capture
 provenance, student VMware isolation, independent attack labels, model
 performance, real capture-to-alert latency or Windows laptop acceptance.
+
+## CI container Zeek binary fingerprint gate (pending verification)
+
+The synthetic-only GitHub workflow now records the Docker image ID and the
+SHA-256 of the resolved **Zeek executable inside** the network-disabled
+container before the first offline import. The host-side proxy still has its
+separate SHA-256 pin; the proxy additionally checks the in-container executable
+hash immediately before **each** subsequent `zeek -r` invocation. A negative
+CI test supplies a deliberately wrong container digest and requires rejection
+without a new `conn.log`. The short-lived artifact includes
+`zeek_container_binary.sha256`, `zeek_image_id.txt` and JSON reports with
+explicit scope flags. These changes require exact-head CI success before being
+called verified.
+
+This closes the prior **proxy-only fingerprint gap in CI**, but the container
+binary hash is observed at runtime rather than independently trusted, and the
+check is not an execution attestation or a defense against every time-of-check
+race. Image IDs are local image-content identifiers, not signatures or
+independent supply-chain provenance. It does not verify the dynamic libraries,
+Zeek scripts, plugins, PCAP origin, VMware isolation or attack ground truth.
+The student Linux-VM protocol above remains unchanged; no live traffic is
+created.
