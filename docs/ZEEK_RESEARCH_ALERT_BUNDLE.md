@@ -129,3 +129,29 @@ correspondence, or actual event-to-SOC latency. No operational alert is emitted.
 ```powershell
 py -3.12 -m pytest -q tests/test_zeek_research_alert_bundle.py
 ```
+
+
+## Optional local software timing of the manual SOC write boundary
+
+After choosing and independently pinning one candidate as above, append
+`--measure-manual-soc-runtime` to the **case-writing** command. This opt-in
+prints `offline_manual_soc_handoff_duration_ms` with six decimal places and
+an explicit boundary marker. The measurement uses Python's monotonic
+`perf_counter_ns` around **one** final call to
+`create_new_log_candidate_case`: repeated source/model/report/partition
+verification, research queue recomputation when supplied, and SQLite
+case creation **or idempotent reuse**. It excludes earlier CLI file reads,
+model loading, manifest preflight, the first report review, JSON export,
+human analyst decision/wait, packet collection and Zeek processing.
+Listing candidates with the timing flag is refused. Failure produces no
+duration line, and the flag adds no database fields or extra writes.
+
+A repeated source+UID case can be **reused**, so its timing must not be
+compared with first-time case creation without recording that distinction.
+The printed value is a local software processing duration, **not** event-to-
+detection, capture-to-alert or analyst response latency. Run on the
+student's Windows 11 laptop with authorized, independently pinned private
+evidence, record CPU/OS/Python/VMware and whether the case already existed,
+and preserve stdout privately. Synthetic GitHub CI timing is not a
+Windows/VMware measurement. No operational alert or attack ground truth
+is established.
