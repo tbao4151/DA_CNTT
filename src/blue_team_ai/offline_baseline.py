@@ -68,6 +68,12 @@ def _validate_dataset(dataset: LabeledLabDataset) -> None:
             digest = meta["source_sha256"]
             if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
                 raise ValueError("Invalid Zeek provenance SHA-256")
+            # Preserve the established cross-split leakage diagnostic before
+            # checking the stronger within-source metadata consistency.
+            # Otherwise a reused digest across partitions is misreported as
+            # merely contradictory per-source metadata.
+            if digest in seen_sources and seen_sources[digest] != split:
+                raise ValueError("Cross-split source_sha256 leakage or invalid provenance")
             source_claim = (
                 split, meta["session_id"], meta["host_group"],
                 meta["label_method"], meta["label_reference"],
