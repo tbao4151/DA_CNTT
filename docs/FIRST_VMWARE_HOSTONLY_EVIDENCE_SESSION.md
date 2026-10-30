@@ -18,9 +18,10 @@ py -3.12 --version
 powershell -File scripts/collect_windows_hostonly_snapshot.ps1 -AdapterName 'VMware Network Adapter VMnet1' -OutputPath 'C:/DA005-private/session-001/network/host.json'
 ```
 
-Inside the **owned Windows guest**, run the same repository script or transfer that script to the guest. Keep the output private and transfer the original bytes back without editing:
+Inside the **owned Windows guest**, create its own private folder first, then run the same repository script (or copy the script to the guest and invoke its actual local path). Keep the output private and transfer the original bytes back without editing:
 
 ```powershell
+New-Item -ItemType Directory -Force 'C:/DA005-private/session-001/network'
 powershell -File scripts/collect_windows_guest_network_snapshot.ps1 -OutputPath 'C:/DA005-private/session-001/network/guest.json'
 ```
 
@@ -38,9 +39,9 @@ A passing snapshot comparison is **not** a physical isolation certificate. Indep
 
 ## 2. Obtain an original, authorized benign PCAP (manual)
 
-Only **after** the manual isolation/authorization review, capture a small, bounded, non-destructive baseline on the approved Host-only interface using a tool already installed on the Linux guest (e.g. tcpdump). Record the exact interface and command in the private notebook. Do not run a network scanner or attack generator. Stop capture manually; preserve a **classic .pcap**, not PCAPNG, below 64 MiB. Zeek must be able to produce a nonempty `conn.log`. Record the PCAP SHA-256 immediately and preserve the original bytes; no packet payloads go into Git.
+Only **after** the manual isolation/authorization review, capture a small, bounded, non-destructive baseline on the approved Host-only interface using a tool already installed on the Linux guest (e.g. tcpdump). For example, after checking the actual interface with `ip -br link`, a bounded passive capture is `sudo tcpdump -i <ACTUAL_HOST_ONLY_INTERFACE> -c 100 -w /home/student/da005-private/session-001/original.pcap` (stop it manually if the approved session ends first). This does not generate traffic. Record the exact interface and command in the private notebook. Do not run a network scanner or attack generator. Stop capture manually; preserve a **classic .pcap**, not PCAPNG, below 64 MiB. Zeek must be able to produce a nonempty `conn.log`. Record the PCAP SHA-256 immediately and preserve the original bytes; no packet payloads go into Git.
 
-Inside the Linux Zeek VM, with a private output directory that does **not yet exist**:
+Inside the Linux Zeek VM, with the DA005 repository/scripts available locally and a private output directory that does **not yet exist**:
 
 ```bash
 zeek --version
