@@ -155,3 +155,27 @@ evidence, record CPU/OS/Python/VMware and whether the case already existed,
 and preserve stdout privately. Synthetic GitHub CI timing is not a
 Windows/VMware measurement. No operational alert or attack ground truth
 is established.
+
+
+## Optional local software timing of verified research queue export
+
+Append `--measure-research-export-runtime` to the **export** command above.
+Only after successful publication, the CLI prints
+`offline_research_queue_export_duration_ms` with six decimal places and
+`offline_research_queue_export_boundary=verified_recompute_json_publish`.
+The monotonic `perf_counter_ns` interval begins immediately before the final
+`build_verified_research_alert_bundle` call and ends after JSON serialization
+and atomic no-overwrite publication. It includes recomputation/verification of
+the pinned research queue, JSON serialization and publication. It **excludes**
+initial private file reads, model loading, manifest loading and labeled-dataset
+construction, capture, Zeek processing, analyst review and SOC case creation.
+
+The duration is printed to stdout only; it is **not** added to the evidence
+bundle, so timed and untimed exports of identical inputs remain byte-identical.
+Failures (including wrong pins or an existing output) print no duration.
+This is an offline software processing measurement, **not** attack detection
+latency, end-to-end event-to-alert latency, or a live capture benchmark.
+Keep exact local output and machine details privately, and report queue-export
+and manual SOC handoff timings as separate stages without adding them as if
+they covered all missing pipeline time. Synthetic GitHub CI is not a student
+Windows 11/VMware measurement.
