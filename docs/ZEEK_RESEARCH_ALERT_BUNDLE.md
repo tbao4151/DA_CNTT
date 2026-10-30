@@ -113,9 +113,11 @@ non-finite values, a stale/tampered bundle even when it is re-pinned, and
 mismatched selected original row/reference. At the **SOC write boundary** it
 rebuilds the entire expected queue from pinned original model, log, prediction
 report, declared manifest and original labeled captures. Only then may the
-existing manual, idempotent `Unclassified` case be created/reused. The initial
-audit note records the bundle SHA-256 and selected reference, never a verified
-attack label. Repeated selections reuse the same source+UID research case.
+existing manual, idempotent `Unclassified` case be created/reused. The existing canonical SOC creation audit records source/model/report and selected
+Zeek UID, not the bundle SHA-256; preserve the independently recorded bundle
+pin and chosen reference in the **private experiment notebook**. This keeps
+existing strict SOC audit verifiers compatible. Repeated selections reuse the
+same source+UID research case.
 
 The legacy manual triage command remains compatible, but does **not** claim
 pinned-bundle verification. Existing cases retain their original audit note
