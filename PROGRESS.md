@@ -2274,3 +2274,10 @@
   Windows/VMware capture, independent ground truth, new attack metrics or
   live detection is claimed. No Dataset Mode benchmark/model, SOC SQLite,
   network operations or Red Team behavior changed.
+
+
+## 2026-10-31 — PR #281 regression fixture repair after failed CI
+
+- Exact feature-head CI at `6c153af1ef699210746b773bda18ae383b9cfedb` failed: [Ubuntu quality #41100408685](https://github.com/tbao4151/DA_CNTT/actions/runs/41100408685) and [Windows offline #41100408651](https://github.com/tbao4151/DA_CNTT/actions/runs/41100408651). Windows log shows 2 failed / 232 passed in the offline Zeek contract suite. Both failures came from `tests/test_zeek_port_ablation.py` changing one row's host declaration inside a two-flow single-source Zeek log; the new fail-closed provenance guard correctly rejects that contradiction.
+- Updated PR #281 branch tests to construct two genuine distinct **synthetic one-flow source logs** with independent session IDs and host declarations, rather than forging host metadata on a shared source. Commit `44488baf0cbe03e366efd6eef23c9ecdc294c2e9`. Keep the production provenance guard unchanged.
+- New-head CI outcome is **not yet verified** at authoring. No laptop tests, VMware captures, independently authenticated labels, new research metrics, network actions or official UNSW benchmark changes are claimed.
