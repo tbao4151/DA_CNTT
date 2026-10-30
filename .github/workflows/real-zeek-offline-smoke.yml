@@ -64,7 +64,7 @@ jobs:
       - name: Run actual Zeek binary on offline fixture in network-disabled container
         run: |
           docker pull zeek/zeek:9.0.1
-          docker image inspect zeek/zeek:9.0.1 --format '{{.Id}}'
+          docker image inspect zeek/zeek:9.0.1 --format '{{.Id}}' | tee "$SMOKE_DIR/zeek_image_id.txt"
           docker run --rm \
             --network none \
             --read-only \
@@ -76,7 +76,14 @@ jobs:
             --mount "type=bind,src=$SMOKE_DIR,dst=/work" \
             --workdir /work \
             zeek/zeek:9.0.1 \
-            /bin/sh -c 'zeek --version > /work/zeek_version.txt 2>&1 && zeek -r /work/benign_synthetic.pcap'
+            /bin/sh -ec 'resolved=$(readlink -f "$(command -v zeek)"); \
+              test -f "$resolved"; \
+              sha256sum "$resolved" > /work/zeek_container_binary.sha256; \
+              zeek --version > /work/zeek_version.txt 2>&1; \
+              zeek -r /work/benign_synthetic.pcap'
+          binary_sha=$(cut -d ' ' -f 1 "$SMOKE_DIR/zeek_container_binary.sha256")
+          [[ "$binary_sha" =~ ^[0-9a-f]{64}$ ]]
+          echo "ZEEK_CONTAINER_BINARY_SHA256=$binary_sha" >> "$GITHUB_ENV"
       - name: Validate genuine Zeek output against exact fixture contract
         run: |
           PYTHONPATH=src python - <<'PY'
@@ -96,12 +103,25 @@ jobs:
           assert scope["flow_count"] == 1
           version = (root / "zeek_version.txt").read_text(encoding="utf-8").strip()
           assert version.startswith("zeek version ")
+          binary_sha, binary_path = (root / "zeek_container_binary.sha256").read_text(
+              encoding="utf-8"
+          ).strip().split(maxsplit=1)
+          assert len(binary_sha) == 64 and all(c in "0123456789abcdef" for c in binary_sha)
+          assert binary_path.startswith("/") and "\\n" not in binary_path
+          image_id = (root / "zeek_image_id.txt").read_text(encoding="utf-8").strip()
+          assert image_id.startswith("sha256:") and len(image_id) == 71
+          assert all(c in "0123456789abcdef" for c in image_id[7:])
+          assert binary_sha == os.environ["ZEEK_CONTAINER_BINARY_SHA256"]
           result = {
               "report_version": 1,
               "source_kind": "synthetic_benign_udp_fixture",
               "execution": "github_actions_real_zeek_offline_container",
               "zeek_image_tag": "zeek/zeek:9.0.1",
               "zeek_version_reported": version,
+              "zeek_container_image_id": image_id,
+              "zeek_container_binary_sha256": binary_sha,
+              "zeek_container_binary_sha256_scope": "observed_in_container_before_first_offline_pass",
+              "zeek_container_binary_execution_attested": False,
               "pcap_sha256": hashlib.sha256(pcap.read_bytes()).hexdigest(),
               "zeek_conn_sha256": hashlib.sha256(conn.read_bytes()).hexdigest(),
               "flow_count": scope["flow_count"],
@@ -135,17 +155,25 @@ jobs:
             echo "CI Zeek proxy only permits -r with an existing PCAP" >&2
             exit 2
           fi
+          if [[ ! "${ZEEK_CONTAINER_BINARY_SHA256:-}" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "Missing validated container Zeek SHA-256" >&2
+            exit 2
+          fi
           exec docker run --rm \
             --network none --read-only \
             --user "$(id -u):$(id -g)" \
             --env HOME=/tmp \
+            --env EXPECTED_ZEEK_BINARY_SHA256="$ZEEK_CONTAINER_BINARY_SHA256" \
             --cap-drop ALL --security-opt no-new-privileges \
             --tmpfs /tmp:rw,nosuid,noexec,size=16m \
             --mount "type=bind,src=$2,dst=/input.pcap,readonly" \
             --mount "type=bind,src=$PWD,dst=/work" \
             --workdir /work \
             zeek/zeek:9.0.1 \
-            /bin/sh -c 'zeek -r /input.pcap'
+            /bin/sh -ec 'resolved=$(readlink -f "$(command -v zeek)"); \
+              actual=$(sha256sum "$resolved"); actual=${actual%% *}; \
+              test "$actual" = "$EXPECTED_ZEEK_BINARY_SHA256"; \
+              zeek -r /input.pcap'
           SH
           chmod +x "$SMOKE_DIR/bin/zeek"
           export PATH="$SMOKE_DIR/bin:$PATH"
@@ -154,6 +182,7 @@ jobs:
           import json
           import os
           from pathlib import Path
+          import subprocess
           from blue_team_ai.offline_pcap import import_offline_pcap
           from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
           from blue_team_ai.zeek_smoke import verify_fixture_feature_projection
@@ -161,6 +190,19 @@ jobs:
           root = Path(os.environ["SMOKE_DIR"])
           pcap = root / "benign_synthetic.pcap"
           output = root / "importer-real"
+          # Negative integration gate: wrong in-container binary digest must fail
+          # before Zeek can write a conn.log in a fresh working directory.
+          rejected_dir = root / "wrong-container-binary-pin"
+          rejected_dir.mkdir()
+          bad_env = os.environ.copy()
+          bad_env["ZEEK_CONTAINER_BINARY_SHA256"] = "0" * 64
+          refused = subprocess.run(
+              [str(root / "bin" / "zeek"), "-r", str(pcap)],
+              cwd=rejected_dir, env=bad_env, capture_output=True, text=True,
+              timeout=60, check=False,
+          )
+          assert refused.returncode != 0
+          assert not (rejected_dir / "conn.log").exists()
           imported = import_offline_pcap(
               pcap, output, lab_cidrs=["192.168.56.0/24"],
               operator_confirmed_offline=True,
@@ -265,7 +307,11 @@ jobs:
               "ci_source_kind": "deterministic_synthetic_benign_udp_pcap",
               "ci_execution": "two_real_zeek_r_passes_via_network_disabled_docker_proxy",
               "ci_zeek_image_tag": "zeek/zeek:9.0.1",
-              "ci_sha256_pin_scope": "host_side_proxy_script_only_not_container_zeek_binary",
+              "ci_sha256_pin_scope": "host_side_proxy_script_pinned_by_runner_and_container_zeek_binary_checked_by_proxy",
+              "ci_zeek_container_binary_sha256": os.environ["ZEEK_CONTAINER_BINARY_SHA256"],
+              "ci_zeek_container_binary_check": "sha256_verified_inside_container_before_each_proxy_invocation",
+              "ci_zeek_container_image_id": (root / "zeek_image_id.txt").read_text(encoding="utf-8").strip(),
+              "ci_zeek_container_binary_execution_attested": False,
               "ci_vmware_capture_performed": False,
               "ci_independent_attack_labels": False,
               "ci_soc_case_created": False,
@@ -346,6 +392,8 @@ jobs:
             ${{ env.SMOKE_DIR }}/benign_synthetic.pcap
             ${{ env.SMOKE_DIR }}/conn.log
             ${{ env.SMOKE_DIR }}/zeek_version.txt
+            ${{ env.SMOKE_DIR }}/zeek_container_binary.sha256
+            ${{ env.SMOKE_DIR }}/zeek_image_id.txt
             ${{ env.SMOKE_DIR }}/ci_smoke_report.json
             ${{ env.SMOKE_DIR }}/ci_importer_real_report.json
             ${{ env.SMOKE_DIR }}/ci_two_pass_real_zeek_report.json
