@@ -29,6 +29,23 @@ py -3.12 scripts/verify_pcap_zeek_tuple.py `
   --expected-log-sha256 "<INDEPENDENT_LOWERCASE_ZEEK_SHA256>"
 ```
 
+Optional stricter **timestamp-presence** gate (default OFF): append
+`--require-timestamp-corroboration` to the command. For each Zeek flow,
+this requires at least one same-direction or reverse-direction TCP/UDP IPv4
+packet whose classic-PCAP record timestamp is within **1.0 second** of the
+Zeek flow start timestamp. Both microsecond and nanosecond PCAP timestamp
+resolutions are supported. A matching five-tuple from a distant session no
+longer suffices under this opt-in gate. The stdout report sets
+`timestamps_correlated=true` and `timestamp_corroboration_window_seconds=1.0`
+only when the stricter gate was requested and passed. The default retains
+`timestamps_correlated=false` and the original tuple-only behavior.
+
+This is a *bounded timestamp presence* check, not packet-to-flow identity,
+Zeek clock attestation, proof of derivation, capture authenticity or measured
+detection latency. Timestamp shifts from clock errors, PCAP processing or
+unsupported encapsulation may cause refusal. Do not loosen the one-second
+window to force a desired result; investigate discrepancies independently.
+
 The successful stdout JSON contains counts and explicit false safety claims;
 no addresses, UIDs or timestamps are emitted. Exit code `2` means refusal;
 there is no partial success output. Do not upload private PCAP, Zeek logs,
@@ -38,7 +55,7 @@ configuration, Host-only isolation screenshots and operator approval privately.
 
 **Interpretation limits:** A matching tuple is *not* evidence that the Zeek
 flow was generated from that packet. A single packet can corroborate multiple
-Zeek records with identical tuples; no timestamp matching, packet-to-flow
+Zeek records with identical tuples; no timestamp matching by default, packet-to-flow
 cardinality, connection state, payload analysis, flow completeness, NAT
 reconstruction or Zeek processing reproducibility is established. Independently
 pinned hashes demonstrate byte consistency with recorded digests, not

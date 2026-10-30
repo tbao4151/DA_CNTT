@@ -19,8 +19,8 @@ from verify_pcap_zeek_tuple import main
 
 
 def zeek_log(*, src="10.1.1.2", dst="10.1.1.3", sport=1234, dport=80,
-             proto="tcp", second=False) -> bytes:
-    rows = [f"100.0\tC1\t{src}\t{sport}\t{dst}\t{dport}\t{proto}"]
+             proto="tcp", second=False, ts="100.0") -> bytes:
+    rows = [f"{ts}\tC1\t{src}\t{sport}\t{dst}\t{dport}\t{proto}"]
     if second:
         rows.append("101.0\tC2\t10.1.1.4\t5555\t10.1.1.5\t443\ttcp")
     return ("#separator \\x09\n"
@@ -41,10 +41,11 @@ def pcap_packet(*, src="10.1.1.2", dst="10.1.1.3", sport=1234, dport=80,
     return (b"\x00" * 12 + struct.pack("!H", ethertype) + ip + transport)[:-truncate or None]
 
 
-def pcap(*frames: bytes, linktype=1) -> bytes:
-    out = bytearray(bytes.fromhex("d4c3b2a1") + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, linktype))
+def pcap(*frames: bytes, linktype=1, seconds=100, fraction=0, nanos=False) -> bytes:
+    magic = "4d3cb2a1" if nanos else "d4c3b2a1"
+    out = bytearray(bytes.fromhex(magic) + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, linktype))
     for frame in frames:
-        out.extend(struct.pack("<IIII", 100, 0, len(frame), len(frame)))
+        out.extend(struct.pack("<IIII", seconds, fraction, len(frame), len(frame)))
         out.extend(frame)
     return bytes(out)
 
@@ -142,4 +143,63 @@ def test_cli_refuses_invalid_pin_and_repo_relative_path(tmp_path, capsys):
     assert capsys.readouterr().out == ""
     cmd[1] = "relative.pcap"
     assert main(cmd) == 2
+    assert capsys.readouterr().out == ""
+
+
+def test_opt_in_timestamp_correspondence_micro_and_nano():
+    packet = pcap_packet()
+    for nanos, fraction in ((False, 500_000), (True, 500_000_000)):
+        raw = pcap(packet, seconds=100, fraction=fraction, nanos=nanos)
+        log = zeek_log(ts="100.5")
+        result = corroborate_pcap_zeek_tuples(
+            raw, log, require_timestamp_corroboration=True,
+        )
+        assert result["timestamps_correlated"] is True
+        assert result["timestamp_corroboration_window_seconds"] == 1.0
+        reverse = zeek_log(
+            src="10.1.1.3", dst="10.1.1.2", sport=80, dport=1234, ts="100.5",
+        )
+        assert corroborate_pcap_zeek_tuples(
+            raw, reverse, require_timestamp_corroboration=True,
+        )["matched_zeek_flow_count"] == 1
+
+
+def test_opt_in_timestamp_rejects_reused_tuple_from_distant_session():
+    raw = pcap(pcap_packet(), seconds=100)
+    forged_time = zeek_log(ts="105.0")
+    legacy = corroborate_pcap_zeek_tuples(raw, forged_time)
+    assert legacy["timestamps_correlated"] is False
+    assert legacy["timestamp_corroboration_window_seconds"] is None
+    with pytest.raises(ValueError, match="within one second"):
+        corroborate_pcap_zeek_tuples(
+            raw, forged_time, require_timestamp_corroboration=True,
+        )
+
+
+def test_opt_in_timestamp_requires_each_zeek_flow_to_match():
+    raw = pcap(pcap_packet(), seconds=100)
+    log = zeek_log().decode() + "105.0\tC2\t10.1.1.2\t1234\t10.1.1.3\t80\ttcp\n"
+    with pytest.raises(ValueError, match="within one second"):
+        corroborate_pcap_zeek_tuples(
+            raw, log.encode(), require_timestamp_corroboration=True,
+        )
+
+
+def test_cli_opt_in_timestamp_gate_fails_closed(tmp_path, capsys):
+    capture = tmp_path / "owned.pcap"
+    log = tmp_path / "conn.log"
+    capture.write_bytes(pcap(pcap_packet()))
+    log.write_bytes(zeek_log())
+    args = [
+        "--pcap", str(capture),
+        "--expected-pcap-sha256", hashlib.sha256(capture.read_bytes()).hexdigest(),
+        "--log", str(log),
+        "--expected-log-sha256", hashlib.sha256(log.read_bytes()).hexdigest(),
+        "--require-timestamp-corroboration",
+    ]
+    assert main(args) == 0
+    assert json.loads(capsys.readouterr().out)["timestamps_correlated"] is True
+    log.write_bytes(zeek_log(ts="105.0"))
+    args[args.index("--expected-log-sha256") + 1] = hashlib.sha256(log.read_bytes()).hexdigest()
+    assert main(args) == 2
     assert capsys.readouterr().out == ""
