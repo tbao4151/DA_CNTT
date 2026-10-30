@@ -151,3 +151,35 @@ def test_original_pcap_modified_during_run_is_rejected(tmp_path, monkeypatch):
             source, output, lab_cidrs=CIDR, operator_confirmed_offline=True,
         )
     assert not (output / "offline_import_report.json").exists()
+
+
+def test_explicit_pinned_executable_is_invoked_without_path_lookup(tmp_path, monkeypatch):
+    source = _pcap(tmp_path)
+    binary = tmp_path / "pinned-zeek"
+    binary.write_bytes(b"synthetic executable; subprocess is mocked")
+    seen = _fake_zeek(monkeypatch)
+    output = tmp_path / "pinned-output"
+    offline_pcap.import_offline_pcap(
+        source, output, lab_cidrs=CIDR, operator_confirmed_offline=True,
+        zeek_executable=binary.resolve(),
+    )
+    assert len(seen) == 1
+    assert seen[0][0] == [str(binary.resolve()), "-r", str(source)]
+    assert seen[0][1]["cwd"] == output
+
+
+@pytest.mark.parametrize("invalid", ["relative", "missing"])
+def test_invalid_pinned_executable_refused_before_output_creation(tmp_path, monkeypatch, invalid):
+    source = _pcap(tmp_path)
+    output = tmp_path / "must-not-create"
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("Zeek must not run")
+    monkeypatch.setattr(offline_pcap.subprocess, "run", forbidden)
+    executable = (Path("relative-zeek") if invalid == "relative"
+                  else tmp_path / "missing-zeek")
+    with pytest.raises((ValueError, FileNotFoundError)):
+        offline_pcap.import_offline_pcap(
+            source, output, lab_cidrs=CIDR, operator_confirmed_offline=True,
+            zeek_executable=executable,
+        )
+    assert not output.exists()
