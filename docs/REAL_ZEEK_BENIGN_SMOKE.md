@@ -208,3 +208,30 @@ On Windows, run `py -3.12 -m pytest -q tests/test_ci_real_zeek_scoring.py`
 for synthetic regression. Genuine capture acceptance still requires the
 student's private PCAP, matching Zeek log, independent SHA-256 pins, and
 manual isolation/clock documentation. Never upload sensitive captures.
+
+
+## Production timestamp-gated scoring acceptance on real Zeek synthetic output (30 October 2026)
+
+The dedicated network-disabled Real Zeek workflow now also invokes the
+**production** `scripts/score_zeek_new_log.py` with
+`--require-pcap-zeek-timestamp-corroboration` on the actual Zeek-generated
+`conn.log` and deterministic benign synthetic PCAP. It compares the resulting
+prediction JSON with the same fixed CI-only model scored through the legacy
+(non-temporal) CLI: the optional gate must not alter inference results.
+
+A negative CI fixture shifts every packet timestamp by +120 seconds without
+changing packet payloads or five-tuples. A fresh **fabricated CI-only**
+import-report copy is re-pinned to the shifted PCAP and unchanged Zeek log.
+This intentionally tests the timestamp gate after the existing hash and scope
+checks pass; the legacy scorer must accept this self-consistent negative fixture,
+while the opt-in production gate must refuse it **without publishing a JSON
+prediction**. The negative report is not authentic Zeek provenance and must
+never be used as evidence of a real import or attack.
+
+The CI summary records four explicit acceptance flags and
+`repinned_negative_import_metadata_authentic=false`. The synthetic model
+and all pins are generated in CI. This test is **not** independent ground
+truth, student VMware acceptance, attack-detection performance, production
+alerting, or a capture-to-SOC latency measurement. The old CLI remains the
+default and Dataset Mode is unchanged. The acceptance is a proposed test until
+the PR's exact-head real-Zeek workflow and quality CI complete successfully.

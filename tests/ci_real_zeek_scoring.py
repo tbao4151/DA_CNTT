@@ -21,6 +21,7 @@ from blue_team_ai.zeek_smoke import verify_fixture_feature_projection
 from siem_ai.case_report import export_case_report
 from siem_ai.core import list_cases
 from test_zeek_offline_baseline import _dataset
+from ci_real_zeek_production_timestamp import exercise_production_timestamp_gate
 
 ROOT = Path(__file__).resolve().parents[1]
 CIDR = "192.168.56.0/24"
@@ -235,6 +236,12 @@ def run(root: Path) -> dict[str, object]:
     ], should_succeed=True)
     report = json.loads(prediction.read_text(encoding="utf-8"))
     validate_research_only_report(report, log_sha=log_sha, model_sha=model_sha)
+    production_timestamp = exercise_production_timestamp_gate(
+        root=root, model=model, model_sha=model_sha,
+        log=log, log_sha=log_sha, pcap=pcap,
+        import_report=import_report, import_sha=import_sha,
+        baseline_report=report,
+    )
     verify = [
         str(ROOT / "scripts" / "verify_zeek_new_log_report.py"),
         *common, "--report", str(prediction),
@@ -349,6 +356,7 @@ def run(root: Path) -> dict[str, object]:
         "offline_import_report_sha256": import_sha,
         "flow_count": report["flow_count"],
         "pcap_zeek_timestamp_presence_verified_ci_only": True,
+        **production_timestamp,
         "pcap_zeek_timestamp_window_seconds": timestamp_gate["timestamp_corroboration_window_seconds"],
         "shifted_pcap_tuple_only_accepted_ci_only": True,
         "shifted_pcap_timestamp_gate_rejected_ci_only": True,
