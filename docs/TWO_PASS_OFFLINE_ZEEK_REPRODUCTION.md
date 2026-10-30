@@ -60,6 +60,40 @@ Some legitimate differences between runs can therefore cause a refusal.
 Unsupported link types, VLAN, IPv6 or fragmented packets also refuse rather
 than being treated as successfully corroborated.
 
+## Optional independent Zeek executable fingerprint
+
+For stronger **executable-byte consistency** across both offline passes, record
+the SHA-256 of the PATH-selected Zeek executable independently before running.
+On Linux, resolve a possible symlink to its actual target first:
+
+```bash
+command -v zeek
+readlink -f "$(command -v zeek)"
+sha256sum "$(readlink -f "$(command -v zeek)")"
+```
+
+Append this flag to the existing two-pass command:
+
+```bash
+  --expected-zeek-binary-sha256 '<INDEPENDENT_LOWERCASE_ZEEK_BINARY_SHA256>'
+```
+
+With the flag, the tool checks the PATH-selected regular executable (maximum
+256 MiB) before either import and again after **each** pass. A missing binary,
+bad digest, changed binary or changed resolved executable path causes refusal
+with no success JSON. Private partial outputs remain untouched. Successful
+JSON includes `zeek_binary_sha256_pinned=true` and the pinned digest; the
+default backward-compatible mode reports `false` without a binary digest.
+No executable path is written to the success JSON.
+
+**Scope limitation:** Pinning executable bytes does not authenticate the
+binary's origin, record `zeek --version`, or freeze dynamic libraries, Zeek
+scripts, plugins, environment variables or runtime configuration. The report
+therefore continues to set `zeek_binary_version_verified=false`. Independently
+archive the version output, installed scripts/configuration and environment in
+the private lab notebook. Do not call a successful synthetic GitHub test a
+real Zeek/VMware experiment.
+
 ## Scientific boundaries
 
 Two successful subprocesses and matching logs provide stronger **procedural
