@@ -56,6 +56,6 @@ jobs:
       - name: Offline paired Windows host and guest configuration checks (synthetic only)
         run: python -m pytest -q tests/test_paired_network_preflight.py
       - name: Integrated private lab evidence chain (synthetic offline only)
-        run: python -m pytest -q tests/test_lab_evidence_chain.py
+        run: python -m pytest -q tests/test_lab_evidence_chain.py tests/test_vmware_session_record.py
       - name: Offline Red Team proposal audit and Streamlit UI
         run: python -m pytest -q tests/test_red_team_planning_audit.py tests/test_red_team_scenario_policy.py tests/test_red_team_audit_verify.py

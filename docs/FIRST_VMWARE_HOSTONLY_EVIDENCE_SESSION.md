@@ -88,3 +88,69 @@ py -3.12 -m pytest -q tests/test_first_vmware_session_contract.py
 ```
 
 This regression checks that the runbook still references existing scripts and actual CLI flags. It **does not** execute VMware, Zeek, tcpdump, traffic, labels, AI scoring, or SOC cases. CI passing is never evidence that the student ran this procedure on Windows 11.
+
+
+## 6. Optional private session evidence index (operator review, not attestation)
+
+After step 3 succeeds, save its **unmodified JSON stdout** as
+C:/DA005-private/session-001/chain.json (on Windows PowerShell 5.1,
+use a pipeline to Set-Content -Encoding UTF8 and immediately check
+that $LASTEXITCODE equals 0; a failed command is not a valid report).
+Record the chain file's SHA-256 independently in the private notebook.
+This index does **not** re-run step 3; its chain check validates a
+hash-pinned report's expected fields, not whether the report was authentic.
+
+Place four **private** supporting files beside session-record.json:
+a written approval/scope note (approval.txt), VMware adapter assignment
+screenshots (vmware-nics.png), guest routes/NIC screenshots or saved text
+(guest-routes.txt), and a dated capture-command/origin note
+(capture-origin.txt). Include actual operator, time, network scope,
+interface, command and original PCAP/Zeek SHA-256 in the private notes;
+do not commit or publish them. Each supporting file must be nonempty,
+at most 4 MiB, and SHA-256-pinned. For multiple screenshots, combine
+the review into a bounded private PDF or text summary and hash that file;
+the tool checks bytes only, not what the screenshot proves.
+
+Create session-record.json **outside Git** with real lowercase hashes,
+using forward-slash relative paths. Example schema only; placeholder hashes
+are not valid evidence:
+
+~~~json
+{
+  "record_version": 1,
+  "session_id": "session-001",
+  "checks": {
+    "authorization": {"status": "PASS", "path": "approval.txt", "sha256": "<ACTUAL_SHA256>"},
+    "vmware_hostonly_adapters": {"status": "PASS", "path": "vmware-nics.png", "sha256": "<ACTUAL_SHA256>"},
+    "guest_route_review": {"status": "PASS", "path": "guest-routes.txt", "sha256": "<ACTUAL_SHA256>"},
+    "capture_origin": {"status": "PASS", "path": "capture-origin.txt", "sha256": "<ACTUAL_SHA256>"}
+  }
+}
+~~~
+
+Use {"status": "FAIL"} or {"status": "NOT_MEASURED"} for
+incomplete checks; **never** mark PASS without a supporting file.
+Record the finished JSON's SHA-256 separately, before validation.
+From the project root:
+
+~~~powershell
+Get-FileHash 'C:/DA005-private/session-001/chain.json' -Algorithm SHA256
+Get-FileHash 'C:/DA005-private/session-001/session-record.json' -Algorithm SHA256
+py -3.12 scripts/verify_vmware_session_record.py --record 'C:/DA005-private/session-001/session-record.json' --expected-record-sha256 '<RECORD_SHA256_LOWERCASE>' --chain-report 'C:/DA005-private/session-001/chain.json' --expected-chain-sha256 '<CHAIN_SHA256_LOWERCASE>'
+~~~
+
+Exit 0 means the supplied record is complete and hash-consistent
+**for subsequent human review**, not certified isolation or approval.
+Exit 2 means a valid but incomplete FAIL/NOT_MEASURED checklist;
+exit 1 means invalid input, untrusted report shape, hash mismatch or
+unsafe path. The CLI reads only private local files, never connects to
+a network, never exports private paths or IPs in stdout, and never
+writes an output file. Hashes cannot prove that the operator's claims,
+timestamps, approval or capture source are truthful. The signed-off
+human review and original evidence remain mandatory.
+
+Synthetic-only developer test:
+
+~~~powershell
+py -3.12 -m pytest -q tests/test_vmware_session_record.py
+~~~
