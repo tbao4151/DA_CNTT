@@ -73,3 +73,19 @@ py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py
 ~~~
 
 GitHub CI synthetic fixtures are not Windows laptop/VMware experimental results.
+
+## Fixed always-Normal reference (additive report field)
+
+The private aggregate JSON includes `fixed_always_normal_reference`, a
+predeclared, non-learning comparator that always predicts Normal. It reports
+the same capture support, its own confusion counts, undefined precision as
+JSON null (no predicted Attack flows), zero recall if Attack labels exist,
+and zero false-positive rate if Normal labels exist. Single-class captures
+retain nulls for undefined denominators. Flow-level Wilson intervals remain
+descriptive and are not host/session-cluster adjusted.
+
+This reference is **not** chosen from the NEW capture labels, is not a
+trained AI baseline, and must not be presented as a useful detector simply
+because it generates zero false positives. Comparing it with the fixed
+Zeek-schema research predictions does not authenticate operator labels,
+establish independent holdout, or justify threshold/model tuning.
