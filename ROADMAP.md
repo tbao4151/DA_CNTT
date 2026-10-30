@@ -1505,3 +1505,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
   train/validation/test hosts and evidence of physical isolation; report
   genuine held-out metrics and model-vs-reference tradeoffs without claiming
   synthetic CI performance as real attack detection.
+
+
+## 2026-10-31 — Fixed trivial-policy comparison for private NEW Zeek evaluation
+
+- [x] Verify [PR #283](https://github.com/tbao4151/DA_CNTT/pull/283) merged and its exact-head [Ubuntu #41117434320](https://github.com/tbao4151/DA_CNTT/actions/runs/41117434320) and [Windows #41117434375](https://github.com/tbao4151/DA_CNTT/actions/runs/41117434375) CI passed; post-merge [main quality #41121257764](https://github.com/tbao4151/DA_CNTT/actions/runs/41121257764) passed. Historical pending PR #283 entry above is superseded.
+- [ ] Validate the complementary always-Attack reference with mixed/single-class synthetic regression tests on Ubuntu and Windows CI; merge its PR only if exact-head checks succeed and no conflicts. Both fixed references are non-learning controls, not detectors, and cannot be selected using NEW labels.
+- [ ] On student Windows 11 with authorized isolated VMware Host-only lab, independently preserve PCAP/Zeek SHA-256, labels and scenario evidence, pre-register host/session-disjoint holdout, run `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`, then compare model against both fixed policies on genuine independently adjudicated data. Never interpret synthetic CI as measured attack detection.

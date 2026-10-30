@@ -132,6 +132,36 @@ def evaluate_new_log_operator_labels(
             "zero_alerts_imply_zero_recall_when_attacks_are_present"
         ),
     }
+    # Complementary fixed policy: all flows are flagged Attack. Its perfect
+    # recall when attacks exist is obtained by accepting every normal flow
+    # as a false alarm. Precision equals capture attack prevalence.
+    # This policy is predeclared, not selected from NEW labels.
+    attack_reference_confusion = {
+        "tp": tp + fn, "fp": fp + tn, "tn": 0, "fn": 0,
+        "support": support,
+    }
+    attack_support = tp + fn
+    normal_support = fp + tn
+    attack_reference = {
+        "policy": "always_attack_fixed_a_priori",
+        "confusion_matrix": attack_reference_confusion,
+        "metrics": {
+            "attack_precision": attack_support / support,
+            "attack_recall": 1.0 if attack_support else None,
+            "false_positive_rate": 1.0 if normal_support else None,
+            "attack_f1": (
+                2 * attack_support / (2 * attack_support + normal_support)
+                if attack_support else 0.0
+            ),
+        },
+        "flow_level_uncertainty": summarize_detection_uncertainty(
+            attack_reference_confusion
+        ),
+        "interpretation": (
+            "fixed_nonlearned_reference_not_selected_from_new_labels; "
+            "all_flows_alerted_full_recall_and_full_fpr_when_both_classes_exist"
+        ),
+    }
     return {
         "report_version": 1,
         "mode": "offline_new_zeek_operator_labeled_descriptive_evaluation_only",
@@ -149,6 +179,7 @@ def evaluate_new_log_operator_labels(
         },
         "flow_level_uncertainty": summarize_detection_uncertainty(confusion),
         "fixed_always_normal_reference": normal_reference,
+        "fixed_always_attack_reference": attack_reference,
         "label_authenticity_verified": False,
         "independent_partition_history_verified": False,
         "physical_host_only_isolation_verified": False,

@@ -2305,3 +2305,10 @@
   denominators. **No GitHub CI result is claimed at authoring**; no student
   VMware capture, independent label authenticity or attack-detection result
   has been verified. The comparator is not a deployable detector.
+
+
+## 2026-10-31 — Verified fixed always-Normal reference merge; complementary always-Attack comparator proposed
+
+- [PR #283](https://github.com/tbao4151/DA_CNTT/pull/283) was merged to `main` as `a7072b485ea3b2a9e7cf9fe99fd340b23ac0dc3b`; its exact feature head `9d687aae35258f3cccf3b3716e9171bc7a1f53d5` passed [Ubuntu quality #41117434320](https://github.com/tbao4151/DA_CNTT/actions/runs/41117434320) and [Windows offline #41117434375](https://github.com/tbao4151/DA_CNTT/actions/runs/41117434375). [Post-merge main quality #41121257764](https://github.com/tbao4151/DA_CNTT/actions/runs/41121257764) also passed. No active PR remained at start of this slice.
+- Added an **additive, predeclared always-Attack** non-learning reference to the private NEW Zeek labeled-evaluation JSON, complementing always-Normal. Its confusion matrix and defined/undefined Precision/Recall/FPR/F1 explicitly expose the 100%-recall/100%-FPR tradeoff when both classes are present. Reuses the existing descriptive Wilson flow-level intervals; does not alter model, threshold, label validation, UNSW benchmark, SOC DB, or Red Team.
+- Added synthetic regression cases for mixed/single-class captures and CLI JSON output; **new feature-head CI not yet verified at authoring**. No independent labels, genuine VMware capture, detection accuracy, live traffic, or laptop test are claimed.

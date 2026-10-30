@@ -89,3 +89,23 @@ trained AI baseline, and must not be presented as a useful detector simply
 because it generates zero false positives. Comparing it with the fixed
 Zeek-schema research predictions does not authenticate operator labels,
 establish independent holdout, or justify threshold/model tuning.
+
+## Fixed always-Attack reference (additive report field)
+
+The aggregate JSON also includes `fixed_always_attack_reference`, a
+predeclared, non-learning policy that flags **every** observed flow as Attack.
+It has TP equal to the number of externally labeled Attack flows, FP equal
+to the number of externally labeled Normal flows, and zero TN/FN. On a
+capture containing both classes it necessarily achieves 100% Attack Recall
+**and 100% False Positive Rate**; Attack Precision equals the operator-labeled
+Attack prevalence. A high recall score alone therefore cannot demonstrate
+useful detection. This is a diagnostic reference, not a deployment policy.
+
+When the capture has no Attack labels, recall is undefined (JSON null),
+precision and F1 are zero; when it has no Normal labels, FPR is undefined
+(JSON null). The fixed validation threshold, AI predictions and original
+report schema/version remain unchanged; both references are additive JSON
+fields. Wilson intervals remain descriptive flow-level summaries, not
+host/session-cluster-adjusted inference. No new-label-driven selection,
+threshold tuning, ground-truth authentication, or real lab performance is
+claimed. Keep private raw logs and labels outside Git.

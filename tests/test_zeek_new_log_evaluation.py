@@ -149,6 +149,7 @@ def test_cli_evaluates_only_private_pinned_inputs_without_writes(inputs):
     assert result["declared_partition_screen"]["exact_byte_and_normalized_identity_nonreuse"]
     assert result["declared_partition_screen"]["independent_partition_history_verified"] is False
     assert result["confusion_matrix"]["support"] == 2
+    assert result["fixed_always_attack_reference"]["confusion_matrix"]["support"] == 2
     assert before == {p.name: p.read_bytes() for p in files}
     assert not (inputs["manifest"].parent / "soc_cases.sqlite3").exists()
 
@@ -212,3 +213,55 @@ def test_always_normal_reference_preserves_undefined_single_class_rates(inputs, 
     assert reference["metrics"]["attack_recall"] == (None if label == 0 else 0.0)
     assert reference["metrics"]["false_positive_rate"] == (0.0 if label == 0 else None)
     assert reference["metrics"]["attack_f1"] == (None if label == 0 else 0.0)
+
+
+def test_predeclared_always_attack_reference_counts_and_rates(inputs):
+    result = _evaluate(inputs)
+    observed = result["confusion_matrix"]
+    reference = result["fixed_always_attack_reference"]
+    attacks = observed["tp"] + observed["fn"]
+    normals = observed["fp"] + observed["tn"]
+    support = observed["support"]
+    assert reference["policy"] == "always_attack_fixed_a_priori"
+    assert reference["confusion_matrix"] == {
+        "tp": attacks, "fp": normals, "tn": 0, "fn": 0,
+        "support": support,
+    }
+    assert reference["metrics"] == {
+        "attack_precision": attacks / support,
+        "attack_recall": 1.0 if attacks else None,
+        "false_positive_rate": 1.0 if normals else None,
+        "attack_f1": 2 * attacks / (2 * attacks + normals) if attacks else 0.0,
+    }
+    assert reference["flow_level_uncertainty"]["unit_of_analysis"] == "network_flow"
+    assert reference["flow_level_uncertainty"]["attack_precision"]["trials"] == support
+    assert "labels_by_uid" not in json.dumps(reference)
+    assert "NEW1" not in json.dumps(reference)
+
+
+@pytest.mark.parametrize("label", [0, 1])
+def test_always_attack_reference_preserves_single_class_denominators(inputs, label):
+    labels = json.loads(inputs["annotation_bytes"])
+    labels["labels_by_uid"] = {uid: label for uid in labels["labels_by_uid"]}
+    data = json.dumps(labels, allow_nan=False).encode("utf-8")
+    result = _evaluate(
+        inputs, annotation_data=data,
+        expected_annotation_sha256=hashlib.sha256(data).hexdigest(),
+    )
+    reference = result["fixed_always_attack_reference"]
+    support = len(labels["labels_by_uid"])
+    assert reference["confusion_matrix"] == {
+        "tp": support if label == 1 else 0,
+        "fp": support if label == 0 else 0,
+        "tn": 0, "fn": 0, "support": support,
+    }
+    assert reference["metrics"]["attack_precision"] == float(label)
+    assert reference["metrics"]["attack_recall"] == (1.0 if label else None)
+    assert reference["metrics"]["false_positive_rate"] == (None if label else 1.0)
+    assert reference["metrics"]["attack_f1"] == float(label)
+    assert reference["flow_level_uncertainty"]["attack_recall"]["trials"] == (
+        support if label else 0
+    )
+    assert reference["flow_level_uncertainty"]["false_positive_rate"]["trials"] == (
+        0 if label else support
+    )
