@@ -111,7 +111,11 @@ def corroborate_pcap_zeek_tuples(
                 raise ValueError("Zeek flow start has no same-tuple PCAP packet within one second")
         matched += 1
     return {
-        "corroboration": "unordered_bidirectional_ipv4_tcp_udp_5tuple_presence_only",
+        "corroboration": (
+            "bidirectional_ipv4_tcp_udp_5tuple_and_one_second_timestamp_presence"
+            if require_timestamp_corroboration else
+            "unordered_bidirectional_ipv4_tcp_udp_5tuple_presence_only"
+        ),
         "pcap_packet_count": framing["packet_count"],
         "supported_pcap_packet_count": packet_count,
         "zeek_flow_count": len(events),
