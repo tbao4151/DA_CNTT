@@ -130,10 +130,9 @@ def create_new_log_candidate_case(
     if prediction["uid"] != events[record_index]["uid"]:
         raise ValueError("Selected UID does not match the original Zeek flow")
 
-    verified_bundle_sha = None
     if research_bundle_data is not None:
         # Rebuild the saved queue from pinned evidence at the SOC write boundary.
-        verified_bundle_sha = verify_pinned_research_alert_selection(
+        verify_pinned_research_alert_selection(
             research_bundle_data,
             expected_bundle_sha256=research_bundle_sha256,
             research_alert_ref=research_alert_ref,
@@ -175,12 +174,6 @@ def create_new_log_candidate_case(
             f"pcap_sha256={verified_import['pcap_sha256']}. "
             if verified_import is not None else
             "Original PCAP provenance NOT software-checked. "
-        )
-        + (
-            f"Pinned research_bundle_sha256={verified_bundle_sha}; "
-            f"research_alert_ref={research_alert_ref}. "
-            if verified_bundle_sha is not None else
-            "Research alert bundle not independently checked. "
         )
         + "Authorization, Host-only isolation and ground truth are unverified."
     )
