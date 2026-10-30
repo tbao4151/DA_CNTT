@@ -1227,3 +1227,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Validate final feature-head Ubuntu Python 3.12.9 quality CI and Windows Server 2022 offline tests, confirm mergeability and no competing PR before merging. The opt-in integrated gate must refuse missing independent original pins, header-only classic PCAP and truncated packet records while accepting a well-formed synthetic PCAP.
 - [ ] Student runs `--require-pcap-framing --require-independent-original-pins` on an authorized, independently SHA-256-pinned private VMware Host-only PCAP/Zeek capture, preserving original evidence and manual isolation proof outside Git.
 - [ ] Study real PCAP packet-to-Zeek flow semantic linkage and independent held-out labels; structural record validity is not evidence of genuine AI detection, authorization, live alerts or event-to-SOC latency.
+
+
+## Cyber Lab — integrated strict PCAP framing merged (#245, 30/10/2026)
+
+- [x] [PR #245](https://github.com/tbao4151/DA_CNTT/pull/245) merged at `84b38fc67c8b90562fe6069a8f4c0dc75024cc45` after final-head [Ubuntu CI #40974345980](https://github.com/tbao4151/DA_CNTT/actions/runs/40974345980) and [Windows CI #40974345837](https://github.com/tbao4151/DA_CNTT/actions/runs/40974345837) succeeded with no conflicts. This supersedes the earlier pending-CI checkbox; post-merge main CI remains a separate verification.
+- [ ] On Windows 11, use independently SHA-256-pinned, authorized private Host-only classic PCAP and Zeek conn.log with `--require-pcap-framing --require-independent-original-pins`; retain original files, NIC/VMnet screenshots, permission, version and command outputs outside Git. Synthetic CI cannot prove VMware isolation or capture origin.
+- [ ] Next prioritize a verified offline research alert bundle → explicitly analyst-approved Unclassified SOC case handoff with tamper/duplicate checks and reproducible stage timings, followed by independently adjudicated host/session-disjoint real-lab evaluation. Do not substitute packet framing for packet-to-flow linkage or live AI detection.
