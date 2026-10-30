@@ -16,7 +16,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from blue_team_ai.offline_baseline import evaluate_offline_zeek_baseline
 from blue_team_ai.port_ablation import evaluate_zeek_port_ablation, _portless_pipeline
-from test_zeek_offline_baseline import _dataset
+from test_zeek_offline_baseline import _capture, _dataset
+from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
 from test_zeek_lab_cli import _lab_files
 
 
@@ -44,10 +45,28 @@ def test_portless_excludes_both_ports_and_full_matches_existing_baseline():
 
 
 
+def _dataset_with_two_test_hosts():
+    """Build two independent one-flow test captures, not a forged host claim.
+
+    A source log is owned by exactly one session and host. Mutating only one
+    row's host_group inside a shared log would violate that contract.
+    """
+    normal = _capture("test", 2)
+    attack = _capture("test", 3)
+    normal_lines = normal["log_bytes"].splitlines(keepends=True)
+    attack_lines = attack["log_bytes"].splitlines(keepends=True)
+    normal["log_bytes"] = b"".join(normal_lines[:2] + normal_lines[2:3])
+    attack["log_bytes"] = b"".join(attack_lines[:2] + attack_lines[3:4])
+    normal["labels_by_uid"] = {"N2": 0}
+    attack["labels_by_uid"] = {"A3": 1}
+    attack["host_group"] = "private-second-test-host"
+    return build_labeled_lab_dataset([
+        _capture("train", 0), _capture("validation", 1), normal, attack,
+    ])
+
+
 def test_paired_ablation_reports_anonymous_host_variability_with_matching_counts():
-    dataset = _dataset()
-    # A second operator-declared TEST group makes host-level variation visible.
-    dataset.provenance["test"][1]["host_group"] = "private-second-test-host"
+    dataset = _dataset_with_two_test_hosts()
     report = evaluate_zeek_port_ablation(dataset)
     assert report["report_version"] == 2
     assert report["host_group_variability_is_descriptive_only"] is True
@@ -71,8 +90,7 @@ def test_paired_ablation_reports_anonymous_host_variability_with_matching_counts
 
 
 def test_heldout_labels_change_host_diagnostics_but_not_validation_selection():
-    dataset = _dataset()
-    dataset.provenance["test"][1]["host_group"] = "private-second-test-host"
+    dataset = _dataset_with_two_test_hosts()
     before = evaluate_zeek_port_ablation(dataset)
     altered = copy.deepcopy(dataset)
     altered.labels["test"] = [1, 0]
