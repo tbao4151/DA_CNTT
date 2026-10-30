@@ -14,7 +14,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.offline_pcap import _private_path
 from blue_team_ai.zeek import MAX_LOG_BYTES
-from blue_team_ai.zeek_reprocessing_compare import compare_parsed_zeek_reprocessing
+from blue_team_ai.zeek_reprocessing_compare import (
+    compare_parsed_zeek_reprocessing,
+    compare_strict_zeek_reprocessing,
+)
 from verify_pcap_zeek_tuple import _pinned_private_bytes
 
 
@@ -24,6 +27,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-original-sha256", required=True)
     parser.add_argument("--reprocessed-log", type=Path, required=True)
     parser.add_argument("--expected-reprocessed-sha256", required=True)
+    parser.add_argument("--strict-all-fields", action="store_true", help="Compare every raw Zeek column except UID, including extra fields and declared types")
     args = parser.parse_args(argv)
     try:
         original_path = _private_path(args.original_log, must_exist=True)
@@ -36,7 +40,9 @@ def main(argv: list[str] | None = None) -> int:
         reprocessed = _pinned_private_bytes(
             reprocessed_path, args.expected_reprocessed_sha256, limit=MAX_LOG_BYTES,
         )
-        report = compare_parsed_zeek_reprocessing(original, reprocessed)
+        comparator = (compare_strict_zeek_reprocessing if args.strict_all_fields
+                      else compare_parsed_zeek_reprocessing)
+        report = comparator(original, reprocessed)
     except (OSError, ValueError, TypeError) as exc:
         print(f"Offline Zeek reprocessing comparison refused: {exc}", file=sys.stderr)
         return 2

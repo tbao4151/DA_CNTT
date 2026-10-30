@@ -54,3 +54,23 @@ Dataset Mode UNSW-NB15, existing models, SOC cases and Red Team execution
 remain unchanged. A student must separately verify authorized VMware
 Host-only isolation and independent experiment labels before making any
 attack-detection claim.
+
+
+## Opt-in strict all-field raw comparison (feature pending CI, 30/10/2026)
+
+Add `--strict-all-fields` to the Windows command above to require equality of
+**all raw ASCII Zeek columns except `uid`**, including `conn_state`, `history`
+and script-defined extra columns. Both logs must declare the same field names,
+matching per-field `#types` if present, and matching missing/empty/set
+sentinel metadata. Field order and row order may differ. The check is
+case-sensitive, format-sensitive (e.g. `100.0` vs `100.00` differs) and
+preserves duplicate multiplicity. `#open`/`#close` run timestamps and UID
+values remain excluded; fields that *contain* run-specific UID references
+may cause an intentional conservative mismatch.
+
+The default command remains the historical parsed-field comparison. Strict
+mode first performs that comparison, then checks the full raw field multiset.
+It can detect additional discrepancies but cannot prove a particular PCAP
+produced either log, establish Zeek binary/config provenance, or validate
+isolation, labels, attack detection or latency. The JSON output never includes
+individual flows, IPs or UIDs. No Zeek executable or network is invoked.
