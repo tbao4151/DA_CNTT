@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -205,3 +206,35 @@ def test_pinned_queue_handoff_refuses_unverified_selection_without_soc_write(
     assert "refused" in result.stderr
     assert "192.168.56" not in result.stderr
     assert str(tmp_path) not in result.stderr
+
+
+def test_opt_in_manual_soc_runtime_is_scoped_and_not_detection_latency(tmp_path):
+    command, output, db, selected = _pinned_manual_handoff(tmp_path)
+    first = _run(command)
+    assert first.returncode == 0, first.stderr
+    assert "offline_manual_soc_handoff_duration_ms=" not in first.stdout
+
+    # Reusing an existing source+UID case is a different operation from
+    # first-time creation. The timer must not pretend to measure analyst wait.
+    timed = _run(command + ["--measure-manual-soc-runtime"])
+    assert timed.returncode == 0, timed.stderr
+    match = re.search(r"^offline_manual_soc_handoff_duration_ms=(\d+\.\d{6})$",
+                      timed.stdout, re.MULTILINE)
+    assert match is not None
+    assert float(match.group(1)) >= 0
+    assert "offline_manual_soc_handoff_boundary=verified_recompute_plus_sqlite_create_or_reuse" in timed.stdout
+    assert "detection_latency_measured=false; analyst_wait_excluded=true" in timed.stdout
+    assert "192.168.56." not in timed.stdout
+    sys.path.insert(0, str(ROOT / "src"))
+    from siem_ai.core import list_cases
+    assert len(list_cases(db)) == 1
+
+
+def test_opt_in_manual_soc_runtime_refuses_bad_pin_without_timing_or_write(tmp_path):
+    command, output, db, selected = _pinned_manual_handoff(tmp_path)
+    command[command.index("--expected-research-alert-bundle-sha256") + 1] = "0" * 64
+    failed = _run(command + ["--measure-manual-soc-runtime"])
+    assert failed.returncode == 1
+    assert "offline_manual_soc_handoff_duration_ms=" not in failed.stdout
+    assert not db.exists()
+    assert "refused" in failed.stderr
