@@ -238,3 +238,37 @@ def test_opt_in_manual_soc_runtime_refuses_bad_pin_without_timing_or_write(tmp_p
     assert "offline_manual_soc_handoff_duration_ms=" not in failed.stdout
     assert not db.exists()
     assert "refused" in failed.stderr
+
+
+def test_opt_in_research_queue_export_runtime_scoped_and_json_deterministic(tmp_path):
+    command, output, manifest, log, report = _fixture(tmp_path)
+    timed = _run(command + ["--measure-research-export-runtime"])
+    assert timed.returncode == 0, timed.stderr
+    match = re.search(r"^offline_research_queue_export_duration_ms=(\\d+\\.\\d{6})$",
+                      timed.stdout, re.MULTILINE)
+    assert match is not None
+    assert float(match.group(1)) >= 0
+    assert "offline_research_queue_export_boundary=verified_recompute_json_publish" in timed.stdout
+    assert "detection_latency_measured=false; capture_zeek_analyst_wait_excluded=true" in timed.stdout
+    assert "192.168.56." not in timed.stdout
+    assert str(tmp_path) not in timed.stdout
+    first_bytes = output.read_bytes()
+    second = log.parent / "research-alerts-untimed.json"
+    untimed_command = command.copy()
+    untimed_command[untimed_command.index("--output") + 1] = str(second)
+    untimed = _run(untimed_command)
+    assert untimed.returncode == 0, untimed.stderr
+    assert "offline_research_queue_export_duration_ms=" not in untimed.stdout
+    assert first_bytes == second.read_bytes()  # Timing is never embedded in evidence.
+
+
+def test_opt_in_research_queue_export_runtime_refuses_bad_pin_without_timing(tmp_path):
+    command, output, manifest, log, report = _fixture(tmp_path)
+    command[command.index("--expected-report-sha256") + 1] = "0" * 64
+    failed = _run(command + ["--measure-research-export-runtime"])
+    assert failed.returncode == 1
+    assert not output.exists()
+    assert "offline_research_queue_export_duration_ms=" not in failed.stdout
+    assert "refused" in failed.stderr
+    assert "192.168.56." not in failed.stderr
+    assert str(tmp_path) not in failed.stderr
