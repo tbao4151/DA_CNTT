@@ -14,6 +14,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ci_real_zeek_red_blue_handoff import validate_ci_handoff_summary
+from test_red_team_offline_fixture_binding import evidence  # pytest fixture dependency
 from test_red_blue_offline_handoff import joint, _verify
 
 
