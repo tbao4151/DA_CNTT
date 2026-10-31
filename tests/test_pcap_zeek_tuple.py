@@ -105,6 +105,36 @@ def test_refuse_unsupported_or_missing_corroboration(mutation):
         corroborate_pcap_zeek_tuples(pcap(*([] if packet is None else [packet]), linktype=linktype), log)
 
 
+@pytest.mark.parametrize("proto,zeek_proto", [(6, "tcp"), (17, "udp")])
+@pytest.mark.parametrize("mode", ["tuple", "timestamp", "distinct"])
+def test_reserved_ipv4_flag_cannot_corroborate_zeek_flow(proto, zeek_proto, mode):
+    # The RFC 791 reserved high flag bit is invalid even when tuple and
+    # packet timestamp are otherwise plausible. The stricter gate must not
+    # be bypassable by switching corroboration modes.
+    raw = pcap(pcap_packet(proto=proto, fragment=0x8000))
+    kwargs = {
+        "require_timestamp_corroboration": mode != "tuple",
+        "require_distinct_packet_corroboration": mode == "distinct",
+    }
+    with pytest.raises(ValueError, match="reserved fragmentation flag"):
+        corroborate_pcap_zeek_tuples(raw, zeek_log(proto=zeek_proto), **kwargs)
+
+
+@pytest.mark.parametrize("proto,zeek_proto", [(6, "tcp"), (17, "udp")])
+@pytest.mark.parametrize("mode", ["tuple", "timestamp", "distinct"])
+def test_valid_ipv4_dont_fragment_flag_remains_accepted(proto, zeek_proto, mode):
+    # Do-not-fragment (0x4000) is legal and must not be confused with the
+    # reserved bit, more-fragments bit or nonzero fragment offset.
+    raw = pcap(pcap_packet(proto=proto, fragment=0x4000))
+    kwargs = {
+        "require_timestamp_corroboration": mode != "tuple",
+        "require_distinct_packet_corroboration": mode == "distinct",
+    }
+    result = corroborate_pcap_zeek_tuples(raw, zeek_log(proto=zeek_proto), **kwargs)
+    assert result["matched_zeek_flow_count"] == 1
+    assert result["packet_to_flow_identity_verified"] is False
+
+
 @pytest.mark.parametrize("declared_udp_length", [0, 7, 9, 65535])
 def test_udp_tuple_corroboration_refuses_impossible_datagram_length(declared_udp_length):
     # IPv4 payload is exactly the eight-byte UDP header in this fixture.

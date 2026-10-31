@@ -92,6 +92,11 @@ def corroborate_pcap_zeek_tuples(
         if original < 14 + total:
             raise ValueError("IPv4 total length exceeds original PCAP Ethernet frame length")
         flags_fragment = struct.unpack_from("!H", frame, 20)[0]
+        # RFC 791 reserves the high flag bit; accepting it would let an
+        # invalid IPv4 header contribute tuple/timestamp evidence. DF (0x4000)
+        # remains valid, while MF and nonzero fragment offsets are unsupported.
+        if flags_fragment & 0x8000:
+            raise ValueError("IPv4 reserved fragmentation flag must be zero")
         if flags_fragment & 0x3FFF:
             raise ValueError("Fragmented IPv4 is unsupported for strict tuple corroboration")
         protocol = frame[23]
