@@ -181,3 +181,20 @@ host adapter's IPv6 configuration was screened. Global/ULA IPv6 or IPv6
 default routes/DNS cause a v2 refusal. Still inspect **all** host and guest
 NICs/routes and VMware's actual Host-only configuration manually; neither
 snapshot version proves physical isolation or permits Red Team execution.
+
+
+## Optional stronger original packet-to-Zeek presence check
+
+After the strict evidence-chain command in step 3, the operator may repeat
+the **read-only** verification with `--require-pcap-zeek-tuples` added,
+and optionally `--require-pcap-zeek-timestamps`. Both require
+`--require-independent-original-pins` and the original PCAP/Zeek SHA-256
+values. Only use these options for untagged Ethernet classic-PCAP and IPv4
+TCP/UDP Zeek flows; other protocols or capture formats are unsupported,
+not evidence of wrongdoing. Timestamp corroboration requires a matching
+packet within one second of each Zeek flow start. It is an optional
+research consistency screen, **not** a prerequisite for all benign sessions
+and not proof that Zeek generated the flows. Record a failure as
+NOT MEASURED/unsupported where appropriate; do not modify the original
+capture, log or labels to make it pass. See
+`docs/OFFLINE_LAB_EVIDENCE_CHAIN.md` for limitations.

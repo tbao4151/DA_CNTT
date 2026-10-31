@@ -17,9 +17,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
+from blue_team_ai.pcap_structure import MAX_CLASSIC_PCAP_BYTES
+from blue_team_ai.pcap_zeek_tuple import corroborate_pcap_zeek_tuples
 from blue_team_ai.paired_network_preflight import assess_paired_network_snapshots
 from blue_team_ai.zeek import MAX_LOG_BYTES, parse_zeek_conn_log
 from check_paired_network_preflight import _load_private_pinned_snapshot
+from verify_pcap_zeek_tuple import _pinned_private_bytes
 
 
 def verify_chain(args: argparse.Namespace) -> dict[str, object]:
@@ -52,6 +55,10 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("Guest flow presence requires the strict original-pin gate")
     if args.require_pcap_framing and not args.require_independent_original_pins:
         raise ValueError("PCAP framing requires the strict original-pin gate")
+    if (args.require_pcap_zeek_tuples or args.require_pcap_zeek_timestamps) and not args.require_independent_original_pins:
+        raise ValueError("PCAP/Zeek tuple checks require strict independent original pins")
+    if args.require_pcap_zeek_timestamps and not args.require_pcap_zeek_tuples:
+        raise ValueError("Timestamp check requires PCAP/Zeek tuple check")
     original_pins = (args.expected_pcap_sha256, args.expected_log_sha256)
     if args.require_independent_original_pins and not all(
         pin is not None for pin in original_pins
@@ -74,6 +81,23 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         if (not hmac.compare_digest(imported["pcap_sha256"], args.expected_pcap_sha256)
                 or not hmac.compare_digest(imported["zeek_conn_sha256"], args.expected_log_sha256)):
             raise ValueError("Original evidence does not match independent pins")
+    # Opt-in semantic corroboration: re-read *original* bounded files and
+    # recheck their hashes against the import verifier before decoding.
+    # Tuple/timestamp presence is not a one-to-one packet/flow identity proof.
+    tuple_report = None
+    if args.require_pcap_zeek_tuples:
+        pcap_bytes = _pinned_private_bytes(
+            args.pcap, imported["pcap_sha256"], limit=MAX_CLASSIC_PCAP_BYTES,
+        )
+        zeek_bytes = _pinned_private_bytes(
+            args.log, imported["zeek_conn_sha256"], limit=MAX_LOG_BYTES,
+        )
+        tuple_report = corroborate_pcap_zeek_tuples(
+            pcap_bytes, zeek_bytes,
+            require_timestamp_corroboration=args.require_pcap_zeek_timestamps,
+        )
+        if tuple_report["matched_zeek_flow_count"] != imported["flow_count"]:
+            raise ValueError("Tuple corroboration count differs from verified import")
     # Optional research-readiness check: the declared guest must actually
     # occur in at least one *verified* Zeek flow. This does not establish
     # that the capture originated from the guest or that the PCAP is authentic.
@@ -104,6 +128,17 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         "pcap_framing_required": args.require_pcap_framing,
         "pcap_framing_verified": imported["pcap_framing_verified"],
         "pcap_packet_count": imported["pcap_packet_count"],
+        "pcap_zeek_tuples_required": args.require_pcap_zeek_tuples,
+        "pcap_zeek_tuples_verified": tuple_report is not None,
+        "pcap_zeek_timestamps_required": args.require_pcap_zeek_timestamps,
+        "pcap_zeek_matched_flow_count": (
+            tuple_report["matched_zeek_flow_count"] if tuple_report is not None else None
+        ),
+        "pcap_zeek_potential_tuple_reuse": (
+            tuple_report["potential_packet_reuse_for_multiple_zeek_flows"]
+            if tuple_report is not None else None
+        ),
+        "packet_to_flow_identity_verified": False,
         "guest_endpoint_presence_required": args.require_guest_endpoint,
         "guest_endpoint_observed_in_verified_log": args.require_guest_endpoint,
         "independent_original_pcap_zeek_pins_verified": all(
@@ -157,6 +192,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--require-pcap-framing", action="store_true",
         help="With strict original pins, require valid bounded classic-PCAP packet record framing",
+    )
+    parser.add_argument(
+        "--require-pcap-zeek-tuples", action="store_true",
+        help="With strict original pins, require every Zeek IPv4 TCP/UDP 5-tuple in original Ethernet PCAP",
+    )
+    parser.add_argument(
+        "--require-pcap-zeek-timestamps", action="store_true",
+        help="With strict pins and tuple check, require same-tuple packet within 1s of Zeek flow start",
     )
     parser.add_argument(
         "--require-guest-endpoint", action="store_true",

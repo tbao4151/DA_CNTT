@@ -12,6 +12,7 @@ import pytest
 
 from test_offline_pcap_verify import imported
 from test_paired_network_preflight import guest, host
+from test_pcap_zeek_tuple import pcap, pcap_packet
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -63,6 +64,12 @@ def test_synthetic_integrated_evidence_passes_without_claiming_detection(tmp_pat
     assert obj["pcap_framing_required"] is False
     assert obj["pcap_framing_verified"] is False
     assert obj["pcap_packet_count"] is None
+    assert obj["pcap_zeek_tuples_required"] is False
+    assert obj["pcap_zeek_tuples_verified"] is False
+    assert obj["pcap_zeek_timestamps_required"] is False
+    assert obj["pcap_zeek_matched_flow_count"] is None
+    assert obj["pcap_zeek_potential_tuple_reuse"] is None
+    assert obj["packet_to_flow_identity_verified"] is False
     assert obj["zeek_flow_count"] == 1
     assert obj["independent_original_pcap_zeek_pins_verified"] is False
     assert all(obj[k] is False for k in (
@@ -339,3 +346,89 @@ def test_strict_host_ipv6_screen_v2_pinned_pair(tmp_path, imported, ipv6, routes
         assert result.stdout == ""
         assert "refused" in result.stderr
         assert "192.168" not in result.stderr
+
+
+def _tuple_packet(*, dst_port=443, seconds=1630000000, fraction=250000):
+    # Synthetic PCAP is deliberately generated without network access.
+    return pcap(
+        pcap_packet(src="192.168.56.10", dst="192.168.56.20",
+                    sport=52344, dport=dst_port),
+        seconds=seconds, fraction=fraction,
+    )
+
+
+def test_integrated_tuple_gate_requires_strict_original_pins(tmp_path, imported):
+    def enable(args, hp, gp):
+        args.append("--require-pcap-zeek-tuples")
+        _repin_integrated_pcap(args, imported, _tuple_packet())
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+
+
+def test_integrated_tuple_gate_matches_only_pinned_original_bytes(tmp_path, imported):
+    def enable(args, hp, gp):
+        args.extend(["--require-independent-original-pins", "--require-pcap-zeek-tuples"])
+        _repin_integrated_pcap(args, imported, _tuple_packet())
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report["pcap_zeek_tuples_required"] is True
+    assert report["pcap_zeek_tuples_verified"] is True
+    assert report["pcap_zeek_timestamps_required"] is False
+    assert report["pcap_zeek_matched_flow_count"] == 1
+    assert report["pcap_zeek_potential_tuple_reuse"] is False
+    assert report["packet_to_flow_identity_verified"] is False
+    assert report["capture_authenticity_verified"] is False
+    assert "192.168.56" not in result.stdout
+    assert str(tmp_path) not in result.stdout
+
+
+def test_integrated_tuple_gate_refuses_pinned_but_unrelated_packet(tmp_path, imported):
+    def enable(args, hp, gp):
+        args.extend(["--require-independent-original-pins", "--require-pcap-zeek-tuples"])
+        _repin_integrated_pcap(args, imported, _tuple_packet(dst_port=444))
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert "192.168.56" not in result.stderr
+
+
+@pytest.mark.parametrize("seconds,accepted", [
+    (1630000000, True),
+    (1630000020, False),
+])
+def test_integrated_tuple_timestamp_gate(tmp_path, imported, seconds, accepted):
+    def enable(args, hp, gp):
+        args.extend([
+            "--require-independent-original-pins",
+            "--require-pcap-zeek-tuples", "--require-pcap-zeek-timestamps",
+        ])
+        _repin_integrated_pcap(args, imported, _tuple_packet(seconds=seconds))
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert (result.returncode == 0) is accepted, result.stderr
+    if accepted:
+        report = json.loads(result.stdout)
+        assert report["pcap_zeek_timestamps_required"] is True
+        assert report["pcap_zeek_matched_flow_count"] == 1
+        assert report["packet_to_flow_identity_verified"] is False
+    else:
+        assert result.stdout == ""
+        assert "refused" in result.stderr
+
+
+def test_integrated_timestamp_gate_refuses_missing_tuple_opt_in(tmp_path, imported):
+    def enable(args, hp, gp):
+        args.extend(["--require-independent-original-pins", "--require-pcap-zeek-timestamps"])
+        _repin_integrated_pcap(args, imported, _tuple_packet())
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
