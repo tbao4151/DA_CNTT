@@ -793,3 +793,24 @@ reading these diagnostics. Group identifiers and per-group flow counts
 are never included in the report. The diagnostic remains read-only and
 uses TRAIN/VALIDATION only; the broader manifest preflight still checks
 TEST structure and class counts.
+
+## Session-level variability in offline baseline report v6 (31/10/2026)
+
+The private, offline Zeek baseline aggregate report v6 adds
+`validation_session_variability` and `test_session_variability` at the
+**same validation-selected fixed threshold** as the existing host variability.
+The new summaries group independently supplied labels and model predictions
+by operator-declared `session_id`, not `host_group`, and reuse the
+same confusion counts, undefined-rate `null` semantics and small-group
+privacy suppression. If any session contains fewer than 30 flows, **all**
+per-session confusion rows and rate ranges in that split are suppressed.
+Only group count, suppression and single/small-group warnings remain.
+The held-out TEST summary is descriptive and must never guide retuning.
+
+This reveals potential instability across sessions even when multiple sessions
+belong to one host, but sessions are not automatically independent statistical
+units. It does **not** authenticate session declarations, verify attack labels,
+measure operational SOC latency or estimate cluster-adjusted uncertainty.
+Existing host summaries and official UNSW-NB15 metrics are unchanged.
+The read-only private trace reviewer accepts report v4/v5/v6; private trace
+schema remains v1. Synthetic CI is not VMware evidence.
