@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from blue_team_ai.trace_review import review_private_zeek_trace
+from blue_team_ai.uncertainty import summarize_detection_uncertainty
 from evaluate_zeek_lab import run_offline_experiment
 
 
@@ -122,6 +123,46 @@ def test_private_trace_rejects_inconsistent_or_invalid_heldout_rates(tmp_path, m
         review_private_zeek_trace(raw, _encode(report))
 
 
+
+@pytest.mark.parametrize("mutation", [
+    "missing_section", "missing_interval", "changed_successes",
+    "changed_trials", "changed_lower", "changed_upper", "changed_estimate",
+    "changed_method", "changed_warning", "bool_count", "extra_key",
+    "null_interval", "wrong_unit",
+])
+def test_private_trace_rejects_tampered_heldout_wilson_intervals(tmp_path, mutation):
+    raw, report = _fixture(tmp_path)
+    diagnostic = report["test_detection_uncertainty"]
+    recall = diagnostic["attack_recall"]  # one positive label: defined interval
+    if mutation == "missing_section":
+        report.pop("test_detection_uncertainty")
+    elif mutation == "missing_interval":
+        diagnostic.pop("attack_recall")
+    elif mutation == "changed_successes":
+        recall["successes"] += 1
+    elif mutation == "changed_trials":
+        recall["trials"] += 1
+    elif mutation == "changed_lower":
+        recall["lower"] = 0.123456789
+    elif mutation == "changed_upper":
+        recall["upper"] = 0.876543211
+    elif mutation == "changed_estimate":
+        recall["estimate"] = 0.333333
+    elif mutation == "changed_method":
+        recall["method"] = "normal_approximation"
+    elif mutation == "changed_warning":
+        diagnostic["small_denominator_warning"] = False
+    elif mutation == "bool_count":
+        recall["trials"] = True
+    elif mutation == "extra_key":
+        diagnostic["unverified_confidence"] = 1.0
+    elif mutation == "null_interval":
+        recall["lower"] = None
+    elif mutation == "wrong_unit":
+        diagnostic["unit_of_analysis"] = "independent_host"
+    with pytest.raises(ValueError, match="Wilson uncertainty mismatch"):
+        review_private_zeek_trace(raw, _encode(report))
+
 def test_trace_input_size_and_duplicate_json_keys_refused(tmp_path):
     raw, report = _fixture(tmp_path)
     with pytest.raises(ValueError, match="bounded"):
@@ -159,6 +200,9 @@ def test_test_label_reassignment_does_not_change_review_predictions(tmp_path):
         "f1": 2 * precision * recall / (precision + recall) if precision + recall else 0.0,
         "false_positive_rate": fp / (fp + tn) if fp + tn else 0.0,
     })
+    report["test_detection_uncertainty"] = summarize_detection_uncertainty(
+        report["test_metrics"]
+    )
     second = review_private_zeek_trace(raw, _encode(report))
     assert first == second  # review exposes no ground truth and does not retrain
 

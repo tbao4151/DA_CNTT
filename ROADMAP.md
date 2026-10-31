@@ -1670,3 +1670,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI for the new trace-rate consistency regressions; merge only when all required checks pass and the PR is conflict-free.
 - [ ] On Windows 11 run `py -3.12 -m pytest -q tests/test_zeek_trace_review.py`, then manually review a private pinned Zeek test trace produced from independently annotated authorized VMware Host-only captures. Keep all raw PCAP, Zeek logs, labels and per-flow trace outside public GitHub.
 - [ ] Collect actual independently verified capture/annotation evidence and measure held-out detection metrics and event-to-alert-to-SOC timing. Arithmetic consistency cannot authenticate training, operator labels, capture origin or lab isolation; Red Team network execution remains disabled pending safety acceptance. Preserve official UNSW-NB15 Dataset Mode.
+
+
+## 2026-10-31 — Verify private held-out Zeek Wilson intervals (feature acceptance pending)
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI for Wilson uncertainty trace-integrity tests; merge only when all required checks pass and GitHub reports no conflict.
+- [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_zeek_trace_review.py`, then validate a **private**, independently annotated authorized VMware Host-only test trace and its original pinned Zeek source. Do not publish UIDs, labels, private traces or lab addresses.
+- [ ] Record genuine Host-only isolation, PCAP/Zeek provenance and independent annotation, then measure held-out Precision/Recall/FPR and event-to-alert-to-SOC timing. Wilson flow-level intervals assume independent observations; correlated sessions can make bounds misleading. No synthetic CI or JSON arithmetic check proves attack detection. Red Team execution remains disabled pending safety acceptance; preserve UNSW-NB15 Dataset Mode.

@@ -11,6 +11,7 @@ import json
 import math
 
 from .features import LAB_FEATURE_SCHEMA_VERSION
+from .uncertainty import summarize_detection_uncertainty
 from .zeek import parse_zeek_conn_log
 
 MAX_PRIVATE_TRACE_BYTES = 16 * 1024 * 1024
@@ -42,6 +43,30 @@ def _invalid_constant(_value: str) -> None:
 
 def _digest(value: object) -> bool:
     return isinstance(value, str) and len(value) == 64 and all(c in _HEX for c in value)
+
+
+def _matches_derived_diagnostic(observed: object, expected: object) -> bool:
+    """Compare a nested generated diagnostic with strict shape and finite rates.
+
+    Allow negligible JSON float-rounding differences, but never treat booleans
+    as integer counts or permit extra fields in a research integrity check.
+    """
+    if isinstance(expected, dict):
+        return (
+            isinstance(observed, dict)
+            and set(observed) == set(expected)
+            and all(
+                _matches_derived_diagnostic(observed[key], value)
+                for key, value in expected.items()
+            )
+        )
+    if type(expected) is float:
+        return (
+            type(observed) in (int, float)
+            and math.isfinite(observed)
+            and math.isclose(observed, expected, rel_tol=0.0, abs_tol=1e-12)
+        )
+    return type(observed) is type(expected) and observed == expected
 
 
 def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str, object]:
@@ -160,6 +185,14 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
                 or not math.isfinite(observed) or not 0 <= observed <= 1
                 or not math.isclose(observed, expected, rel_tol=0.0, abs_tol=1e-12)):
             raise ValueError("Private trace/test report rate mismatch")
+    # Wilson intervals and their numerators/denominators are fully determined
+    # by the held-out trace counts. Do not accept edited uncertainty bounds as
+    # independent evidence of model reliability or authenticated ground truth.
+    expected_uncertainty = summarize_detection_uncertainty(metrics)
+    if not _matches_derived_diagnostic(
+        report.get("test_detection_uncertainty"), expected_uncertainty
+    ):
+        raise ValueError("Private trace/test Wilson uncertainty mismatch")
     if set(rows_by_source) != set(declared_sources):
         raise ValueError("Private trace sources differ from held-out test provenance")
 

@@ -316,8 +316,13 @@ operator-supplied labels.
 The reviewer also recomputes the reported held-out Precision, Recall, F1 and
 false-positive rate from those trace confusion counts and rejects missing,
 non-numeric or inconsistent rates (including zero-denominator cases). This
-checks internal arithmetic only; an attacker who rewrites the trace and all
-its metrics consistently can still forge a self-consistent report. It shows a **read-only**, label-free list of up to 500
+also recomputes the held-out 95% Wilson interval counts, estimates, bounds
+and small-denominator warning from the same confusion matrix, rejecting
+missing, modified or malformed uncertainty diagnostics (report v4/v5/v6).
+These are descriptive **flow-level** intervals, not host/session-adjusted
+confidence intervals. The check establishes internal arithmetic only; an
+attacker who rewrites the trace and all derived metrics consistently can still
+forge a self-consistent report. It shows a **read-only**, label-free list of up to 500
 research Attack candidates and their actual Zeek IP/timestamps, sorted by
 research probability. The trace may include other test captures; this view
 does **not** verify their original bytes. Uploading a trace neither fits/loads

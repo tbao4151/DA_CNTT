@@ -9,6 +9,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from blue_team_ai.research_triage import create_research_candidate_case
+from blue_team_ai.uncertainty import summarize_detection_uncertainty
 from blue_team_ai.triage import create_offline_review_case
 from siem_ai.core import case_evidence, case_history, list_cases
 
@@ -56,6 +57,7 @@ def _inputs():
             "flows": flows,
         },
     }
+    report["test_detection_uncertainty"] = summarize_detection_uncertainty(report["test_metrics"])
     return raw, json.dumps(report).encode()
 
 
@@ -139,6 +141,19 @@ def test_inconsistent_heldout_rates_fail_closed_before_soc_write(tmp_path):
             record_index=1, analyst_confirmed=True,
         )
     assert not db.exists()
+
+def test_inconsistent_wilson_interval_fails_closed_before_soc_write(tmp_path):
+    raw, trace = _inputs()
+    db = tmp_path / "cyber.sqlite3"
+    altered = json.loads(trace)
+    altered["test_detection_uncertainty"]["attack_recall"]["lower"] = 0.123456789
+    with pytest.raises(ValueError, match="Wilson uncertainty mismatch"):
+        create_research_candidate_case(
+            db, source_data=raw, trace_data=json.dumps(altered).encode(),
+            record_index=1, analyst_confirmed=True,
+        )
+    assert not db.exists()
+
 
 def test_legacy_manual_case_keeps_default_note_and_unclassified_semantics(tmp_path):
     raw, _ = _inputs()
