@@ -163,7 +163,7 @@ def test_bidirectional_reuse_is_reported_even_with_reverse_zeek_direction():
     # Two Zeek rows can be corroborated by one packet, including a reverse
     # direction row. This is not a packet-to-flow identity proof.
     log = zeek_log().decode()
-    log += "101.0\\tC2\\t10.1.1.3\\t80\\t10.1.1.2\\t1234\\ttcp\\n"
+    log += "101.0\tC2\t10.1.1.3\t80\t10.1.1.2\t1234\ttcp\n"
     result = corroborate_pcap_zeek_tuples(pcap(pcap_packet()), log.encode())
     assert result["matched_zeek_flow_count"] == 2
     assert result["supported_pcap_packet_count"] == 1
