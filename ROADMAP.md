@@ -1724,7 +1724,7 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Obtain independently annotated real captures with host/session-disjoint held-out evaluation and demonstrate offline Zeek model -> research alert -> explicit SOC case, measuring real end-to-end timing. This IPv4 syntax gate alone proves neither packet provenance nor real AI detection. Keep Red network execution OFF and UNSW-NB15 benchmark unchanged.
 
 
-## Cyber Lab — signed PCAP/Zeek timing bias diagnostic (01/11/2026)
+## Cyber Lab — signed PCAP/Zeek timing bias diagnostic (PR #315; 01/11/2026)
 
 - [ ] Confirm final-head Ubuntu Python 3.12.9 quality CI and Windows offline synthetic tests pass, check clean PR mergeability, then merge the signed timestamp-offset diagnostic feature. Record PR and exact run URLs in PROGRESS; do not claim CI success before verification.
 - [ ] Student runs the synthetic regression on Windows 11 Python 3.12.9, then validates an authorized genuine VMware Host-only PCAP and Zeek conn.log with independently pinned SHA-256 and verified network isolation evidence. Record Zeek version and clock setup privately; do not upload original captures.
