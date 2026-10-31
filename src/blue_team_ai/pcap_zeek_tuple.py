@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import ipaddress
 import struct
-from collections import Counter
 from bisect import bisect_left
+from collections import Counter
 from datetime import datetime
 
 from .pcap_structure import MAGIC_FORMATS, inspect_classic_pcap_framing
