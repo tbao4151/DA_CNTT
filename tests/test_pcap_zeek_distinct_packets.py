@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from blue_team_ai.pcap_zeek_tuple import corroborate_pcap_zeek_tuples
 from test_pcap_zeek_tuple import pcap, pcap_packet, zeek_log
 from test_lab_evidence_chain import _repin_integrated_pcap, _run
+from test_offline_pcap_verify import imported  # pytest fixture must be visible in this module
 from verify_pcap_zeek_tuple import main as standalone_main
 
 
