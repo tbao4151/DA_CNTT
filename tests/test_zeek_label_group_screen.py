@@ -129,3 +129,55 @@ def test_cli_opt_in_read_only_and_preflight_only(tmp_path, capsys):
     assert capsys.readouterr().out == ""
     assert not output.exists()
     assert {p.name: p.read_bytes() for p in manifest.parent.iterdir()} == before
+
+
+def test_session_separation_detected_even_when_host_has_both_labels():
+    dataset = _dataset()
+    dataset.provenance["train"] = [
+        {"host_group": "host-A", "session_id": "normal-session"},
+        {"host_group": "host-A", "session_id": "normal-session"},
+        {"host_group": "host-A", "session_id": "attack-session"},
+        {"host_group": "host-A", "session_id": "attack-session"},
+    ]
+    report = summarize_train_validation_label_group_confounding(dataset)
+    train = report["partitions"]["train"]
+    assert train["host_groups_with_both_classes"] == 1
+    assert train["labels_fully_separated_by_host_group"] is False
+    assert train["labels_fully_separated_by_session"] is True
+    assert train["normal_session_coverage"] == 1
+    assert train["attack_session_coverage"] == 1
+    assert train["host_groups_with_multiple_sessions"] == 1
+    assert "train:labels_fully_separated_by_session" in report["warnings"]
+    assert "train:attack_labels_in_one_session" in report["warnings"]
+    assert "train:normal_labels_in_one_session" in report["warnings"]
+    assert "train:labels_fully_separated_by_host_group" not in report["warnings"]
+    assert "train:host_and_session_one_to_one" not in report["warnings"]
+    assert "normal-session" not in json.dumps(report)
+    assert "attack-session" not in json.dumps(report)
+
+
+def test_one_to_one_host_session_nesting_warning_is_not_detection_claim():
+    report = summarize_train_validation_label_group_confounding(_dataset())
+    assert "train:host_and_session_one_to_one" in report["warnings"]
+    assert "validation:host_and_session_one_to_one" in report["warnings"]
+    assert report["partitions"]["train"]["host_groups_with_multiple_sessions"] == 0
+    assert report["partitions"]["validation"]["labels_fully_separated_by_session"] is False
+    assert "validation:labels_fully_separated_by_session" not in report["warnings"]
+    assert report["label_truth_verified"] is False
+    assert report["host_only_isolation_verified"] is False
+
+
+def test_single_mixed_session_is_distinct_from_perfect_session_separation():
+    dataset = _dataset()
+    dataset.provenance["train"] = [
+        {"host_group": "host-A", "session_id": "single-session"}
+        for _ in dataset.labels["train"]
+    ]
+    report = summarize_train_validation_label_group_confounding(dataset)
+    train = report["partitions"]["train"]
+    assert train["sessions"] == 1
+    assert train["sessions_with_both_classes"] == 1
+    assert train["labels_fully_separated_by_session"] is False
+    assert "train:only_one_declared_session" in report["warnings"]
+    assert "train:labels_fully_separated_by_session" not in report["warnings"]
+    assert "train:host_and_session_one_to_one" not in report["warnings"]
