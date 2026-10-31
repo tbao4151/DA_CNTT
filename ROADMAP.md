@@ -1572,3 +1572,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify post-merge `main` CI separately; do not interpret synthetic runner success as a laptop/VMware capture.
 - [ ] Student Windows 11: follow `docs/FIRST_VMWARE_HOSTONLY_EVIDENCE_SESSION.md`; manually review Host-only NICs/routes and authorization, archive original PCAP/Zeek and four distinct hash-pinned supporting evidence files privately, and run `py -3.12 -m pytest -q tests/test_vmware_session_record.py` locally. Structural file identity is not proof of evidence authenticity.
 - [ ] Prioritize genuine independently annotated host/session-disjoint Zeek data, preregistered holdout, measured Blue Team Precision/Recall/FPR and event-to-alert-to-SOC-case latency. Keep active Red Team disabled until lab scope/isolation is verified. Preserve official UNSW-NB15 metrics.
+
+
+## 2026-10-31 — Offline Red Team proposal-to-evidence handoff
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows CI for `tests/test_red_team_offline_fixture_binding.py`; merge only after successful checks and clean mergeability. The new CLI only links an outstanding, audited offline proposal to independently pinned PCAP/Zeek *bytes* and declared scope, never executes a replay.
+- [ ] On Windows 11, first obtain authorization and manually confirm VMware Host-only isolation, preserve original PCAP/conn.log/import report and exported pending Red Team audit privately, independently pin hashes, then run `scripts/bind_red_team_offline_fixture.py` with the real CIDR. Review scenario-to-traffic correspondence separately; the tool does not establish it.
+- [ ] Gather independently adjudicated, host/session-disjoint Zeek labels and measure Blue Team detection and SOC timing before any AI-vs-AI performance claim. No active Red Team execution until a separately reviewed safety gate and kill switch exist. Preserve the official UNSW-NB15 benchmark.
