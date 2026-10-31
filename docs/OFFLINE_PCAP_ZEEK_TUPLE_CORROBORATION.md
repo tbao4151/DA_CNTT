@@ -25,7 +25,7 @@ lengths even if the captured prefix contains plausible ports and timestamps.
 A legitimate snaplen-truncated record may still pass when its separately
 recorded original length is sufficient; no payload completeness is claimed.
  Non-IPv4 packets such as ARP are ignored for
-corroboration; VLAN-tagged Ethernet and fragmented IPv4 are refused. Zeek
+corroboration; VLAN-tagged Ethernet, fragmented IPv4, and IPv4 packets with the RFC 791 reserved high flag bit set are refused. The valid IPv4 Don't Fragment (DF) bit remains accepted. Zeek
 flows using IPv6 or non-TCP/UDP protocols are refused rather than silently
 reported as verified. Classic PCAP record framing and Zeek ASCII parsing are
 validated using existing bounded project parsers. Unsupported formats need
