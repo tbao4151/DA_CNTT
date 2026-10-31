@@ -751,9 +751,13 @@ py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experime
 `label_group_diagnostics` aggregates the number of operator-declared host
 groups and sessions containing both Normal and Attack labels, only Normal,
 or only Attack; it also counts how many declared host groups contain each
-class. When all host groups in TRAIN or VALIDATION are single-class, the
-screen warns that the model might learn host/environment shortcuts rather
-than attack behavior. Single-host class concentration is also flagged.
+class. The diagnostic now also reports session-level class coverage, flags
+sessions that are all single-class even when their shared host has both
+classes, and warns when a class occurs in just one declared session. It
+flags one-to-one host/session nesting (one session per host), where the
+operator cannot distinguish host effects from session effects in this
+partition. The existing host-level warnings remain unchanged. These are
+**warnings**, not automatic reasons to relabel or discard a capture.
 
 The diagnostic reads **only TRAIN and VALIDATION labels plus host/session
 declarations**, not feature values or held-out TEST labels/features. The

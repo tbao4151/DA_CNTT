@@ -53,6 +53,7 @@ def summarize_train_validation_label_group_confounding(
             raise ValueError("TRAIN/VALIDATION labels and provenance must align with both classes")
         host_classes: dict[str, set[int]] = {}
         session_classes: dict[str, set[int]] = {}
+        host_sessions: dict[str, set[str]] = {}
         for label, meta in zip(labels, provenance):
             if not isinstance(meta, Mapping):
                 raise ValueError("Invalid Zeek provenance")
@@ -68,11 +69,14 @@ def summarize_train_validation_label_group_confounding(
             seen_sessions[session] = (split, host)
             host_classes.setdefault(host, set()).add(label)
             session_classes.setdefault(session, set()).add(label)
+            host_sessions.setdefault(host, set()).add(session)
 
         host_mixed = sum(classes == {0, 1} for classes in host_classes.values())
         session_mixed = sum(classes == {0, 1} for classes in session_classes.values())
         normal_hosts = sum(0 in classes for classes in host_classes.values())
         attack_hosts = sum(1 in classes for classes in host_classes.values())
+        normal_sessions = sum(0 in classes for classes in session_classes.values())
+        attack_sessions = sum(1 in classes for classes in session_classes.values())
         partitions[split] = {
             "host_groups": len(host_classes),
             "sessions": len(session_classes),
@@ -85,15 +89,33 @@ def summarize_train_validation_label_group_confounding(
             "sessions_normal_only": sum(classes == {0} for classes in session_classes.values()),
             "sessions_attack_only": sum(classes == {1} for classes in session_classes.values()),
             "labels_fully_separated_by_host_group": host_mixed == 0,
+            "labels_fully_separated_by_session": session_mixed == 0,
+            "normal_session_coverage": normal_sessions,
+            "attack_session_coverage": attack_sessions,
+            "host_groups_with_multiple_sessions": sum(
+                len(sessions) > 1 for sessions in host_sessions.values()
+            ),
         }
         if len(host_classes) < 2:
             warnings.append(f"{split}:only_one_declared_host_group")
         if host_mixed == 0:
             warnings.append(f"{split}:labels_fully_separated_by_host_group")
+        if len(session_classes) < 2:
+            warnings.append(f"{split}:only_one_declared_session")
+        if session_mixed == 0:
+            warnings.append(f"{split}:labels_fully_separated_by_session")
+        if len(host_classes) > 1 and all(
+            len(sessions) == 1 for sessions in host_sessions.values()
+        ):
+            warnings.append(f"{split}:host_and_session_one_to_one")
         if len(host_classes) > 1 and attack_hosts == 1:
             warnings.append(f"{split}:attack_labels_in_one_host_group")
         if len(host_classes) > 1 and normal_hosts == 1:
             warnings.append(f"{split}:normal_labels_in_one_host_group")
+        if len(session_classes) > 1 and attack_sessions == 1:
+            warnings.append(f"{split}:attack_labels_in_one_session")
+        if len(session_classes) > 1 and normal_sessions == 1:
+            warnings.append(f"{split}:normal_labels_in_one_session")
 
     return {
         "diagnostic_version": 1,
@@ -110,7 +132,8 @@ def summarize_train_validation_label_group_confounding(
         "warnings": warnings,
         "interpretation": (
             "Declared host/session-to-label concentration is descriptive only. "
-            "It can flag host/scenario confounding but cannot establish causal "
+            "Host/session concentration and one-to-one nesting can flag possible "
+            "scenario confounding but cannot establish causal "
             "leakage, genuine ground truth, host independence or attack detection. "
             "TEST is deliberately excluded; never tune using held-out TEST."
         ),
