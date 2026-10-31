@@ -59,7 +59,7 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
     )
     if (not isinstance(report, dict)
             or type(report.get("report_version")) is not int
-            or report["report_version"] not in (4, 5)
+            or report["report_version"] not in (4, 5, 6)
             or report.get("mode") != "offline_labeled_zeek_research_only"):
         raise ValueError("Unsupported offline Zeek research report")
     if not _digest(report.get("input_manifest_sha256")):
