@@ -93,3 +93,37 @@ latency. PCAPNG is not supported by this strict classic-PCAP gate.
 
 Regression only: `py -3.12 -m pytest -q tests/test_lab_evidence_chain.py`.
 These synthetic tests are not a Windows 11/VMware experiment.
+
+
+## Optional original PCAP ↔ Zeek tuple corroboration (31/10/2026)
+
+The existing integrated verifier can now opt into **semantic packet/flow presence**
+after the strict independent original-hash checks. Add
+`--require-pcap-zeek-tuples` to the full command **with**
+`--require-independent-original-pins` and both independently recorded original
+PCAP/Zeek hashes. It re-reads bounded original files, checks their SHA-256
+again, and delegates to the existing strict Ethernet classic-PCAP IPv4 TCP/UDP
+tuple corroborator. Every Zeek flow must have a matching packet five-tuple in
+either direction. A valid import report or structurally valid PCAP alone is
+not sufficient. The check rejects unsupported linktypes, VLAN, fragmented IP,
+IPv6/ICMP Zeek flows and malformed packets; do not loosen the protocol contract
+or rewrite real evidence to obtain PASS.
+
+Optionally also add `--require-pcap-zeek-timestamps` (requires the tuple
+flag) to require a same-tuple packet timestamp within one second of each Zeek
+flow start. This may fail on genuine traces with different clock origins,
+missing packets, capture truncation or Zeek time semantics. Report failures
+as **unsupported/inconclusive**, not as proof of an attack or fabrication.
+Output contains only aggregate counts and booleans:
+`pcap_zeek_tuples_required`, `pcap_zeek_tuples_verified`,
+`pcap_zeek_timestamps_required`, `pcap_zeek_matched_flow_count`,
+`pcap_zeek_potential_tuple_reuse`. With no opt-in, the gate remains
+backward-compatible and the latter two fields are null.
+
+A single packet may satisfy several Zeek rows with the same tuple, even with
+timestamp corroboration. `packet_to_flow_identity_verified` remains false.
+These checks do **not** authenticate capture origin, physical Host-only
+isolation, permission, Zeek derivation, independent labels, AI detection or
+SOC latency. No PCAP, IP or UID is exported; no network access or file writes.
+Run `py -3.12 -m pytest -q tests/test_lab_evidence_chain.py` on Windows
+for synthetic regression only, and separately retain real VMware evidence.
