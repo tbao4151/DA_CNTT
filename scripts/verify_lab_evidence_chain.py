@@ -147,6 +147,14 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
             tuple_report["distinct_assigned_packet_offset_max_ms"]
             if tuple_report is not None else None
         ),
+        "pcap_zeek_nearest_packet_signed_offset_mean_ms": (
+            tuple_report["timestamp_nearest_packet_signed_offset_mean_ms"]
+            if tuple_report is not None else None
+        ),
+        "pcap_zeek_distinct_assigned_signed_offset_mean_ms": (
+            tuple_report["distinct_assigned_packet_signed_offset_mean_ms"]
+            if tuple_report is not None else None
+        ),
         "pcap_zeek_potential_tuple_reuse": (
             tuple_report["potential_packet_reuse_for_multiple_zeek_flows"]
             if tuple_report is not None else None
