@@ -163,3 +163,15 @@ Synthetic-only developer test:
 ~~~powershell
 py -3.12 -m pytest -q tests/test_vmware_session_record.py
 ~~~
+
+
+## Host adapter IPv6 note (snapshot v2)
+
+The host PowerShell collector now records the selected VMnet adapter's IPv6
+addresses, IPv6 default routes and IPv6 DNS in snapshot v2. An old v1 host
+snapshot remains readable but explicitly reports `host_ipv6_screened=false`:
+replace it with a new independently pinned v2 capture before claiming the
+host adapter's IPv6 configuration was screened. Global/ULA IPv6 or IPv6
+default routes/DNS cause a v2 refusal. Still inspect **all** host and guest
+NICs/routes and VMware's actual Host-only configuration manually; neither
+snapshot version proves physical isolation or permits Red Team execution.

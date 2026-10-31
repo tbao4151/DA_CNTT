@@ -1677,3 +1677,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI for Wilson uncertainty trace-integrity tests; merge only when all required checks pass and GitHub reports no conflict.
 - [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_zeek_trace_review.py`, then validate a **private**, independently annotated authorized VMware Host-only test trace and its original pinned Zeek source. Do not publish UIDs, labels, private traces or lab addresses.
 - [ ] Record genuine Host-only isolation, PCAP/Zeek provenance and independent annotation, then measure held-out Precision/Recall/FPR and event-to-alert-to-SOC timing. Wilson flow-level intervals assume independent observations; correlated sessions can make bounds misleading. No synthetic CI or JSON arithmetic check proves attack detection. Red Team execution remains disabled pending safety acceptance; preserve UNSW-NB15 Dataset Mode.
+
+
+## 2026-10-31 — Windows host snapshot v2 IPv6 safety screen (feature acceptance pending)
+
+- [ ] Verify exact-head Python 3.12.9 Ubuntu quality and Windows offline Zeek CI, including mocked PowerShell host snapshot smoke and host/paired preflight tests. Merge only after all required checks succeed and the PR is conflict-free.
+- [ ] Student Windows 11: collect a **new private v2** host adapter snapshot on the actual VMware Host-only VMnet; independently record SHA-256 and run pinned host and paired preflight. Reject non-link-local IPv6/default routes/DNS; review all guest NICs, Linux IPv6 routes, VMware mode and authorization manually. Do not treat legacy v1 IPv4-only passes as IPv6 clearance.
+- [ ] Obtain independently labeled genuine PCAP/Zeek evidence from authorized isolated lab and measure Blue Team held-out Precision/Recall/FPR and event-to-SOC timing. Snapshot validation is not isolation attestation, network traffic, attack detection or a live Red Team kill switch. Preserve official UNSW-NB15 benchmark.

@@ -36,3 +36,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tests/windows_hostonly_snaps
 ```
 
 The PowerShell smoke test mocks Windows networking cmdlets; it neither reads a real VMware adapter nor changes network configuration. GitHub CI is not evidence of isolation on the student's laptop.
+
+
+## Snapshot v2: host adapter IPv6 visibility (31/10/2026)
+
+The read-only PowerShell collector now writes `schema_version=2`, adding
+`adapter_ipv6`, `adapter_default_routes_ipv6` and
+`adapter_dns_servers_ipv6` for the **selected host adapter**. The offline
+checker refuses non-link-local IPv6 addresses (including global and ULA),
+IPv6 default routes or IPv6 DNS servers, malformed addresses, duplicates,
+and unexpected fields. Windows link-local zone suffixes such as `%11` are
+accepted only when numeric. The paired host/guest checker also accepts v2.
+
+Legacy v1 evidence remains readable to avoid breaking old local scripts,
+but reports `host_ipv6_screened=false` and null IPv6 conclusions. **Do not
+interpret a v1 pass as an IPv6 safety check.** Collect a fresh v2 snapshot
+under a new private filename, record its SHA-256 independently, and rerun
+host and paired preflights before any authorized activity. Neither v2 nor
+passing host/guest snapshots verifies other host adapters, all Linux guest
+routes, VMware's actual virtual network mode, authorization, or isolation.
+The Windows CI PowerShell smoke uses mocked network cmdlets only.
