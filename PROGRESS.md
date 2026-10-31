@@ -2501,7 +2501,7 @@
 - **At authoring:** this PR's CI and Windows laptop execution have not been verified. No model, official benchmark, SQLite, PCAP, network operation or public deployment was changed. Genuine Host-only capture, independent labels, held-out metrics and measured event-to-SOC latency remain open.
 
 
-## 2026-10-31 — Opt-in strict host IPv6 visibility in integrated offline evidence chain (feature PR; CI pending)
+## 2026-10-31 — Opt-in strict host IPv6 visibility in integrated offline evidence chain ([PR #310](https://github.com/tbao4151/DA_CNTT/pull/310); CI pending)
 
 - Verified `main` at `ac3a687b2e8a1de534e89aab1de93fde9d287767`: PR #309 merged, post-merge main quality run #41209436855 succeeded, and no open PR existed at branch creation. Reviewed README, PROGRESS, ROADMAP, current architecture inventory, pinned host/guest checks, integrated PCAP/Zeek chain and existing synthetic regressions.
 - Added `--require-host-ipv6-screened` to the **read-only** integrated evidence-chain CLI. With explicit opt-in it refuses legacy v1 host snapshots; v2 must pass the existing selected-adapter link-local-only IPv6, no IPv6 default route and no IPv6 DNS validation. Both screened/required flags appear in aggregate JSON, while the old CLI behavior remains compatible by default. The first-session Windows runbook opts into the stricter gate.
