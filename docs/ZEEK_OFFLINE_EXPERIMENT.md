@@ -772,3 +772,24 @@ Operator declarations and network isolation still require independent review.
 
 Run synthetic-only regressions:
 `py -3.12 -m pytest -q tests/test_zeek_label_group_screen.py`.
+
+
+### TRAIN/VALIDATION class-flow dominance diagnostic (31/10/2026)
+
+The existing `--preflight --label-group-screen` also reports four
+`*_max_*_flow_share` fractions (Normal/Attack by host group/session).
+For each class, the fraction is the largest number of class-labeled flows
+from one declared group divided by all flows of that class in the same
+TRAIN or VALIDATION split. It is rounded to four decimals in JSON. When
+there are at least **10 flows of that class**, at least **two declared
+groups** and one group contributes **80% or more**, a fixed
+`<split>:<normal|attack>_flows_dominated_by_one_<host_group|session>`
+warning is emitted. The 80% rule is an exploratory screen, not a learned
+threshold, hypothesis test, independent-sample-size estimate, or proof of
+model shortcut learning. Small classes and one-group partitions retain
+their existing warnings; no dominance warning does **not** imply safe
+generalization. Do not change capture labels or held-out TEST after
+reading these diagnostics. Group identifiers and per-group flow counts
+are never included in the report. The diagnostic remains read-only and
+uses TRAIN/VALIDATION only; the broader manifest preflight still checks
+TEST structure and class counts.

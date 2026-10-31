@@ -1650,3 +1650,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI for session-level preflight regressions; merge only when all required checks succeed and GitHub reports no conflicts. No CI pass is claimed for this feature at authoring.
 - [ ] On the student's Windows 11 laptop, run `py -3.12 -m pytest -q tests/test_zeek_label_group_screen.py` and the private manifest with `--preflight --label-group-screen` after independently annotating authorized VMware Host-only captures. Review both host-level and session-level class concentration, one-to-one nesting, and independent scenario records before designing new capture sessions.
 - [ ] Obtain genuine independently verified labels and host/session-disjoint held-out captures; report real Precision/Recall/FPR and event-to-case latency only after the actual lab experiment. No warning proves leakage or detection; Red Team traffic remains disabled pending isolation approval. Official UNSW-NB15 benchmark remains unchanged.
+
+
+## 2026-10-31 — Zeek class-flow dominance screen (proposed, CI pending)
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows offline Zeek CI for the new host/session class-flow dominance diagnostics; merge only if checks pass and no conflicts. Preserve the existing `--label-group-screen` interface and UNSW-NB15 benchmark.
+- [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_zeek_label_group_screen.py`; with private independently annotated Host-only Zeek captures, run `--preflight --label-group-screen` and review the fixed 80% concentration warnings together with host/session class coverage. Never tune thresholds or reassign TEST based on held-out outcomes.
+- [ ] Independently establish VMware isolation, capture provenance and scenario labels, then measure held-out Blue Team Precision/Recall/FPR and event-to-SOC latency; these descriptive warnings are not detection results.
