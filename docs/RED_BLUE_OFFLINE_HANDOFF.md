@@ -67,3 +67,42 @@ retain original files/Zeek version/adapter and route evidence privately,
 independently label scenarios, and evaluate the Zeek-schema model on a
 preregistered host/session-disjoint holdout. Never confuse CI success with
 student laptop acceptance. Dataset Mode/UNSW-NB15 remains untouched.
+
+
+## Real-Zeek CI integration acceptance (proposed 31/10/2026)
+
+The separate GitHub workflow `.github/workflows/real-zeek-offline-smoke.yml`
+now runs `tests/ci_real_zeek_red_blue_handoff.py` **after** the existing
+production importer, Blue research scoring, independent score review and
+disposable manual Unclassified SOC-case acceptance. The new stage reuses the
+actual Zeek `conn.log` produced by the network-disabled container from a
+deterministic **benign synthetic PCAP**, not a hand-authored Zeek fixture.
+
+It creates a **pending, non-executed** Red UCB1/random proposal in the CI
+temporary directory and runs the production read-only handoff library and
+CLI against the exact existing original PCAP, importer report, Zeek log,
+synthetic-label Blue model and prediction JSON. It checks matching hashes,
+flow counts, library/CLI agreement, all non-operational flags, missing
+operator confirmation, wrong Red audit pin and a changed Blue report whose
+SHA-256 is deliberately re-pinned. It also verifies that existing model,
+PCAP, log, prediction, import and disposable SQLite case bytes remain
+unchanged. The resulting bounded artifact is
+`ci_real_zeek_red_blue_handoff_report.json` in
+`da005-real-zeek-synthetic-smoke` (7-day retention).
+
+Run the unit-only contract tests on Windows:
+
+```powershell
+py -3.12 -m pytest -q tests/test_ci_real_zeek_red_blue_handoff.py
+```
+
+**Scientific boundary:** The pending Red proposal is not executed and has
+no independently verified relationship to the benign packets. The model
+was fitted on arbitrary synthetic labels. All pins are generated within
+the same CI job, not independently preregistered. The integration tests
+exercise software plumbing with an actual Zeek binary, but do not verify
+a student-owned VMware capture, physical Host-only isolation, independent
+labels, attack detection, operational alerts or event-to-SOC latency.
+Only a separate authorized Windows/VMware experiment can establish those
+claims. At authoring, the new PR-head CI is **not yet verified**; check the
+specific workflow runs before marking this acceptance complete.
