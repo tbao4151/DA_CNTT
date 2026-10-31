@@ -1607,3 +1607,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Confirm exact-head Ubuntu Python 3.12.9 quality CI and Windows offline Zeek CI for the proposed strict IPv4 UDP length validation; merge only after both pass without conflicts. Synthetic tests cover invalid UDP lengths (0, 7, 9, 65535) under tuple-only and opt-in timestamp corroboration; do not claim these are real VMware observations.
 - [ ] On Windows 11/VMware Host-only, preserve independently pinned genuine PCAP and Zeek `conn.log`, verify isolation and authorization manually, run the existing read-only tuple/timestamp CLI and record unsupported encapsulations or rejected malformed traffic. This gate is not packet-to-flow provenance, ground truth or operational AI detection.
 - [ ] Prioritize independently labeled host/session-disjoint evaluation and genuine source-to-alert-to-SOC evidence on student hardware; do not expand header guards into unvalidated attack claims or modify the UNSW-NB15 benchmark.
+
+
+## 2026-10-31 — PCAP IPv4 declared length versus original record size
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 quality, Windows offline Zeek contract and any triggered real-Zeek synthetic smoke CI; merge only if all required checks pass and the PR remains conflict-free. This guard rejects IPv4 total lengths impossible for the **original** Ethernet frame, without refusing valid snaplen-truncated captures.
+- [ ] Student Windows 11: verify VMware Host-only isolation and authorization manually, preserve original PCAP/Zeek logs and independent SHA-256 pins, and run `py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py` followed by the documented offline corroboration CLI on a genuine authorized capture. Keep private artifacts out of public Git.
+- [ ] Continue toward independently adjudicated host/session-disjoint labels, actual Blue Team Precision/Recall/FPR and measured event-to-alert-to-SOC-case timing. A header consistency check is not attack detection or capture provenance; keep Red Team traffic disabled until separately reviewed lab controls exist.

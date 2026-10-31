@@ -122,6 +122,42 @@ def test_udp_tuple_corroboration_refuses_impossible_datagram_length(declared_udp
         )
 
 
+
+@pytest.mark.parametrize("proto,zeek_proto", [(6, "tcp"), (17, "udp")])
+@pytest.mark.parametrize("timestamp_gate", [False, True])
+def test_ipv4_total_length_must_fit_original_pcap_frame(proto, zeek_proto, timestamp_gate):
+    # Captured transport headers alone do not validate an impossible
+    # original-frame length, even when tuple and timestamps match.
+    frame = bytearray(pcap_packet(proto=proto))
+    struct.pack_into("!H", frame, 14 + 2, 200)
+    if proto == 17:
+        struct.pack_into("!H", frame, 14 + 20 + 4, 180)
+    with pytest.raises(ValueError, match="exceeds original PCAP Ethernet frame"):
+        corroborate_pcap_zeek_tuples(
+            pcap(bytes(frame)), zeek_log(proto=zeek_proto),
+            require_timestamp_corroboration=timestamp_gate,
+        )
+
+
+@pytest.mark.parametrize("proto,zeek_proto", [(6, "tcp"), (17, "udp")])
+@pytest.mark.parametrize("timestamp_gate", [False, True])
+def test_snaplen_truncated_ipv4_payload_with_valid_original_length(proto, zeek_proto, timestamp_gate):
+    # A real snapshot can contain the full IP/transport headers but omit
+    # payload bytes; original length (not captured length) is the bound.
+    frame = bytearray(pcap_packet(proto=proto))
+    struct.pack_into("!H", frame, 14 + 2, 200)
+    if proto == 17:
+        struct.pack_into("!H", frame, 14 + 20 + 4, 180)
+    raw = bytearray(pcap(bytes(frame)))
+    struct.pack_into("<I", raw, 16, len(frame))  # snaplen
+    struct.pack_into("<I", raw, 24 + 12, 14 + 200)  # original record length
+    result = corroborate_pcap_zeek_tuples(
+        bytes(raw), zeek_log(proto=zeek_proto),
+        require_timestamp_corroboration=timestamp_gate,
+    )
+    assert result["matched_zeek_flow_count"] == 1
+    assert result["packet_to_flow_identity_verified"] is False
+
 def test_repeated_zeek_tuples_are_only_existence_correlated():
     log = zeek_log().decode()
     log += "101.0\tC2\t10.1.1.2\t1234\t10.1.1.3\t80\ttcp\n"
