@@ -111,3 +111,23 @@ def test_small_group_suppression_requires_boolean():
         summarize_host_variability(
             [0], [0.5], ["private"], 0.5, suppress_small_groups=1,
         )
+
+def test_session_grouping_is_explicit_and_preserves_small_group_suppression():
+    result = summarize_host_variability(
+        [0, 1] * 30, [0.2, 0.8] * 30,
+        ["private-session-a"] * 29 + ["private-session-b"] * 31,
+        0.5, suppress_small_groups=True,
+        grouping_unit="operator_declared_session",
+    )
+    assert result["unit_of_grouping"] == "operator_declared_session"
+    assert result["group_count"] == 2
+    assert result["all_group_counts_suppressed"] is True
+    assert result["groups"] == []
+    assert result["rate_ranges"] is None
+    assert "private-session" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("invalid", ["operator_declared_ip", "", None, 7])
+def test_unrecognized_grouping_units_fail_closed(invalid):
+    with pytest.raises(ValueError, match="grouping unit"):
+        summarize_host_variability([0], [0.5], ["private"], 0.5, grouping_unit=invalid)
