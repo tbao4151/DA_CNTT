@@ -1,5 +1,12 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Opt-in offline IPv4 header checksum evidence gate (PR pending CI)
+
+- Feature branch `feature/pcap-ipv4-header-checksum-gate-20261101` based on `main` `d98229854a2da51762e6b72dd48049b76241be44` after merged PR #316 and successful main quality run #41243461132; no open PR at branch creation. Added optional RFC 791 IPv4 header checksum validation to the original SHA-pinned PCAP/Zeek tuple verifier and integrated private evidence-chain CLI, preserving default behavior.
+- Added synthetic TCP/UDP, IPv4 options, header corruption, standalone CLI and integrated fail-closed regression tests; registered tests in Windows offline CI. No local Git checkout/pytest, student Windows/VMware capture or real-world acceptance is claimed. PR-head CI pending.
+- This is **not** a transport checksum, packet provenance or attack-detection check. Checksum-offload/capture artifacts can cause false refusals; keep originals unchanged, record failures and investigate. Dataset Mode/UNSW, models, cases and Red Team execution untouched.
+
+
 ## 2026-11-01: Offline PCAP/Zeek absolute-offset P95 diagnostics (PR pending CI)
 
 - Feature branch `feature/pcap-zeek-p95-offset-diagnostics-20261101` based on `main` commit `51abba3c128defd24e8ab90344b5451e12fbd1ed`. Added nearest-rank P95 absolute packet-minus-flow-start offsets for optional timestamp-presence and distinct-record corroboration; included aggregate-only private evidence-chain fields. Existing signed/absolute mean/max, tuple checks and UNSW benchmark are unchanged.
