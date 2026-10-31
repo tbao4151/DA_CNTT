@@ -5,9 +5,9 @@
 - [ ] Confirm final-head Ubuntu quality and Windows offline CI for [PR #318](https://github.com/tbao4151/DA_CNTT/pull/318) (`feature/zeek-heldout-source-session-cardinality-20261101`), check for conflicts and overlapping automation PRs, then merge only when all required checks pass. Verify multi-source TEST provenance cardinality and preserve backward compatibility with v4/v5/v6 trace reports.
 - [ ] On authorized Windows/VMware Host-only captures, independently document session-to-source and host-group assignments, capture SHA-256, original labels and holdout. This code only checks self-consistency of supplied metadata; it does not authenticate host identity, independent labels or real detection performance.
 
-## 2026-11-01: Optional IPv4 header checksum evidence check (PR #317 pending CI)
+## 2026-11-01: Optional IPv4 header checksum evidence check (PR #317 merged)
 
-- [ ] Verify final-head Ubuntu quality and Windows offline CI on `feature/pcap-ipv4-header-checksum-gate-20261101`, confirm conflict-free mergeability, then merge. The new gate checks RFC 791 header checksums only when explicitly enabled; defaults and Dataset Mode remain unchanged.
+- [x] PR #317 merged at `4cb84fe2ff624ad10898231cd39257e9b68fa005` after final-head Ubuntu #41244712478, Windows #41244712471 and synthetic Zeek #41244712511 succeeded. The optional RFC 791 header checksum gate remains disabled by default; Dataset Mode is unchanged. Post-merge main CI is not independently verified in this entry.
 - [ ] On student-owned, authorized VMware Host-only captures, record PCAP/Zeek SHA-256 and capture NIC/checksum-offload settings privately. Evaluate whether the optional gate is applicable; preserve failing originals rather than correcting packet bytes. Obtain independent labels and untouched holdout for actual AI/SOC evaluation.
 
 
