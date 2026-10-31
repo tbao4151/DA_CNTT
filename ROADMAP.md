@@ -1600,3 +1600,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Python 3.12.9 Ubuntu quality, Windows offline contract and network-disabled real-Zeek synthetic smoke CI, then merge the feature PR only if conflict-free. Confirm that the same original Zeek source and import report are reverified across Red planning, fitted Blue research scoring and a **separate neutral-fixture-model** manually opened Unclassified SOC case; missing-case and forged-link regressions must fail closed.
 - [ ] Preserve the distinction between the two CI-only model roles: no Red execution, no causal Red-to-packet link, no verified attack, no automated alert, and no operational SOC case. Never use this integration as a Precision/Recall/FPR or detection-latency experiment.
 - [ ] Student Windows 11/VMware: complete the authorized Host-only isolation checklist, collect genuine PCAP and Zeek logs with independent hashes, annotate scenarios independently, preregister host/session-disjoint holdout and reproduce the offline source → model → manual SOC evidence chain privately. Report real research metrics only after independent evaluation.
+
+
+## 2026-10-31 — PCAP/Zeek UDP datagram length guard
+
+- [ ] Confirm exact-head Ubuntu Python 3.12.9 quality CI and Windows offline Zeek CI for the proposed strict IPv4 UDP length validation; merge only after both pass without conflicts. Synthetic tests cover invalid UDP lengths (0, 7, 9, 65535) under tuple-only and opt-in timestamp corroboration; do not claim these are real VMware observations.
+- [ ] On Windows 11/VMware Host-only, preserve independently pinned genuine PCAP and Zeek `conn.log`, verify isolation and authorization manually, run the existing read-only tuple/timestamp CLI and record unsupported encapsulations or rejected malformed traffic. This gate is not packet-to-flow provenance, ground truth or operational AI detection.
+- [ ] Prioritize independently labeled host/session-disjoint evaluation and genuine source-to-alert-to-SOC evidence on student hardware; do not expand header guards into unvalidated attack claims or modify the UNSW-NB15 benchmark.
