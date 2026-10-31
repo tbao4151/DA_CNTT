@@ -7,11 +7,19 @@ from __future__ import annotations
 
 import ipaddress
 import struct
+from collections import Counter
 from bisect import bisect_left
 from datetime import datetime
 
 from .pcap_structure import MAGIC_FORMATS, inspect_classic_pcap_framing
 from .zeek import parse_zeek_conn_log
+
+
+def _bidirectional_tuple(src_ip: str, src_port: int, dst_ip: str,
+                         dst_port: int, proto: str) -> tuple[object, ...]:
+    """Direction-neutral grouping for ambiguity diagnostics, not flow identity."""
+    a, b = (src_ip, src_port), (dst_ip, dst_port)
+    return (proto, a, b) if a <= b else (proto, b, a)
 
 
 def corroborate_pcap_zeek_tuples(
@@ -37,6 +45,16 @@ def corroborate_pcap_zeek_tuples(
                 or ipaddress.ip_address(event["dst_ip"]).version != 4):
             raise ValueError("Tuple corroboration supports only Zeek IPv4 TCP/UDP flows")
 
+    # An existence match can reuse the same packet for several Zeek rows.
+    # Surface this ambiguity without silently upgrading it to flow identity.
+    zeek_tuple_counts = Counter(
+        _bidirectional_tuple(
+            event["src_ip"], event["src_port"], event["dst_ip"],
+            event["dst_port"], event["proto"],
+        )
+        for event in events
+    )
+    packet_tuple_counts: Counter[tuple[object, ...]] = Counter()
     tuples: set[tuple[str, int, str, int, str]] = set()
     packet_times: dict[tuple[str, int, str, int, str], list[float]] = {}
     packet_count = 0
@@ -97,6 +115,9 @@ def corroborate_pcap_zeek_tuples(
         proto = "tcp" if protocol == 6 else "udp"
         key = (src_ip, src_port, dst_ip, dst_port, proto)
         tuples.add(key)
+        packet_tuple_counts[_bidirectional_tuple(
+            src_ip, src_port, dst_ip, dst_port, proto,
+        )] += 1
         if require_timestamp_corroboration:
             packet_times.setdefault(key, []).append(sec + fraction / fraction_base)
         packet_count += 1
@@ -124,7 +145,14 @@ def corroborate_pcap_zeek_tuples(
             if not near_start(forward) and not near_start(reverse):
                 raise ValueError("Zeek flow start has no same-tuple PCAP packet within one second")
         matched += 1
+    reused_zeek_rows = sum(
+        count for count in zeek_tuple_counts.values() if count > 1
+    )
     return {
+        "distinct_zeek_bidirectional_tuples": len(zeek_tuple_counts),
+        "zeek_rows_with_nonunique_bidirectional_tuple": reused_zeek_rows,
+        "distinct_supported_pcap_bidirectional_tuples": len(packet_tuple_counts),
+        "potential_packet_reuse_for_multiple_zeek_flows": reused_zeek_rows > 0,
         "corroboration": (
             "bidirectional_ipv4_tcp_udp_5tuple_and_one_second_timestamp_presence"
             if require_timestamp_corroboration else
