@@ -2,7 +2,7 @@
 
 ## 2026-11-01: Held-out Zeek source/session cardinality consistency (feature PR, CI pending)
 
-- Based on `main` merge commit `4cb84fe2ff624ad10898231cd39257e9b68fa005` after PR #317 merged and its exact-head Ubuntu, Windows and synthetic Zeek CI succeeded; no open PR at branch creation. Feature branch `feature/zeek-heldout-source-session-cardinality-20261101`.
+- Based on `main` merge commit `4cb84fe2ff624ad10898231cd39257e9b68fa005` after PR #317 merged and its exact-head Ubuntu, Windows and synthetic Zeek CI succeeded; no open PR at branch creation. [PR #318](https://github.com/tbao4151/DA_CNTT/pull/318), feature branch `feature/zeek-heldout-source-session-cardinality-20261101`.
 - Tighten the **read-only private held-out research trace review**: the declared TEST session count must equal the number of distinct TEST source SHA-256 values (one capture per session in the existing labeled-dataset contract); declared host-group count cannot exceed session count. Keep the existing source/UID join, confusion-matrix, Wilson and no-label-exposure checks unchanged.
 - Synthetic regression covers a valid two-source held-out experiment and inconsistent, missing/extra, boolean or fractional aggregate counts. No real Windows/VMware capture, independent ground-truth validation, model training change, live traffic, Red Team execution or SOC database write is claimed. Await final-head CI before merge.
 
