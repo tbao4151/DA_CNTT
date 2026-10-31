@@ -1579,3 +1579,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows CI for `tests/test_red_team_offline_fixture_binding.py`; merge only after successful checks and clean mergeability. The new CLI only links an outstanding, audited offline proposal to independently pinned PCAP/Zeek *bytes* and declared scope, never executes a replay.
 - [ ] On Windows 11, first obtain authorization and manually confirm VMware Host-only isolation, preserve original PCAP/conn.log/import report and exported pending Red Team audit privately, independently pin hashes, then run `scripts/bind_red_team_offline_fixture.py` with the real CIDR. Review scenario-to-traffic correspondence separately; the tool does not establish it.
 - [ ] Gather independently adjudicated, host/session-disjoint Zeek labels and measure Blue Team detection and SOC timing before any AI-vs-AI performance claim. No active Red Team execution until a separately reviewed safety gate and kill switch exist. Preserve the official UNSW-NB15 benchmark.
+
+
+## Cyber Lab — read-only cross-team pinned Zeek handoff (31/10/2026)
+
+- [ ] Verify final-head Ubuntu and Windows CI and merge the shared offline Red/Blue evidence handoff; see PROGRESS for exact PR status. This verifies one common Zeek source for an audited **non-executing** Red proposal and recomputed Blue **research-only** predictions; it is not operational attack detection.
+- [ ] On the student's Windows 11/VMware Host-only environment, collect genuine authorized PCAP and Zeek `conn.log`, independently pin Red audit, import report, log, model and Blue report, and run the read-only handoff CLI. Preserve original private evidence, routes/adapters, Zeek version and human scenario correspondence review outside Git.
+- [ ] Before reporting AI performance, independently label authorized captures and use host/session-disjoint held-out evaluation, measure Precision/Recall/FPR and event-to-SOC latency. No automatic Red execution or live network access; never convert unverified manual feedback into attack labels or policy reward.
