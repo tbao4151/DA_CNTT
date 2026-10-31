@@ -1621,3 +1621,19 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Ubuntu Python 3.12.9 quality, Windows offline Zeek and any relevant real-Zeek synthetic CI for the new direction-neutral reuse counters. Merge only after all triggered required checks succeed and the PR is conflict-free; no test pass is claimed at authoring.
 - [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py` and the existing pinned offline PCAP/Zeek corroboration CLI using an authorized, genuine VMware Host-only capture. Retain original hashes, isolation/authorization evidence and Zeek version privately. Review any duplicated/reverse tuple diagnostics; do not equate an absence of duplicates with flow identity.
 - [ ] Collect independently adjudicated host/session-disjoint labels and measure Blue Team Precision/Recall/FPR plus event-to-alert-to-SOC latency on student hardware. Red Team execution remains disabled pending validated isolation and safety controls. Keep official UNSW-NB15 Dataset Mode results unchanged.
+
+
+## 2026-10-31 — Zeek TRAIN-to-VALIDATION feature-shift diagnostics
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows offline CI for
+  `tests/test_zeek_feature_shift.py`; merge the feature PR only after all
+  required checks pass and GitHub reports no conflicts.
+- [ ] Student Windows 11: run `py -3.12 -m pytest -q tests/test_zeek_feature_shift.py`
+  and, after collecting private independently labeled Host-only captures,
+  `py -3.12 scripts/evaluate_zeek_lab.py --manifest "<PRIVATE_MANIFEST>" --preflight --feature-shift`.
+  Review validation-only missingness, unseen categories and numeric-range
+  warnings without inspecting held-out TEST feature values for tuning.
+- [ ] Obtain genuine authorized host/session-disjoint captures, independent
+  labels, original hashes and isolation evidence; report held-out Precision,
+  Recall, FPR and end-to-end SOC timing only after real experiments. No
+  synthetic CI diagnostic establishes attack detection. Preserve Dataset Mode.

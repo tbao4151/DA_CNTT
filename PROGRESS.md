@@ -2428,3 +2428,18 @@
 - Verified `main` at `82fda7a7dc0cfb09c303b8c2a67166886f55adf7`: PR #299 had merged, with exact-head Ubuntu quality #41169553448, Windows offline #41169553613 and real-Zeek synthetic #41169553484 successful; no open PR at the start of this slice. Post-merge main CI was not independently established from the commit-workflow connector.
 - Proposed a read-only addition to `src/blue_team_ai/pcap_zeek_tuple.py`: count distinct direction-neutral Zeek/PCAP TCP/UDP IPv4 tuples and Zeek rows sharing a bidirectional tuple. Report potential packet reuse for multiple Zeek rows without IP/UID disclosure or any claim of packet-to-flow identity. Existing strict matching, timestamp option, file bounds and refusal semantics are unchanged.
 - Added synthetic regression for two reverse-direction Zeek rows corroborated by one PCAP packet and for two independent tuples; updated offline private-lab documentation. **At authoring: new PR-head CI and Windows laptop pytest are not verified.** This does not prove capture authenticity, scenario-to-traffic causality, independent attack labels, real AI detection, alert creation or SOC timing. No network traffic, Red Team execution, model/benchmark changes, SQLite writes or public deployment.
+
+
+## 2026-10-31: TRAIN/VALIDATION-only Zeek feature-shift preflight (feature PR pending)
+
+- Added an opt-in, read-only `--preflight --feature-shift` diagnostic to the
+  private Zeek manifest CLI. It compares aggregate missingness, unseen
+  categorical values and out-of-TRAIN numeric ranges on VALIDATION only;
+  no held-out TEST feature inspection, fitting, threshold selection or SOC
+  writes are performed by the new diagnostic.
+- New synthetic regression tests cover exact counts, unchanged results when
+  TEST is mutated, invalid feature rows, CLI opt-in and refusal in report
+  modes. All source/label values remain private; the report contains fixed
+  feature names and aggregate counts only.
+- PR CI and Windows Python 3.12.9 acceptance **not yet verified** at authoring.
+  No genuine VMware data, detection metric or laptop execution is claimed.
