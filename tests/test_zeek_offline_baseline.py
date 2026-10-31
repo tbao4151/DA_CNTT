@@ -44,7 +44,7 @@ def test_baseline_reports_real_synthetic_fit_without_identity_or_labels():
     assert report["feature_columns"] == list(dataset.feature_columns)
     assert report["selected_threshold"] in (0.25, 0.40, 0.50, 0.60, 0.75)
     assert report["validation_metrics"]["support"] == 2
-    assert report["report_version"] == 5
+    assert report["report_version"] == 6
     assert report["validation_probability_diagnostics"]["sample_size"] == 2
     assert report["test_probability_diagnostics"]["sample_size"] == 2
     for split in ("validation", "test"):
@@ -56,6 +56,12 @@ def test_baseline_reports_real_synthetic_fit_without_identity_or_labels():
     assert report["test_metrics"]["support"] == 2
     for split in ("validation", "test"):
         grouped = report[f"{split}_host_variability"]
+        session_grouped = report[f"{split}_session_variability"]
+        assert session_grouped["unit_of_grouping"] == "operator_declared_session"
+        assert session_grouped["group_count"] == 1
+        assert session_grouped["all_group_counts_suppressed"] is True
+        assert session_grouped["groups"] == []
+        assert session_grouped["rate_ranges"] is None
         assert grouped["group_count"] == 1
         assert grouped["single_group_warning"] is True
         assert grouped["small_group_warning"] is True
@@ -194,3 +200,22 @@ def test_baseline_and_port_ablation_do_not_reexpose_tiny_host_groups():
             assert summary["rate_ranges"] is None
     assert baseline["test_metrics"] == ablation["variants"]["full"]["test_metrics"]
     assert baseline["validation_metrics"] == ablation["variants"]["full"]["validation_metrics"]
+
+def test_multiple_validation_sessions_on_same_host_are_reported_separately():
+    second = _capture("validation", 9)
+    second["log_bytes"] = (
+        second["log_bytes"]
+        .replace(b"1630000000.25", b"1630000100.25")
+        .replace(b"1630000001.0", b"1630000101.0")
+    )
+    dataset = build_labeled_lab_dataset([
+        _capture("train", 0), _capture("validation", 1),
+        second, _capture("test", 2),
+    ])
+    report = evaluate_offline_zeek_baseline(dataset)
+    assert report["validation_host_variability"]["group_count"] == 1
+    assert report["validation_session_variability"]["group_count"] == 2
+    assert report["validation_session_variability"]["small_group_warning"] is True
+    assert report["validation_session_variability"]["groups"] == []
+    assert report["validation_session_variability"]["rate_ranges"] is None
+    assert report["validation_metrics"]["support"] == 4

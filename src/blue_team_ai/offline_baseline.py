@@ -193,7 +193,7 @@ def evaluate_offline_zeek_baseline(
         for split in SPLITS
     }
     report = {
-        "report_version": 5,
+        "report_version": 6,
         "mode": "offline_labeled_zeek_research_only",
         "label_authenticity": "operator_supplied_not_verified",
         "feature_schema_version": LAB_FEATURE_SCHEMA_VERSION,
@@ -217,6 +217,18 @@ def evaluate_offline_zeek_baseline(
             dataset.labels["test"], test_probs,
             [meta["host_group"] for meta in dataset.provenance["test"]],
             selected, suppress_small_groups=True,
+        ),
+        "validation_session_variability": summarize_host_variability(
+            dataset.labels["validation"], validation_probs,
+            [meta["session_id"] for meta in dataset.provenance["validation"]],
+            selected, suppress_small_groups=True,
+            grouping_unit="operator_declared_session",
+        ),
+        "test_session_variability": summarize_host_variability(
+            dataset.labels["test"], test_probs,
+            [meta["session_id"] for meta in dataset.provenance["test"]],
+            selected, suppress_small_groups=True,
+            grouping_unit="operator_declared_session",
         ),
         "provenance": sources,
         "live_capture": False,

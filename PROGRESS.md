@@ -2465,3 +2465,9 @@
 - Confirmed PR #303 merged at `7de01106455f6a0bae9f90f59b394126b104c558`, exact-head Ubuntu #41185403005 and Windows #41185403057 succeeded, and post-merge main quality #41187757510 succeeded. No open PR at start.
 - Extended the existing opt-in TRAIN/VALIDATION-only `--preflight --label-group-screen` to report the largest fraction of each class's flows from a single declared host group or session, and flag >=80% dominance only when a class has >=10 flows and at least two groups. The fixed cutoff is descriptive, not optimized or statistically validated. Diagnostic schema version becomes 2; existing fields remain.
 - Added synthetic tests for a 90/10 Attack split across two mixed-label sessions, low-support suppression, private identifier redaction and TEST/feature independence; updated offline research documentation. **At authoring, new PR CI, Windows laptop execution and VMware captures are not verified.** No model fit, attack execution, network I/O, SOC writes, benchmark changes or empirical detection metrics.
+
+## 2026-10-31 — Session-level variability for offline Zeek evaluation (feature PR; CI pending)
+
+- Verified PR #304 merged as `772bb34e2125ddf1f81d9b64c26d6578af92a031`; exact-head Ubuntu #41189424796 and Windows #41189424704 workflows succeeded. No open PR at feature start.
+- Proposed baseline aggregate report v6: VALIDATION and held-out TEST session-level fixed-threshold confusion/rate variability, reusing existing privacy suppression and preserving host-level summaries. The read-only private trace reviewer accepts legacy v4/v5 and v6; private trace v1 unchanged.
+- Added synthetic regression for separate sessions on one host, small-session suppression, grouping-unit validation and reviewer compatibility. **At authoring: new PR CI, Windows laptop execution and VMware captures not verified.** No independent labels, real attack-detection accuracy, event-to-SOC timing, live Red execution, deployment or UNSW-NB15 benchmark change.

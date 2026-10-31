@@ -1657,3 +1657,9 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows offline Zeek CI for the new host/session class-flow dominance diagnostics; merge only if checks pass and no conflicts. Preserve the existing `--label-group-screen` interface and UNSW-NB15 benchmark.
 - [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_zeek_label_group_screen.py`; with private independently annotated Host-only Zeek captures, run `--preflight --label-group-screen` and review the fixed 80% concentration warnings together with host/session class coverage. Never tune thresholds or reassign TEST based on held-out outcomes.
 - [ ] Independently establish VMware isolation, capture provenance and scenario labels, then measure held-out Blue Team Precision/Recall/FPR and event-to-SOC latency; these descriptive warnings are not detection results.
+
+## 2026-10-31 — Zeek per-session held-out variability (feature acceptance pending)
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows offline CI for baseline report v6, reviewer compatibility and session suppression tests; merge only if required checks pass and no conflict exists.
+- [ ] On Windows 11 run `py -3.12 -m pytest -q tests/test_zeek_offline_baseline.py tests/test_zeek_trace_review.py tests/test_zeek_host_variability.py`. With genuine authorized, independently annotated VMware Host-only captures, review per-session variability without tuning on held-out TEST; preserve PCAP/Zeek, hashes, isolation and scenario evidence privately.
+- [ ] Measure independent held-out Precision/Recall/FPR and event-to-alert-to-SOC timing before any operational detection claim. Group summaries do not establish session independence or true labels; Red execution stays disabled pending verified controls; preserve Dataset Mode.
