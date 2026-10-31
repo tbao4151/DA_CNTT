@@ -33,7 +33,10 @@ def _object_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
-def _read(\n    path: Path, limit: int, *, parent: Path | None = None,\n    used_file_ids: set[tuple[int, int]] | None = None,\n) -> bytes:
+def _read(
+    path: Path, limit: int, *, parent: Path | None = None,
+    used_file_ids: set[tuple[int, int]] | None = None,
+) -> bytes:
     if not path.is_absolute() or path.is_symlink():
         raise ValueError("Absolute non-symlink private paths required")
     resolved = path.resolve(strict=True)
