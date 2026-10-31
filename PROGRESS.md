@@ -2520,3 +2520,5 @@
 - Proposed opt-in offline screen requiring one **different** same-tuple PCAP packet record within ±1 second of each Zeek flow start. Integrates into both standalone and five-file evidence-chain verifiers, with synthetic regressions and Windows CI registration.
 - The default verifier and UNSW-NB15 Dataset Mode are unchanged. This is not a packet-to-flow identity proof, real VMware capture, authorization attestation, AI inference, independent label or SOC latency measurement.
 - Feature branch `feature/da005-distinct-pcap-zeek-packet-gate-312`; PR/CI state must be checked before claiming merge or acceptance.
+
+- PR #312 initial exact-head CI (Ubuntu #41220959427; Windows #41220959528) **failed** because `tests/test_pcap_zeek_distinct_packets.py` used pytest fixture `imported` without importing it into that test module. Corrected the fixture import on feature branch (commit `b6d407d7dcc2627f10c2cbda806126ee7eb7892c`). This is a CI repair, **not** evidence of passing tests or Windows/VMware validation; merge remains blocked until fresh exact-head Ubuntu and Windows CI pass.
