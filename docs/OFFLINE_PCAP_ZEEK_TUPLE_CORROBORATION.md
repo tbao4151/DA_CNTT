@@ -166,3 +166,29 @@ Synthetic regression only (not student VMware acceptance):
 ```powershell
 py -3.12 -m pytest -q tests/test_pcap_zeek_signed_offsets.py
 ```
+
+## Absolute offset P95 diagnostics (01/11/2026; synthetic-only contract)
+
+The opt-in timestamp gate now also reports
+`timestamp_nearest_packet_offset_p95_ms`. The additional distinct-record
+gate reports `distinct_assigned_packet_offset_p95_ms`. Both use the
+**nearest-rank 95th percentile**: sort absolute offsets and select the
+observation at 1-based rank `ceil(0.95 * N)` (no interpolation). For
+`N=1` this is the sole offset; for `N=10` it is the largest offset.
+Fields are null when their corresponding gate is disabled.
+
+The private integrated evidence-chain JSON exposes these aggregate values
+as `pcap_zeek_nearest_packet_offset_p95_ms` and
+`pcap_zeek_distinct_assigned_offset_p95_ms`. The presence-only P95 may
+reuse the same packet for multiple Zeek rows; the distinct P95 uses the
+existing earliest-eligible assignment, **not** an optimal minimum-offset
+matching. Compare both with absolute max/mean and signed mean; the P95 is
+not a confidence interval, synchronization proof, attack metric, or
+event-to-alert detection latency. A small sample can make P95 equal the
+maximum. No raw IP, UID or packet timestamp is exported.
+
+Run synthetic-only regression (no Zeek executable, VMware, or live traffic):
+
+```powershell
+py -3.12 -m pytest -q tests/test_pcap_zeek_offset_percentiles.py
+```
