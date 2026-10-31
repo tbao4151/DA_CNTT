@@ -2443,3 +2443,11 @@
   feature names and aggregate counts only.
 - PR CI and Windows Python 3.12.9 acceptance **not yet verified** at authoring.
   No genuine VMware data, detection metric or laptop execution is claimed.
+
+
+## 2026-10-31 — TRAIN/VALIDATION-only Zeek host-label confounding preflight (feature PR pending)
+
+- Read `main`, README, PROGRESS, ROADMAP, architecture, Zeek input/evaluation contracts, recent CI and open PRs; latest `main` was `e456d70edc959bae9aa015f68600041d8f76787f`, with no open PR at branch creation.
+- Added opt-in `--preflight --label-group-screen`: aggregate TRAIN/VALIDATION label distribution across operator-declared host groups and sessions. Warns on complete host-label separation and class concentration in a single host group, without inspecting TEST or feature values. Existing manifest preflight still validates TEST annotations structurally.
+- Added synthetic regression for separated/mixed groups, malformed declarations, TEST/feature mutation independence, private-output redaction and CLI refusal outside preflight; added Windows offline CI coverage and research limitations.
+- **At authoring:** feature-head CI, Windows laptop execution and VMware experiments are not yet verified. This screen cannot authenticate operator labels, genuine host identities, isolation, causal confounding or attack detection. No model/benchmark changes, traffic generation, SOC writes or deployment.

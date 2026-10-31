@@ -1637,3 +1637,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
   labels, original hashes and isolation evidence; report held-out Precision,
   Recall, FPR and end-to-end SOC timing only after real experiments. No
   synthetic CI diagnostic establishes attack detection. Preserve Dataset Mode.
+
+
+## 2026-10-31 — Offline Zeek host-label confounding screen
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 quality and Windows offline CI for the new TRAIN/VALIDATION-only label-group preflight; merge only after required checks succeed and the PR is conflict-free.
+- [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_zeek_label_group_screen.py`; with genuine authorized independently annotated Host-only captures, run the private pinned manifest with `--preflight --label-group-screen` and review whether class labels are tied to host or session. Preserve raw evidence and labels privately.
+- [ ] Independently verify host/session assignment and scenario evidence, reserve untouched host-disjoint TEST, then evaluate Blue Team Precision/Recall/FPR and actual event-to-alert-to-SOC latency. A confounding warning is not a detection result; keep Red Team network execution disabled until safety controls are validated. Do not change UNSW-NB15.

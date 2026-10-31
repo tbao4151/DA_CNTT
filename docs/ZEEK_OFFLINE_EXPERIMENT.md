@@ -737,3 +737,34 @@ are intended for private research notes, not public lab evidence.
 
 Synthetic regression only:
 `py -3.12 -m pytest -q tests/test_zeek_feature_shift.py`.
+
+
+## Optional TRAIN/VALIDATION host-label confounding preflight (31/10/2026)
+
+Use the new **read-only**, opt-in label-group diagnostic after obtaining a
+private, independently pinned and annotated manifest:
+
+```powershell
+py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --preflight --label-group-screen
+```
+
+`label_group_diagnostics` aggregates the number of operator-declared host
+groups and sessions containing both Normal and Attack labels, only Normal,
+or only Attack; it also counts how many declared host groups contain each
+class. When all host groups in TRAIN or VALIDATION are single-class, the
+screen warns that the model might learn host/environment shortcuts rather
+than attack behavior. Single-host class concentration is also flagged.
+
+The diagnostic reads **only TRAIN and VALIDATION labels plus host/session
+declarations**, not feature values or held-out TEST labels/features. The
+*existing manifest preflight* still reads TEST annotations for structural
+validation and class counts. No host/session names, UIDs, IPs, class-by-host
+flow counts or individual evidence references are emitted. Aggregate counts
+are descriptive, not differential privacy. It is deliberately refused with
+`--output`, `--trace-output` or `--port-ablation-output`, so historical
+model evaluation is unchanged. A warning is not proof of leakage, and an
+absence of warnings does not prove generalization or ground-truth validity.
+Operator declarations and network isolation still require independent review.
+
+Run synthetic-only regressions:
+`py -3.12 -m pytest -q tests/test_zeek_label_group_screen.py`.
