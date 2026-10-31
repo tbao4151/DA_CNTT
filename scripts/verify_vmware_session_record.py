@@ -33,7 +33,10 @@ def _object_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
-def _read(path: Path, limit: int, *, parent: Path | None = None) -> bytes:
+def _read(
+    path: Path, limit: int, *, parent: Path | None = None,
+    used_file_ids: set[tuple[int, int]] | None = None,
+) -> bytes:
     if not path.is_absolute() or path.is_symlink():
         raise ValueError("Absolute non-symlink private paths required")
     resolved = path.resolve(strict=True)
@@ -42,8 +45,17 @@ def _read(path: Path, limit: int, *, parent: Path | None = None) -> bytes:
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
     fd = os.open(path, flags)
     with os.fdopen(fd, "rb") as stream:
-        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+        metadata = os.fstat(stream.fileno())
+        if not stat.S_ISREG(metadata.st_mode):
             raise ValueError("Not a regular evidence file")
+        # Distinct paths can still be hard links to the same underlying file.
+        # Use the opened descriptor's identity to avoid a second path lookup.
+        # Some filesystems report inode 0; keep the resolved-path guard there.
+        if used_file_ids is not None and metadata.st_ino:
+            file_id = (metadata.st_dev, metadata.st_ino)
+            if file_id in used_file_ids:
+                raise ValueError("Evidence file hard-link reused across roles")
+            used_file_ids.add(file_id)
         raw = stream.read(limit + 1)
     if not raw or len(raw) > limit:
         raise ValueError("Empty or oversized evidence file")
@@ -115,6 +127,7 @@ def verify_record(record_path: Path, record_pin: str, chain_path: Path, chain_pi
     # One operator-supplied file cannot stand in for multiple distinct review roles.
     # This checks path identity, not the truth or independence of the contents.
     used_evidence_paths: set[Path] = set()
+    used_file_ids: set[tuple[int, int]] = set()
     for key in CHECKS:
         entry = checks[key]
         if not isinstance(entry, dict) or entry.get("status") not in ("PASS", "FAIL", "NOT_MEASURED"):
@@ -128,7 +141,10 @@ def verify_record(record_path: Path, record_pin: str, chain_path: Path, chain_pi
             if resolved_evidence_path in used_evidence_paths:
                 raise ValueError("Evidence file reused across manual check roles")
             used_evidence_paths.add(resolved_evidence_path)
-            raw = _read(evidence_path, 4 * 1024 * 1024, parent=base)
+            raw = _read(
+                evidence_path, 4 * 1024 * 1024, parent=base,
+                used_file_ids=used_file_ids,
+            )
             _pin(raw, entry["sha256"])
         elif set(entry) != {"status"}:
             raise ValueError("Incomplete checks cannot claim pinned evidence")
