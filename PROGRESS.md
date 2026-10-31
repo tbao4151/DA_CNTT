@@ -1,5 +1,12 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Offline PCAP/Zeek absolute-offset P95 diagnostics (PR pending CI)
+
+- Feature branch `feature/pcap-zeek-p95-offset-diagnostics-20261101` based on `main` commit `51abba3c128defd24e8ab90344b5451e12fbd1ed`. Added nearest-rank P95 absolute packet-minus-flow-start offsets for optional timestamp-presence and distinct-record corroboration; included aggregate-only private evidence-chain fields. Existing signed/absolute mean/max, tuple checks and UNSW benchmark are unchanged.
+- Added five synthetic regression cases including a 10-flow same-tuple tail where packet reuse hides a 900 ms distinct-assignment offset, plus integrated chain privacy assertions. Registered the test in Windows offline CI. No local pytest or student VMware experiment has been performed in this run; PR-head CI must pass before merging.
+- P95 is an offline timing-consistency diagnostic, **not** AI detection latency, physical clock attestation, packet-to-flow identity, genuine capture provenance, or independently verified ground truth. Red Team execution remains disabled.
+
+
 ## 2026-11-01: Signed offline PCAP/Zeek timestamp bias diagnostics (PR #315 pending CI)
 
 - [PR #315](https://github.com/tbao4151/DA_CNTT/pull/315), feature branch `feature/pcap-zeek-signed-clock-offset-20261101` based on main `9804a2c29aeb670eede4760ee4c18c796aa0c3a3`. Added signed aggregate packet-minus-Zeek start offsets for nearest-timestamp presence and distinct earliest-eligible assignment, including integrated private evidence-chain report fields. No raw IPs or timestamps in output.

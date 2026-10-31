@@ -22,6 +22,14 @@ def _bidirectional_tuple(src_ip: str, src_port: int, dst_ip: str,
     return (proto, a, b) if a <= b else (proto, b, a)
 
 
+def _p95_offset_ms(offsets_seconds: list[float]) -> float:
+    """Nearest-rank P95 of absolute offsets, without interpolation or dependencies."""
+    if not offsets_seconds:
+        raise ValueError("Cannot summarize an empty offset population")
+    rank = (95 * len(offsets_seconds) + 99) // 100  # ceil(0.95 * N)
+    return round(sorted(offsets_seconds)[rank - 1] * 1000, 6)
+
+
 def corroborate_pcap_zeek_tuples(
     pcap: bytes, zeek_log: bytes, *, require_timestamp_corroboration: bool = False,
     require_distinct_packet_corroboration: bool = False,
@@ -245,6 +253,10 @@ def corroborate_pcap_zeek_tuples(
             round(sum(nearest_offsets_seconds) * 1000 / len(nearest_offsets_seconds), 6)
             if require_timestamp_corroboration else None
         ),
+        "timestamp_nearest_packet_offset_p95_ms": (
+            _p95_offset_ms(nearest_offsets_seconds)
+            if require_timestamp_corroboration else None
+        ),
         # Signed delta = PCAP packet time - Zeek flow start. Positive means
         # packet timestamp is later; mean can cancel opposing offsets.
         "timestamp_nearest_packet_signed_offset_mean_ms": (
@@ -257,6 +269,10 @@ def corroborate_pcap_zeek_tuples(
         ),
         "distinct_assigned_packet_offset_mean_ms": (
             round(sum(assigned_offsets_seconds) * 1000 / len(assigned_offsets_seconds), 6)
+            if require_distinct_packet_corroboration else None
+        ),
+        "distinct_assigned_packet_offset_p95_ms": (
+            _p95_offset_ms(assigned_offsets_seconds)
             if require_distinct_packet_corroboration else None
         ),
         "distinct_assigned_packet_signed_offset_mean_ms": (

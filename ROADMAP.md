@@ -1,5 +1,11 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Offline packet/flow timing tail diagnostics (PR pending CI)
+
+- [ ] Verify final-head Ubuntu, Windows and relevant synthetic Zeek CI for `feature/pcap-zeek-p95-offset-diagnostics-20261101`, confirm no conflicts, then merge. Nearest-rank P95 is only a read-only, synthetic-tested consistency metric; it must not be presented as live detection latency.
+- [ ] On the student's authorized VMware Host-only lab, record genuine PCAP/Zeek original hashes, isolation evidence, clock configuration and packet/flow timing privately. Compare nearest and distinct P95 alongside absolute/signed means and maxima; do not edit originals to force a pass. The research pipeline still needs independent labels and an untouched holdout.
+
+
 ## 2026-11-01: PCAP/Zeek timing consistency (pending CI)
 
 - [ ] Verify and merge `feature/pcap-zeek-timing-offset-diagnostics-20261101` after Ubuntu and Windows PR-head CI succeed: aggregate nearest packet/Zeek start offsets for timestamp presence, separate distinct greedy-assignment offsets, and read-only integrated evidence-chain maximum fields. Synthetic tests only; see PROGRESS.
