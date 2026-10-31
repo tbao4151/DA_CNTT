@@ -46,6 +46,8 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         guest_adapter=args.guest_adapter,
         expected_cidr=args.cidr,
     )
+    if args.require_host_ipv6_screened and paired["host_ipv6_screened"] is not True:
+        raise ValueError("Strict host IPv6 screen requires a valid v2 host snapshot")
     if args.require_guest_endpoint and not args.require_independent_original_pins:
         raise ValueError("Guest flow presence requires the strict original-pin gate")
     if args.require_pcap_framing and not args.require_independent_original_pins:
@@ -96,6 +98,8 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         "report_version": 1,
         "mode": "offline_private_lab_evidence_consistency_only",
         "configuration_snapshots_consistent": True,
+        "host_ipv6_screened": paired["host_ipv6_screened"],
+        "host_ipv6_screening_required": args.require_host_ipv6_screened,
         "offline_pcap_zeek_import_consistent": True,
         "pcap_framing_required": args.require_pcap_framing,
         "pcap_framing_verified": imported["pcap_framing_verified"],
@@ -140,6 +144,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-guest-sha256", required=True)
     parser.add_argument("--guest-adapter", required=True)
     parser.add_argument("--cidr", required=True)
+    parser.add_argument(
+        "--require-host-ipv6-screened", action="store_true",
+        help="Fail closed on legacy host v1 snapshots without selected-adapter IPv6 visibility",
+    )
     parser.add_argument("--pcap", required=True, type=Path)
     parser.add_argument("--log", required=True, type=Path)
     parser.add_argument("--import-report", required=True, type=Path)
