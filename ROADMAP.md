@@ -1,5 +1,11 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Optional IPv4 header checksum evidence check (pending CI)
+
+- [ ] Verify final-head Ubuntu quality and Windows offline CI on `feature/pcap-ipv4-header-checksum-gate-20261101`, confirm conflict-free mergeability, then merge. The new gate checks RFC 791 header checksums only when explicitly enabled; defaults and Dataset Mode remain unchanged.
+- [ ] On student-owned, authorized VMware Host-only captures, record PCAP/Zeek SHA-256 and capture NIC/checksum-offload settings privately. Evaluate whether the optional gate is applicable; preserve failing originals rather than correcting packet bytes. Obtain independent labels and untouched holdout for actual AI/SOC evaluation.
+
+
 ## 2026-11-01: Offline packet/flow timing tail diagnostics (PR pending CI)
 
 - [ ] Verify final-head Ubuntu, Windows and relevant synthetic Zeek CI for `feature/pcap-zeek-p95-offset-diagnostics-20261101`, confirm no conflicts, then merge. Nearest-rank P95 is only a read-only, synthetic-tested consistency metric; it must not be presented as live detection latency.
