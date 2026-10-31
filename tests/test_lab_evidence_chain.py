@@ -57,6 +57,8 @@ def test_synthetic_integrated_evidence_passes_without_claiming_detection(tmp_pat
     assert result.returncode == 0, result.stderr
     obj = json.loads(result.stdout)
     assert obj["configuration_snapshots_consistent"] is True
+    assert obj["host_ipv6_screened"] is False
+    assert obj["host_ipv6_screening_required"] is False
     assert obj["offline_pcap_zeek_import_consistent"] is True
     assert obj["pcap_framing_required"] is False
     assert obj["pcap_framing_verified"] is False
@@ -285,3 +287,55 @@ def test_integrated_framing_checks_original_pcap_packet_records(tmp_path, import
         assert report["ai_inference_performed"] is False
         assert "192.168.56" not in result.stdout
     assert str(tmp_path) not in result.stderr
+
+
+def test_strict_host_ipv6_screen_refuses_legacy_v1_without_writing_evidence(tmp_path, imported):
+    before = {key: imported[key].read_bytes() for key in ("pcap", "log", "report")}
+
+    def enable(args, hp, gp):
+        args.extend(["--require-independent-original-pins", "--require-host-ipv6-screened"])
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert "192.168" not in result.stderr
+    assert all(imported[key].read_bytes() == value for key, value in before.items())
+
+
+@pytest.mark.parametrize("ipv6, routes, dns, accepted", [
+    (["fe80::123%11"], [], [], True),
+    (["2001:db8::1"], [], [], False),
+    (["fd00::1"], [], [], False),
+    (["fe80::123%11"], ["fe80::2"], [], False),
+    (["fe80::123%11"], [], ["fe80::2"], False),
+])
+def test_strict_host_ipv6_screen_v2_pinned_pair(tmp_path, imported, ipv6, routes, dns, accepted):
+    def enable(args, hp, gp):
+        args.extend(["--require-independent-original-pins", "--require-host-ipv6-screened"])
+        snapshot = json.loads(hp.read_text(encoding="utf-8"))
+        snapshot.update({
+            "schema_version": 2,
+            "adapter_ipv6": ipv6,
+            "adapter_default_routes_ipv6": routes,
+            "adapter_dns_servers_ipv6": dns,
+        })
+        raw = json.dumps(snapshot).encode("utf-8")
+        hp.write_bytes(raw)
+        args[args.index("--expected-host-sha256") + 1] = hashlib.sha256(raw).hexdigest()
+
+    result = _run(tmp_path, imported, independent_pins=True, changes=enable)
+    assert (result.returncode == 0) is accepted
+    if accepted:
+        report = json.loads(result.stdout)
+        assert report["host_ipv6_screened"] is True
+        assert report["host_ipv6_screening_required"] is True
+        assert report["vmware_isolation_verified"] is False
+        assert report["traffic_authorized"] is False
+        assert report["ai_inference_performed"] is False
+        assert "fe80" not in result.stdout
+        assert "192.168" not in result.stdout
+    else:
+        assert result.stdout == ""
+        assert "refused" in result.stderr
+        assert "192.168" not in result.stderr

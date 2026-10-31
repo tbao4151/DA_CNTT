@@ -35,6 +35,12 @@ py -3.12 scripts/check_paired_network_preflight.py `
   --guest-snapshot 'C:/DA005-private/session-001/network/guest.json' --expected-guest-sha256 '<GUEST_SHA256_LOWERCASE>' --guest-adapter '<ACTUAL_GUEST_ADAPTER>' --cidr '<ACTUAL_HOST_ONLY_CIDR>'
 ```
 
+The integrated evidence-chain command below requires a fresh host snapshot v2
+(`--require-host-ipv6-screened`); a legacy v1 IPv4-only snapshot is refused
+even when its SHA-256 matches. The paired preflight command above remains
+backward-compatible and reports `host_ipv6_screened=false` for v1.
+Neither check can attest VMware isolation or inspect other host adapters.
+
 A passing snapshot comparison is **not** a physical isolation certificate. Independently archive screenshots of VMware NIC assignments, host/guest routes, and Linux guest NICs.
 
 ## 2. Obtain an original, authorized benign PCAP (manual)
@@ -70,7 +76,7 @@ py -3.12 scripts/verify_lab_evidence_chain.py `
   --import-report 'C:/DA005-private/session-001/zeek-run-001/offline_import_report.json' `
   --expected-import-report-sha256 '<IMPORT_REPORT_SHA256_LOWERCASE>' `
   --expected-pcap-sha256 '<PCAP_SHA256_LOWERCASE>' --expected-log-sha256 '<CONN_SHA256_LOWERCASE>' `
-  --require-independent-original-pins --require-pcap-framing
+  --require-independent-original-pins --require-pcap-framing --require-host-ipv6-screened
 ```
 
 Do **not** add `--require-guest-endpoint` when the observed traffic legitimately excludes the Windows guest (e.g. passive sensor on a third VM). A PASS only corroborates **operator-supplied bytes/configuration**, not real isolation, capture authenticity, authorization, attack truth, or AI detection.
