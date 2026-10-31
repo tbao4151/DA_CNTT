@@ -1,8 +1,8 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
-## 2026-11-01: Signed offline PCAP/Zeek timestamp bias diagnostics (PR pending CI)
+## 2026-11-01: Signed offline PCAP/Zeek timestamp bias diagnostics (PR #315 pending CI)
 
-- Feature branch `feature/pcap-zeek-signed-clock-offset-20261101` based on main `9804a2c29aeb670eede4760ee4c18c796aa0c3a3`. Added signed aggregate packet-minus-Zeek start offsets for nearest-timestamp presence and distinct earliest-eligible assignment, including integrated private evidence-chain report fields. No raw IPs or timestamps in output.
+- [PR #315](https://github.com/tbao4151/DA_CNTT/pull/315), feature branch `feature/pcap-zeek-signed-clock-offset-20261101` based on main `9804a2c29aeb670eede4760ee4c18c796aa0c3a3`. Added signed aggregate packet-minus-Zeek start offsets for nearest-timestamp presence and distinct earliest-eligible assignment, including integrated private evidence-chain report fields. No raw IPs or timestamps in output.
 - Added synthetic-only regression covering positive/negative offset, micro/nanosecond PCAP, reverse direction, deterministic tie-break, cancellation and integrated report; registered the test in Windows offline CI. No independent local pytest or Windows/VMware run has been performed; PR-head CI must pass before merge.
 - Signed mean can cancel, is not clock synchronization proof, and is **not** AI detection latency. No changes to UNSW-NB15 Dataset Mode, model/labels, active Red Team execution, or private artifacts.
 
