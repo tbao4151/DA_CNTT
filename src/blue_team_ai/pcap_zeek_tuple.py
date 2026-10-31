@@ -136,6 +136,7 @@ def corroborate_pcap_zeek_tuples(
         for times in packet_times.values():
             times.sort()
 
+    nearest_offsets_seconds: list[float] = []
     matched = 0
     for event in events:
         forward = (event["src_ip"], event["src_port"], event["dst_ip"],
@@ -148,18 +149,30 @@ def corroborate_pcap_zeek_tuples(
             event_ts = datetime.fromisoformat(event["event_time_utc"]).timestamp()
             # Sorted timestamp search avoids accepting two distant sessions
             # merely because they reused the same five-tuple.
-            def near_start(key: tuple[str, int, str, int, str]) -> bool:
+            def nearest_offset(key: tuple[str, int, str, int, str]) -> float | None:
                 times = packet_times.get(key, [])
-                index = bisect_left(times, event_ts - 1.0)
-                return index < len(times) and times[index] <= event_ts + 1.0
-            if not near_start(forward) and not near_start(reverse):
+                index = bisect_left(times, event_ts)
+                candidates = [
+                    abs(times[i] - event_ts)
+                    for i in (index - 1, index) if 0 <= i < len(times)
+                ]
+                nearest = min(candidates, default=None)
+                return nearest if nearest is not None and nearest <= 1.0 else None
+
+            offsets = [
+                value for value in (nearest_offset(forward), nearest_offset(reverse))
+                if value is not None
+            ]
+            if not offsets:
                 raise ValueError("Zeek flow start has no same-tuple PCAP packet within one second")
+            nearest_offsets_seconds.append(min(offsets))
         matched += 1
     # Stronger optional *record availability* screen: no PCAP packet record
     # may satisfy two Zeek rows, including when the directions are reversed.
     # Sorting by flow start (hence deadline) and consuming the earliest
     # eligible packet gives a deterministic interval matching for +/-1 s.
     # This is still not proof that Zeek derived a row from that packet.
+    assigned_offsets_seconds: list[float] = []
     if require_distinct_packet_corroboration:
         available: dict[tuple[object, ...], list[float]] = {}
         for key, times in packet_times.items():
@@ -187,6 +200,7 @@ def corroborate_pcap_zeek_tuples(
                     raise ValueError(
                         "Insufficient distinct same-tuple PCAP packets near Zeek flow starts"
                     )
+                assigned_offsets_seconds.append(abs(times[cursor] - start))
                 cursor += 1
 
     reused_zeek_rows = sum(
@@ -210,6 +224,25 @@ def corroborate_pcap_zeek_tuples(
         "timestamps_correlated": require_timestamp_corroboration,
         "distinct_packet_per_flow_required": require_distinct_packet_corroboration,
         "distinct_packet_per_flow_correlated": require_distinct_packet_corroboration,
+        # Aggregate packet/start offsets are consistency diagnostics only:
+        # nearest presence can reuse a packet; distinct uses greedy assignment.
+        # Neither quantity measures AI detection latency or clock accuracy.
+        "timestamp_nearest_packet_offset_max_ms": (
+            round(max(nearest_offsets_seconds) * 1000, 6)
+            if require_timestamp_corroboration else None
+        ),
+        "timestamp_nearest_packet_offset_mean_ms": (
+            round(sum(nearest_offsets_seconds) * 1000 / len(nearest_offsets_seconds), 6)
+            if require_timestamp_corroboration else None
+        ),
+        "distinct_assigned_packet_offset_max_ms": (
+            round(max(assigned_offsets_seconds) * 1000, 6)
+            if require_distinct_packet_corroboration else None
+        ),
+        "distinct_assigned_packet_offset_mean_ms": (
+            round(sum(assigned_offsets_seconds) * 1000 / len(assigned_offsets_seconds), 6)
+            if require_distinct_packet_corroboration else None
+        ),
         "timestamp_corroboration_window_seconds": (1.0 if require_timestamp_corroboration else None),
         "capture_authenticity_verified": False,
         "host_only_isolation_verified": False,

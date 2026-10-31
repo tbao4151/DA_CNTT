@@ -1,5 +1,10 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: PCAP/Zeek timing consistency (pending CI)
+
+- [ ] Verify and merge `feature/pcap-zeek-timing-offset-diagnostics-20261101` after Ubuntu and Windows PR-head CI succeed: aggregate nearest packet/Zeek start offsets for timestamp presence, separate distinct greedy-assignment offsets, and read-only integrated evidence-chain maximum fields. Synthetic tests only; see PROGRESS.
+- [ ] On authorized Windows/VMware Host-only captures, independently record clock configuration and packet/Zeek timestamps privately; compare the bounded offsets without interpreting them as event-to-alert or event-to-SOC detection latency. Preserve original evidence and SHA-256.
+
 ## Tiêu chí nghiệm thu
 
 1. Chạy cục bộ từ README; không yêu cầu dịch vụ trả phí.

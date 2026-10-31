@@ -139,6 +139,14 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         "pcap_zeek_matched_flow_count": (
             tuple_report["matched_zeek_flow_count"] if tuple_report is not None else None
         ),
+        "pcap_zeek_nearest_packet_offset_max_ms": (
+            tuple_report["timestamp_nearest_packet_offset_max_ms"]
+            if tuple_report is not None else None
+        ),
+        "pcap_zeek_distinct_assigned_offset_max_ms": (
+            tuple_report["distinct_assigned_packet_offset_max_ms"]
+            if tuple_report is not None else None
+        ),
         "pcap_zeek_potential_tuple_reuse": (
             tuple_report["potential_packet_reuse_for_multiple_zeek_flows"]
             if tuple_report is not None else None
