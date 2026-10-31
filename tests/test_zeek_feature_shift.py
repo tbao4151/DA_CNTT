@@ -73,7 +73,7 @@ def test_test_mutation_cannot_change_shift_diagnostic():
 @pytest.mark.parametrize("mutation", [
     lambda d: d.features["train"].clear(),
     lambda d: d.features["validation"][0].update(label=1),
-    lambda d: setattr(d, "feature_schema_version", 999),
+    lambda d: object.__setattr__(d, "feature_schema_version", 999),
 ])
 def test_invalid_train_or_validation_contract_is_rejected(mutation):
     dataset = _dataset()
