@@ -24,6 +24,10 @@ on:
       - "tests/test_ci_real_zeek_production_timestamp.py"
       - "tests/test_ci_real_zeek_scoring.py"
       - "tests/test_ci_real_zeek_soc_contract.py"
+      - "tests/ci_real_zeek_red_blue_handoff.py"
+      - "tests/test_ci_real_zeek_red_blue_handoff.py"
+      - "src/shared/offline_handoff.py"
+      - "scripts/verify_red_blue_offline_handoff.py"
       - "scripts/triage_zeek_new_log.py"
       - "src/blue_team_ai/new_log_triage.py"
       - "src/siem_ai/case_report.py"
@@ -385,6 +389,8 @@ jobs:
           PY
       - name: Exercise production scoring, review and explicit manual SOC triage (synthetic-only)
         run: PYTHONPATH=src:tests python tests/ci_real_zeek_scoring.py --root "$SMOKE_DIR"
+      - name: Verify Red/Blue shared-source handoff on real Zeek CI output (synthetic-only)
+        run: PYTHONPATH=src:tests python tests/ci_real_zeek_red_blue_handoff.py --root "$SMOKE_DIR"
       - name: Upload synthetic-only reproducibility evidence
         if: success()
         uses: actions/upload-artifact@v4
@@ -405,6 +411,7 @@ jobs:
             ${{ env.SMOKE_DIR }}/two-pass-real-2/offline_import_report.json
             ${{ env.SMOKE_DIR }}/ci_real_zeek_telemetry_quality.json
             ${{ env.SMOKE_DIR }}/ci_real_zeek_scoring_report.json
+            ${{ env.SMOKE_DIR }}/ci_real_zeek_red_blue_handoff_report.json
             ${{ env.SMOKE_DIR }}/importer-real/conn.log
             ${{ env.SMOKE_DIR }}/importer-real/offline_import_report.json
           if-no-files-found: error
