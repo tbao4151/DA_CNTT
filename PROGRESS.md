@@ -2471,3 +2471,10 @@
 - Verified PR #304 merged as `772bb34e2125ddf1f81d9b64c26d6578af92a031`; exact-head Ubuntu #41189424796 and Windows #41189424704 workflows succeeded. No open PR at feature start.
 - Proposed baseline aggregate report v6: VALIDATION and held-out TEST session-level fixed-threshold confusion/rate variability, reusing existing privacy suppression and preserving host-level summaries. The read-only private trace reviewer accepts legacy v4/v5 and v6; private trace v1 unchanged.
 - Added synthetic regression for separate sessions on one host, small-session suppression, grouping-unit validation and reviewer compatibility. **At authoring: new PR CI, Windows laptop execution and VMware captures not verified.** No independent labels, real attack-detection accuracy, event-to-SOC timing, live Red execution, deployment or UNSW-NB15 benchmark change.
+
+
+## 2026-10-31 — Private Zeek held-out rate consistency (feature PR; CI pending)
+
+- Confirmed PR #305 merged into `main` at `9b13dcb15e262ea5dd0daf4e055d5273e42165e7`; its exact-head Ubuntu #41193838207, Windows #41193838205 and Real Zeek Synthetic #41193838211 CI all succeeded. No open PR at branch creation.
+- Extended the existing read-only private Zeek trace reviewer to recompute held-out Precision, Recall, F1 and FPR from trace TP/FP/TN/FN and reject missing, malformed, out-of-range or inconsistent reported rates. Existing report v4/v5/v6 and private trace v1 remain supported; no change to research model, threshold selection, test split, UI case creation, or UNSW-NB15.
+- Added synthetic regressions for four tampered rates, missing/invalid rate fields and consistent operator-label reassignment. At authoring, **new feature PR CI, Windows laptop execution and VMware captures have not been verified**. This only detects inconsistent arithmetic in supplied JSON, not a consistently forged trace, genuine model training, independent ground truth, physical isolation, real attack detection or SOC latency.
