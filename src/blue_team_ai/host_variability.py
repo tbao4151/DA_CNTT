@@ -1,4 +1,4 @@
-"""Descriptive host-group variability for independently labeled offline Zeek flows.
+"""Descriptive host/session-group variability for independently labeled offline Zeek flows.
 
 This does not estimate cluster-adjusted confidence intervals. Groups are
 operator-declared, not authenticated, and may represent correlated sessions.
@@ -18,6 +18,7 @@ def summarize_host_variability(
     threshold: float,
     *,
     suppress_small_groups: bool = False,
+    grouping_unit: str = "operator_declared_host_group",
 ) -> dict[str, object]:
     """Summarize fixed-threshold confusion counts and rates per host group.
 
@@ -31,6 +32,8 @@ def summarize_host_variability(
         raise ValueError("Expected aligned offline sequences") from exc
     if type(suppress_small_groups) is not bool:
         raise ValueError("Small-group suppression flag must be boolean")
+    if not isinstance(grouping_unit, str) or grouping_unit not in ("operator_declared_host_group", "operator_declared_session"):
+        raise ValueError("Unsupported variability grouping unit")
     if not truth or len(truth) != len(scores) or len(truth) != len(groups):
         raise ValueError("Host variability inputs must align and be nonempty")
     if any(type(y) is not int or y not in (0, 1) for y in truth):
@@ -75,7 +78,7 @@ def summarize_host_variability(
             "defined_groups": len(observed),
         }
     result: dict[str, object] = {
-        "unit_of_grouping": "operator_declared_host_group",
+        "unit_of_grouping": grouping_unit,
         "group_count": len(summaries),
         "groups": summaries,
         "rate_ranges": ranges,
