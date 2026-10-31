@@ -137,6 +137,13 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
         or not 1 <= len(declared_sources) <= 30
         or any(not _digest(source) for source in declared_sources)
         or declared_sources != sorted(set(declared_sources))
+        # The labeled-dataset contract binds one original source digest to
+        # exactly one session and one session to exactly one source. A trace
+        # must not claim extra/missing sessions relative to its source list.
+        or test_provenance["sessions"] != len(declared_sources)
+        # Several captures can share a host group, but a host group cannot
+        # outnumber the sessions from which the held-out data originated.
+        or test_provenance["host_groups"] > test_provenance["sessions"]
     ):
         raise ValueError("Invalid held-out test provenance")
 

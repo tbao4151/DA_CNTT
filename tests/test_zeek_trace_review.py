@@ -15,9 +15,10 @@ from blue_team_ai.uncertainty import summarize_detection_uncertainty
 from evaluate_zeek_lab import run_offline_experiment
 
 
-def _fixture(tmp_path):
+def _fixture(tmp_path, *, second_test_capture=False):
     entries = []
-    for i, split in enumerate(("train", "validation", "test")):
+    splits = ("train", "validation", "test", "test") if second_test_capture else ("train", "validation", "test")
+    for i, split in enumerate(splits):
         raw = (
             "#separator \\x09\n"
             "#fields\tts\tuid\tid.orig_h\tid.orig_p\tid.resp_h\tid.resp_p\tproto"
@@ -236,6 +237,41 @@ def test_private_trace_requires_aggregate_heldout_provenance(tmp_path, mutation)
         report["feature_schema_version"] = -1
     with pytest.raises(ValueError):
         review_private_zeek_trace(raw, _encode(report))
+
+
+@pytest.mark.parametrize("mutation", [
+    "extra_sessions", "missing_session", "more_hosts_than_sessions",
+    "boolean_sessions", "fractional_host_count",
+])
+def test_private_trace_refuses_inconsistent_heldout_source_session_counts(tmp_path, mutation):
+    # Two independent synthetic TEST sources exercise source/session cardinality
+    # without trusting operator-supplied host labels as authenticated evidence.
+    raw, report = _fixture(tmp_path, second_test_capture=True)
+    test = report["provenance"]["test"]
+    assert len(test["source_sha256"]) == test["sessions"] == test["host_groups"] == 2
+    if mutation == "extra_sessions":
+        test["sessions"] = 3
+    elif mutation == "missing_session":
+        test["sessions"] = 1
+    elif mutation == "more_hosts_than_sessions":
+        test["host_groups"] = 3
+    elif mutation == "boolean_sessions":
+        test["sessions"] = True
+    else:
+        test["host_groups"] = 1.5
+    with pytest.raises(ValueError, match="Invalid held-out test provenance"):
+        review_private_zeek_trace(raw, _encode(report))
+
+
+def test_private_trace_accepts_multiple_independent_heldout_sources(tmp_path):
+    raw, report = _fixture(tmp_path, second_test_capture=True)
+    test = report["provenance"]["test"]
+    assert test["sessions"] == len(test["source_sha256"]) == 2
+    assert test["host_groups"] == 2
+    reviewed = review_private_zeek_trace(raw, _encode(report))
+    assert reviewed["flow_count"] == 2
+    assert reviewed["other_sources_verified"] is False
+    assert reviewed["label_truth_verified"] is False
 
 
 def test_private_trace_accepts_genuine_synthetic_experiment_provenance(tmp_path):
