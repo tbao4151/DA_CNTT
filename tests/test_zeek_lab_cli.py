@@ -237,7 +237,7 @@ def test_private_heldout_trace_is_opt_in_and_joinable_to_verified_log(tmp_path):
     assert proc.returncode == 0, proc.stderr
     result = json.loads(private_output.read_text(encoding="utf-8"))
     trace = result["private_test_trace"]
-    assert result["report_version"] == 5
+    assert result["report_version"] == 6
     assert trace["mode"] == "offline_zeek_heldout_test_predictions_only"
     assert trace["selected_threshold"] == result["selected_threshold"]
     assert trace["automated_alerts"] is False
