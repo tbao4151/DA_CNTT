@@ -24,6 +24,7 @@ def _bidirectional_tuple(src_ip: str, src_port: int, dst_ip: str,
 
 def corroborate_pcap_zeek_tuples(
     pcap: bytes, zeek_log: bytes, *, require_timestamp_corroboration: bool = False,
+    require_distinct_packet_corroboration: bool = False,
 ) -> dict[str, object]:
     """Require every Zeek TCP/UDP IPv4 flow tuple to occur in a classic PCAP.
 
@@ -31,8 +32,12 @@ def corroborate_pcap_zeek_tuples(
     A packet can corroborate multiple Zeek rows with the same tuple; this is
     explicitly an existence check, NOT a one-to-one correspondence proof.
     Optional timestamp corroboration requires a same-tuple PCAP packet within
-    one second of each Zeek flow start. It still does not prove derivation.
+    one second of each Zeek flow start. The stricter opt-in distinct-packet
+    gate greedily assigns a different matching packet record to each Zeek row.
+    Neither check proves packet-to-flow identity or capture authenticity.
     """
+    if require_distinct_packet_corroboration and not require_timestamp_corroboration:
+        raise ValueError("Distinct packet gate requires timestamp corroboration")
     framing = inspect_classic_pcap_framing(pcap)
     endian, fraction_base = MAGIC_FORMATS[pcap[:4]]
     linktype = struct.unpack_from(endian + "I", pcap, 20)[0]
@@ -145,6 +150,40 @@ def corroborate_pcap_zeek_tuples(
             if not near_start(forward) and not near_start(reverse):
                 raise ValueError("Zeek flow start has no same-tuple PCAP packet within one second")
         matched += 1
+    # Stronger optional *record availability* screen: no PCAP packet record
+    # may satisfy two Zeek rows, including when the directions are reversed.
+    # Sorting by flow start (hence deadline) and consuming the earliest
+    # eligible packet gives a deterministic interval matching for +/-1 s.
+    # This is still not proof that Zeek derived a row from that packet.
+    if require_distinct_packet_corroboration:
+        available: dict[tuple[object, ...], list[float]] = {}
+        for key, times in packet_times.items():
+            neutral = _bidirectional_tuple(*key)
+            available.setdefault(neutral, []).extend(times)
+        for times in available.values():
+            times.sort()
+        starts_by_tuple: dict[tuple[object, ...], list[float]] = {}
+        for event in events:
+            neutral = _bidirectional_tuple(
+                event["src_ip"], event["src_port"], event["dst_ip"],
+                event["dst_port"], event["proto"],
+            )
+            starts_by_tuple.setdefault(neutral, []).append(
+                datetime.fromisoformat(event["event_time_utc"]).timestamp()
+            )
+        for neutral, starts in starts_by_tuple.items():
+            starts.sort()
+            times = available.get(neutral, [])
+            cursor = 0
+            for start in starts:
+                while cursor < len(times) and times[cursor] < start - 1.0:
+                    cursor += 1
+                if cursor >= len(times) or times[cursor] > start + 1.0:
+                    raise ValueError(
+                        "Insufficient distinct same-tuple PCAP packets near Zeek flow starts"
+                    )
+                cursor += 1
+
     reused_zeek_rows = sum(
         count for count in zeek_tuple_counts.values() if count > 1
     )
@@ -164,6 +203,8 @@ def corroborate_pcap_zeek_tuples(
         "matched_zeek_flow_count": matched,
         "packet_to_flow_identity_verified": False,
         "timestamps_correlated": require_timestamp_corroboration,
+        "distinct_packet_per_flow_required": require_distinct_packet_corroboration,
+        "distinct_packet_per_flow_correlated": require_distinct_packet_corroboration,
         "timestamp_corroboration_window_seconds": (1.0 if require_timestamp_corroboration else None),
         "capture_authenticity_verified": False,
         "host_only_isolation_verified": False,
