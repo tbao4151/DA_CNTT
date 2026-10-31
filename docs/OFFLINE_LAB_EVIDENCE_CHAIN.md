@@ -127,3 +127,30 @@ isolation, permission, Zeek derivation, independent labels, AI detection or
 SOC latency. No PCAP, IP or UID is exported; no network access or file writes.
 Run `py -3.12 -m pytest -q tests/test_lab_evidence_chain.py` on Windows
 for synthetic regression only, and separately retain real VMware evidence.
+
+## Optional distinct-packet availability screen (31/10/2026)
+
+For **small, owned, classic Ethernet IPv4 TCP/UDP PCAPs**, the additional
+`--require-distinct-pcap-packets` option requires all three earlier gates:
+`--require-independent-original-pins`,
+`--require-pcap-zeek-tuples` and
+`--require-pcap-zeek-timestamps`. It rejects evidence if one PCAP packet
+record would need to be reused to corroborate multiple Zeek rows with the
+same bidirectional five-tuple and overlapping one-second start windows.
+Example: append all four flags to the integrated verifier invocation above.
+
+The standalone `scripts/verify_pcap_zeek_tuple.py` offers the equivalent
+`--require-distinct-packet-corroboration` option, requiring
+`--require-timestamp-corroboration`. The matching algorithm uses each
+original PCAP record at most once and accepts either packet direction.
+It is a **necessary record-availability screen**, not a claim that the
+particular packet created a Zeek row, that every packet was captured, or
+that packet timestamps are trustworthy. Do not use this screen to infer
+attack labels, capture authenticity, VMware isolation or live latency.
+Some legitimate captures may lack sufficient packets; preserve failures
+and original evidence rather than fabricating or editing data.
+
+Only sanitized aggregate flags and counts are returned. The input files
+remain unchanged. Synthetic CI regressions:
+`tests/test_pcap_zeek_distinct_packets.py`. No real VMware acceptance
+is claimed by these tests.
