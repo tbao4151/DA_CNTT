@@ -1549,3 +1549,11 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows offline CI for the distinct-PASS-file-path regression; merge only with successful required checks and clean mergeability. This is a bounded software integrity check, not evidence authentication.
 - [ ] Student Windows 11: independently inspect Host-only NICs/routes and authorization, retain four *separate* original evidence files and their SHA-256 in a private directory, run `py -3.12 -m pytest -q tests/test_vmware_session_record.py` and the documented first-session validator, then obtain manual review. Software cannot establish the truth of operator declarations.
 - [ ] Collect genuine authorized Host-only PCAP/Zeek logs and independently adjudicated labels with preregistered host/session-disjoint TEST before measuring Blue Team Precision/Recall/FPR and event-to-SOC latency. Do not enable Red Team network activity or modify historical UNSW-NB15 benchmarks.
+
+
+## 2026-10-31 — Verified distinct-path VMware evidence index (PR #289)
+
+- [x] Verify exact-head [Ubuntu CI #41146132469](https://github.com/tbao4151/DA_CNTT/actions/runs/41146132469) and [Windows CI #41146132481](https://github.com/tbao4151/DA_CNTT/actions/runs/41146132481) succeeded, review the diff and conflict-free state, then merge [PR #289](https://github.com/tbao4151/DA_CNTT/pull/289) as `ddf4138b65592ddc1fe400d8f547f9b0f7d1db1c`.
+- [ ] Verify post-merge `main` CI independently; do not equate PR-head success with post-merge acceptance.
+- [ ] Student executes the private Windows 11 + VMware Host-only first-session runbook, independently reviews authorization/isolation and preserves distinct hash-pinned original evidence. Software validates file identity/integrity, not truth of the underlying claims.
+- [ ] Obtain genuine, independently annotated host/session-disjoint Zeek captures; run held-out Blue Team evaluation and measure end-to-end alert-to-SOC evidence/latency. Keep Red Team traffic disabled until lab controls are validated. Preserve official UNSW-NB15 metrics.
