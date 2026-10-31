@@ -106,3 +106,29 @@ labels, attack detection, operational alerts or event-to-SOC latency.
 Only a separate authorized Windows/VMware experiment can establish those
 claims. At authoring, the new PR-head CI is **not yet verified**; check the
 specific workflow runs before marking this acceptance complete.
+
+
+## Real-Zeek CI Red/Blue to existing manual SOC bridge (proposed 31/10/2026)
+
+The real-Zeek synthetic smoke workflow already creates a **disposable manual
+Unclassified SOC case** in an earlier stage, using a deliberately neutralized
+fixture-only model to guarantee a research candidate. A later Red/Blue stage
+uses a **different** fitted synthetic-label research model. The new acceptance
+checks that both independent paths use the exact same original Zeek bytes and
+PCAP import report, then re-verifies the existing case's flow snapshot and
+initial audit against the neutral model and its original prediction JSON.
+
+The bridge invokes the production read-only `verify_new_log_soc_case_link`
+on the existing SQLite database, checks the Red/Blue source/import/PCAP pins,
+rejects a missing case ID, and verifies that original database, PCAP, log,
+import report, both model/report files and Red audit remain unchanged.
+It records `manual_unclassified_soc_bridge` in the synthetic CI report.
+No new case is created by the bridge and no network traffic is generated.
+
+**Important:** This is two separately labeled synthetic-model paths sharing
+a Zeek source, not proof that the Red scenario caused packets, that a fitted
+Blue model detected an attack, or that an operational SOC alert was generated.
+The manually opened Unclassified case was created by the preceding CI stage.
+All hashes and case content originate within the CI job; no student VMware
+experiment or independent ground truth is established. PR-head CI acceptance
+must be checked before marking this work verified.
