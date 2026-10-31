@@ -15,7 +15,7 @@ def _identifier(value: object) -> bool:
     return (
         isinstance(value, str) and 1 <= len(value) <= 128
         and value.strip() == value
-        and all(33 <= ord(ch) < 127 for ch in value)
+        and all(ord(ch) >= 33 and ord(ch) != 127 for ch in value)
     )
 
 

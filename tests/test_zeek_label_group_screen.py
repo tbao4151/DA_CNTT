@@ -62,7 +62,6 @@ def test_detects_perfect_host_label_separation_without_private_values():
 def test_test_and_feature_mutation_cannot_change_diagnostic():
     dataset = _dataset()
     baseline = summarize_train_validation_label_group_confounding(dataset)
-    dataset.features = None if False else dataset.features
     dataset.features["train"] = None
     dataset.features["validation"] = None
     dataset.features["test"] = None
