@@ -295,3 +295,64 @@ def test_private_trace_accepts_v4_v5_and_current_v6_but_refuses_other_versions(t
         report["report_version"] = invalid
         with pytest.raises(ValueError, match="Unsupported offline Zeek research report"):
             review_private_zeek_trace(raw, _encode(report))
+
+
+@pytest.mark.parametrize("mutation", [
+    "reuse_train_test_source",
+    "reuse_train_validation_source",
+    "missing_validation_split",
+    "unexpected_split",
+    "train_duplicate_source",
+    "train_missing_source",
+    "train_sessions_mismatch",
+    "validation_hosts_exceed_sessions",
+    "train_boolean_flows",
+    "validation_zero_flows",
+    "train_extra_field",
+    "train_invalid_digest",
+    "train_flows_fewer_than_sources",
+])
+def test_private_trace_refuses_invalid_cross_split_source_provenance(tmp_path, mutation):
+    # The reviewer receives an operator-generated aggregate report, not the
+    # private TRAIN/VALIDATION original bytes. This catches false metadata
+    # claims without pretending to authenticate those underlying captures.
+    raw, report = _fixture(tmp_path, second_test_capture=True)
+    parts = report["provenance"]
+    if mutation == "reuse_train_test_source":
+        parts["train"]["source_sha256"] = [parts["test"]["source_sha256"][0]]
+    elif mutation == "reuse_train_validation_source":
+        parts["validation"]["source_sha256"] = parts["train"]["source_sha256"][:]
+    elif mutation == "missing_validation_split":
+        parts.pop("validation")
+    elif mutation == "unexpected_split":
+        parts["extra"] = dict(parts["train"])
+    elif mutation == "train_duplicate_source":
+        parts["train"]["source_sha256"] *= 2
+    elif mutation == "train_missing_source":
+        parts["train"]["source_sha256"] = []
+    elif mutation == "train_sessions_mismatch":
+        parts["train"]["sessions"] += 1
+    elif mutation == "validation_hosts_exceed_sessions":
+        parts["validation"]["host_groups"] += 1
+    elif mutation == "train_boolean_flows":
+        parts["train"]["flows"] = True
+    elif mutation == "validation_zero_flows":
+        parts["validation"]["flows"] = 0
+    elif mutation == "train_extra_field":
+        parts["train"]["host_names"] = ["invented"]
+    elif mutation == "train_invalid_digest":
+        parts["train"]["source_sha256"] = ["not-a-sha256"]
+    else:
+        parts["train"]["flows"] = 0
+    with pytest.raises(ValueError):
+        review_private_zeek_trace(raw, _encode(report))
+
+
+def test_private_trace_cross_split_source_screen_keeps_legacy_versions(tmp_path):
+    raw, report = _fixture(tmp_path, second_test_capture=True)
+    expected = review_private_zeek_trace(raw, _encode(report))
+    for version in (4, 5, 6):
+        report["report_version"] = version
+        assert review_private_zeek_trace(raw, _encode(report)) == expected
+    assert expected["other_sources_verified"] is False
+    assert expected["model_provenance_authenticated"] is False
