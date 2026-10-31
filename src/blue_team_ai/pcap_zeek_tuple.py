@@ -30,9 +30,23 @@ def _p95_offset_ms(offsets_seconds: list[float]) -> float:
     return round(sorted(offsets_seconds)[rank - 1] * 1000, 6)
 
 
+def _valid_ipv4_header_checksum(header: memoryview) -> bool:
+    """RFC 791 ones-complement checksum over the complete captured IPv4 header.
+
+    Checks accidental header corruption only; not cryptographic authenticity.
+    """
+    words = (int.from_bytes(header[i:i + 2], "big")
+             for i in range(0, len(header), 2))
+    total = sum(words)
+    while total >> 16:
+        total = (total & 0xFFFF) + (total >> 16)
+    return total == 0xFFFF
+
+
 def corroborate_pcap_zeek_tuples(
     pcap: bytes, zeek_log: bytes, *, require_timestamp_corroboration: bool = False,
     require_distinct_packet_corroboration: bool = False,
+    require_ipv4_header_checksum: bool = False,
 ) -> dict[str, object]:
     """Require every Zeek TCP/UDP IPv4 flow tuple to occur in a classic PCAP.
 
@@ -43,6 +57,8 @@ def corroborate_pcap_zeek_tuples(
     one second of each Zeek flow start. The stricter opt-in distinct-packet
     gate greedily assigns a different matching packet record to each Zeek row.
     Neither check proves packet-to-flow identity or capture authenticity.
+    Optional IPv4 header checksum validation is fail-closed on every IPv4
+    packet header; offloaded/partial captures may fail despite legitimate traffic.
     """
     if require_distinct_packet_corroboration and not require_timestamp_corroboration:
         raise ValueError("Distinct packet gate requires timestamp corroboration")
@@ -107,6 +123,9 @@ def corroborate_pcap_zeek_tuples(
             raise ValueError("IPv4 reserved fragmentation flag must be zero")
         if flags_fragment & 0x3FFF:
             raise ValueError("Fragmented IPv4 is unsupported for strict tuple corroboration")
+        if (require_ipv4_header_checksum
+                and not _valid_ipv4_header_checksum(frame[14:14 + ihl])):
+            raise ValueError("Invalid IPv4 header checksum in original PCAP")
         protocol = frame[23]
         if protocol not in (6, 17):
             continue
@@ -239,6 +258,8 @@ def corroborate_pcap_zeek_tuples(
         "zeek_flow_count": len(events),
         "matched_zeek_flow_count": matched,
         "packet_to_flow_identity_verified": False,
+        "ipv4_header_checksum_required": require_ipv4_header_checksum,
+        "ipv4_header_checksum_verified": require_ipv4_header_checksum,
         "timestamps_correlated": require_timestamp_corroboration,
         "distinct_packet_per_flow_required": require_distinct_packet_corroboration,
         "distinct_packet_per_flow_correlated": require_distinct_packet_corroboration,
