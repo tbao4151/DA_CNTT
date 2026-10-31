@@ -2522,3 +2522,10 @@
 - Feature branch `feature/da005-distinct-pcap-zeek-packet-gate-312`; PR/CI state must be checked before claiming merge or acceptance.
 
 - PR #312 initial exact-head CI (Ubuntu #41220959427; Windows #41220959528) **failed** because `tests/test_pcap_zeek_distinct_packets.py` used pytest fixture `imported` without importing it into that test module. Corrected the fixture import on feature branch (commit `b6d407d7dcc2627f10c2cbda806126ee7eb7892c`). This is a CI repair, **not** evidence of passing tests or Windows/VMware validation; merge remains blocked until fresh exact-head Ubuntu and Windows CI pass.
+
+
+## 2026-11-01 — Reject reserved IPv4 flag in pinned PCAP/Zeek corroboration (feature PR; CI pending)
+
+- Verified `main` at `ffe20ed2974396d3b2de76d12a6545e5528e10db`: PR #312 merged; its latest PR-head Ubuntu/Windows/Real Zeek Synthetic CI and main quality run #41223819591 succeeded. No open PR at branch creation. Read README, PROGRESS, ROADMAP, source tree, tuple parser, synthetic tests, first-session guidance and CI.
+- Added a fail-closed RFC 791 reserved IPv4 fragmentation-flag check before any PCAP TCP/UDP tuple is accepted. The valid Don't Fragment bit remains allowed. Added synthetic TCP/UDP regressions for tuple-only, timestamp and distinct-packet modes, including valid-DF controls. This closes a malformed-header evidence-acceptance gap; no change to existing CLI flags or successful JSON schema.
+- **At authoring:** PR-head CI and Windows/VMware laptop tests are not yet verified. These checks do not authenticate packet checksums, capture origin, lab isolation, Zeek processing, independent attack labels, AI detection or SOC latency. No traffic, Red execution, model/UNSW benchmark, SQLite, secrets or deployment changes. The original PCAP/Zeek must remain unchanged.
