@@ -1722,3 +1722,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu Python 3.12.9 quality, Windows offline Zeek and any triggered Real Zeek synthetic CI on the feature PR; merge only after green required checks and no conflicts. The gate rejects the invalid RFC 791 reserved flag but continues to accept valid DF on IPv4 TCP/UDP.
 - [ ] On student Windows 11 run `py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py tests/test_pcap_zeek_distinct_packets.py tests/test_lab_evidence_chain.py`. Preserve approved original private Host-only PCAP/Zeek, independent SHA-256 pins, VMware isolation screenshots and operator authorization. Record any malformed or unsupported packets as failures, not modified evidence.
 - [ ] Obtain independently annotated real captures with host/session-disjoint held-out evaluation and demonstrate offline Zeek model -> research alert -> explicit SOC case, measuring real end-to-end timing. This IPv4 syntax gate alone proves neither packet provenance nor real AI detection. Keep Red network execution OFF and UNSW-NB15 benchmark unchanged.
+
+
+## Cyber Lab — signed PCAP/Zeek timing bias diagnostic (PR #315; 01/11/2026)
+
+- [ ] Confirm final-head Ubuntu Python 3.12.9 quality CI and Windows offline synthetic tests pass, check clean PR mergeability, then merge the signed timestamp-offset diagnostic feature. Record PR and exact run URLs in PROGRESS; do not claim CI success before verification.
+- [ ] Student runs the synthetic regression on Windows 11 Python 3.12.9, then validates an authorized genuine VMware Host-only PCAP and Zeek conn.log with independently pinned SHA-256 and verified network isolation evidence. Record Zeek version and clock setup privately; do not upload original captures.
+- [ ] Interpret signed mean alongside absolute offset max/mean; cancellation does not prove synchronized clocks. Independently label host/session-disjoint real Zeek captures and measure event-to-alert-to-SOC latency separately. Keep active Red Team traffic disabled and preserve the official UNSW-NB15 benchmark.

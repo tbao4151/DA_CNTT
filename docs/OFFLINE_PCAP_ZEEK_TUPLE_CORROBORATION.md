@@ -135,3 +135,34 @@ Synthetic regression (Windows and Ubuntu CI, not VMware acceptance):
 ```powershell
 py -3.12 -m pytest -q tests/test_pcap_zeek_timing_offsets.py
 ```
+
+
+## Signed PCAP-to-Zeek timestamp offsets (01/11/2026; synthetic regression)
+
+The optional timestamp gate now also returns
+`timestamp_nearest_packet_signed_offset_mean_ms`. The optional distinct-packet
+gate returns `distinct_assigned_packet_signed_offset_mean_ms`. Both are
+aggregate **signed** means in milliseconds, with the convention
+`PCAP packet timestamp - Zeek flow start timestamp`: positive means the
+matched packet is later, negative means earlier. On equal absolute nearest
+offsets the earlier packet wins deterministically. The integrated private
+evidence-chain report exposes these as
+`pcap_zeek_nearest_packet_signed_offset_mean_ms` and
+`pcap_zeek_distinct_assigned_signed_offset_mean_ms`. When the relevant
+opt-in gate is disabled, its signed mean is null.
+
+Signed means can cancel: equal positive and negative offsets can produce a
+zero mean despite substantial per-flow disagreement. Always interpret the
+signed mean **together with** the pre-existing absolute max/mean offsets;
+a nonzero mean is not proof of clock skew, and zero is not proof of
+synchronization. The distinct assignment remains earliest-eligible greedy,
+not minimum-cost matching. These aggregates contain no packet IPs or raw
+timestamps. They are not event-to-alert latency, attack detection, capture
+authenticity, or packet-to-flow provenance. This change makes no network
+requests and leaves Dataset Mode and Red Team execution unchanged.
+
+Synthetic regression only (not student VMware acceptance):
+
+```powershell
+py -3.12 -m pytest -q tests/test_pcap_zeek_signed_offsets.py
+```
