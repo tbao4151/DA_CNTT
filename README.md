@@ -59,17 +59,21 @@ Sau khi có mô hình: Tab **AI & đánh giá** hiển thị kết quả test ch
 
 ## Cấu trúc mã nguồn
 
+**Kiểm kê kiến trúc hiện tại:** [Sentinel Lab implementation status](docs/SENTINEL_LAB_IMPLEMENTATION_STATUS.md). Dataset Mode và Cyber Lab Mode là hai luồng riêng; phần Zeek chỉ là nghiên cứu offline, không phải AI phát hiện live. Tài liệu [Cyber Lab architecture](docs/CYBER_LAB_ARCHITECTURE.md) có cả nhật ký các giai đoạn trước, không được hiểu mọi mục "pending" cũ là trạng thái hiện tại.
+
 ```text
-app.py                     Giao diện Streamlit
-src/siem_ai/core.py         Kiểm tra log, rules mẫu, quản lý SOC cases
-src/siem_ai/model.py        Huấn luyện, đánh giá và dự đoán
-scripts/train_siem.py       CLI tạo mô hình/metrics
-scripts/download_unsw_nb15.py Tải và kiểm tra SHA-256
-data/raw/unsw_nb15/         Train/test chính thức và metadata
-tests/                      Unit tests
-.github/workflows/ci.yml    Kiểm tra tự động
-PROGRESS.md                 Công việc thực tế / phần còn thiếu
-ROADMAP.md                  Mục tiêu / thứ tự ưu tiên
+app.py                       Dataset Mode Streamlit / UNSW-NB15
+src/siem_ai/                 Legacy-compatible Dataset model, SOC, UI
+pages/1_Cyber_Lab.py         Blue Team offline Zeek preview/manual case
+pages/2_Red_Team_Lab.py      Red Team non-executing scenario planner
+pages/3_New_Log_Review.py    Blue Team pinned NEW-log research review
+src/blue_team_ai/            Zeek parsing, lab research model, verification, SOC
+src/red_team_ai/             Offline scenario policy, audit, fixture binding
+src/shared/offline_handoff.py Read-only Red/Blue evidence join
+scripts/                     Dataset, Zeek, PCAP, preflight and research CLIs
+tests/                       Synthetic regression and contract tests
+docs/                        Scientific limits, runbooks and architecture
+PROGRESS.md / ROADMAP.md     Evidence-based progress and next steps
 ```
 
 ## Minh chứng benchmark AI và chuẩn bị bảo vệ

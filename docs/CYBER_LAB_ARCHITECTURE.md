@@ -1,6 +1,8 @@
 # Cyber Lab Mode — telemetry boundary (offline-first)
 
-## Architecture and current implementation
+> **Current-state source of truth:** [Sentinel Lab implementation status](SENTINEL_LAB_IMPLEMENTATION_STATUS.md), checked against `main` at `e31b99b1ad8632230b902f6bb7aec31f8f4f7f4a` (31/10/2026). This document also preserves chronological design notes from earlier PRs. Statements below such as "not yet a classifier" or "PR pending" describe the **dated increment in which they were written**, not necessarily the current repository. In particular, the current repo has a separate offline Zeek research baseline, NEW-log score/review and manual Unclassified SOC case, plus a non-executing Red Team UI. It does **not** have operational live detection, verified real VMware experiments or active Red Team execution.
+
+## Historical initial telemetry increment (28/10/2026; superseded by current-state inventory)
 
 Dataset Mode is the existing `app.py` + `src/siem_ai/` UNSW-NB15 prototype. It has an offline trained Random Forest, held-out benchmark reports, alert views and SQLite SOC cases. The official UNSW train/test CSVs do not contain original IPs or event timestamps.
 
