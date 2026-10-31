@@ -1564,3 +1564,11 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [x] Documentation PR #290 merged at `249eb5146ef2c4ebeacdc3d8248fd9732ecdbec7` after exact-head Ubuntu quality [#41148991738](https://github.com/tbao4151/DA_CNTT/actions/runs/41148991738) succeeded and mergeability was clean.
 - [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows offline CI for the hard-link file-identity regression; merge only if relevant checks pass and no conflict exists. Keep resolved-path guard for filesystems without usable inode IDs. This does not establish independent evidence authenticity.
 - [ ] Student Windows 11: follow the private VMware Host-only first-session runbook, retain independently pinned original PCAP/Zeek and four separately reviewed operator evidence files, and run `py -3.12 -m pytest -q tests/test_vmware_session_record.py` locally. Never present synthetic CI as laptop evidence or claim attack detection without independently adjudicated labels and held-out evaluation.
+
+
+## 2026-10-31 — Hard-link identity guard accepted; genuine lab evidence still required
+
+- [x] Verify [PR #291](https://github.com/tbao4151/DA_CNTT/pull/291) exact-head [Ubuntu quality #41151928707](https://github.com/tbao4151/DA_CNTT/actions/runs/41151928707) and [Windows offline Zeek #41151928392](https://github.com/tbao4151/DA_CNTT/actions/runs/41151928392) success, review diff and clean mergeability, and squash-merge as `c7a02b7122b47770cfbc785aa189a550b1c88d0c`. The earlier feature-pending checkbox is superseded.
+- [ ] Verify post-merge `main` CI separately; do not interpret synthetic runner success as a laptop/VMware capture.
+- [ ] Student Windows 11: follow `docs/FIRST_VMWARE_HOSTONLY_EVIDENCE_SESSION.md`; manually review Host-only NICs/routes and authorization, archive original PCAP/Zeek and four distinct hash-pinned supporting evidence files privately, and run `py -3.12 -m pytest -q tests/test_vmware_session_record.py` locally. Structural file identity is not proof of evidence authenticity.
+- [ ] Prioritize genuine independently annotated host/session-disjoint Zeek data, preregistered holdout, measured Blue Team Precision/Recall/FPR and event-to-alert-to-SOC-case latency. Keep active Red Team disabled until lab scope/isolation is verified. Preserve official UNSW-NB15 metrics.
