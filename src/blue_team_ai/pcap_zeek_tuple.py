@@ -73,6 +73,14 @@ def corroborate_pcap_zeek_tuples(
             raise ValueError("Truncated IPv4 TCP/UDP transport header")
         start = 14 + ihl
         src_port, dst_port = struct.unpack_from("!HH", frame, start)
+        if protocol == 17:
+            # UDP's declared datagram length must include its eight-byte
+            # header and fit within the unfragmented IPv4 payload. A packet
+            # with plausible port bytes but an impossible UDP length must not
+            # corroborate a Zeek flow (even when its five-tuple matches).
+            udp_length = struct.unpack_from("!H", frame, start + 4)[0]
+            if udp_length < 8 or udp_length > total - ihl:
+                raise ValueError("Invalid IPv4 UDP datagram length")
         if protocol == 6:
             tcp_header_length = (frame[start + 12] >> 4) * 4
             if (tcp_header_length < 20 or total < ihl + tcp_header_length
