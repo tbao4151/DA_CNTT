@@ -105,6 +105,23 @@ def test_refuse_unsupported_or_missing_corroboration(mutation):
         corroborate_pcap_zeek_tuples(pcap(*([] if packet is None else [packet]), linktype=linktype), log)
 
 
+@pytest.mark.parametrize("declared_udp_length", [0, 7, 9, 65535])
+def test_udp_tuple_corroboration_refuses_impossible_datagram_length(declared_udp_length):
+    # IPv4 payload is exactly the eight-byte UDP header in this fixture.
+    # Re-pinning the packet would not make a malformed UDP length valid.
+    frame = bytearray(pcap_packet(proto=17))
+    struct.pack_into("!H", frame, 14 + 20 + 4, declared_udp_length)
+    with pytest.raises(ValueError, match="Invalid IPv4 UDP datagram length"):
+        corroborate_pcap_zeek_tuples(
+            pcap(bytes(frame)), zeek_log(proto="udp"),
+        )
+    with pytest.raises(ValueError, match="Invalid IPv4 UDP datagram length"):
+        corroborate_pcap_zeek_tuples(
+            pcap(bytes(frame)), zeek_log(proto="udp"),
+            require_timestamp_corroboration=True,
+        )
+
+
 def test_repeated_zeek_tuples_are_only_existence_correlated():
     log = zeek_log().decode()
     log += "101.0\tC2\t10.1.1.2\t1234\t10.1.1.3\t80\ttcp\n"

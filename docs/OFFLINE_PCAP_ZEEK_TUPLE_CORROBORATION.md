@@ -8,7 +8,16 @@ one packet of an independently SHA-256-pinned classic PCAP (either direction).
 It never transmits traffic, starts Zeek or writes to SQLite.
 
 Supported input is **classic Ethernet PCAP (DLT 1), untagged IPv4,
-nonfragmented TCP or UDP**. Non-IPv4 packets such as ARP are ignored for
+nonfragmented TCP or UDP**.
+
+For UDP, the strict verifier additionally rejects a declared datagram length
+smaller than the eight-byte UDP header or larger than the IPv4 payload length.
+This prevents malformed UDP port bytes from being counted as corroborating
+packet evidence, including under the opt-in timestamp gate. It does **not**
+validate UDP checksums, complete payload delivery or packet-to-Zeek flow
+identity; valid snaplen-truncated payloads are not rejected solely because
+the full IP payload was not captured. Existing TCP behavior is unchanged.
+ Non-IPv4 packets such as ARP are ignored for
 corroboration; VLAN-tagged Ethernet and fragmented IPv4 are refused. Zeek
 flows using IPv6 or non-TCP/UDP protocols are refused rather than silently
 reported as verified. Classic PCAP record framing and Zeek ASCII parsing are
