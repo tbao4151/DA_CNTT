@@ -42,7 +42,9 @@ def _inputs():
             "test": {"flows": 2, "source_sha256": [digest], "host_groups": 1, "sessions": 1},
         },
         "selected_threshold": 0.5,
-        "test_metrics": {"tp": 1, "fp": 0, "tn": 1, "fn": 0, "support": 2},
+        "test_metrics": {"tp": 1, "fp": 0, "tn": 1, "fn": 0, "support": 2,
+                         "precision": 1.0, "recall": 1.0, "f1": 1.0,
+                         "false_positive_rate": 0.0},
         "live_capture": False, "automated_alerts": False,
         "private_test_trace": {
             "trace_version": 1,
@@ -124,6 +126,19 @@ def test_tampered_original_or_trace_fails_closed_without_case(tmp_path):
             )
         assert not db.exists()
 
+
+
+def test_inconsistent_heldout_rates_fail_closed_before_soc_write(tmp_path):
+    raw, trace = _inputs()
+    db = tmp_path / "cyber.sqlite3"
+    altered = json.loads(trace)
+    altered["test_metrics"]["precision"] = 0.5
+    with pytest.raises(ValueError, match="rate mismatch"):
+        create_research_candidate_case(
+            db, source_data=raw, trace_data=json.dumps(altered).encode(),
+            record_index=1, analyst_confirmed=True,
+        )
+    assert not db.exists()
 
 def test_legacy_manual_case_keeps_default_note_and_unclassified_semantics(tmp_path):
     raw, _ = _inputs()

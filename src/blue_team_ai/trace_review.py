@@ -141,6 +141,25 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
         rows_by_source.setdefault(digest, {})[uid] = flow
     if any(counts[key] != metrics[key] for key in counts):
         raise ValueError("Private trace confusion counts mismatch")
+    # The research report also exposes derived TEST rates. Recompute these
+    # solely from the private trace confusion counts, not from untrusted
+    # floating-point fields in the supplied JSON. This is an integrity check,
+    # not authentication of the model, source capture or operator labels.
+    tp, fp, tn, fn = (counts[key] for key in ("tp", "fp", "tn", "fn"))
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    expected_rates = {
+        "precision": precision,
+        "recall": recall,
+        "f1": 2 * precision * recall / (precision + recall) if precision + recall else 0.0,
+        "false_positive_rate": fp / (fp + tn) if fp + tn else 0.0,
+    }
+    for name, expected in expected_rates.items():
+        observed = metrics.get(name)
+        if (type(observed) not in (int, float)
+                or not math.isfinite(observed) or not 0 <= observed <= 1
+                or not math.isclose(observed, expected, rel_tol=0.0, abs_tol=1e-12)):
+            raise ValueError("Private trace/test report rate mismatch")
     if set(rows_by_source) != set(declared_sources):
         raise ValueError("Private trace sources differ from held-out test provenance")
 
