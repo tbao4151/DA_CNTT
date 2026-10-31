@@ -59,6 +59,8 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("PCAP/Zeek tuple checks require strict independent original pins")
     if args.require_pcap_zeek_timestamps and not args.require_pcap_zeek_tuples:
         raise ValueError("Timestamp check requires PCAP/Zeek tuple check")
+    if args.require_distinct_pcap_packets and not args.require_pcap_zeek_timestamps:
+        raise ValueError("Distinct packet gate requires timestamp corroboration")
     original_pins = (args.expected_pcap_sha256, args.expected_log_sha256)
     if args.require_independent_original_pins and not all(
         pin is not None for pin in original_pins
@@ -95,6 +97,7 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         tuple_report = corroborate_pcap_zeek_tuples(
             pcap_bytes, zeek_bytes,
             require_timestamp_corroboration=args.require_pcap_zeek_timestamps,
+            require_distinct_packet_corroboration=args.require_distinct_pcap_packets,
         )
         if tuple_report["matched_zeek_flow_count"] != imported["flow_count"]:
             raise ValueError("Tuple corroboration count differs from verified import")
@@ -131,6 +134,8 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         "pcap_zeek_tuples_required": args.require_pcap_zeek_tuples,
         "pcap_zeek_tuples_verified": tuple_report is not None,
         "pcap_zeek_timestamps_required": args.require_pcap_zeek_timestamps,
+        "pcap_zeek_distinct_packets_required": args.require_distinct_pcap_packets,
+        "pcap_zeek_distinct_packets_correlated": args.require_distinct_pcap_packets,
         "pcap_zeek_matched_flow_count": (
             tuple_report["matched_zeek_flow_count"] if tuple_report is not None else None
         ),
@@ -200,6 +205,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--require-pcap-zeek-timestamps", action="store_true",
         help="With strict pins and tuple check, require same-tuple packet within 1s of Zeek flow start",
+    )
+    parser.add_argument(
+        "--require-distinct-pcap-packets", action="store_true",
+        help="Requires tuple and timestamp gates; one matching PCAP record per Zeek flow",
     )
     parser.add_argument(
         "--require-guest-endpoint", action="store_true",
