@@ -1,4 +1,4 @@
-"""Descriptive TRAIN-to-VALIDATION Zeek feature shift; held-out TEST stays sealed.
+"""Descriptive TRAIN-to-VALIDATION Zeek feature shift; TEST features uninspected.
 
 This is a read-only aggregate diagnostic on already validated offline feature
 rows. It never fits a model, selects a threshold, reads test features, creates
@@ -91,8 +91,8 @@ def summarize_train_validation_feature_shift(
     if any(count is not None and count > 0 for count in out_of_range.values()):
         warnings.append("validation_contains_values_outside_train_numeric_ranges")
     if any(
-        partitions["train"]["missing_counts"][field] !=
-        partitions["validation"]["missing_counts"][field]
+        partitions["train"]["missing_counts"][field] * len(validation) !=
+        partitions["validation"]["missing_counts"][field] * len(train)
         for field in LAB_FEATURE_COLUMNS
     ):
         warnings.append("missing_value_counts_differ_between_splits")
@@ -116,7 +116,7 @@ def summarize_train_validation_feature_shift(
         "warnings": warnings,
         "interpretation": (
             "Train-referenced aggregate feature diagnostics only; no held-out "
-            "test inspection, no hypothesis test or proof of attack detection. "
+            "test feature inspection by this diagnostic, no hypothesis test or proof of attack detection. "
             "Operator-supplied capture independence and labels are not authenticated."
         ),
     }
