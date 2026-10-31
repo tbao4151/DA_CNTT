@@ -1663,3 +1663,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows offline CI for baseline report v6, reviewer compatibility and session suppression tests; merge only if required checks pass and no conflict exists.
 - [ ] On Windows 11 run `py -3.12 -m pytest -q tests/test_zeek_offline_baseline.py tests/test_zeek_trace_review.py tests/test_zeek_host_variability.py`. With genuine authorized, independently annotated VMware Host-only captures, review per-session variability without tuning on held-out TEST; preserve PCAP/Zeek, hashes, isolation and scenario evidence privately.
 - [ ] Measure independent held-out Precision/Recall/FPR and event-to-alert-to-SOC timing before any operational detection claim. Group summaries do not establish session independence or true labels; Red execution stays disabled pending verified controls; preserve Dataset Mode.
+
+
+## 2026-10-31 — Private held-out Zeek metric integrity (feature acceptance pending)
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI for the new trace-rate consistency regressions; merge only when all required checks pass and the PR is conflict-free.
+- [ ] On Windows 11 run `py -3.12 -m pytest -q tests/test_zeek_trace_review.py`, then manually review a private pinned Zeek test trace produced from independently annotated authorized VMware Host-only captures. Keep all raw PCAP, Zeek logs, labels and per-flow trace outside public GitHub.
+- [ ] Collect actual independently verified capture/annotation evidence and measure held-out detection metrics and event-to-alert-to-SOC timing. Arithmetic consistency cannot authenticate training, operator labels, capture origin or lab isolation; Red Team network execution remains disabled pending safety acceptance. Preserve official UNSW-NB15 Dataset Mode.
