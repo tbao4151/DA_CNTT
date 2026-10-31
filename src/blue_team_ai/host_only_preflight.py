@@ -22,8 +22,21 @@ def assess_host_only_snapshot(
     The caller must separately check VMware Virtual Network Editor, *every*
     guest NIC, guest routes, bridging/NAT and authorization before lab traffic.
     """
-    if not isinstance(snapshot, Mapping) or type(snapshot.get("schema_version")) is not int or snapshot.get("schema_version") != 1:
+    if (not isinstance(snapshot, Mapping)
+            or type(snapshot.get("schema_version")) is not int
+            or snapshot["schema_version"] not in (1, 2)):
         raise LabPreflightError("Unsupported host adapter snapshot schema")
+    # Legacy v1 is accepted for old evidence but has no IPv6 visibility.
+    required = {
+        "schema_version", "capture_origin", "adapter_name", "adapter_status",
+        "adapter_ipv4", "adapter_default_routes", "adapter_dns_servers",
+    }
+    if snapshot["schema_version"] == 2:
+        required |= {
+            "adapter_ipv6", "adapter_default_routes_ipv6", "adapter_dns_servers_ipv6",
+        }
+    if set(snapshot) != required:
+        raise LabPreflightError("Unexpected host adapter snapshot fields")
     if snapshot.get("capture_origin") != "windows_host_network_configuration":
         raise LabPreflightError("Unrecognized snapshot source declaration")
     if not isinstance(expected_adapter, str) or not expected_adapter.strip():
@@ -73,6 +86,29 @@ def assess_host_only_snapshot(
         raise LabPreflightError("Lab adapter must not have a default route")
     if snapshot.get("adapter_dns_servers") != []:
         raise LabPreflightError("Lab adapter must not declare DNS servers")
+    ipv6_screened = snapshot["schema_version"] == 2
+    if ipv6_screened:
+        if (snapshot["adapter_default_routes_ipv6"] != []
+                or snapshot["adapter_dns_servers_ipv6"] != []):
+            raise LabPreflightError("Lab adapter must not have IPv6 default routes or DNS")
+        ipv6_addresses = snapshot["adapter_ipv6"]
+        if not isinstance(ipv6_addresses, list) or len(ipv6_addresses) > 8:
+            raise LabPreflightError("Invalid bounded host IPv6 inventory")
+        normalized: set[str] = set()
+        for value in ipv6_addresses:
+            if not isinstance(value, str) or not value or value.strip() != value:
+                raise LabPreflightError("Invalid host IPv6 address")
+            # Windows may append a numeric interface zone to link-local IPs.
+            address, separator, zone = value.partition("%")
+            if separator and (not zone.isascii() or not zone.isdecimal()):
+                raise LabPreflightError("Invalid host IPv6 interface zone")
+            try:
+                parsed = ipaddress.IPv6Address(address)
+            except ValueError as exc:
+                raise LabPreflightError("Invalid host IPv6 address") from exc
+            if not parsed.is_link_local or str(parsed) in normalized:
+                raise LabPreflightError("Non-link-local or duplicate host IPv6 address")
+            normalized.add(str(parsed))
     return {
         "report_version": 1,
         "mode": "offline_windows_host_adapter_configuration_preflight",
@@ -80,14 +116,20 @@ def assess_host_only_snapshot(
         "host_adapter_name_matches": True,
         "expected_private_subnet_matches": True,
         "host_adapter_has_no_default_route_or_dns": True,
+        "host_ipv6_screened": ipv6_screened,
+        "host_non_link_local_ipv6_absent": True if ipv6_screened else None,
+        "host_ipv6_default_route_dns_absent": True if ipv6_screened else None,
         "vmware_virtual_network_editor_verified": False,
         "guest_nics_and_routes_verified": False,
         "physical_host_only_isolation_verified": False,
         "traffic_authorized": False,
         "network_activity_performed": False,
         "interpretation": (
-            "Host-side configuration snapshot passed offline checks only. "
-            "Inspect VMware network mode, guest NICs/routes and written scope "
+            "Host-side IPv4 configuration passed offline checks. "
+            + ("IPv6 addresses/routes/DNS were checked in snapshot v2. "
+               if ipv6_screened else
+               "Legacy v1 does NOT record IPv6; collect v2 before lab acceptance. ")
+            + "Inspect VMware mode, all host/guest NICs/routes and written "
             "authorization independently before any lab traffic."
         ),
     }

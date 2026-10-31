@@ -16,10 +16,17 @@ def assess_paired_network_snapshots(
     host_adapter: str, guest_adapter: str, expected_cidr: str,
 ) -> dict[str, object]:
     """Fail closed unless both strict checks pass and IPv4 addresses differ."""
-    if not isinstance(host, Mapping) or set(host) != {
+    if not isinstance(host, Mapping) or type(host.get("schema_version")) is not int:
+        raise ValueError("Unexpected host snapshot schema")
+    host_fields = {
         "schema_version", "capture_origin", "adapter_name", "adapter_status",
         "adapter_ipv4", "adapter_default_routes", "adapter_dns_servers",
-    }:
+    }
+    if host["schema_version"] == 2:
+        host_fields |= {
+            "adapter_ipv6", "adapter_default_routes_ipv6", "adapter_dns_servers_ipv6",
+        }
+    if set(host) != host_fields:
         raise ValueError("Unexpected host snapshot schema")
     host_result = assess_host_only_snapshot(
         host, expected_adapter=host_adapter, expected_cidr=expected_cidr,
@@ -42,6 +49,7 @@ def assess_paired_network_snapshots(
         "guest_configuration_passed": True,
         "declared_subnet_consistent": True,
         "host_guest_ipv4_distinct": True,
+        "host_ipv6_screened": host_result["host_ipv6_screened"],
         "vmware_virtual_network_editor_verified": False,
         "physical_host_only_isolation_verified": False,
         "snapshot_authenticity_verified": False,
