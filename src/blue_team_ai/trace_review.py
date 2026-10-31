@@ -118,34 +118,49 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
     ) or metrics["support"] != len(flows):
         raise ValueError("Private trace/test report support mismatch")
 
-    # A trace may be internally consistent yet refer to a different held-out
-    # capture than the one declared in the experiment's aggregate provenance.
-    # Check the full TEST source set and count before exposing any candidates.
+    # An aggregate research report can claim a held-out source set while
+    # silently reusing that same capture in TRAIN or VALIDATION. Check all
+    # declared split source sets before exposing any TEST candidates. These
+    # are operator-provided digests, not independently authenticated captures.
     provenance = report.get("provenance")
-    test_provenance = provenance.get("test") if isinstance(provenance, dict) else None
-    if not isinstance(test_provenance, dict) or set(test_provenance) != {
-        "flows", "source_sha256", "host_groups", "sessions",
+    if not isinstance(provenance, dict) or set(provenance) != {
+        "train", "validation", "test",
     }:
-        raise ValueError("Missing exact held-out test provenance")
+        raise ValueError("Missing exact research split provenance")
+    source_owners: dict[str, str] = {}
+    for split in ("train", "validation", "test"):
+        part = provenance[split]
+        if not isinstance(part, dict) or set(part) != {
+            "flows", "source_sha256", "host_groups", "sessions",
+        }:
+            raise ValueError("Invalid research split provenance")
+        sources = part["source_sha256"]
+        if (
+            type(part["flows"]) is not int
+            or part["flows"] < 1
+            or not isinstance(sources, list)
+            or not 1 <= len(sources) <= 30
+            or any(not _digest(source) for source in sources)
+            or sources != sorted(set(sources))
+            or part["flows"] < len(sources)
+            or any(
+                type(part[key]) is not int or not 1 <= part[key] <= 30
+                for key in ("host_groups", "sessions")
+            )
+            # The labeled dataset contract has one original source per
+            # session. Multiple sessions may share an operator-declared host.
+            or part["sessions"] != len(sources)
+            or part["host_groups"] > part["sessions"]
+        ):
+            raise ValueError("Invalid research split provenance")
+        for source in sources:
+            if source in source_owners:
+                raise ValueError("Cross-split source SHA-256 reuse in research trace")
+            source_owners[source] = split
+    test_provenance = provenance["test"]
     declared_sources = test_provenance["source_sha256"]
-    if (
-        type(test_provenance["flows"]) is not int
-        or test_provenance["flows"] != len(flows)
-        or any(type(test_provenance[key]) is not int or not 1 <= test_provenance[key] <= 30
-               for key in ("host_groups", "sessions"))
-        or not isinstance(declared_sources, list)
-        or not 1 <= len(declared_sources) <= 30
-        or any(not _digest(source) for source in declared_sources)
-        or declared_sources != sorted(set(declared_sources))
-        # The labeled-dataset contract binds one original source digest to
-        # exactly one session and one session to exactly one source. A trace
-        # must not claim extra/missing sessions relative to its source list.
-        or test_provenance["sessions"] != len(declared_sources)
-        # Several captures can share a host group, but a host group cannot
-        # outnumber the sessions from which the held-out data originated.
-        or test_provenance["host_groups"] > test_provenance["sessions"]
-    ):
-        raise ValueError("Invalid held-out test provenance")
+    if test_provenance["flows"] != len(flows):
+        raise ValueError("Private trace/test report support mismatch")
 
     seen: set[tuple[str, str]] = set()
     counts = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
