@@ -1684,3 +1684,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Python 3.12.9 Ubuntu quality and Windows offline Zeek CI, including mocked PowerShell host snapshot smoke and host/paired preflight tests. Merge only after all required checks succeed and the PR is conflict-free.
 - [ ] Student Windows 11: collect a **new private v2** host adapter snapshot on the actual VMware Host-only VMnet; independently record SHA-256 and run pinned host and paired preflight. Reject non-link-local IPv6/default routes/DNS; review all guest NICs, Linux IPv6 routes, VMware mode and authorization manually. Do not treat legacy v1 IPv4-only passes as IPv6 clearance.
 - [ ] Obtain independently labeled genuine PCAP/Zeek evidence from authorized isolated lab and measure Blue Team held-out Precision/Recall/FPR and event-to-SOC timing. Snapshot validation is not isolation attestation, network traffic, attack detection or a live Red Team kill switch. Preserve official UNSW-NB15 benchmark.
+
+
+## 2026-10-31 — Current-state architecture reconciliation
+
+- [x] Inventory actual Dataset/Blue/Red/shared code and UI entrypoints at `main` `e31b99b1ad8632230b902f6bb7aec31f8f4f7f4a`; add a canonical current-state document and a regression guard for referenced paths. This is **documentation verification**, not a functional Cyber Lab acceptance.
+- [ ] Verify feature-PR exact-head Ubuntu/Windows CI and merge only after required checks pass without conflicts. Keep the inventory up to date after future module changes; do not confuse historical PR notes with current implementation.
+- [ ] On student Windows 11, independently verify VMware Host-only isolation (including IPv6 and all guest adapters), collect genuine authorized PCAP/Zeek and SHA-256, obtain independent labels with host/session-disjoint holdout, and manually demonstrate offline research candidate -> Unclassified SOC case with audit and measured timing. Keep Red execution OFF until separate authorization/safety acceptance. Do not change official UNSW-NB15 benchmark.
