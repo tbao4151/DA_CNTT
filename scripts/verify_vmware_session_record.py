@@ -112,6 +112,9 @@ def verify_record(record_path: Path, record_pin: str, chain_path: Path, chain_pi
         raise ValueError("No bounded PCAP/Zeek observations")
 
     statuses: dict[str, str] = {}
+    # One operator-supplied file cannot stand in for multiple distinct review roles.
+    # This checks path identity, not the truth or independence of the contents.
+    used_evidence_paths: set[Path] = set()
     for key in CHECKS:
         entry = checks[key]
         if not isinstance(entry, dict) or entry.get("status") not in ("PASS", "FAIL", "NOT_MEASURED"):
@@ -120,7 +123,12 @@ def verify_record(record_path: Path, record_pin: str, chain_path: Path, chain_pi
         if status == "PASS":
             if set(entry) != {"status", "path", "sha256"}:
                 raise ValueError("PASS requires one pinned evidence file")
-            raw = _read(_relative_path(base, entry["path"]), 4 * 1024 * 1024, parent=base)
+            evidence_path = _relative_path(base, entry["path"])
+            resolved_evidence_path = evidence_path.resolve(strict=True)
+            if resolved_evidence_path in used_evidence_paths:
+                raise ValueError("Evidence file reused across manual check roles")
+            used_evidence_paths.add(resolved_evidence_path)
+            raw = _read(evidence_path, 4 * 1024 * 1024, parent=base)
             _pin(raw, entry["sha256"])
         elif set(entry) != {"status"}:
             raise ValueError("Incomplete checks cannot claim pinned evidence")

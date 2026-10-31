@@ -1541,3 +1541,11 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Confirm [post-merge main CI 41142872878](https://github.com/tbao4151/DA_CNTT/actions/runs/41142872878) (queued at verification time).
 - [ ] Student runs the private Windows 11 + VMware Host-only first-session runbook; separately pins original PCAP/Zeek, operator checklist and strict offline chain; obtains manual isolation/authorization review. A hash-consistent index alone is **not** a certified lab session.
 - [ ] Obtain independently labeled host/session-disjoint holdout data, report research Precision/Recall/FPR and genuine event-to-alert-to-SOC-case latency. Keep Red Team traffic disabled until authorization and isolation controls are demonstrated. Do not change the official UNSW-NB15 benchmark.
+
+
+## 2026-10-31 — Distinct private VMware manual evidence role paths
+
+- [x] Close the prior documentation PR #288 only after exact-head [Ubuntu quality CI #41142934488](https://github.com/tbao4151/DA_CNTT/actions/runs/41142934488) succeeded and the PR was conflict-free; squash merge commit `15cfb0730e7aad3e46ac839426747bf06fd5fb81`. The older pending post-merge #287 [main CI #41142872878](https://github.com/tbao4151/DA_CNTT/actions/runs/41142872878) is also verified successful.
+- [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows offline CI for the distinct-PASS-file-path regression; merge only with successful required checks and clean mergeability. This is a bounded software integrity check, not evidence authentication.
+- [ ] Student Windows 11: independently inspect Host-only NICs/routes and authorization, retain four *separate* original evidence files and their SHA-256 in a private directory, run `py -3.12 -m pytest -q tests/test_vmware_session_record.py` and the documented first-session validator, then obtain manual review. Software cannot establish the truth of operator declarations.
+- [ ] Collect genuine authorized Host-only PCAP/Zeek logs and independently adjudicated labels with preregistered host/session-disjoint TEST before measuring Blue Team Precision/Recall/FPR and event-to-SOC latency. Do not enable Red Team network activity or modify historical UNSW-NB15 benchmarks.
