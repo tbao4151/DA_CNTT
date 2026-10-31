@@ -27,19 +27,29 @@ if (Test-Path -LiteralPath $OutputPath) {
 $adapter = Get-NetAdapter -Name $AdapterName -ErrorAction Stop
 $ipv4 = @(Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction Stop |
     ForEach-Object { @{ address = [string]$_.IPAddress; prefix_length = [int]$_.PrefixLength } })
+$ipv6 = @(Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -ErrorAction Stop |
+    ForEach-Object { [string]$_.IPAddress })
 $defaultRoutes = @(Get-NetRoute -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction Stop |
     Where-Object { $_.DestinationPrefix -eq '0.0.0.0/0' } |
     ForEach-Object { [string]$_.NextHop })
+$defaultRoutesIpv6 = @(Get-NetRoute -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -ErrorAction Stop |
+    Where-Object { $_.DestinationPrefix -eq '::/0' } |
+    ForEach-Object { [string]$_.NextHop })
 $dnsInfo = Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction Stop
+$dnsInfoIpv6 = Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -ErrorAction Stop
 $dnsServers = @($dnsInfo.ServerAddresses | ForEach-Object { [string]$_ })
+$dnsServersIpv6 = @($dnsInfoIpv6.ServerAddresses | ForEach-Object { [string]$_ })
 $snapshot = @{
-    schema_version = 1
+    schema_version = 2
     capture_origin = 'windows_host_network_configuration'
     adapter_name = [string]$adapter.Name
     adapter_status = [string]$adapter.Status
     adapter_ipv4 = $ipv4
+    adapter_ipv6 = $ipv6
     adapter_default_routes = $defaultRoutes
+    adapter_default_routes_ipv6 = $defaultRoutesIpv6
     adapter_dns_servers = $dnsServers
+    adapter_dns_servers_ipv6 = $dnsServersIpv6
 }
 $jsonBytes = [System.Text.UTF8Encoding]::new($false).GetBytes(($snapshot | ConvertTo-Json -Depth 5))
 # CreateNew is atomic: never overwrite original evidence even if the path

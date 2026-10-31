@@ -1,7 +1,11 @@
 # GitHub Windows CI uses mocked NetTCPIP cmdlets: no real adapter access or traffic.
 $ErrorActionPreference = 'Stop'
 function Get-NetAdapter { param([string]$Name, [string]$ErrorAction) [pscustomobject]@{ Name = $Name; ifIndex = 11; Status = 'Up' } }
-function Get-NetIPAddress { param([int]$InterfaceIndex, [string]$AddressFamily, [string]$ErrorAction) [pscustomobject]@{ IPAddress = '192.168.77.1'; PrefixLength = 24 } }
+function Get-NetIPAddress {
+    param([int]$InterfaceIndex, [string]$AddressFamily, [string]$ErrorAction)
+    if ($AddressFamily -eq 'IPv6') { return [pscustomobject]@{ IPAddress = 'fe80::abcd%11'; PrefixLength = 64 } }
+    return [pscustomobject]@{ IPAddress = '192.168.77.1'; PrefixLength = 24 }
+}
 function Get-NetRoute { param([int]$InterfaceIndex, [string]$AddressFamily, [string]$ErrorAction) @() }
 function Get-DnsClientServerAddress { param([int]$InterfaceIndex, [string]$AddressFamily, [string]$ErrorAction) [pscustomobject]@{ ServerAddresses = @() } }
 $target = Join-Path $env:TEMP ("da005-hostonly-" + [guid]::NewGuid().ToString() + '.json')
@@ -10,7 +14,9 @@ try {
     $messages = @(& $collector -AdapterName 'VMware Network Adapter VMnet1' -OutputPath $target)
     if (-not (Test-Path -LiteralPath $target)) { throw 'Snapshot not created' }
     $snapshot = Get-Content -LiteralPath $target -Raw | ConvertFrom-Json
-    if ($snapshot.schema_version -ne 1 -or $snapshot.adapter_ipv4[0].address -ne '192.168.77.1') { throw 'Unexpected snapshot' }
+    if ($snapshot.schema_version -ne 2 -or $snapshot.adapter_ipv4[0].address -ne '192.168.77.1') { throw 'Unexpected snapshot' }
+    if (@($snapshot.adapter_ipv6).Count -ne 1 -or @($snapshot.adapter_ipv6)[0] -ne 'fe80::abcd%11') { throw 'IPv6 not recorded' }
+    if (@($snapshot.adapter_default_routes_ipv6).Count -ne 0 -or @($snapshot.adapter_dns_servers_ipv6).Count -ne 0) { throw 'Unexpected IPv6 route or DNS' }
     if (@($snapshot.adapter_default_routes).Count -ne 0 -or @($snapshot.adapter_dns_servers).Count -ne 0) { throw 'Unexpected route or DNS' }
     if (-not ($messages -join ' ').Contains('NOT verified')) { throw 'Missing safety disclaimer' }
     $refused = $false

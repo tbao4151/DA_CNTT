@@ -148,3 +148,19 @@ def test_cli_rejects_symlink_and_same_file(tmp_path):
     cmd[cmd.index(str(gpath))] = str(hpath)
     proc = subprocess.run(cmd, capture_output=True, text=True)
     assert proc.returncode == 1 and proc.stdout == ""
+
+
+def test_paired_preflight_accepts_v2_host_ipv6_screen_and_rejects_global():
+    legacy = assess()
+    assert legacy["host_ipv6_screened"] is False
+    updated = host()
+    updated["schema_version"] = 2
+    updated["adapter_ipv6"] = ["fe80::123%11"]
+    updated["adapter_default_routes_ipv6"] = []
+    updated["adapter_dns_servers_ipv6"] = []
+    report = assess(h=updated)
+    assert report["host_ipv6_screened"] is True
+    assert report["physical_host_only_isolation_verified"] is False
+    updated["adapter_ipv6"] = ["2001:db8::123"]
+    with pytest.raises(ValueError):
+        assess(h=updated)
