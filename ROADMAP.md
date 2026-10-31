@@ -1705,3 +1705,8 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify exact-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI for opt-in tuple/timestamp integration regressions; merge only with passing required checks and no conflicts.
 - [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_lab_evidence_chain.py`, then inspect genuine independently SHA-pinned Host-only PCAP and Zeek log using `--require-pcap-zeek-tuples` (and optionally `--require-pcap-zeek-timestamps` for compatible captures). Record unsupported formats and failures rather than changing original evidence.
 - [ ] Independently verify VMware isolation and authorization, capture origin and labels, held-out Blue Team metrics and measured event-to-alert-to-SOC timing. Tuple presence and ±1-second matching are **not** packet-to-flow identity or proof of real detection. Red network execution remains OFF; preserve official UNSW-NB15 benchmark.
+
+## PCAP/Zeek distinct packet availability (31/10/2026)
+
+- [ ] Merge the optional one-PCAP-record-per-Zeek-row corroboration gate **only after** exact-head Ubuntu and Windows CI pass and GitHub reports no conflicts (see PROGRESS.md).
+- [ ] On the student Windows/VMware Host-only lab, independently archive an approved original PCAP, Zeek log and hashes; run the strict offline evidence chain and record PASS/FAIL without editing originals. A packet availability PASS is not packet-to-flow identity, an AI detection metric or proof of isolation.
