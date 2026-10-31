@@ -1710,3 +1710,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 
 - [ ] Merge the optional one-PCAP-record-per-Zeek-row corroboration gate **only after** exact-head Ubuntu and Windows CI pass and GitHub reports no conflicts (see PROGRESS.md).
 - [ ] On the student Windows/VMware Host-only lab, independently archive an approved original PCAP, Zeek log and hashes; run the strict offline evidence chain and record PASS/FAIL without editing originals. A packet availability PASS is not packet-to-flow identity, an AI detection metric or proof of isolation.
+
+
+## 2026-11-01 — Reserved IPv4 flag integrity gate for offline PCAP/Zeek
+
+- [ ] Verify exact-head Ubuntu Python 3.12.9 quality, Windows offline Zeek and any triggered Real Zeek synthetic CI on the feature PR; merge only after green required checks and no conflicts. The gate rejects the invalid RFC 791 reserved flag but continues to accept valid DF on IPv4 TCP/UDP.
+- [ ] On student Windows 11 run `py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py tests/test_pcap_zeek_distinct_packets.py tests/test_lab_evidence_chain.py`. Preserve approved original private Host-only PCAP/Zeek, independent SHA-256 pins, VMware isolation screenshots and operator authorization. Record any malformed or unsupported packets as failures, not modified evidence.
+- [ ] Obtain independently annotated real captures with host/session-disjoint held-out evaluation and demonstrate offline Zeek model -> research alert -> explicit SOC case, measuring real end-to-end timing. This IPv4 syntax gate alone proves neither packet provenance nor real AI detection. Keep Red network execution OFF and UNSW-NB15 benchmark unchanged.
