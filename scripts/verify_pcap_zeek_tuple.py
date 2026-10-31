@@ -51,6 +51,10 @@ def main(argv: list[str] | None = None) -> int:
         "--require-timestamp-corroboration", action="store_true",
         help="Opt-in: require a same-tuple PCAP packet within 1 second of every Zeek flow start",
     )
+    parser.add_argument(
+        "--require-distinct-packet-corroboration", action="store_true",
+        help="Requires timestamp gate; prevent reuse of one PCAP record across Zeek rows",
+    )
     args = parser.parse_args(argv)
     try:
         pcap_path = _private_path(args.pcap, must_exist=True)
@@ -63,6 +67,7 @@ def main(argv: list[str] | None = None) -> int:
                                     limit=MAX_LOG_BYTES)
         result = corroborate_pcap_zeek_tuples(
             pcap, log, require_timestamp_corroboration=args.require_timestamp_corroboration,
+            require_distinct_packet_corroboration=args.require_distinct_packet_corroboration,
         )
     except (OSError, ValueError, TypeError) as exc:
         print(f"PCAP/Zeek tuple corroboration refused: {exc}", file=sys.stderr)
