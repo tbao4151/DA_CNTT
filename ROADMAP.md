@@ -2,7 +2,7 @@
 
 ## 2026-11-01: Held-out Zeek source/session consistency (feature PR, CI pending)
 
-- [ ] Confirm final-head Ubuntu quality and Windows offline CI for `feature/zeek-heldout-source-session-cardinality-20261101`, check for conflicts and overlapping automation PRs, then merge only when all required checks pass. Verify multi-source TEST provenance cardinality and preserve backward compatibility with v4/v5/v6 trace reports.
+- [ ] Confirm final-head Ubuntu quality and Windows offline CI for [PR #318](https://github.com/tbao4151/DA_CNTT/pull/318) (`feature/zeek-heldout-source-session-cardinality-20261101`), check for conflicts and overlapping automation PRs, then merge only when all required checks pass. Verify multi-source TEST provenance cardinality and preserve backward compatibility with v4/v5/v6 trace reports.
 - [ ] On authorized Windows/VMware Host-only captures, independently document session-to-source and host-group assignments, capture SHA-256, original labels and holdout. This code only checks self-consistency of supplied metadata; it does not authenticate host identity, independent labels or real detection performance.
 
 ## 2026-11-01: Optional IPv4 header checksum evidence check (PR #317 pending CI)
