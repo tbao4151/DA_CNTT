@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.labeled_dataset import MAX_CAPTURES, SPLITS, build_labeled_lab_dataset
 from blue_team_ai.feature_shift import summarize_train_validation_feature_shift
+from blue_team_ai.label_group_screen import summarize_train_validation_label_group_confounding
 from blue_team_ai.cross_split_overlap import screen_uid_independent_cross_split_overlap
 from blue_team_ai.originator_split import screen_originator_ip_disjoint_splits
 from blue_team_ai.lab_scope import inspect_zeek_lab_scope
@@ -226,6 +227,7 @@ def load_experiment_manifest(
 def inspect_offline_experiment(
     manifest_path: str | Path, *, lab_cidrs: Sequence[str] | None = None,
     include_feature_shift: bool = False,
+    include_label_group_screen: bool = False,
     require_label_sha256: bool = False, require_telemetry_quality: bool = False,
     require_uid_independent_overlap: bool = False,
     require_originator_ip_disjoint: bool = False,
@@ -243,6 +245,8 @@ def inspect_offline_experiment(
     """
     if type(include_feature_shift) is not bool:
         raise ValueError("Feature shift option must be boolean")
+    if type(include_label_group_screen) is not bool:
+        raise ValueError("Label group screen option must be boolean")
     if (require_telemetry_quality or require_zeek_types or event_window_start_utc is not None or event_window_end_utc is not None) and lab_cidrs is None:
         raise ValueError("Telemetry quality screening requires explicit lab CIDRs")
     captures, manifest_sha256 = load_experiment_manifest(
@@ -302,6 +306,8 @@ def inspect_offline_experiment(
         "warnings": warnings,
         **({"feature_shift_diagnostics": summarize_train_validation_feature_shift(dataset)}
            if include_feature_shift else {}),
+        **({"label_group_diagnostics": summarize_train_validation_label_group_confounding(dataset)}
+           if include_label_group_screen else {}),
         **({"telemetry_quality": quality} if quality is not None else {}),
         **({"uid_independent_overlap_screen": overlap} if overlap is not None else {}),
         **({"originator_ip_split_screen": originator_screen} if originator_screen is not None else {}),
@@ -400,6 +406,8 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--preflight", action="store_true", help="Validate inputs and print aggregate counts; no model or file writes")
     parser.add_argument("--feature-shift", action="store_true",
                         help="Preflight only: aggregate TRAIN vs VALIDATION feature shift; never inspect TEST features")
+    parser.add_argument("--label-group-screen", action="store_true",
+                        help="Preflight only: aggregate TRAIN/VALIDATION label-to-host/session concentration; no TEST or feature inspection")
     args = parser.parse_args(argv)
     # One explicit opt-in avoids accidentally omitting a research-input gate.
     # It does NOT certify capture authenticity, label truth or Host-only isolation.
@@ -409,6 +417,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.feature_shift and not args.preflight:
             raise ValueError("Feature shift diagnostic is preflight-only")
+        if args.label_group_screen and not args.preflight:
+            raise ValueError("Label group screen is preflight-only")
         if args.port_ablation_output is not None and (
             args.expected_manifest_sha256 is None or not args.strict_input_gates or args.cidr is None
         ):
@@ -418,6 +428,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(inspect_offline_experiment(
                 manifest, lab_cidrs=args.cidr,
                 include_feature_shift=args.feature_shift,
+                include_label_group_screen=args.label_group_screen,
                 require_label_sha256=require_label_sha256,
                 require_telemetry_quality=require_telemetry_quality,
                 require_uid_independent_overlap=require_uid_independent_overlap,
