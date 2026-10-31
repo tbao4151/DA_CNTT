@@ -91,3 +91,67 @@ def test_cli_rejects_duplicate_keys_and_oversized_snapshots(tmp_path):
     for raw in (b'{"schema_version":1,"schema_version":1}', b"x" * (64 * 1024 + 1)):
         proc = run_cli(tmp_path, raw)
         assert proc.returncode == 1 and proc.stdout == ""
+
+
+def snapshot_v2():
+    result = snapshot()
+    result["schema_version"] = 2
+    result["adapter_ipv6"] = ["fe80::abcd%11"]
+    result["adapter_default_routes_ipv6"] = []
+    result["adapter_dns_servers_ipv6"] = []
+    return result
+
+
+def test_v2_ipv6_link_local_only_and_legacy_v1_explicitly_unscreened():
+    assert check(snapshot())["host_ipv6_screened"] is False
+    assert check(snapshot())["host_non_link_local_ipv6_absent"] is None
+    report = check(snapshot_v2())
+    assert report["host_ipv6_screened"] is True
+    assert report["host_non_link_local_ipv6_absent"] is True
+    assert report["host_ipv6_default_route_dns_absent"] is True
+    assert report["physical_host_only_isolation_verified"] is False
+    assert "fe80" not in json.dumps(report)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("adapter_ipv6", ["2001:4860::1"]),
+    ("adapter_ipv6", ["fd00::1"]),
+    ("adapter_ipv6", ["::1"]),
+    ("adapter_ipv6", ["fe80::1", "fe80::1%11"]),
+    ("adapter_ipv6", ["fe80::1%evil"]),
+    ("adapter_ipv6", ["not-an-ip"]),
+    ("adapter_ipv6", "fe80::1"),
+    ("adapter_ipv6", ["fe80::1"] * 9),
+    ("adapter_default_routes_ipv6", ["fe80::2"]),
+    ("adapter_dns_servers_ipv6", ["fe80::2"]),
+])
+def test_v2_refuses_unsafe_or_malformed_ipv6(field, value):
+    data = snapshot_v2()
+    data[field] = value
+    with pytest.raises(LabPreflightError):
+        check(data)
+
+
+def test_v2_refuses_missing_or_extra_fields_and_v1_extra_ipv6_claim():
+    data = snapshot_v2()
+    del data["adapter_ipv6"]
+    with pytest.raises(LabPreflightError):
+        check(data)
+    data = snapshot_v2()
+    data["isolation_verified"] = True
+    with pytest.raises(LabPreflightError):
+        check(data)
+    data = snapshot()
+    data["adapter_ipv6"] = []
+    with pytest.raises(LabPreflightError):
+        check(data)
+
+
+def test_cli_accepts_pinned_v2_and_refuses_global_ipv6(tmp_path):
+    valid = run_cli(tmp_path, json.dumps(snapshot_v2()).encode())
+    assert valid.returncode == 0, valid.stderr
+    assert json.loads(valid.stdout)["host_ipv6_screened"] is True
+    data = snapshot_v2()
+    data["adapter_ipv6"] = ["2001:db8::123"]
+    refused = run_cli(tmp_path, json.dumps(data).encode())
+    assert refused.returncode == 1 and refused.stdout == ""
