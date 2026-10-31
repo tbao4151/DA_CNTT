@@ -59,6 +59,10 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("PCAP/Zeek tuple checks require strict independent original pins")
     if args.require_pcap_zeek_timestamps and not args.require_pcap_zeek_tuples:
         raise ValueError("Timestamp check requires PCAP/Zeek tuple check")
+    if (args.require_pcap_ipv4_header_checksum
+            and not (args.require_pcap_zeek_tuples
+                     and args.require_independent_original_pins)):
+        raise ValueError("IPv4 checksum gate requires tuple check and independent original pins")
     if args.require_distinct_pcap_packets and not args.require_pcap_zeek_timestamps:
         raise ValueError("Distinct packet gate requires timestamp corroboration")
     original_pins = (args.expected_pcap_sha256, args.expected_log_sha256)
@@ -98,6 +102,7 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
             pcap_bytes, zeek_bytes,
             require_timestamp_corroboration=args.require_pcap_zeek_timestamps,
             require_distinct_packet_corroboration=args.require_distinct_pcap_packets,
+            require_ipv4_header_checksum=args.require_pcap_ipv4_header_checksum,
         )
         if tuple_report["matched_zeek_flow_count"] != imported["flow_count"]:
             raise ValueError("Tuple corroboration count differs from verified import")
@@ -133,6 +138,11 @@ def verify_chain(args: argparse.Namespace) -> dict[str, object]:
         "pcap_packet_count": imported["pcap_packet_count"],
         "pcap_zeek_tuples_required": args.require_pcap_zeek_tuples,
         "pcap_zeek_tuples_verified": tuple_report is not None,
+        "pcap_ipv4_header_checksum_required": args.require_pcap_ipv4_header_checksum,
+        "pcap_ipv4_header_checksum_verified": (
+            tuple_report["ipv4_header_checksum_verified"]
+            if tuple_report is not None else False
+        ),
         "pcap_zeek_timestamps_required": args.require_pcap_zeek_timestamps,
         "pcap_zeek_distinct_packets_required": args.require_distinct_pcap_packets,
         "pcap_zeek_distinct_packets_correlated": args.require_distinct_pcap_packets,
@@ -225,6 +235,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--require-pcap-zeek-tuples", action="store_true",
         help="With strict original pins, require every Zeek IPv4 TCP/UDP 5-tuple in original Ethernet PCAP",
+    )
+    parser.add_argument(
+        "--require-pcap-ipv4-header-checksum", action="store_true",
+        help="Requires strict original pins and tuple gate; validate every IPv4 header checksum",
     )
     parser.add_argument(
         "--require-pcap-zeek-timestamps", action="store_true",

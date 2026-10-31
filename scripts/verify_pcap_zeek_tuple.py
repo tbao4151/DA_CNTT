@@ -55,6 +55,10 @@ def main(argv: list[str] | None = None) -> int:
         "--require-distinct-packet-corroboration", action="store_true",
         help="Requires timestamp gate; prevent reuse of one PCAP record across Zeek rows",
     )
+    parser.add_argument(
+        "--require-ipv4-header-checksum", action="store_true",
+        help="Opt-in: reject any IPv4 packet with an invalid RFC 791 header checksum",
+    )
     args = parser.parse_args(argv)
     try:
         pcap_path = _private_path(args.pcap, must_exist=True)
@@ -68,6 +72,7 @@ def main(argv: list[str] | None = None) -> int:
         result = corroborate_pcap_zeek_tuples(
             pcap, log, require_timestamp_corroboration=args.require_timestamp_corroboration,
             require_distinct_packet_corroboration=args.require_distinct_packet_corroboration,
+            require_ipv4_header_checksum=args.require_ipv4_header_checksum,
         )
     except (OSError, ValueError, TypeError) as exc:
         print(f"PCAP/Zeek tuple corroboration refused: {exc}", file=sys.stderr)
