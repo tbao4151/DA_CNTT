@@ -110,7 +110,7 @@ def test_standalone_cli_rechecks_pinned_checksum_without_success_on_failure(tmp_
     args[args.index("--expected-pcap-sha256") + 1] = hashlib.sha256(damaged).hexdigest()
     assert main(args) == 0  # Checksum is only over the IPv4 header.
     capsys.readouterr()
-    damaged[16 + 24 + 8] ^= 1  # IPv4 TTL at Ethernet offset 22, PCAP record starts at 40.
+    damaged[24 + 16 + 22] ^= 1  # IPv4 TTL at Ethernet offset 22, record data starts at 40.
     capture.write_bytes(damaged)
     args[args.index("--expected-pcap-sha256") + 1] = hashlib.sha256(damaged).hexdigest()
     assert main(args) == 2
