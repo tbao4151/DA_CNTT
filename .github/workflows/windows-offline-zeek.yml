@@ -51,7 +51,7 @@ jobs:
       - name: Two-pass offline Zeek reproduction (mocked; no Zeek binary)
         run: python -m pytest -q tests/test_two_pass_offline_zeek.py
       - name: Strict classic PCAP record framing (synthetic offline only)
-        run: python -m pytest -q tests/test_pcap_structure.py tests/test_offline_pcap_verify.py tests/test_pcap_zeek_tuple.py tests/test_pcap_zeek_distinct_packets.py
+        run: python -m pytest -q tests/test_pcap_structure.py tests/test_offline_pcap_verify.py tests/test_pcap_zeek_tuple.py tests/test_pcap_zeek_distinct_packets.py tests/test_pcap_zeek_timing_offsets.py
       - name: Offline Windows host-only adapter snapshot checks (mocked; no VMware)
         run: |
           python -m pytest -q tests/test_host_only_preflight.py

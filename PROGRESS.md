@@ -1,5 +1,11 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Offline PCAP/Zeek timestamp-offset diagnostics (PR pending CI)
+
+- Feature branch `feature/pcap-zeek-timing-offset-diagnostics-20261101` based on main `5ce22a0ad01a92f0414e23a0ddd544a824d8cf4b`. Added aggregate nearest same-tuple packet/Zeek start-time offset (max/mean, milliseconds) under opt-in timestamp corroboration; added distinct greedy-assignment offset summaries and integrated-chain maximum fields. No raw packet timestamps or IPs in JSON.
+- Added synthetic regression `tests/test_pcap_zeek_timing_offsets.py` and Windows offline workflow registration. CI results pending; no local Windows/VMware capture, timing benchmark, new labels or model evaluation performed in this change.
+- These packet/start offsets are NOT detection latency, clock attestation, or packet-to-flow provenance. Dataset Mode and UNSW benchmark unchanged. Do not merge before Ubuntu and Windows PR-head CI succeed.
+
 ## 2026-10-26: Khởi tạo bộ khung Mini-SIEM
 
 - Đã có `data/raw/unsw_nb15/` gồm hai CSV và metadata số hàng, SHA-256 (được thêm ở các commit trước).
