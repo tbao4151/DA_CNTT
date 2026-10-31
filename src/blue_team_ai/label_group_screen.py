@@ -19,6 +19,13 @@ def _identifier(value: object) -> bool:
     )
 
 
+
+def _dominant_fraction(group_counts: Mapping[str, list[int]], label: int) -> float:
+    """Largest share of one class held by any declared group (not independence)."""
+    counts = [values[label] for values in group_counts.values()]
+    return max(counts) / sum(counts)
+
+
 def summarize_train_validation_label_group_confounding(
     dataset: LabeledLabDataset,
 ) -> dict[str, object]:
@@ -54,6 +61,8 @@ def summarize_train_validation_label_group_confounding(
         host_classes: dict[str, set[int]] = {}
         session_classes: dict[str, set[int]] = {}
         host_sessions: dict[str, set[str]] = {}
+        host_label_counts: dict[str, list[int]] = {}
+        session_label_counts: dict[str, list[int]] = {}
         for label, meta in zip(labels, provenance):
             if not isinstance(meta, Mapping):
                 raise ValueError("Invalid Zeek provenance")
@@ -70,6 +79,8 @@ def summarize_train_validation_label_group_confounding(
             host_classes.setdefault(host, set()).add(label)
             session_classes.setdefault(session, set()).add(label)
             host_sessions.setdefault(host, set()).add(session)
+            host_label_counts.setdefault(host, [0, 0])[label] += 1
+            session_label_counts.setdefault(session, [0, 0])[label] += 1
 
         host_mixed = sum(classes == {0, 1} for classes in host_classes.values())
         session_mixed = sum(classes == {0, 1} for classes in session_classes.values())
@@ -77,7 +88,13 @@ def summarize_train_validation_label_group_confounding(
         attack_hosts = sum(1 in classes for classes in host_classes.values())
         normal_sessions = sum(0 in classes for classes in session_classes.values())
         attack_sessions = sum(1 in classes for classes in session_classes.values())
+        host_dominance = {label: _dominant_fraction(host_label_counts, label) for label in (0, 1)}
+        session_dominance = {label: _dominant_fraction(session_label_counts, label) for label in (0, 1)}
         partitions[split] = {
+            "normal_max_host_flow_share": round(host_dominance[0], 4),
+            "attack_max_host_flow_share": round(host_dominance[1], 4),
+            "normal_max_session_flow_share": round(session_dominance[0], 4),
+            "attack_max_session_flow_share": round(session_dominance[1], 4),
             "host_groups": len(host_classes),
             "sessions": len(session_classes),
             "host_groups_with_both_classes": host_mixed,
@@ -116,9 +133,20 @@ def summarize_train_validation_label_group_confounding(
             warnings.append(f"{split}:attack_labels_in_one_session")
         if len(session_classes) > 1 and normal_sessions == 1:
             warnings.append(f"{split}:normal_labels_in_one_session")
+        # Fixed descriptive screen, not a learned cutoff or hypothesis test.
+        # Require at least 10 class flows and 2 groups to avoid small-sample
+        # noise and redundant one-group warnings. Never consult TEST.
+        for scope, groups, fractions in (
+            ("host_group", host_label_counts, host_dominance),
+            ("session", session_label_counts, session_dominance),
+        ):
+            if len(groups) > 1:
+                for label, name in ((0, "normal"), (1, "attack")):
+                    if labels.count(label) >= 10 and fractions[label] >= 0.8:
+                        warnings.append(f"{split}:{name}_flows_dominated_by_one_{scope}")
 
     return {
-        "diagnostic_version": 1,
+        "diagnostic_version": 2,
         "mode": "offline_zeek_train_validation_label_group_screen_only",
         "reference_splits": ["train", "validation"],
         "partitions": partitions,
@@ -132,7 +160,8 @@ def summarize_train_validation_label_group_confounding(
         "warnings": warnings,
         "interpretation": (
             "Declared host/session-to-label concentration is descriptive only. "
-            "Host/session concentration and one-to-one nesting can flag possible "
+            "Host/session concentration, fixed 80-percent class-flow dominance " 
+            "(minimum 10 class flows), and one-to-one nesting can flag possible "
             "scenario confounding but cannot establish causal "
             "leakage, genuine ground truth, host independence or attack detection. "
             "TEST is deliberately excluded; never tune using held-out TEST."

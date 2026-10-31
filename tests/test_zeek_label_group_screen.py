@@ -181,3 +181,46 @@ def test_single_mixed_session_is_distinct_from_perfect_session_separation():
     assert "train:only_one_declared_session" in report["warnings"]
     assert "train:labels_fully_separated_by_session" not in report["warnings"]
     assert "train:host_and_session_one_to_one" not in report["warnings"]
+
+
+
+def test_dominance_flags_imbalanced_session_flows_even_when_both_sessions_are_mixed():
+    dataset = _dataset()
+    dataset.labels["train"] = [0] * 10 + [1] * 9 + [0] * 10 + [1]
+    dataset.provenance["train"] = (
+        [{"host_group": "private-host", "session_id": "private-A"}] * 19
+        + [{"host_group": "private-host", "session_id": "private-B"}] * 11
+    )
+    report = summarize_train_validation_label_group_confounding(dataset)
+    train = report["partitions"]["train"]
+    assert report["diagnostic_version"] == 2
+    assert train["sessions_with_both_classes"] == 2
+    assert train["labels_fully_separated_by_session"] is False
+    assert train["attack_max_session_flow_share"] == 0.9
+    assert train["normal_max_session_flow_share"] == 0.5
+    assert train["attack_max_host_flow_share"] == 1.0
+    assert "train:attack_flows_dominated_by_one_session" in report["warnings"]
+    assert "train:normal_flows_dominated_by_one_session" not in report["warnings"]
+    assert "train:attack_flows_dominated_by_one_host_group" not in report["warnings"]
+    assert "private-host" not in json.dumps(report)
+    assert "private-A" not in json.dumps(report)
+    dataset.features["train"] = None
+    dataset.features["test"] = None
+    dataset.labels["test"] = None
+    dataset.provenance["test"] = None
+    assert summarize_train_validation_label_group_confounding(dataset) == report
+
+
+def test_dominance_warning_requires_ten_class_flows_and_two_groups():
+    dataset = _dataset()
+    dataset.labels["train"] = [0] * 3 + [1] * 4 + [0] * 2 + [1]
+    dataset.provenance["train"] = (
+        [{"host_group": "host-A", "session_id": "session-A"}] * 7
+        + [{"host_group": "host-B", "session_id": "session-B"}] * 3
+    )
+    report = summarize_train_validation_label_group_confounding(dataset)
+    train = report["partitions"]["train"]
+    assert train["attack_max_session_flow_share"] == 0.8
+    assert train["normal_max_host_flow_share"] == 0.6
+    assert "train:attack_flows_dominated_by_one_session" not in report["warnings"]
+    assert "train:attack_flows_dominated_by_one_host_group" not in report["warnings"]
