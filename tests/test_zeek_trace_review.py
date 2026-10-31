@@ -100,6 +100,28 @@ def test_mismatched_or_forged_private_trace_refused(tmp_path, change):
         review_private_zeek_trace(raw, _encode(report))
 
 
+@pytest.mark.parametrize("mutation", [
+    "precision", "recall", "f1", "false_positive_rate",
+    "missing_rate", "boolean_rate", "string_rate", "negative_rate",
+])
+def test_private_trace_rejects_inconsistent_or_invalid_heldout_rates(tmp_path, mutation):
+    raw, report = _fixture(tmp_path)
+    metrics = report["test_metrics"]
+    if mutation == "missing_rate":
+        metrics.pop("precision")
+    elif mutation == "boolean_rate":
+        metrics["precision"] = True
+    elif mutation == "string_rate":
+        metrics["precision"] = "NaN"
+    elif mutation == "negative_rate":
+        metrics["precision"] = -0.1
+    else:
+        original = metrics[mutation]
+        metrics[mutation] = 0.0 if original != 0.0 else 1.0
+    with pytest.raises(ValueError, match="rate mismatch"):
+        review_private_zeek_trace(raw, _encode(report))
+
+
 def test_trace_input_size_and_duplicate_json_keys_refused(tmp_path):
     raw, report = _fixture(tmp_path)
     with pytest.raises(ValueError, match="bounded"):
@@ -128,6 +150,15 @@ def test_test_label_reassignment_does_not_change_review_predictions(tmp_path):
     for row in report["private_test_trace"]["flows"]:
         counts[mapping[row["outcome_against_supplied_label"]]] += 1
     report["test_metrics"].update(counts)
+    tp, fp, tn, fn = (counts[key] for key in ("tp", "fp", "tn", "fn"))
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    report["test_metrics"].update({
+        "precision": precision,
+        "recall": recall,
+        "f1": 2 * precision * recall / (precision + recall) if precision + recall else 0.0,
+        "false_positive_rate": fp / (fp + tn) if fp + tn else 0.0,
+    })
     second = review_private_zeek_trace(raw, _encode(report))
     assert first == second  # review exposes no ground truth and does not retrain
 
