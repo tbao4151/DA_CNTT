@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.trusted_model import load_pinned_zeek_research_model
+from blue_team_ai.soc_evidence_link import verify_new_log_soc_case_link
+from siem_ai.core import list_cases
 from red_team_ai.planning_audit import append_proposal, export_planning_audit
 from red_team_ai.scenario_policy import choose_scenario
 from shared.offline_handoff import verify_red_blue_offline_handoff
@@ -77,6 +79,51 @@ def validate_ci_handoff_summary(
     serialized = json.dumps(summary, allow_nan=False)
     if "192.168.56." in serialized or "fixture-uid" in serialized:
         raise ValueError("CI handoff leaked private flow details")
+
+
+
+def validate_ci_manual_soc_bridge(
+    handoff: dict[str, object],
+    case_link: dict[str, object], *,
+    log_sha: str, import_sha: str, pcap_sha: str,
+    fitted_model_sha: str, manual_model_sha: str,
+    manual_report_sha: str, case_id: int,
+) -> None:
+    """Check one *existing* manual Unclassified case against the Red/Blue source.
+
+    The case uses a deliberately neutral CI-only model, NOT the fitted model
+    in the Red/Blue research report. Matching Zeek bytes is not causality.
+    """
+    if (
+        not isinstance(handoff, dict) or not isinstance(case_link, dict)
+        or handoff.get("same_pinned_zeek_source_verified") is not True
+        or handoff.get("zeek_conn_sha256") != log_sha
+        or handoff.get("offline_import_report_sha256") != import_sha
+        or handoff.get("pcap_sha256") != pcap_sha
+        or handoff.get("blue_model_sha256") != fitted_model_sha
+        or manual_model_sha == fitted_model_sha
+        or type(case_id) is not int or case_id <= 0
+        or case_link.get("mode") != "offline_new_log_soc_evidence_link_check_only"
+        or case_link.get("case_id") != case_id
+        or case_link.get("record_index") != 0
+        or case_link.get("source_sha256") != log_sha
+        or case_link.get("model_sha256") != manual_model_sha
+        or case_link.get("report_sha256") != manual_report_sha
+        or any(case_link.get(key) is not True for key in (
+            "stored_flow_snapshot_matches_original",
+            "initial_audit_matches_recomputed_inference",
+            "sqlite_read_only",
+        ))
+        or any(case_link.get(key) is not False for key in (
+            "independent_labels_verified",
+            "declared_partition_history_verified",
+            "host_only_isolation_verified",
+            "operational_alert_verified",
+            "detection_latency_measured",
+        ))
+        or any(handoff.get(key) is not False for key in FALSE_CLAIMS)
+    ):
+        raise ValueError("CI synthetic manual SOC bridge contract violated")
 
 
 def _cli(command: list[str], *, succeed: bool) -> subprocess.CompletedProcess[str]:
@@ -180,6 +227,61 @@ def run(root: Path) -> dict[str, object]:
     bad[bad.index("--expected-blue-report-sha256") + 1] = _sha(tampered_bytes)
     _cli(bad, succeed=False)
 
+
+    # Cross-check the existing manually created Unclassified SOC case.
+    # The SOC CI stage deliberately uses a NEUTRALIZED fixture-only model,
+    # not the fitted synthetic-label model used for the Red/Blue research
+    # report. Never present this as one-model attack detection or causality.
+    manual_model_path = root / "ci_neutral_model_not_for_research.json"
+    manual_report_path = imported / "ci_neutral_model_predictions.json"
+    if not all(path.is_file() and not path.is_symlink()
+               for path in (manual_model_path, manual_report_path)):
+        raise ValueError("Expected existing synthetic manual SOC research artifacts")
+    manual_model_bytes = manual_model_path.read_bytes()
+    manual_report_bytes = manual_report_path.read_bytes()
+    manual_model_sha = _sha(manual_model_bytes)
+    manual_report_sha = _sha(manual_report_bytes)
+    manual_model = load_pinned_zeek_research_model(
+        manual_model_path, expected_sha256=manual_model_sha,
+    )
+    cases = list_cases(paths["db"])
+    if len(cases) != 1:
+        raise ValueError("Expected exactly one pre-existing manual SOC CI case")
+    case_id = int(cases.iloc[0]["case_id"])
+    soc_options = dict(
+        source_data=originals["log"],
+        model=manual_model,
+        report_data=manual_report_bytes,
+        expected_log_sha256=pins["log"],
+        model_sha256=manual_model_sha,
+        lab_cidrs=[CIDR],
+        record_index=0,
+        case_id=case_id,
+        expected_import_report_sha256=pins["import"],
+        expected_pcap_sha256=pins["pcap"],
+    )
+    case_link = verify_new_log_soc_case_link(paths["db"], **soc_options)
+    validate_ci_manual_soc_bridge(
+        summary, case_link,
+        log_sha=pins["log"], import_sha=pins["import"],
+        pcap_sha=pins["pcap"], fitted_model_sha=pins["model"],
+        manual_model_sha=manual_model_sha,
+        manual_report_sha=manual_report_sha, case_id=case_id,
+    )
+    try:
+        verify_new_log_soc_case_link(
+            paths["db"], **{**soc_options, "case_id": case_id + 1000},
+        )
+    except ValueError:
+        pass
+    else:
+        raise ValueError("Nonexistent manual SOC case was accepted")
+    if (
+        manual_model_path.read_bytes() != manual_model_bytes
+        or manual_report_path.read_bytes() != manual_report_bytes
+    ):
+        raise ValueError("Read-only bridge modified manual SOC model/report")
+
     if any(path.read_bytes() != originals[key] for key, path in paths.items()):
         raise ValueError("Read-only handoff modified existing Zeek/model/SOC evidence")
     if audit_path.read_bytes() != audit_data:
@@ -196,6 +298,19 @@ def run(root: Path) -> dict[str, object]:
         "operational_alerts_created": False,
         "operational_soc_case_created": False,
         "red_blue_handoff_summary": summary,
+        "manual_unclassified_soc_bridge": {
+            "same_zeek_source_and_pcap_import_verified": True,
+            "existing_case_snapshot_and_initial_audit_verified": True,
+            "manual_case_id": case_id,
+            "manual_case_model_sha256": manual_model_sha,
+            "manual_case_report_sha256": manual_report_sha,
+            "manual_case_uses_distinct_neutral_fixture_model": True,
+            "missing_case_rejected": True,
+            "sqlite_read_only": True,
+            "scenario_caused_soc_case_verified": False,
+            "independent_attack_ground_truth_verified": False,
+            "operational_soc_case_created": False,
+        },
         "missing_confirmation_rejected": True,
         "wrong_audit_pin_rejected": True,
         "tampered_re_pinned_blue_report_rejected": True,
@@ -203,7 +318,8 @@ def run(root: Path) -> dict[str, object]:
         "interpretation": (
             "Real Zeek parsed a synthetic benign PCAP in CI. Red proposal was "
             "non-executing; Blue scores used a synthetic-label model. Same-source "
-            "provenance is verified, not scenario semantics, attack detection, "
+            "provenance and an existing manual Unclassified case are checked, "
+            "not scenario causality, attack detection, "
             "student VMware isolation, independent labels or operational SOC."
         ),
     }
