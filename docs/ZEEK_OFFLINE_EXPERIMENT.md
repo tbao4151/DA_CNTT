@@ -312,7 +312,12 @@ the private trace JSON in the research review section. Keep both files outside G
 The UI checks the original log SHA-256, exact UID coverage for that log, the
 private trace's declared schema, validation-selected threshold, probability/
 verdict consistency, unique SHA/UID keys and confusion totals against the
-operator-supplied labels. It shows a **read-only**, label-free list of up to 500
+operator-supplied labels.
+The reviewer also recomputes the reported held-out Precision, Recall, F1 and
+false-positive rate from those trace confusion counts and rejects missing,
+non-numeric or inconsistent rates (including zero-denominator cases). This
+checks internal arithmetic only; an attacker who rewrites the trace and all
+its metrics consistently can still forge a self-consistent report. It shows a **read-only**, label-free list of up to 500
 research Attack candidates and their actual Zeek IP/timestamps, sorted by
 research probability. The trace may include other test captures; this view
 does **not** verify their original bytes. Uploading a trace neither fits/loads
