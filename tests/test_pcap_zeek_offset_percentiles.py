@@ -76,7 +76,8 @@ def test_private_integrated_evidence_chain_exposes_aggregate_p95_only(tmp_path, 
     frame = pcap_packet(
         src="192.168.56.10", dst="192.168.56.20", sport=52344, dport=443,
     )
-    raw = pcap(frame, seconds=1630000000, fraction=250_000)
+    # Zeek fixture starts at 1630000000.25; packet at .50 is +250 ms.
+    raw = pcap(frame, seconds=1630000000, fraction=500_000)
 
     def enable(args, hp, gp):
         _repin_integrated_pcap(args, imported, raw)
