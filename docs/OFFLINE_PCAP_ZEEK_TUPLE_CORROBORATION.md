@@ -192,3 +192,35 @@ Run synthetic-only regression (no Zeek executable, VMware, or live traffic):
 ```powershell
 py -3.12 -m pytest -q tests/test_pcap_zeek_offset_percentiles.py
 ```
+
+## Optional IPv4 header checksum gate (01/11/2026; synthetic contract)
+
+The tuple verifier can now enforce RFC 791 **IPv4 header checksum** validity
+for every IPv4 packet in the original, independently SHA-256-pinned classic
+PCAP. This gate is **OFF by default** to preserve compatibility with prior
+fixtures and captures where checksum offloading or capture tooling may expose
+invalid/uncomputed header checksums. Add
+`--require-ipv4-header-checksum` to the standalone command above.
+
+The integrated private evidence-chain CLI uses the separate flag
+`--require-pcap-ipv4-header-checksum`. It refuses this flag unless both
+`--require-independent-original-pins` and
+`--require-pcap-zeek-tuples` are present. Successful output reports
+`pcap_ipv4_header_checksum_required=true` and
+`pcap_ipv4_header_checksum_verified=true`; the standalone verifier reports
+`ipv4_header_checksum_required` and `ipv4_header_checksum_verified`.
+Without the opt-in flag, the values remain false.
+
+The checksum covers the **IPv4 header only**, including any IPv4 options.
+It does **not** check TCP/UDP headers or payload, nor establish cryptographic
+integrity, authenticity, packet-to-flow identity, isolation, labels, or AI
+detection. A failed gate is a reason to investigate and preserve the original
+PCAP, **not** to rewrite its checksums or adjust the source to pass. The
+existing SHA-256 pins are separate byte-consistency checks, not provenance
+attestation. No live traffic, exploit or model operation is performed.
+
+Synthetic-only regression (no VMware or real capture):
+
+```powershell
+py -3.12 -m pytest -q tests/test_pcap_ipv4_header_checksum.py
+```
