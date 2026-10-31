@@ -703,3 +703,37 @@ unchanged. Synthetic tests are software regressions, not student lab metrics.
 Run `py -3.12 -m pytest -q tests/test_zeek_offline_baseline.py` on Windows
 after this PR is merged; preserve the independently pinned original private
 logs and annotations for actual experiments.
+
+
+## Optional TRAIN-to-VALIDATION feature-shift preflight (31/10/2026)
+
+Before fitting a model, run a read-only aggregate comparison of the fixed Zeek
+v1 feature schema on TRAIN versus VALIDATION:
+
+~~~powershell
+py -3.12 scripts/evaluate_zeek_lab.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --preflight --feature-shift
+~~~
+
+The optional `feature_shift_diagnostics` JSON reports per-feature missing
+counts in both partitions, previously unseen nonmissing validation categories
+for `proto` and `service`, and validation numeric observations outside the
+measured TRAIN minimum/maximum (without disclosing those ranges). No raw
+categories, ports, IPs, UIDs, host names or source values are exported. The
+held-out TEST **features are not inspected by this diagnostic**, and no model
+is fitted or threshold chosen. Existing preflight manifest validation still
+reads the declared TEST labels to verify coverage and class balance; do not
+interpret this option as sealing the entire manifest reader.
+
+This is an **indicator of possible schema/distribution mismatch**, not a
+statistical hypothesis test, a measure of attack detection or evidence of
+ground-truth independence. A validation value outside the observed training
+range can be legitimate; tiny training samples often exaggerate this effect.
+Missing counts should be interpreted relative to the reported partition
+sizes. Never use TEST to revise feature engineering, thresholds or the
+pre-registered evaluation protocol. This flag is deliberately rejected in
+`--output`, `--trace-output` and `--port-ablation-output` modes, preserving
+the existing model and official UNSW-NB15 benchmark behavior. The diagnostics
+are intended for private research notes, not public lab evidence.
+
+Synthetic regression only:
+`py -3.12 -m pytest -q tests/test_zeek_feature_shift.py`.
