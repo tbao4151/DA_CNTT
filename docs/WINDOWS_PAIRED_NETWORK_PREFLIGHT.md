@@ -44,3 +44,17 @@ Synthetic-only regression (no student VMware evidence):
 ```powershell
 py -3.12 -m pytest -q tests/test_paired_network_preflight.py
 ```
+
+
+## Optional strict IPv6 gate for the integrated evidence chain (31/10/2026)
+
+The paired preflight CLI above continues to accept legacy v1 host snapshots for
+historical review, but its `host_ipv6_screened=false` output is **not**
+IPv6 clearance. For the first authorized evidence session, use the **separate**
+`scripts/verify_lab_evidence_chain.py` command with
+`--require-host-ipv6-screened` (alongside the existing independent original
+pins and PCAP framing flags). That opt-in refuses v1 and requires the v2 host
+adapter IPv6 address/default-route/DNS checks to pass. It reports both
+`host_ipv6_screened` and `host_ipv6_screening_required`, without exposing
+addresses. It is still only a pinned metadata consistency check, not proof of
+isolation, authorization, live collection or attack detection.
