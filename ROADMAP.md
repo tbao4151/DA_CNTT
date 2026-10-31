@@ -1,5 +1,10 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Held-out Zeek source/session consistency (feature PR, CI pending)
+
+- [ ] Confirm final-head Ubuntu quality and Windows offline CI for `feature/zeek-heldout-source-session-cardinality-20261101`, check for conflicts and overlapping automation PRs, then merge only when all required checks pass. Verify multi-source TEST provenance cardinality and preserve backward compatibility with v4/v5/v6 trace reports.
+- [ ] On authorized Windows/VMware Host-only captures, independently document session-to-source and host-group assignments, capture SHA-256, original labels and holdout. This code only checks self-consistency of supplied metadata; it does not authenticate host identity, independent labels or real detection performance.
+
 ## 2026-11-01: Optional IPv4 header checksum evidence check (PR #317 pending CI)
 
 - [ ] Verify final-head Ubuntu quality and Windows offline CI on `feature/pcap-ipv4-header-checksum-gate-20261101`, confirm conflict-free mergeability, then merge. The new gate checks RFC 791 header checksums only when explicitly enabled; defaults and Dataset Mode remain unchanged.
