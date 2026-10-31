@@ -1557,3 +1557,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify post-merge `main` CI independently; do not equate PR-head success with post-merge acceptance.
 - [ ] Student executes the private Windows 11 + VMware Host-only first-session runbook, independently reviews authorization/isolation and preserves distinct hash-pinned original evidence. Software validates file identity/integrity, not truth of the underlying claims.
 - [ ] Obtain genuine, independently annotated host/session-disjoint Zeek captures; run held-out Blue Team evaluation and measure end-to-end alert-to-SOC evidence/latency. Keep Red Team traffic disabled until lab controls are validated. Preserve official UNSW-NB15 metrics.
+
+
+## 2026-10-31 — Reject hard-link aliases in private VMware evidence index (feature acceptance pending)
+
+- [x] Documentation PR #290 merged at `249eb5146ef2c4ebeacdc3d8248fd9732ecdbec7` after exact-head Ubuntu quality [#41148991738](https://github.com/tbao4151/DA_CNTT/actions/runs/41148991738) succeeded and mergeability was clean.
+- [ ] Verify exact-head Ubuntu Python 3.12.9 and Windows offline CI for the hard-link file-identity regression; merge only if relevant checks pass and no conflict exists. Keep resolved-path guard for filesystems without usable inode IDs. This does not establish independent evidence authenticity.
+- [ ] Student Windows 11: follow the private VMware Host-only first-session runbook, retain independently pinned original PCAP/Zeek and four separately reviewed operator evidence files, and run `py -3.12 -m pytest -q tests/test_vmware_session_record.py` locally. Never present synthetic CI as laptop evidence or claim attack detection without independently adjudicated labels and held-out evaluation.

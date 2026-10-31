@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -81,6 +82,31 @@ def test_reused_evidence_path_across_manual_roles_is_refused(tmp_path):
     assert "refused" in result.stderr
     assert str(private) not in result.stderr
 
+
+
+def test_hardlinked_evidence_paths_are_refused_when_file_identity_available(tmp_path):
+    private, record, chain = _setup(tmp_path)
+    original = private / "authorization.txt"
+    alias = private / "adapter-hardlink.txt"
+    try:
+        os.link(original, alias)
+    except (OSError, NotImplementedError):
+        pytest.skip("Hard links are unavailable on this runner")
+    original_stat, alias_stat = original.stat(), alias.stat()
+    if not original_stat.st_ino or not alias_stat.st_ino:
+        pytest.skip("Filesystem does not expose usable file identity")
+    assert (original_stat.st_dev, original_stat.st_ino) == (
+        alias_stat.st_dev, alias_stat.st_ino
+    )
+    record["checks"]["vmware_hostonly_adapters"] = {
+        "status": "PASS", "path": alias.name,
+        "sha256": record["checks"]["authorization"]["sha256"],
+    }
+    result = _run(private, record, chain)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert str(private) not in result.stderr
 
 def test_distinct_evidence_paths_with_identical_bytes_remain_accepted(tmp_path):
     private, record, chain = _setup(tmp_path)

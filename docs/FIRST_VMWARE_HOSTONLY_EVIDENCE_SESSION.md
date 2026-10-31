@@ -112,6 +112,10 @@ at most 4 MiB, and SHA-256-pinned. Each PASS role must reference a
 roles is rejected even if its SHA-256 is valid. Distinct files with
 identical bytes are not automatically rejected: file identity checks
 cannot establish independent human evidence or content relevance.
+On filesystems exposing a usable file identity, hard-linked paths pointing
+to the same underlying file are also refused; on filesystems reporting inode
+zero, only resolved-path uniqueness can be checked. This is a structural
+integrity screen, not an attestation of evidence independence.
 For multiple screenshots, combine
 the review into a bounded private PDF or text summary and hash that file;
 the tool checks bytes only, not what the screenshot proves.
