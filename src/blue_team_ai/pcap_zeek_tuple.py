@@ -42,7 +42,7 @@ def corroborate_pcap_zeek_tuples(
     packet_count = 0
     offset = 24
     while offset < len(pcap):
-        sec, fraction, captured, _original = struct.unpack_from(endian + "IIII", pcap, offset)
+        sec, fraction, captured, original = struct.unpack_from(endian + "IIII", pcap, offset)
         offset += 16
         frame = memoryview(pcap)[offset:offset + captured]
         offset += captured
@@ -62,6 +62,12 @@ def corroborate_pcap_zeek_tuples(
         total = struct.unpack_from("!H", frame, 16)[0]
         if total < ihl:
             raise ValueError("Invalid IPv4 total length")
+        # The record may be snaplen-truncated, but its original Ethernet
+        # length must still accommodate the entire declared IPv4 datagram.
+        # Otherwise a forged header with plausible ports could corroborate
+        # a Zeek flow even though the packet was physically too short.
+        if original < 14 + total:
+            raise ValueError("IPv4 total length exceeds original PCAP Ethernet frame length")
         flags_fragment = struct.unpack_from("!H", frame, 20)[0]
         if flags_fragment & 0x3FFF:
             raise ValueError("Fragmented IPv4 is unsupported for strict tuple corroboration")

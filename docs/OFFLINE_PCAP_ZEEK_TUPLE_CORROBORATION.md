@@ -17,6 +17,13 @@ packet evidence, including under the opt-in timestamp gate. It does **not**
 validate UDP checksums, complete payload delivery or packet-to-Zeek flow
 identity; valid snaplen-truncated payloads are not rejected solely because
 the full IP payload was not captured. Existing TCP behavior is unchanged.
+
+For both TCP and UDP, the verifier now also requires the **PCAP record's
+original Ethernet frame length** to be at least the 14-byte Ethernet header
+plus the IPv4 header's declared total length. This rejects impossible IP
+lengths even if the captured prefix contains plausible ports and timestamps.
+A legitimate snaplen-truncated record may still pass when its separately
+recorded original length is sufficient; no payload completeness is claimed.
  Non-IPv4 packets such as ARP are ignored for
 corroboration; VLAN-tagged Ethernet and fragmented IPv4 are refused. Zeek
 flows using IPv6 or non-TCP/UDP protocols are refused rather than silently
