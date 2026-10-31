@@ -198,3 +198,17 @@ and not proof that Zeek generated the flows. Record a failure as
 NOT MEASURED/unsupported where appropriate; do not modify the original
 capture, log or labels to make it pass. See
 `docs/OFFLINE_LAB_EVIDENCE_CHAIN.md` for limitations.
+
+## Optional stricter PCAP/Zeek packet availability check
+
+After the initial read-only chain verification, a **separate** research
+screen may add `--require-pcap-zeek-tuples`,
+`--require-pcap-zeek-timestamps`, and
+`--require-distinct-pcap-packets` together to the same command (while
+retaining `--require-independent-original-pins`). This stricter option
+does not generate traffic or change evidence. It requires at least one
+distinct, matching, timestamp-near PCAP record for every Zeek row and
+may refuse incomplete or unsupported captures. A PASS does not establish
+packet-to-flow identity, attack detection, or network isolation.
+Keep any failure as part of the experimental record; do not edit the
+original PCAP or Zeek log to make the screen pass.
