@@ -1,5 +1,13 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Cross-split Zeek source provenance in held-out trace review (PR #319, CI pending)
+
+- [PR #319](https://github.com/tbao4151/DA_CNTT/pull/319), feature branch `feature/zeek-trace-cross-split-provenance-20261101` based on `main` `ce59c877b686652d6a5b31912d266cdffedb55c6` (merged PR #318); no open PR at branch creation.
+- In `src/blue_team_ai/trace_review.py`, require exact TRAIN/VALIDATION/TEST aggregate provenance, sorted unique SHA-256 sources, no declared digest reused across splits, one session per source, host count no larger than sessions, and positive flow counts. Preserve original TEST source/UID join, confusion-matrix, Wilson and label-free read-only result.
+- `tests/test_zeek_trace_review.py` adds 13 synthetic rejection cases plus one v4/v5/v6 compatibility regression. GitHub CI not yet confirmed on final head; no local pytest, student VMware run, new labels, new model, SOC writes or live alerts claimed.
+- **Limit:** all non-supplied TRAIN/VALIDATION sources remain operator-declared metadata, not independently rehashed original captures. This cannot authenticate source history, labels or host-only isolation. Dataset Mode/UNSW benchmark, Red Team execution and private artifacts unchanged. Merge only after final-head Ubuntu/Windows CI pass and conflict-free status.
+
+
 ## 2026-11-01: Held-out Zeek source/session cardinality consistency (feature PR, CI pending)
 
 - Based on `main` merge commit `4cb84fe2ff624ad10898231cd39257e9b68fa005` after PR #317 merged and its exact-head Ubuntu, Windows and synthetic Zeek CI succeeded; no open PR at branch creation. [PR #318](https://github.com/tbao4151/DA_CNTT/pull/318), feature branch `feature/zeek-heldout-source-session-cardinality-20261101`.
