@@ -69,6 +69,20 @@ original hashes tied to confidential investigations or lab notebook to a
 public repository. Preserve original evidence, Zeek version, capture
 configuration, Host-only isolation screenshots and operator approval privately.
 
+**Ambiguity diagnostics (offline, non-identifying):** The JSON also reports
+`distinct_zeek_bidirectional_tuples`,
+`zeek_rows_with_nonunique_bidirectional_tuple`,
+`distinct_supported_pcap_bidirectional_tuples` and
+`potential_packet_reuse_for_multiple_zeek_flows`. Both directions are
+grouped under the same tuple; for example, two Zeek rows with reverse
+directions and only one matching PCAP packet are explicitly marked as
+potential reuse. These counts do not contain IPs, ports, UIDs or timestamps.
+A `false` reuse flag only means that duplicate bidirectional Zeek tuples
+were not observed; it **never** upgrades `packet_to_flow_identity_verified`
+from `false`. Packet counts are not expected to equal connection counts,
+and this diagnostic is not an attack metric, capture-origin proof or
+one-to-one Zeek correspondence.
+
 **Interpretation limits:** A matching tuple is *not* evidence that the Zeek
 flow was generated from that packet. A single packet can corroborate multiple
 Zeek records with identical tuples; no timestamp matching by default, packet-to-flow

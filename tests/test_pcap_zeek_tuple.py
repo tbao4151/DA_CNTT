@@ -158,6 +158,39 @@ def test_snaplen_truncated_ipv4_payload_with_valid_original_length(proto, zeek_p
     assert result["matched_zeek_flow_count"] == 1
     assert result["packet_to_flow_identity_verified"] is False
 
+
+def test_bidirectional_reuse_is_reported_even_with_reverse_zeek_direction():
+    # Two Zeek rows can be corroborated by one packet, including a reverse
+    # direction row. This is not a packet-to-flow identity proof.
+    log = zeek_log().decode()
+    log += "101.0\tC2\t10.1.1.3\t80\t10.1.1.2\t1234\ttcp\n"
+    result = corroborate_pcap_zeek_tuples(pcap(pcap_packet()), log.encode())
+    assert result["matched_zeek_flow_count"] == 2
+    assert result["supported_pcap_packet_count"] == 1
+    assert result["distinct_zeek_bidirectional_tuples"] == 1
+    assert result["zeek_rows_with_nonunique_bidirectional_tuple"] == 2
+    assert result["distinct_supported_pcap_bidirectional_tuples"] == 1
+    assert result["potential_packet_reuse_for_multiple_zeek_flows"] is True
+    assert result["packet_to_flow_identity_verified"] is False
+    assert "10.1.1." not in json.dumps(result)
+
+
+def test_distinct_tuples_report_no_detected_reuse_but_not_verified_identity():
+    log = zeek_log(second=True)
+    raw = pcap(
+        pcap_packet(),
+        pcap_packet(src="10.1.1.4", dst="10.1.1.5",
+                    sport=5555, dport=443),
+    )
+    result = corroborate_pcap_zeek_tuples(raw, log)
+    assert result["matched_zeek_flow_count"] == 2
+    assert result["distinct_zeek_bidirectional_tuples"] == 2
+    assert result["zeek_rows_with_nonunique_bidirectional_tuple"] == 0
+    assert result["distinct_supported_pcap_bidirectional_tuples"] == 2
+    assert result["potential_packet_reuse_for_multiple_zeek_flows"] is False
+    assert result["packet_to_flow_identity_verified"] is False
+
+
 def test_repeated_zeek_tuples_are_only_existence_correlated():
     log = zeek_log().decode()
     log += "101.0\tC2\t10.1.1.2\t1234\t10.1.1.3\t80\ttcp\n"

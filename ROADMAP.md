@@ -1614,3 +1614,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final-head Ubuntu Python 3.12.9 quality, Windows offline Zeek contract and any triggered real-Zeek synthetic smoke CI; merge only if all required checks pass and the PR remains conflict-free. This guard rejects IPv4 total lengths impossible for the **original** Ethernet frame, without refusing valid snaplen-truncated captures.
 - [ ] Student Windows 11: verify VMware Host-only isolation and authorization manually, preserve original PCAP/Zeek logs and independent SHA-256 pins, and run `py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py` followed by the documented offline corroboration CLI on a genuine authorized capture. Keep private artifacts out of public Git.
 - [ ] Continue toward independently adjudicated host/session-disjoint labels, actual Blue Team Precision/Recall/FPR and measured event-to-alert-to-SOC-case timing. A header consistency check is not attack detection or capture provenance; keep Red Team traffic disabled until separately reviewed lab controls exist.
+
+
+## 2026-10-31 — Offline PCAP/Zeek bidirectional tuple reuse visibility
+
+- [ ] Verify final-head Ubuntu Python 3.12.9 quality, Windows offline Zeek and any relevant real-Zeek synthetic CI for the new direction-neutral reuse counters. Merge only after all triggered required checks succeed and the PR is conflict-free; no test pass is claimed at authoring.
+- [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py` and the existing pinned offline PCAP/Zeek corroboration CLI using an authorized, genuine VMware Host-only capture. Retain original hashes, isolation/authorization evidence and Zeek version privately. Review any duplicated/reverse tuple diagnostics; do not equate an absence of duplicates with flow identity.
+- [ ] Collect independently adjudicated host/session-disjoint labels and measure Blue Team Precision/Recall/FPR plus event-to-alert-to-SOC latency on student hardware. Red Team execution remains disabled pending validated isolation and safety controls. Keep official UNSW-NB15 Dataset Mode results unchanged.
