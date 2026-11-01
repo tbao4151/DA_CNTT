@@ -84,7 +84,7 @@ def _verify_creation_note(
     queue = re.fullmatch(
         r"(.+?)(?:Pinned research queue selection rechecked: "
         r"bundle_sha256=([0-9a-f]{64}); "
-        r"research_alert_ref=([0-9a-f]{64})\\. )",
+        r"research_alert_ref=([0-9a-f]{64})\. )",
         remaining,
     )
     if queue is not None:
