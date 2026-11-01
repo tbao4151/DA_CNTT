@@ -903,3 +903,27 @@ UIDs, IPs, labels and source paths. Reproduction is not independent proof of
 ground-truth correctness, data acquisition, model authorship, physical
 VMware Host-only isolation or live attack detection. Preserve the exact
 dependency versions and independent lab evidence privately.
+
+
+## Strict split-annotation byte pins for NEW-log labeled evaluation (01/11/2026)
+
+The read-only `scripts/evaluate_zeek_new_log_labels.py` now **requires**
+`labels_sha256` for every original TRAIN/VALIDATION/TEST capture in the
+private manifest. It rechecks the independently supplied manifest digest
+inside the original-capture loader and refuses changed annotation bytes
+even when the NEW-log annotation and its own SHA-256 remain valid.
+
+For each declared capture, calculate the raw `labels.json` SHA-256 with
+`Get-FileHash -Algorithm SHA256` on Windows and record it independently.
+Place the lowercase digest in that capture's `labels_sha256` manifest field,
+then record the new manifest SHA-256 and bind the trusted Zeek research model
+to that manifest **before** evaluating a genuinely NEW capture. An old
+manifest lacking any split annotation pin now fails closed in this evaluation
+CLI; the general research-training CLI's separate opt-in flag is unchanged.
+
+This protects declared annotation-byte consistency, **not** annotation
+authenticity, independently adjudicated labels, complete capture history,
+host/session independence, VMware isolation or real attack detection.
+Do not change a historical manifest/model merely to make a failed evaluation
+pass; preserve originals and create a separately documented experiment.
+Regression: `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`.
