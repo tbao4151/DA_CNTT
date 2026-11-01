@@ -64,6 +64,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         captures, manifest_sha256 = load_experiment_manifest(
             manifest_path, lab_cidrs=args.cidr,
+            require_label_sha256=True,
+            expected_manifest_sha256=args.expected_manifest_sha256,
         )
         dataset = build_labeled_lab_dataset(captures)
         guard = verify_declared_partition_exclusion(
