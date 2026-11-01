@@ -1,5 +1,10 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: PR #319 failed CI remediation
+
+- [ ] Recheck PR #319 on its **latest commit** after fixing 11 Ubuntu / 5 Windows failures: verify both required CI workflows pass, inspect changes and mergeability, then merge only if conflict-free. Earlier red checks on `a9fdf09be1555c952bfad793e2027b49392774a8` must not be presented as passing.
+- [ ] Confirm synthetic manual SOC triage remains compatible with exact TRAIN/VALIDATION/TEST metadata, TEST-specific error contract, and cross-split refusal before any SQLite write; do not mistake fixture metadata for independently verified source captures.
+
 ## 2026-11-01: Read-only held-out Zeek cross-split source provenance (PR #319)
 
 - [ ] Confirm [PR #319](https://github.com/tbao4151/DA_CNTT/pull/319) final-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI are green, no overlap/conflicts with parallel PRs, then merge. This prevents declared source SHA-256 reuse across TRAIN/VALIDATION/TEST at private trace review, but does not authenticate original captures.
