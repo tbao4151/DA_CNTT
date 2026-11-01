@@ -140,6 +140,28 @@ def _run_with_all_tables(tmp_path, snapshots, *, problem=None):
             all_v4[-1]["dev"] = "eth9"
         elif problem == "local_wrong_type":
             all_v4[-1]["type"] = "unicast"
+        elif problem == "local_public_ipv4":
+            all_v4[-1]["dst"] = "8.8.8.8"
+        elif problem == "local_other_private_subnet":
+            all_v4[-1].update({"dst": "192.168.57.20", "dev": "ens33"})
+        elif problem == "local_public_ipv6":
+            all_v6[-1].update({"dst": "2001:db8::1234", "dev": "ens33"})
+        elif problem == "local_wrong_loopback_scope":
+            all_v4[-1]["dst"] = "192.168.56.20"
+        elif problem == "local_wrong_multicast_type":
+            all_v4[-1]["dst"] = "224.0.0.1"
+        elif problem == "multicast_wrong_range":
+            all_v4[-1].update({"type": "multicast", "dst": "192.168.56.20"})
+        elif problem == "local_valid_scoped_ipv4":
+            all_v4[-1].update({"dst": "192.168.56.20", "dev": "ens33"})
+        elif problem == "local_valid_linklocal_ipv6":
+            all_v6[-1].update({"dst": "fe80::1234", "dev": "ens33"})
+        elif problem == "local_valid_multicast_ipv4":
+            all_v4[-1].update({"type": "multicast", "dst": "224.0.0.0/4", "dev": "ens33"})
+        elif problem == "local_valid_multicast_ipv6":
+            all_v6[-1].update({"type": "multicast", "dst": "ff00::/8", "dev": "ens33"})
+        elif problem == "local_valid_limited_broadcast":
+            all_v4[-1].update({"type": "broadcast", "dst": "255.255.255.255", "dev": "ens33"})
         for role, data in (("routes-all-v4", all_v4), ("routes-all-v6", all_v6)):
             if problem == "missing_pair" and role == "routes-all-v6":
                 break
@@ -172,7 +194,10 @@ def test_optional_seven_snapshot_all_table_screen_accepts_consistent_private_inp
     "alternate_v4", "alternate_v6", "extra_main", "missing_main",
     "local_gateway", "local_default", "local_wrong_family",
     "local_wrong_dev", "local_wrong_type", "changed_pin",
-    "missing_pair", "duplicate_path",
+    "missing_pair", "duplicate_path", "local_public_ipv4",
+    "local_other_private_subnet", "local_public_ipv6",
+    "local_wrong_loopback_scope", "local_wrong_multicast_type",
+    "multicast_wrong_range",
 ])
 def test_optional_all_table_gate_refuses_unsafe_or_incomplete_snapshots(tmp_path, problem):
     result = _run_with_all_tables(tmp_path, _snapshots(), problem=problem)
@@ -180,3 +205,16 @@ def test_optional_all_table_gate_refuses_unsafe_or_incomplete_snapshots(tmp_path
     assert result.stdout == ""
     assert "refused" in result.stderr
     assert str(tmp_path) not in result.stderr
+
+
+@pytest.mark.parametrize("variant", [
+    "local_valid_scoped_ipv4", "local_valid_linklocal_ipv6",
+    "local_valid_multicast_ipv4", "local_valid_multicast_ipv6",
+    "local_valid_limited_broadcast",
+])
+def test_optional_all_table_gate_accepts_scoped_kernel_local_routes(tmp_path, variant):
+    result = _run_with_all_tables(tmp_path, _snapshots(), problem=variant)
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report["all_routing_tables_in_supplied_snapshots_checked"] is True
+    assert report["vmware_hostonly_isolation_verified"] is False
