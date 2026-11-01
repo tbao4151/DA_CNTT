@@ -104,3 +104,76 @@ def summarize_protocol_error_rates(
             "not host/session-cluster adjusted."
         ),
     }
+
+
+def summarize_protocol_probability_quality(
+    events: Sequence[Mapping[str, object]],
+    predictions: Sequence[Mapping[str, object]],
+    labels_by_uid: Mapping[str, int],
+) -> dict[str, object]:
+    """Describe probability error by fixed Zeek protocol, without recalibration.
+
+    Uses only externally supplied labels and verified prediction probabilities.
+    This is exploratory, flow-level Brier loss, not host/session-adjusted
+    validation, a calibrated-probability claim, or model/threshold selection.
+    """
+    import math
+
+    # Reuse strict UID/order, binary-label and fixed-protocol validation.
+    # No private identifiers are included in either aggregate result.
+    audit = summarize_protocol_error_rates(events, predictions, labels_by_uid)
+    totals = {
+        bucket: {"score_sum": 0.0, "squared_error_sum": 0.0}
+        for bucket in PROTOCOL_BUCKETS
+    }
+    for event, prediction in zip(events, predictions, strict=True):
+        probability = prediction.get("attack_probability")
+        if (
+            type(probability) not in (int, float)
+            or not math.isfinite(probability)
+            or not 0.0 <= probability <= 1.0
+        ):
+            raise ValueError("Expected finite Zeek attack probability in [0,1]")
+        bucket = event["proto"] if event["proto"] in PROTOCOL_BUCKETS[:-1] else "other"
+        truth = labels_by_uid[event["uid"]]
+        totals[bucket]["score_sum"] += probability
+        totals[bucket]["squared_error_sum"] += (probability - truth) ** 2
+
+    summaries: dict[str, dict[str, object]] = {}
+    total_squared_error = 0.0
+    for bucket in PROTOCOL_BUCKETS:
+        confusion = audit["buckets"][bucket]["confusion_matrix"]
+        support = confusion["support"]
+        attack_count = confusion["tp"] + confusion["fn"]
+        score_sum = totals[bucket]["score_sum"]
+        squared_error_sum = totals[bucket]["squared_error_sum"]
+        total_squared_error += squared_error_sum
+        summaries[bucket] = {
+            "support": support,
+            "operator_labeled_attack_prevalence": (
+                attack_count / support if support else None
+            ),
+            "mean_predicted_attack_probability": (
+                score_sum / support if support else None
+            ),
+            "brier_score": squared_error_sum / support if support else None,
+            "insufficient_flow_support": support < MIN_INTERPRETABLE_BUCKET_SUPPORT,
+        }
+    return {
+        "mode": "offline_operator_labeled_protocol_probability_diagnostics_only",
+        "unit_of_analysis": "network_flow",
+        "flow_count": len(events),
+        "overall_brier_score": total_squared_error / len(events),
+        "buckets": summaries,
+        "independent_ground_truth_verified": False,
+        "host_session_cluster_adjusted": False,
+        "probabilities_calibrated_verified": False,
+        "threshold_selection_performed": False,
+        "interpretation": (
+            "Brier loss and mean risk by four fixed protocol strata, using "
+            "operator-supplied labels and existing offline model probabilities. "
+            "Empty buckets are null; small or correlated host/session samples "
+            "are descriptive only. No calibration, independent ground truth, "
+            "physical isolation or live detection is established."
+        ),
+    }
