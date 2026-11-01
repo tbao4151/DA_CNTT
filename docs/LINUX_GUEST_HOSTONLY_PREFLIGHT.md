@@ -43,6 +43,8 @@ py -3.12 scripts/check_linux_guest_network_preflight.py `
 
 The screen requires one active non-loopback lab NIC with exactly one scoped
 IPv4 address, no extra active/addressed NIC, no non-link-local IPv6 address,
+no unexpected or duplicate address on `lo` (only `127.0.0.1/8` and
+`::1/128` are permitted there),
 and only direct lab/link-local routes in the **declared main-table snapshots**.
 The IPv4 lab subnet must be a narrow RFC1918 CIDR. It rejects a default route,
 gateway, out-of-scope route, malformed JSON, duplicate JSON keys and changed

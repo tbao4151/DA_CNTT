@@ -69,6 +69,33 @@ def _scope(cidr: str):
     return network
 
 
+def _check_loopback_addresses(info):
+    """Accept only conventional IPv4/IPv6 loopback identities on lo.
+
+    The full ip -j address inventory includes lo; ignoring its addr_info
+    would let non-loopback addresses evade the guest configuration screen.
+    """
+    allowed = {
+        "inet": ipaddress.IPv4Interface("127.0.0.1/8"),
+        "inet6": ipaddress.IPv6Interface("::1/128"),
+    }
+    seen = set()
+    for entry in info:
+        if not isinstance(entry, dict):
+            raise ValueError("Malformed loopback address")
+        family, local, prefix = entry.get("family"), entry.get("local"), entry.get("prefixlen")
+        if (family not in allowed or not isinstance(local, str)
+                or type(prefix) is not int or "%" in local):
+            raise ValueError("Unsupported loopback address")
+        try:
+            address = ipaddress.ip_interface(f"{local}/{prefix}")
+        except ValueError as exc:
+            raise ValueError("Invalid loopback address") from exc
+        if address != allowed[family] or family in seen:
+            raise ValueError("Unexpected or duplicate loopback address")
+        seen.add(family)
+
+
 def assess(addresses, routes_v4, routes_v6, *, adapter: str, cidr: str):
     """Fail closed on extra active NICs, non-lab addresses and routed egress."""
     scope = _scope(cidr)
@@ -90,6 +117,7 @@ def assess(addresses, routes_v4, routes_v6, *, adapter: str, cidr: str):
         if name == "lo":
             if "LOOPBACK" not in flags:
                 raise ValueError("Invalid loopback interface")
+            _check_loopback_addresses(info)
             continue
         if name != adapter:
             if "UP" in flags or info:
