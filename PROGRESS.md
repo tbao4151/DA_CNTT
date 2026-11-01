@@ -1,3 +1,9 @@
+## 2026-11-02: Optional Linux local-table destination scope validation (feature PR; CI pending)
+
+- Verified `main` at `0944d5f188b234e79a769d40a09079148bfd0d12`: PR #341 merged after exact-head Ubuntu [#41353414977](https://github.com/tbao4151/DA_CNTT/actions/runs/41353414977) and Windows [#41353414942](https://github.com/tbao4151/DA_CNTT/actions/runs/41353414942) success; post-merge main quality [#41355428019](https://github.com/tbao4151/DA_CNTT/actions/runs/41355428019) succeeded. No open PR at branch creation.
+- Found seven-snapshot all-table screen accepted a syntactically valid local-table route to arbitrary public/out-of-scope destinations. Restricted local-table destinations to approved IPv4 Host-only CIDR, IPv6 link-local, conventional loopback, typed multicast and limited broadcast; passed the declared CIDR from the existing combined CLI. Five-snapshot behavior and historical UNSW benchmark remain unchanged. Added six negative and five positive synthetic subprocess variants.
+- Exact feature-head Ubuntu/Windows CI pending. No full-repository local pytest (GitHub clone DNS unavailable), no student VMware experiment, no real capture, labels, operational AI alert, SOC write, model change, network activity or public deployment. A snapshot PASS is not isolation proof.
+
 ## 2026-11-02: Optional pinned all-routing-table Linux guest screen (feature PR; CI pending)
 
 - Verified main at `79141a25dbcd387587bf2e9a0351d20d7db1359a`: PR #340 merged; its exact-head Ubuntu [#41347856113](https://github.com/tbao4151/DA_CNTT/actions/runs/41347856113) and Windows [#41347856172](https://github.com/tbao4151/DA_CNTT/actions/runs/41347856172) passed; post-merge main quality [#41350469927](https://github.com/tbao4151/DA_CNTT/actions/runs/41350469927) passed. No open PR at feature start.

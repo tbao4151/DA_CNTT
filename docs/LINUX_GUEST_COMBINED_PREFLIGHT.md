@@ -93,7 +93,15 @@ Add **both** optional pairs to the existing Windows command:
 The extra gate requires seven distinct, absolute, non-symlink, independently
 pinned files. It rejects unknown routing tables, unsafe local-table entries,
 default routes and missing/extra main-table routes when comparing the
-all-table snapshots to the original main-table snapshots. It may reject
+all-table snapshots to the original main-table snapshots. In seven-file mode,
+local-table destinations are also screened: IPv4 on the approved guest NIC
+must stay within the declared Host-only CIDR, IPv6 on that NIC within
+link-local fe80::/10, and loopback entries within 127.0.0.0/8 or ::1/128.
+Kernel multicast entries are allowed only with a multicast route type and
+multicast destination; the conventional IPv4 limited broadcast address is
+allowed on the approved NIC with broadcast type. Out-of-scope local-table
+addresses are refused even if their route metadata otherwise looks valid.
+This is a conservative policy and may reject legitimate advanced routing. It may reject
 legitimate advanced Linux routing; **investigate**, do not modify evidence to
 force PASS. The snapshots can change between commands and cannot prove they
 represent one atomic kernel state.

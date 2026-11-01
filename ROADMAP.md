@@ -1,3 +1,9 @@
+## 2026-11-02: Local-table destination scope acceptance (feature CI pending)
+
+- [ ] Require exact final feature-head Ubuntu quality and Windows offline Zeek CI success for six out-of-scope negatives and five valid kernel-local/multicast/broadcast positives, plus existing five-/seven-file regressions; confirm mergeability and no competing PR before merging.
+- [ ] On student Windows 11 Python 3.12.9, run `py -3.12 -m pytest -q tests/test_linux_guest_combined_preflight.py`; then privately collect seven original Linux guest snapshots and SHA-256, and inspect any refusal without editing source evidence to force PASS.
+- [ ] Independently verify VMware Host-only VMnet/NIC, forwarding, DNS, firewall, kernel routes, IPv6 and written scope; obtain actual authorized PCAP/Zeek, independent labels and packet-to-SOC timing. Synthetic tests and pinned snapshots cannot establish live capture or operational attack detection.
+
 ## 2026-11-02: Optional Linux all-routing-table snapshot acceptance (feature CI pending)
 
 - [ ] Require exact feature-head Ubuntu quality and Windows offline CI for the expanded combined preflight, including seven-file PASS, unknown table, local-route, mismatch, altered pin, duplicate path and incomplete optional-pair refusal. Confirm no conflicting PR and mergeability before merge.
