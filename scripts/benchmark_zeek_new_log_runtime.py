@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +36,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repetitions", type=int, default=5)
     parser.add_argument("--warmup", type=int, default=1)
     args = parser.parse_args(argv)
+    # A separate monotonic clock records CLI phases outside the repeated
+    # in-memory scoring benchmark; it is NOT packet-to-alert latency.
+    started_ns = time.perf_counter_ns()
     try:
         paths = [_private_regular_file(p) for p in (
             args.model, args.manifest, args.log,
@@ -59,6 +63,7 @@ def main(argv: list[str] | None = None) -> int:
         if manifest_sha256 != args.expected_manifest_sha256:
             raise ValueError("Manifest changed during validation")
         dataset = build_labeled_lab_dataset(captures)
+        prepared_ns = time.perf_counter_ns()
         report = benchmark_offline_new_log_scoring(
             source_data, model,
             expected_log_sha256=args.expected_log_sha256,
@@ -70,6 +75,28 @@ def main(argv: list[str] | None = None) -> int:
             repetitions=args.repetitions,
             warmup=args.warmup,
         )
+        finished_ns = time.perf_counter_ns()
+        report["cli_phase_timing"] = {
+            "method": "perf_counter_ns_same_process",
+            "input_loading_and_manifest_preflight_ms": round(
+                (prepared_ns - started_ns) / 1_000_000, 6
+            ),
+            "benchmark_call_including_gates_and_repetitions_ms": round(
+                (finished_ns - prepared_ns) / 1_000_000, 6
+            ),
+            "pre_output_total_ms": round(
+                (finished_ns - started_ns) / 1_000_000, 6
+            ),
+            "json_serialization_and_stdout_excluded": True,
+            "process_startup_and_argument_parsing_excluded": True,
+            "packet_capture_and_soc_excluded": True,
+            "detection_latency_measured": False,
+            "interpretation": (
+                "Same-process offline CLI phase durations; benchmark call includes "
+                "partition verification, untimed reference, warmups and repeated "
+                "scoring. Not one-batch latency or capture-to-SOC time."
+            ),
+        }
     except (
         ValueError, OSError, TypeError, KeyError, UnicodeError,
         OverflowError, RecursionError,

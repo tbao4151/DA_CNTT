@@ -10,6 +10,27 @@ It is **not detection latency**. Zeek event timestamps do not measure the
 time a detector received a flow or when an alert was delivered. Never use the
 results to claim end-to-end attack detection, live throughput or SOC response.
 
+## Additional offline CLI phase timings (PR #332)
+
+The CLI JSON now adds `cli_phase_timing`, measured with
+`time.perf_counter_ns()` on the **same process and clock**. It separates
+`input_loading_and_manifest_preflight_ms` (private file/path checks, log/model
+loading and original TRAIN/VALIDATION/TEST annotation/manifest verification)
+from `benchmark_call_including_gates_and_repetitions_ms` (partition and
+identity gates, untimed reference/warmups, then all repeated scoring runs).
+`pre_output_total_ms` is their combined pre-output time. These values are
+**not** interchangeable with `median_batch_ms`: the benchmark call contains
+multiple batches and untimed checks. CLI process startup, argument parsing,
+JSON serialization and stdout are excluded; traffic capture, Zeek generation,
+analyst waiting, alerts and SOC creation are also excluded. No timestamp from
+a packet or Zeek event is used to calculate these durations.
+
+These phase timings help the student identify local offline processing cost
+when running the exact pinned inputs on Windows 11. Runner-dependent CI timings
+must not be reported as measurements on the student's laptop. To claim a real
+capture-to-SOC elapsed time, separately instrument all stages on the owned
+VMware setup with documented clocks, provenance and explicit manual actions.
+
 ## Windows 3.12.9: private reproducible measurement
 
 Preserve the model, original TRAIN/VALIDATION/TEST manifest and every original

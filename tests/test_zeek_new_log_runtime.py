@@ -114,6 +114,21 @@ def test_cli_read_only_and_refuses_modified_hash(tmp_path):
     report = json.loads(completed.stdout)
     assert report["repetitions"] == 2
     assert report["detection_latency_measured"] is False
+    phases = report["cli_phase_timing"]
+    assert phases["method"] == "perf_counter_ns_same_process"
+    assert phases["input_loading_and_manifest_preflight_ms"] > 0
+    assert phases["benchmark_call_including_gates_and_repetitions_ms"] > 0
+    assert phases["pre_output_total_ms"] >= max(
+        phases["input_loading_and_manifest_preflight_ms"],
+        phases["benchmark_call_including_gates_and_repetitions_ms"],
+    )
+    assert abs(phases["pre_output_total_ms"] - (
+        phases["input_loading_and_manifest_preflight_ms"]
+        + phases["benchmark_call_including_gates_and_repetitions_ms"]
+    )) < 0.00001
+    assert phases["json_serialization_and_stdout_excluded"] is True
+    assert phases["packet_capture_and_soc_excluded"] is True
+    assert phases["detection_latency_measured"] is False
     assert "192.168.56" not in completed.stdout
     for flag, value in (
         ("--expected-model-sha256", "0" * 64),

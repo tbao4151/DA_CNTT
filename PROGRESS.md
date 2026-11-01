@@ -1,5 +1,13 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Offline NEW-log CLI phase timing ([PR #332](https://github.com/tbao4151/DA_CNTT/pull/332); exact-head CI pending)
+
+- Checked `main` at `e22604fa9c941f03ad94c0569fc81aeb9741f06a` after PR #331 merged; post-merge quality [#41303051095](https://github.com/tbao4151/DA_CNTT/actions/runs/41303051095) passed, and no open PR was found at branch creation.
+- Added additive `cli_phase_timing` to `scripts/benchmark_zeek_new_log_runtime.py`: same-process monotonic pre-output time split between private input/model/manifest preparation and benchmark invocation (including partition checks, warmups and repetitions). Existing `median_batch_ms` remains an in-memory per-batch statistic, not the same timing boundary.
+- Extended the existing synthetic subprocess regression in `tests/test_zeek_new_log_runtime.py` to check positive phase timings, additivity and explicit exclusions. The Windows offline workflow already runs this file. **Ubuntu/Windows CI on the final feature head not yet verified; do not merge before checks pass.**
+- No local laptop/VMware test, traffic, operational alert, SOC write, real detection-latency measurement, model refit or official UNSW benchmark change. See `docs/ZEEK_NEW_LOG_RUNTIME_BENCHMARK.md` for boundaries.
+
+
 ## 2026-11-01: Verified main status inventory after PR #330
 
 - Confirmed no open PR at branch creation. PR #330 merged as `aafec3c233dc3dcd2dd9940ea23e070155f5e2a2`; exact-head Ubuntu quality [#41294345318](https://github.com/tbao4151/DA_CNTT/actions/runs/41294345318) and Windows offline [#41294345303](https://github.com/tbao4151/DA_CNTT/actions/runs/41294345303) passed, as did post-merge main quality [#41295852825](https://github.com/tbao4151/DA_CNTT/actions/runs/41295852825).
