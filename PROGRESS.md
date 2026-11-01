@@ -1,5 +1,17 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: PR #324 Windows CI import-path repair (rerun pending)
+
+- PR #324 final head `d8c0e83e9a37f8436cd1b33047b01a793712286b`: Windows offline run #41271932813 **failed** during the new ranking test collection with `ModuleNotFoundError: No module named 'blue_team_ai'`; its earlier 246 import/provenance/SOC tests and 121 baseline/trace tests passed. The new test omitted the existing repository's explicit `src/` sys.path setup. This is a test-import regression, not evidence of ranking calculation failure.
+- Fixed `tests/test_zeek_ranking_metrics.py` to add the same project-local `src/` path as existing tests. Await new exact-head Ubuntu/Windows CI before merge; no independent local pytest or student Windows/VMware experiment claimed.
+
+## 2026-11-01: Tie-aware NEW-log ranking evaluation (feature PR; CI pending)
+
+- Based on `main` `447327429a4cdd43f6ce6f228f9ecd5dd6114a65` after PR #323 merged and main quality run #41270135400 succeeded; no open PR at branch creation. Feature branch `feature/zeek-new-log-ranking-metrics-20261101`.
+- Added threshold-free ROC AUC (half-credit for tied positive/negative score pairs) and average precision (grouped-score stepwise precision-recall), with explicit class support, positive prevalence and undefined single-class ROC AUC. Integrated into the existing **read-only** pinned NEW Zeek operator-labeled evaluation without changing its CLI, fixed-threshold metrics, model or labels.
+- Added synthetic tie/single-class/invalid-score regression, integration assertion and explicit Windows Python 3.12.9 workflow step. CI on this feature branch is pending; no local Windows/VMware test, independent label validation, live attack detection or measured detection latency is claimed.
+- Scientific limitation: ROC AUC/AP describe ranking against supplied private annotations; correlated host/session flows and unknown annotation truth prevent real-world generalization claims. No automatic alert, network execution, Dataset Mode/UNSW change or SOC write.
+
 
 ## 2026-11-01: Pin verified research queue in original SOC creation audit (feature PR; CI pending)
 

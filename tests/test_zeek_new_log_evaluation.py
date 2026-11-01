@@ -78,6 +78,11 @@ def test_metrics_are_exactly_from_supplied_labels_not_claimed_truth(inputs):
     assert result["metrics"]["attack_recall"] == (tp / (tp + fn) if tp + fn else None)
     assert result["metrics"]["false_positive_rate"] == (fp / (fp + tn) if fp + tn else None)
     assert result["flow_level_uncertainty"]["unit_of_analysis"] == "network_flow"
+    ranking = result["threshold_free_ranking_metrics"]
+    assert ranking["positive_support"] == sum(labels.values())
+    assert ranking["negative_support"] == len(labels) - sum(labels.values())
+    assert ranking["positive_prevalence"] == sum(labels.values()) / len(labels)
+    assert ranking["threshold_selection_performed"] is False
     assert result["label_authenticity_verified"] is False
     assert result["independent_partition_history_verified"] is False
     assert result["detection_latency_measured"] is False
