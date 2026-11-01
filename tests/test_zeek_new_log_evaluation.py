@@ -75,6 +75,29 @@ def _evaluate(i, **changes):
     return evaluate_new_log_operator_labels(**values)
 
 
+def test_new_log_protocol_diagnostics_parse_original_once(inputs, monkeypatch):
+    """Both fixed protocol summaries reuse one validated original Zeek parse.
+
+    The verifier/scorer may independently parse their own pinned inputs;
+    this assertion applies only to the evaluation module's aggregate pass.
+    """
+    from blue_team_ai import new_log_evaluation as evaluation_module
+
+    original_parse = evaluation_module.parse_zeek_conn_log
+    parsed_sources = []
+
+    def tracked_parse(source_data):
+        parsed_sources.append(source_data)
+        return original_parse(source_data)
+
+    monkeypatch.setattr(evaluation_module, "parse_zeek_conn_log", tracked_parse)
+    result = _evaluate(inputs)
+    assert parsed_sources == [inputs["raw"]]
+    assert result["protocol_error_analysis"]["flow_count"] == 2
+    assert result["protocol_probability_quality"]["flow_count"] == 2
+    assert result["protocol_probability_quality"]["overall_brier_score"] >= 0
+
+
 def test_metrics_are_exactly_from_supplied_labels_not_claimed_truth(inputs):
     result = _evaluate(inputs)
     predictions = inputs["report"]["predictions"]
