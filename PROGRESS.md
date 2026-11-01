@@ -1,6 +1,6 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
-## 2026-11-01: Require all original split annotation pins for NEW-log labeled evaluation (feature PR, CI pending)
+## 2026-11-01: Require all original split annotation pins for NEW-log labeled evaluation (PR #326, CI pending)
 
 - After PR #325 merged as `c9dbc79f05167ac1241e3f4fc64af8fadd001df7`, main quality CI #41277726437 succeeded; no open PR at branch creation. The read-only `scripts/evaluate_zeek_new_log_labels.py` previously loaded the declared TRAIN/VALIDATION/TEST manifest without `require_label_sha256=True`, permitting an otherwise pinned manifest with unpinned original split annotation bytes. This was weaker than the NEW-log scoring/manual SOC gates.
 - Tightened only this evaluation CLI to require every original `labels_sha256` and independently check the manifest digest in the loader. Updated synthetic evaluation fixtures to pin original split annotations and added negative regressions for an omitted label digest even after manifest/model re-pinning and for modified original annotation bytes. No UNSW-NB15 benchmark, Red execution, network capture, model training or SQLite writes were changed.
