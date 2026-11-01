@@ -110,7 +110,7 @@ host/session-cluster-adjusted inference. No new-label-driven selection,
 threshold tuning, ground-truth authentication, or real lab performance is
 claimed. Keep private raw logs and labels outside Git.
 
-## Fixed protocol-stratified FP/FN audit (feature PR; CI pending)
+## Fixed protocol-stratified FP/FN audit ([PR #327](https://github.com/tbao4151/DA_CNTT/pull/327); CI pending)
 
 The same pinned, recomputed NEW-log predictions and operator-supplied UID
 annotations now produce an additive `protocol_error_analysis` field.
