@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.new_log_evaluation import evaluate_new_log_operator_labels
+from blue_team_ai.protocol_error_analysis import summarize_protocol_error_rates
 from blue_team_ai.new_log_inference import score_new_zeek_log
 from test_zeek_partition_guard import _inputs
 
@@ -314,3 +315,65 @@ def test_always_attack_reference_preserves_single_class_denominators(inputs, lab
     assert reference["flow_level_uncertainty"]["false_positive_rate"]["trials"] == (
         0 if label else support
     )
+
+
+def test_protocol_error_audit_reconciles_with_global_confusion_without_identifiers(inputs):
+    result = _evaluate(inputs)
+    audit = result["protocol_error_analysis"]
+    buckets = audit["buckets"]
+    assert tuple(buckets) == ("tcp", "udp", "icmp", "other")
+    assert buckets["tcp"]["confusion_matrix"]["support"] == 1
+    assert buckets["udp"]["confusion_matrix"]["support"] == 1
+    assert buckets["icmp"]["confusion_matrix"]["support"] == 0
+    assert buckets["icmp"]["false_positive_rate"] is None
+    for key in ("tp", "fp", "tn", "fn", "support"):
+        assert sum(b["confusion_matrix"][key] for b in buckets.values()) == (
+            result["confusion_matrix"][key]
+        )
+    assert all(b["insufficient_flow_support"] for b in buckets.values())
+    assert audit["independent_ground_truth_verified"] is False
+    assert audit["host_session_cluster_adjusted"] is False
+    assert audit["threshold_selection_performed"] is False
+    serialized = json.dumps(audit)
+    for forbidden in ("NEW1", "NEW2", "192.168.56.", "52344", "52345"):
+        assert forbidden not in serialized
+
+
+def test_protocol_error_audit_unknown_protocol_is_fixed_other_bucket():
+    events = [
+        {"uid": "private-a", "proto": "weird-private-proto"},
+        {"uid": "private-b", "proto": "tcp"},
+        {"uid": "private-c", "proto": "tcp"},
+    ]
+    predictions = [
+        {"uid": "private-a", "research_candidate": True},
+        {"uid": "private-b", "research_candidate": True},
+        {"uid": "private-c", "research_candidate": False},
+    ]
+    labels = {"private-a": 0, "private-b": 1, "private-c": 0}
+    result = summarize_protocol_error_rates(events, predictions, labels)
+    assert result["buckets"]["other"]["confusion_matrix"] == {
+        "tp": 0, "fp": 1, "tn": 0, "fn": 0, "support": 1,
+    }
+    assert result["buckets"]["other"]["false_positive_rate"] == 1.0
+    assert result["buckets"]["other"]["attack_recall"] is None
+    assert result["buckets"]["tcp"]["attack_precision"] == 1.0
+    assert result["buckets"]["tcp"]["attack_recall"] == 1.0
+    assert result["buckets"]["tcp"]["false_positive_rate"] == 0.0
+    assert "private-" not in json.dumps(result)
+    assert "weird-private-proto" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("bad_predictions,bad_labels", [
+    ([{"uid": "wrong", "research_candidate": True}], {"one": 1}),
+    ([{"uid": "one", "research_candidate": 1}], {"one": 1}),
+    ([{"uid": "one", "research_candidate": True}], {"one": True}),
+    ([{"uid": "one", "research_candidate": True}], {"one": 1, "extra": 0}),
+])
+def test_protocol_error_audit_rejects_unaligned_or_untrusted_inputs(
+    bad_predictions, bad_labels,
+):
+    with pytest.raises(ValueError):
+        summarize_protocol_error_rates(
+            [{"uid": "one", "proto": "tcp"}], bad_predictions, bad_labels,
+        )
