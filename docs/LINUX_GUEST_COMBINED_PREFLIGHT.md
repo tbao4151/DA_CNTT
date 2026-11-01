@@ -70,3 +70,38 @@ The original individual procedures remain documented in
 and [Linux policy-rule preflight](LINUX_GUEST_POLICY_RULES_PREFLIGHT.md).
 The broader evidence sequence is
 [First VMware Host-only evidence session](FIRST_VMWARE_HOSTONLY_EVIDENCE_SESSION.md).
+
+
+## Optional seven-snapshot all-routing-table consistency check
+
+The original five-snapshot command remains supported. To additionally screen
+operator-provided **all-table** route inventories, collect two more original
+files on the same owned Linux Zeek guest, as close in time to the five
+snapshots as possible:
+
+    ip -j -4 route show table all > "$HOME/da005-private/session-001/network/routes-all-v4.json"
+    ip -j -6 route show table all > "$HOME/da005-private/session-001/network/routes-all-v6.json"
+    sha256sum "$HOME/da005-private/session-001/network/routes-all-v4.json" "$HOME/da005-private/session-001/network/routes-all-v6.json"
+
+Add **both** optional pairs to the existing Windows command:
+
+    --routes-all-v4 'C:/DA005-private/session-001/network/routes-all-v4.json' `
+    --expected-routes-all-v4-sha256 '<ALL_V4_SHA256_LOWERCASE>' `
+    --routes-all-v6 'C:/DA005-private/session-001/network/routes-all-v6.json' `
+    --expected-routes-all-v6-sha256 '<ALL_V6_SHA256_LOWERCASE>'
+
+The extra gate requires seven distinct, absolute, non-symlink, independently
+pinned files. It rejects unknown routing tables, unsafe local-table entries,
+default routes and missing/extra main-table routes when comparing the
+all-table snapshots to the original main-table snapshots. It may reject
+legitimate advanced Linux routing; **investigate**, do not modify evidence to
+force PASS. The snapshots can change between commands and cannot prove they
+represent one atomic kernel state.
+
+A seven-file PASS sets
+`all_routing_tables_in_supplied_snapshots_checked=true`, but deliberately
+keeps `other_routing_tables_checked=false` because no live kernel state was
+inspected. Both five-file and seven-file modes keep
+`vmware_hostonly_isolation_verified=false` and
+`traffic_authorized=false`. Independently review VMnet/NIC configuration,
+forwarding, DNS, firewall, authorization and actual routing before traffic.
