@@ -1,3 +1,9 @@
+## 2026-11-01: Linux Zeek guest offline configuration screening acceptance (feature CI pending)
+
+- [ ] Require exact-head Ubuntu quality and Windows offline CI success for the new pinned Linux guest snapshot CLI, including unsafe-route/address and malformed-input refusal; confirm no competing PR or conflict before merging.
+- [ ] On the owned Linux Zeek VM, **before any traffic**, save and independently hash `ip -j address show`, `ip -j -4 route show` and `ip -j -6 route show` JSON outside Git. Run the new read-only verifier using the real Host-only NIC/CIDR and archive its exit status; manually inspect all routing tables, forwarding, DNS and VMware NIC mode as documented in `docs/LINUX_GUEST_HOSTONLY_PREFLIGHT.md`.
+- [ ] Preserve original snapshots and approvals privately. The script cannot establish physical isolation or authorization; actual PCAP/Zeek capture, independent labels and telemetry-to-SOC timing remain separate gates.
+
 ## 2026-11-01: Zeek header control-marker integrity acceptance ([PR #335](https://github.com/tbao4151/DA_CNTT/pull/335); CI pending)
 
 - [ ] Require exact feature-head Ubuntu quality and Windows offline Zeek success, including malformed `#fields`/`#types` marker rejection, blank/whitespace field and type names, and backward compatibility with valid extensions and omitted `#types`. Confirm no conflicting PR before merging.
