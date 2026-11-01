@@ -1,5 +1,12 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Offline CLI phase runtime acceptance ([PR #332](https://github.com/tbao4151/DA_CNTT/pull/332))
+
+- [ ] Verify final feature-head Ubuntu quality and Windows offline Zeek CI, the existing runtime subprocess regression and mergeability. Merge only after both required checks pass without conflicts; CI timings are synthetic-runner timings, not laptop results.
+- [ ] On the student's Windows 11 Python 3.12.9, run `py -3.12 -m pytest -q tests/test_zeek_new_log_runtime.py` and then the private pinned runtime CLI from `docs/ZEEK_NEW_LOG_RUNTIME_BENCHMARK.md` using owned Host-only evidence. Archive JSON, original hashes, CPU/RAM, model, capture and software versions outside Git.
+- [ ] Compare `median_batch_ms` (in-memory single batch) with `cli_phase_timing` (pre-output loading/gates/repetitions) without calling either packet-to-alert or analyst-to-SOC latency. Independent labels, physical Host-only isolation and actual capture-to-SOC measurements remain separate acceptance gates.
+
+
 ## 2026-11-01: Current acceptance gate after PR #330 (verified main)
 
 - [x] PR #330 merged on `main` as `aafec3c233dc3dcd2dd9940ea23e070155f5e2a2`; Ubuntu [#41294345318](https://github.com/tbao4151/DA_CNTT/actions/runs/41294345318), Windows offline [#41294345303](https://github.com/tbao4151/DA_CNTT/actions/runs/41294345303) and main quality [#41295852825](https://github.com/tbao4151/DA_CNTT/actions/runs/41295852825) succeeded. Historical unchecked CI items below are retained as dated notes, **not current pending PRs**.
