@@ -31,6 +31,23 @@ must not be reported as measurements on the student's laptop. To claim a real
 capture-to-SOC elapsed time, separately instrument all stages on the owned
 VMware setup with documented clocks, provenance and explicit manual actions.
 
+## Descriptive spread across repeated scoring calls
+
+The offline report also contains `batch_timing_variability`, calculated
+from the same `per_batch_duration_ms` repetitions using their unrounded
+monotonic nanosecond durations. It reports the minimum, maximum, range and
+median absolute deviation (MAD) of whole-log scoring times, in milliseconds.
+For one repetition the range and MAD are zero **by definition**, not evidence
+of stable performance. A small within-run spread does not establish
+repeatability across different machines, runs, hosts or loads.
+
+`confidence_interval_estimated=false` is deliberate: 1–20 consecutive
+within-process timings do not justify a confidence interval for deployment
+latency. These diagnostics describe only offline software timing and must not
+be called packet-to-alert, Zeek-to-SOC or real-time detection measurements.
+Record independent runs, CPU/RAM load, hardware, and original evidence when
+reporting student Windows results.
+
 ## Windows 3.12.9: private reproducible measurement
 
 Preserve the model, original TRAIN/VALIDATION/TEST manifest and every original
