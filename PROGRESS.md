@@ -1,5 +1,12 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Optional pinned research queue binding in Blue Team UI (feature PR; CI pending)
+
+- Based on `main` merge #324 `461f29eda8a66fcf8a6fa8e9740f3ae7948b99ae` with no open PR at branch preparation; main post-merge CI #41273437717 was in progress. Scope: extend the existing manual NEW-log Streamlit SOC write boundary with an optional independently pinned research queue path, SHA-256 and selected alert reference.
+- The wrapper validates all-or-none queue inputs and distinct private paths, reads bounded bytes, and delegates full pinned queue recomputation and original-row verification to existing Blue Team code before an explicit Unclassified SOC write. Legacy UI calls remain unchanged; existing unbound case audits are never rewritten.
+- Added synthetic positive/negative queue-to-audit regression and UI documentation. CI on this feature head is not yet verified; no local Windows/VMware experiment, independent ground truth, live detection, or operational alert is claimed.
+
+
 ## 2026-11-01: PR #324 Windows CI import-path repair (rerun pending)
 
 - PR #324 final head `d8c0e83e9a37f8436cd1b33047b01a793712286b`: Windows offline run #41271932813 **failed** during the new ranking test collection with `ModuleNotFoundError: No module named 'blue_team_ai'`; its earlier 246 import/provenance/SOC tests and 121 baseline/trace tests passed. The new test omitted the existing repository's explicit `src/` sys.path setup. This is a test-import regression, not evidence of ranking calculation failure.

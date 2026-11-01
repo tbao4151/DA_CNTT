@@ -217,6 +217,21 @@ if st.session_state.get("new_log_verified", False):
                             "SQLite SOC riêng tư ngoài Git (.sqlite3)",
                             placeholder="C:/DA005-private/soc/cyber_lab_cases.sqlite3",
                         )
+                        st.caption(
+                            "Tùy chọn: liên kết research queue JSON đã xuất vào audit tạo case. "
+                            "Điền đủ ba trường hoặc để trống cả ba; không tự tạo queue."
+                        )
+                        research_queue_path = st.text_input(
+                            "Research queue JSON riêng tư (tùy chọn)",
+                            placeholder="C:/DA005-private/new-capture/research-alerts.json",
+                        )
+                        research_queue_sha = st.text_input(
+                            "Research queue SHA-256 ghi độc lập (tùy chọn)", max_chars=64,
+                        )
+                        research_queue_ref = st.text_input(
+                            "Research alert reference từ queue đã xuất (tùy chọn)",
+                            max_chars=64,
+                        )
                         analyst_confirmed = st.checkbox(
                             "Tôi đã xem log gốc và bằng chứng của flow này."
                         )
@@ -248,11 +263,14 @@ if st.session_state.get("new_log_verified", False):
                                 offline_import_report_path=(pcap_options[0] or None),
                                 offline_import_report_sha256=(pcap_options[1] or None),
                                 offline_import_pcap_path=(pcap_options[2] or None),
+                                research_alert_bundle_path=(research_queue_path.strip() or None),
+                                expected_research_alert_bundle_sha256=(research_queue_sha.strip() or None),
+                                research_alert_ref=(research_queue_ref.strip() or None),
                             )
                         except (ValueError, TypeError, OSError, UnicodeError, OverflowError, RecursionError):
                             st.error(
                                 "Từ chối ghi SOC. Kiểm tra lại xác nhận, model, manifest, "
-                                "log, CIDR và đường dẫn SQLite riêng tư; không có kết luận tấn công."
+                                "log, CIDR, research queue và SQLite riêng tư; không có kết luận tấn công."
                             )
                         else:
                             st.success(

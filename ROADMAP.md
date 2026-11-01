@@ -1,5 +1,12 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Blue Team UI optional research queue → original SOC audit (feature PR; CI pending)
+
+- [ ] Confirm final-head Ubuntu and Windows offline Zeek CI for optional queue binding, review manual-form behavior and no-conflict status, then merge only if both pass.
+- [ ] On authorized student Windows 11, independently preserve the private research queue JSON and SHA-256, select the matching original Zeek row/reference in Blue Team UI and verify a **new** Unclassified SOC creation audit. A previously unbound case cannot acquire a historical queue pin by reuse.
+- [ ] Continue toward independently labeled VMware Host-only captures and measured telemetry → research candidate → analyst SOC timing. Synthetic UI/SQLite tests do not establish physical isolation, real attack detection, or operational alerting.
+
+
 ## 2026-11-01: NEW-log threshold-free ranking diagnostics ([PR #324](https://github.com/tbao4151/DA_CNTT/pull/324); repaired Windows test import, CI rerun pending)
 
 - [ ] Verify exact feature-head Ubuntu quality and Windows offline Zeek CI, especially tied-score ROC AUC/AP and single-class `null` behavior; confirm no competing PR or conflict, then merge only after checks pass.

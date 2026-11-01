@@ -5,7 +5,9 @@ detection is established by these software tests.
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -16,6 +18,10 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from blue_team_ai.new_log_workspace import prepare_new_log_review
+from blue_team_ai.research_alerts import build_verified_research_alert_bundle
+from blue_team_ai.trusted_model import load_pinned_zeek_research_model
+from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
+from evaluate_zeek_lab import load_experiment_manifest
 from siem_ai.core import list_cases, case_history
 from triage_zeek_new_log import create_ui_candidate_case
 from test_zeek_new_log_ui_partition import _prepared
@@ -152,3 +158,90 @@ def test_ui_soc_write_refuses_unpinned_or_changed_annotation(tmp_path, change):
     with pytest.raises(ValueError):
         create_ui_candidate_case(**args)
     assert not args["db_path"].exists()
+
+
+
+def _ui_args_with_pinned_queue(tmp_path):
+    args = _ui_args(tmp_path)
+    captures, manifest_sha = load_experiment_manifest(
+        args["manifest_path"], lab_cidrs=args["lab_cidrs"],
+        require_label_sha256=True,
+        expected_manifest_sha256=args["expected_manifest_sha256"],
+    )
+    dataset = build_labeled_lab_dataset(captures)
+    model = load_pinned_zeek_research_model(
+        args["model_path"], expected_sha256=args["expected_model_sha256"],
+    )
+    bundle = build_verified_research_alert_bundle(
+        args["source_data"], model, args["report_data"],
+        expected_log_sha256=args["expected_log_sha256"],
+        model_sha256=args["expected_model_sha256"],
+        lab_cidrs=args["lab_cidrs"],
+        manifest_sha256=manifest_sha,
+        declared_dataset=dataset, declared_captures=captures,
+    )
+    selected = next(
+        row for row in bundle["research_alerts"]
+        if row["record_index"] == args["record_index"]
+    )
+    raw = json.dumps(bundle, allow_nan=False).encode("utf-8")
+    path = tmp_path / "research-alerts.json"
+    path.write_bytes(raw)
+    args.update(
+        research_alert_bundle_path=path,
+        expected_research_alert_bundle_sha256=hashlib.sha256(raw).hexdigest(),
+        research_alert_ref=selected["research_alert_ref"],
+    )
+    return args
+
+
+def test_ui_pinned_queue_creates_bound_unclassified_case(tmp_path):
+    args = _ui_args_with_pinned_queue(tmp_path)
+    case_id = create_ui_candidate_case(**args)
+    assert create_ui_candidate_case(**args) == case_id
+    with sqlite3.connect(args["db_path"]) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0] == 1
+        assert conn.execute("SELECT verdict FROM cases").fetchone()[0][0] == "Unclassified"
+        note = conn.execute(
+            "SELECT note FROM case_events ORDER BY event_id LIMIT 1"
+        ).fetchone()[0]
+    assert "bundle_sha256=" + args["expected_research_alert_bundle_sha256"] in note
+    assert "research_alert_ref=" + args["research_alert_ref"] in note
+
+
+@pytest.mark.parametrize("change", [
+    "missing_sha", "wrong_sha", "wrong_ref", "modified_queue",
+    "duplicate_queue_path", "database_is_queue",
+])
+def test_ui_pinned_queue_refuses_invalid_binding_before_soc_write(tmp_path, change):
+    args = _ui_args_with_pinned_queue(tmp_path)
+    if change == "missing_sha":
+        args["expected_research_alert_bundle_sha256"] = None
+    elif change == "wrong_sha":
+        args["expected_research_alert_bundle_sha256"] = "0" * 64
+    elif change == "wrong_ref":
+        args["research_alert_ref"] = "0" * 64
+    elif change == "modified_queue":
+        args["research_alert_bundle_path"].write_bytes(
+            args["research_alert_bundle_path"].read_bytes() + b" "
+        )
+    elif change == "duplicate_queue_path":
+        args["research_alert_bundle_path"] = args["model_path"]
+    else:
+        args["db_path"] = args["research_alert_bundle_path"]
+    with pytest.raises(ValueError):
+        create_ui_candidate_case(**args)
+    if change != "database_is_queue":
+        assert not args["db_path"].exists()
+
+
+def test_ui_page_exposes_optional_pinned_queue_inputs():
+    from streamlit.testing.v1 import AppTest
+
+    app = AppTest.from_file(
+        str(ROOT / "pages" / "3_New_Log_Review.py"), default_timeout=45,
+    ).run()
+    assert not app.exception, [str(item.message) for item in app.exception]
+    # The manual form appears only after a fully pinned private review; it is
+    # intentionally not exposed on the empty page without verified candidates.
+    assert not app.success
