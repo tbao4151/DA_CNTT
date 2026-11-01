@@ -1,5 +1,13 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Reuse one parsed NEW Zeek log for protocol diagnostics (feature PR; CI pending)
+
+- Rechecked `main` at `f9eb1f20b7b157238c6b123f600b868ebfa441cd`: PR #329 merged; exact-head Ubuntu #41289836460 and Windows #41289836420 passed, and post-merge main quality #41291875867 passed. No open PR at branch creation.
+- In `src/blue_team_ai/new_log_evaluation.py`, parse the independently pinned original NEW `conn.log` once for the fixed-protocol confusion/Wilson and Brier summaries instead of parsing the same bytes twice. Existing report fields, model, threshold, labels and offline-only boundaries are unchanged.
+- Added synthetic regression `test_new_log_protocol_diagnostics_parse_original_once` to ensure both aggregates reuse the same parsed event batch. This checks the evaluation aggregation pass only; separate independent report verification and model scoring still perform their own validation.
+- **Feature-head Ubuntu/Windows CI pending**; local Git clone failed DNS, so no independent pytest or performance improvement is claimed. No student Windows/VMware capture, live detection, network activity, SQLite mutation or UNSW benchmark change.
+
+
 
 ## 2026-11-01: Fixed-protocol Brier probability diagnostics (feature branch; CI pending)
 
