@@ -9,6 +9,7 @@ import hashlib
 import json
 from collections.abc import Mapping, Sequence
 
+from .ranking_metrics import summarize_binary_ranking
 from .new_log_inference import score_new_zeek_log
 from .new_log_review import review_pinned_new_log_report
 from .uncertainty import summarize_detection_uncertainty
@@ -178,6 +179,10 @@ def evaluate_new_log_operator_labels(
             "attack_f1": f1,
         },
         "flow_level_uncertainty": summarize_detection_uncertainty(confusion),
+        "threshold_free_ranking_metrics": summarize_binary_ranking(
+            [row["attack_probability"] for row in predictions],
+            [labels[row["uid"]] for row in predictions],
+        ),
         "fixed_always_normal_reference": normal_reference,
         "fixed_always_attack_reference": attack_reference,
         "label_authenticity_verified": False,
@@ -191,7 +196,7 @@ def evaluate_new_log_operator_labels(
         "interpretation": (
             "Descriptive agreement with operator-supplied labels on a fixed "
             "offline NEW capture. No label authentication, independent capture "
-            "history, host-cluster-adjusted intervals or deployment validity. "
+            "history, host-cluster-adjusted intervals or deployment validity. Threshold-free ROC AUC/AP use operator-supplied labels and must not tune the model. "
             "Do not select thresholds/models from these evaluation results."
         ),
     }
