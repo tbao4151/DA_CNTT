@@ -1,3 +1,9 @@
+## 2026-11-02: Linux guest policy-rule screening acceptance (feature CI pending)
+
+- [ ] Require exact feature-head Ubuntu quality and Windows offline CI to pass the new synthetic rule-screen tests; confirm no competing PR and no conflicts before merging.
+- [ ] On the owned Linux Zeek guest, capture original `ip -j -4 rule show` and `ip -j -6 rule show` JSON, record independent SHA-256, run `scripts/check_linux_guest_policy_rules.py` on the unchanged private snapshots and preserve its output/exit code. Use the separate main-route/NIC screen as well.
+- [ ] Independently inspect **all** routing tables, VMnet/NIC modes, DNS, forwarding, firewall and written authorization. Passing policy-rule snapshots cannot prove isolation or real Zeek collection. Still require authentic PCAP/Zeek, independently assigned labels and packet-to-SOC timing on student VMware.
+
 ## 2026-11-02: Linux guest route-source integrity acceptance ([PR #338](https://github.com/tbao4151/DA_CNTT/pull/338); CI pending)
 
 - [ ] Verify exact-final-head Ubuntu quality and Windows offline Zeek CI, including wrong/malformed `prefsrc`, encapsulated/source-specific routes, nested next hops, non-main table marker and accepted matching IPv4/IPv6 `prefsrc`; check competing PRs and conflicts before merge.
