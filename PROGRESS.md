@@ -1,3 +1,9 @@
+## 2026-11-02: Pinned Linux guest forwarding sysctl snapshot screen (feature PR; CI pending)
+
+- Verified `main` at `aee58c723bcdfb9b952a1f4bc535909e0bf78146`: PR #342 merged; exact-head Ubuntu [#41358198387](https://github.com/tbao4151/DA_CNTT/actions/runs/41358198387) and Windows [#41358198465](https://github.com/tbao4151/DA_CNTT/actions/runs/41358198465) succeeded; post-merge main quality [#41360956713](https://github.com/tbao4151/DA_CNTT/actions/runs/41360956713) succeeded. No open PR at feature start.
+- Added an independent read-only, SHA-256-pinned screen for seven explicit Linux IPv4/IPv6 forwarding sysctls (global, default and approved interface), with fail-closed zero-only values, bounded private input and synthetic Windows/Ubuntu tests. Existing five/seven-snapshot CLIs, models, Dataset Mode and SOC remain unchanged.
+- Feature-head CI pending; no local full-repository pytest (GitHub clone DNS unavailable), student VMware capture, traffic, attack, labeling, SOC write or deployment. PASS is a statement about the supplied text only; other interfaces, live kernel, DNS, firewall, authorization and physical isolation remain unchecked.
+
 ## 2026-11-02: Optional Linux local-table destination scope validation (feature PR; CI pending)
 
 - Verified `main` at `0944d5f188b234e79a769d40a09079148bfd0d12`: PR #341 merged after exact-head Ubuntu [#41353414977](https://github.com/tbao4151/DA_CNTT/actions/runs/41353414977) and Windows [#41353414942](https://github.com/tbao4151/DA_CNTT/actions/runs/41353414942) success; post-merge main quality [#41355428019](https://github.com/tbao4151/DA_CNTT/actions/runs/41355428019) succeeded. No open PR at branch creation.
