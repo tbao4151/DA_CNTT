@@ -73,6 +73,51 @@ def test_verifies_all_four_original_sources_without_private_output(originals, ca
     assert str(folder) not in out
 
 
+def test_opt_in_recomputes_model_predictions_from_all_originals(originals, capsys):
+    _, manifest, trace, _ = originals
+    result = verify_original_capture_chain(
+        manifest, trace, recompute_model_predictions=True,
+    )
+    assert result["model_predictions_recomputed"] is True
+    assert main([
+        "--manifest", str(manifest), "--trace", str(trace),
+        "--recompute-model-predictions",
+    ]) == 0
+    assert json.loads(capsys.readouterr().out)["model_predictions_recomputed"] is True
+
+
+def test_opt_in_rejects_forged_probability_even_when_verdict_is_unchanged(originals, tmp_path):
+    folder, manifest, _, report = originals
+    modified = copy.deepcopy(report)
+    row = modified["private_test_trace"]["flows"][0]
+    probability = row["attack_probability"]
+    threshold = modified["selected_threshold"]
+    if row["predicted_attack"]:
+        replacement = 1.0 if probability < 0.999999 else threshold
+    else:
+        replacement = 0.0 if probability > 0.000001 else threshold / 2
+    assert abs(replacement - probability) > 1e-8
+    row["attack_probability"] = replacement
+    altered = _altered_trace(folder, modified, tmp_path)
+    # An internally consistent verdict is insufficient to prove that the
+    # supplied probability came from the declared train-only research model.
+    with pytest.raises(ValueError, match="recomputed model probabilities"):
+        verify_original_capture_chain(
+            manifest, altered, recompute_model_predictions=True,
+        )
+
+
+def test_opt_in_rejects_forged_validation_metric(originals, tmp_path):
+    folder, manifest, _, report = originals
+    modified = copy.deepcopy(report)
+    modified["validation_metrics"]["precision"] = 0.123456
+    with pytest.raises(ValueError, match="recomputed model metrics"):
+        verify_original_capture_chain(
+            manifest, _altered_trace(folder, modified, tmp_path),
+            recompute_model_predictions=True,
+        )
+
+
 def test_refuses_edited_train_provenance_even_with_same_test_trace(originals, tmp_path):
     folder, manifest, _, report = originals
     modified = copy.deepcopy(report)
