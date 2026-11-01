@@ -1,5 +1,10 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: PR #325 Windows manual SOC UI gate follow-up
+
+- [ ] Verify the **new final-head** Ubuntu and Windows CI after commit `410e1d69ac69d3f8405477d79cdb26e8df03ffce`, including the explicitly registered `tests/test_zeek_new_log_ui_soc.py` Windows step. Merge only when both pass and PR remains conflict-free; older successful runs cannot authorize this new head.
+- [ ] On student Windows, use only private, independently hashed NEW-log research queue/manifest/model and explicitly approved Host-only captures; preserve the original Unclassified SOC audit and measure manual case latency separately from AI scoring time.
+
 ## 2026-11-01: Blue Team UI optional research queue → original SOC audit (feature PR; CI pending)
 
 - [ ] Confirm final-head Ubuntu and Windows offline Zeek CI for optional queue binding, review manual-form behavior and no-conflict status, then merge only if both pass.
