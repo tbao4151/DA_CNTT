@@ -1,5 +1,12 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: PR #325 exact-head CI failure repaired in synthetic SOC test (rerun pending)
+
+- On feature head `1acf0079fa8aed7b7d3b2d5fc9a313fd392b496e`, Ubuntu quality run #41274080834 failed with **1 failed / 1518 passed / 2 skipped** and Windows offline Zeek run #41274080844 failed with **1 failed / 17 passed** in the explicitly registered UI test step. Real Zeek synthetic run #41274080853 succeeded. Both failures were the same test-only assertion in `tests/test_zeek_new_log_ui_soc.py`: `fetchone()[0][0]` indexed the first character of the SQLite `verdict` string, producing `U` instead of comparing `Unclassified`.
+- Corrected the assertion to `fetchone()[0]` on the **existing PR #325 feature branch** (commit `a52e220f0eb6c631bd5d75d9c5060290292e56b5`). No production behavior, model, SQLite schema, benchmark, or network execution was changed. This is a narrowly scoped test assertion repair, not evidence that the new queue binding is validated.
+- Await new **exact-head** Ubuntu and Windows CI (plus Real Zeek if triggered), inspect no-conflict status and only then merge. No independent local pytest, student Windows 11/VMware experiment, independent labels, or real detection-latency measurements were performed.
+
+
 ## 2026-11-01: PR #325 Windows UI regression gate (feature head CI pending)
 
 - Review found the new `tests/test_zeek_new_log_ui_soc.py` was not explicitly executed by the Windows offline workflow. Updated `.github/workflows/windows-offline-zeek.yml` on the **same** feature branch to run that test, and added `pages/3_New_Log_Review.py` to the workflow path filter. Commit `410e1d69ac69d3f8405477d79cdb26e8df03ffce`; prior PR-head CI is superseded by this change.
