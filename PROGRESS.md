@@ -1,5 +1,13 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Optional original Zeek model-replay verification (feature PR, CI pending)
+
+- Based on `main` merge `1a3b9679d4dafb79d6c6cbb475769991910762bc` after PR #320 final-head Ubuntu quality #41257716978 and Windows offline #41257716983 passed; post-merge main run #41259701630 was still running when this branch was created. No open PR at branch creation.
+- Added opt-in `--recompute-model-predictions` to `scripts/verify_zeek_original_capture_chain.py`. After verifying all original TRAIN/VALIDATION/TEST captures and UID annotations, it independently refits the existing Zeek-only Logistic Regression research baseline on TRAIN, reselects the threshold using VALIDATION, and checks held-out TEST scores, predictions, protocol and validation/test metrics against the supplied v6 private report (absolute score tolerance 1e-8). Default verification remains read-only and does not fit a model.
+- Added synthetic tests for successful deterministic refit, forged held-out probability with unchanged verdict, and altered validation metrics. Updated private runbook. CI on this feature branch has not yet been verified; no independent local pytest, student Windows/VMware execution, new captures, real labels or SOC writes are claimed.
+- Scientific limit: reproducible software calculations on supplied original bytes and operator annotations do not authenticate model provenance, labels, capture acquisition, physical Host-only isolation or live attack detection. No changes to Dataset Mode, UNSW benchmark, Red Team execution or private SQLite.
+
+
 ## 2026-11-01: All-original Zeek capture/held-out trace consistency verification (feature PR, CI pending)
 
 - Based on main squash merge `e9ca2b6445f4a63eef8323a9df7ce3887a2a7aca` after PR #319 final-head Ubuntu quality #41255386562 and Windows offline #41255386541 succeeded; no open PR when this feature branch was created. PR #319's earlier failed CI was repaired on its branch before merge.
