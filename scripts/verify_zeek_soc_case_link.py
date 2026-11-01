@@ -19,6 +19,9 @@ sys.path.insert(0, str(ROOT / "src"))
 from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
 from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
 from blue_team_ai.partition_guard import verify_declared_partition_exclusion
+from blue_team_ai.research_alerts import (
+    MAX_RESEARCH_ALERT_BUNDLE_BYTES, verify_pinned_research_alert_selection,
+)
 from blue_team_ai.soc_evidence_link import verify_new_log_soc_case_link
 from blue_team_ai.trusted_model import load_pinned_zeek_research_model
 from blue_team_ai.new_log_review import MAX_NEW_LOG_REPORT_BYTES
@@ -43,6 +46,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--offline-import-report", type=Path)
     parser.add_argument("--expected-offline-import-report-sha256")
     parser.add_argument("--offline-import-pcap", type=Path)
+    parser.add_argument("--research-alert-bundle", type=Path,
+                        help="Optional original private research candidate queue")
+    parser.add_argument("--expected-research-alert-bundle-sha256",
+                        help="Independently recorded SHA-256 of the queue")
+    parser.add_argument("--research-alert-ref",
+                        help="Original selected research candidate reference")
     parser.add_argument(
         "--timing-json", action="store_true",
         help="Print aggregate offline processing-stage timing JSON (no event-to-alert latency)",
@@ -62,6 +71,22 @@ def main(argv: list[str] | None = None) -> int:
                 or report_path.suffix.lower() != ".json"
                 or report_path.parent != log_path.parent):
             raise ValueError("Private evidence files must be distinct and correctly located")
+        bundle_options = (
+            args.research_alert_bundle,
+            args.expected_research_alert_bundle_sha256,
+            args.research_alert_ref,
+        )
+        if any(value is not None for value in bundle_options) and not all(
+            value is not None for value in bundle_options
+        ):
+            raise ValueError("All three pinned research queue options are required")
+        bundle_path = None
+        if args.research_alert_bundle is not None:
+            bundle_path = _private_file(args.research_alert_bundle)
+            if (bundle_path in paths or bundle_path.parent != log_path.parent
+                    or bundle_path.suffix.lower() != ".json"):
+                raise ValueError("Research queue must be separate private JSON beside log")
+            paths.add(bundle_path)
         import_options = (
             args.offline_import_report,
             args.expected_offline_import_report_sha256,
@@ -73,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError("PCAP provenance options must be provided together")
             import_report = _private_file(args.offline_import_report)
             import_pcap = _private_file(args.offline_import_pcap)
-            if len(paths | {import_report, import_pcap}) != 7:
+            if len(paths | {import_report, import_pcap}) != len(paths) + 2:
                 raise ValueError("Original PCAP provenance files must be distinct")
             imported = verify_offline_pcap_import(
                 import_report,
@@ -119,6 +144,22 @@ def main(argv: list[str] | None = None) -> int:
             time.perf_counter_ns() - stage_started_ns
         )
         stage_started_ns = time.perf_counter_ns()
+        if bundle_path is not None:
+            verify_pinned_research_alert_selection(
+                _read_bounded(bundle_path, MAX_RESEARCH_ALERT_BUNDLE_BYTES),
+                expected_bundle_sha256=args.expected_research_alert_bundle_sha256,
+                research_alert_ref=args.research_alert_ref,
+                record_index=args.record_index,
+                source_data=source_data, model=model, report_data=report_data,
+                expected_log_sha256=args.expected_log_sha256,
+                model_sha256=args.expected_model_sha256, lab_cidrs=args.cidr,
+                manifest_sha256=manifest_sha, declared_dataset=dataset,
+                declared_captures=captures,
+            )
+            stage_ns["optional_pinned_research_queue_reverification"] = (
+                time.perf_counter_ns() - stage_started_ns
+            )
+            stage_started_ns = time.perf_counter_ns()
         result = verify_new_log_soc_case_link(
             db_path, source_data=source_data, model=model,
             report_data=report_data,
@@ -160,11 +201,13 @@ def main(argv: list[str] | None = None) -> int:
                 "After argument parsing through successful read-only verification; "
                 "includes private file reads, optional PCAP provenance, pinned "
                 "manifest/annotations/model checks, declared partition screen, "
-                "recomputed offline inference and existing SQLite case-link check; "
+                "recomputed offline inference, optional pinned research queue "
+                "reverification and existing SQLite case-link check; "
                 "excludes CLI startup, argument parsing and JSON stdout serialization."
             ),
             "original_evidence_consistency_verified": True,
             "sqlite_read_only": True,
+            "pinned_research_queue_reverified": bundle_path is not None,
             "new_soc_case_created": False,
             "operational_alert_verified": False,
             "attack_ground_truth_verified": False,
@@ -185,6 +228,8 @@ def main(argv: list[str] | None = None) -> int:
     print("pinned_declared_partitions_screened=true (not complete historical proof)")
     if all(value is not None for value in import_options):
         print("offline_pcap_import_reverified=true (bytes and declared scope only)")
+    if bundle_path is not None:
+        print("pinned_research_queue_reverified=true (candidate selection only)")
     print("sqlite_read_only=true; stored_snapshot_and_initial_audit_match=true")
     print("NOT verified: independent labels, physical Host-only isolation, "
           "operational alerts, real attack detection or event-to-SOC latency.")
