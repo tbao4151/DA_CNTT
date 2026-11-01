@@ -824,3 +824,37 @@ measure operational SOC latency or estimate cluster-adjusted uncertainty.
 Existing host summaries and official UNSW-NB15 metrics are unchanged.
 The read-only private trace reviewer accepts report v4/v5/v6; private trace
 schema remains v1. Synthetic CI is not VMware evidence.
+
+
+## Read-only all-original capture verification before SOC research review
+
+The single-log Streamlit held-out reviewer verifies one supplied TEST `conn.log`
+against a private trace; other TEST sources and TRAIN/VALIDATION source bytes
+remain unverified in that view. For an offline, **stronger consistency check**
+with all original capture files available, run from the repository root:
+
+~~~powershell
+py -3.12 scripts/verify_zeek_original_capture_chain.py --manifest "C:/DA005-private/zeek-experiment/manifest.json" --trace "C:/DA005-private/zeek-experiment/private-heldout-trace.json" --require-label-sha256
+~~~
+
+The optional `--require-label-sha256` switch requires each manifest capture
+to include its separately recorded `labels_sha256`; omit it for older
+manifests, but then annotation-file bytes are not independently pinned.
+The trace must be a regular file **inside the private manifest directory**.
+The verifier re-reads the bounded original TRAIN/VALIDATION/TEST Zeek logs
+and annotation files using the existing manifest loader, checks their SHA-256
+and split/UID contracts, checks the report's manifest digest and exact
+per-split aggregate provenance, and compares every TEST UID/label to its
+original annotation. It also runs the existing read-only per-source trace
+review for **every TEST capture**, not just the one selected in the UI.
+
+On success the CLI prints only fixed aggregate counts and explicit
+`false` flags for unverified claims; it does **not** print IP addresses,
+UIDs, host names, local paths, annotation references or per-flow labels.
+On failure it returns a nonzero exit status. It never writes a report,
+trains a model, opens a SOC case, connects to a network or generates traffic.
+This additional verification is **not** independent proof of capture
+authenticity, annotation correctness, model training history, host-only
+isolation, or real attack detection. A malicious actor with control of all
+originals and the manifest could still create a self-consistent false record.
+Keep the original private data and independent lab notes outside GitHub.
