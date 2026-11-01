@@ -113,6 +113,9 @@ def evaluate_new_log_operator_labels(
     fpr = fp / (fp + tn) if fp + tn else None
     f1 = 2 * tp / (2 * tp + fp + fn) if 2 * tp + fp + fn else None
     confusion = {**counts, "support": support}
+    # Both protocol aggregates inspect the same parsed, pinned NEW-log events.
+    # Do not decode and validate the original log a second time for Brier.
+    parsed_events = parse_zeek_conn_log(source_data)
     # Fixed a priori: never choose a majority-class policy using NEW labels.
     # This reference illustrates the zero-FPR / zero-recall tradeoff; it is
     # not an alternative model, deployment rule, or evidence of generalization.
@@ -184,10 +187,10 @@ def evaluate_new_log_operator_labels(
         },
         "flow_level_uncertainty": summarize_detection_uncertainty(confusion),
         "protocol_error_analysis": summarize_protocol_error_rates(
-            parse_zeek_conn_log(source_data), predictions, labels,
+            parsed_events, predictions, labels,
         ),
         "protocol_probability_quality": summarize_protocol_probability_quality(
-            parse_zeek_conn_log(source_data), predictions, labels,
+            parsed_events, predictions, labels,
         ),
         "threshold_free_ranking_metrics": summarize_binary_ranking(
             [row["attack_probability"] for row in predictions],

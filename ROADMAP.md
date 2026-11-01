@@ -1,5 +1,12 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Single-parse NEW Zeek protocol aggregation (feature CI pending)
+
+- [ ] Confirm exact feature-head Ubuntu quality and Windows offline Zeek checks pass, including the new parse-reuse regression and existing protocol error/Brier assertions; verify no competing PR or conflict before merging.
+- [ ] On student Windows 11 after merge, run `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`. With independently labeled authorized Host-only captures, compare aggregate output and measure actual evaluation wall-clock time if performance is discussed; do not infer speedup from code inspection.
+- [ ] Continue first real Host-only PCAP/Zeek evidence session, independent labels, host/session holdout, research queue and analyst-created SOC case. Synthetic CI does not establish capture authenticity, calibration, real-time latency or operational detection.
+
+
 
 ## 2026-11-01: Protocol Brier diagnostic gate (feature PR; CI pending)
 
