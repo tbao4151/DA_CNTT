@@ -118,3 +118,19 @@ def test_creation_audit_rejects_extra_or_reworded_claims(tmp_path, evidence, mut
         )
     with pytest.raises(ValueError):
         _verify(db, evidence, case_id=case_id)
+
+
+def test_legacy_soc_case_cannot_claim_queue_pin_retroactively(tmp_path, evidence):
+    db = tmp_path / "legacy.sqlite3"
+    case_id = create_new_log_candidate_case(db, **_args(evidence))
+    original = db.read_bytes()
+    assert _verify(db, evidence, case_id=case_id)[
+        "pinned_research_queue_creation_audit_verified"
+    ] is False
+    with pytest.raises(ValueError, match="lacks matching pinned research queue"):
+        _verify(
+            db, evidence, case_id=case_id,
+            expected_research_bundle_sha256="a" * 64,
+            expected_research_alert_ref="b" * 64,
+        )
+    assert db.read_bytes() == original
