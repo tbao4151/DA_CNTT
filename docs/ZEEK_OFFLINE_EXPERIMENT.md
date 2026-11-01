@@ -858,3 +858,35 @@ authenticity, annotation correctness, model training history, host-only
 isolation, or real attack detection. A malicious actor with control of all
 originals and the manifest could still create a self-consistent false record.
 Keep the original private data and independent lab notes outside GitHub.
+
+## Optional deterministic replay of held-out Zeek model scores
+
+After generating a **private** v6 trace with `--trace-output`, the
+read-only `scripts/verify_zeek_original_capture_chain.py` can verify every
+original TRAIN/VALIDATION/TEST Zeek capture and operator UID annotation. For
+an additional, slower scientific consistency check, enable model replay:
+
+~~~powershell
+py -3.12 scripts/verify_zeek_original_capture_chain.py `
+  --manifest "C:/DA005-private/zeek-experiment/manifest.json" `
+  --trace "C:/DA005-private/zeek-experiment/trace.json" `
+  --require-label-sha256 `
+  --recompute-model-predictions
+~~~
+
+The opt-in flag refits the existing Zeek-only Logistic Regression baseline
+from original TRAIN data, selects its threshold on VALIDATION and compares
+the reported validation/test metrics and per-UID held-out TEST probabilities
+to a fresh inference pass (absolute probability tolerance `1e-8`). It
+requires the current v6 research trace, original files and the same
+research implementation/dependency environment. Older trace formats remain
+supported by the default source-consistency verifier, but not by this
+recomputation mode. A mismatch refuses verification; the tool does not
+overwrite source files, reports, models or SQLite.
+
+The aggregate JSON output sets `model_predictions_recomputed=true` only
+when the fresh fit and score comparison succeeded. It intentionally excludes
+UIDs, IPs, labels and source paths. Reproduction is not independent proof of
+ground-truth correctness, data acquisition, model authorship, physical
+VMware Host-only isolation or live attack detection. Preserve the exact
+dependency versions and independent lab evidence privately.
