@@ -128,14 +128,14 @@ def test_single_zeek_types_header_accepted_but_duplicate_or_late_refused():
         parse_zeek_conn_log(typed + declaration)
 
 @pytest.mark.parametrize("marker", [
-    b"#fields\\n",
-    b"#fields_extra\\tignored\\n",
-    b"#fields \\tignored\\n",
+    b"#fields\n",
+    b"#fields_extra\tignored\n",
+    b"#fields \tignored\n",
 ])
 def test_malformed_fields_control_marker_cannot_be_ignored(marker):
     # A malformed marker inserted before a valid schema used to be skipped
     # as an ordinary comment, allowing a misleading header to go unnoticed.
-    raw = log(VALUES).replace(b"#fields\\t", marker + b"#fields\\t", 1)
+    raw = log(VALUES).replace(b"#fields\t", marker + b"#fields\t", 1)
     with pytest.raises(ValueError, match="Zeek fields header"):
         parse_zeek_conn_log(raw)
 
@@ -152,20 +152,20 @@ def test_blank_or_whitespace_extension_field_names_fail_closed(extra_name):
 
 
 def test_malformed_types_control_markers_and_blank_type_names_fail_closed():
-    field_header = ("#fields\\t" + "\\t".join(FIELDS) + "\\n").encode()
+    field_header = ("#fields\t" + "\t".join(FIELDS) + "\n").encode()
     types = ("time", "string", "addr", "port", "addr", "port", "enum",
              "string", "interval", "count", "count", "count", "count")
-    declared = ("#types\\t" + "\\t".join(types) + "\\n").encode()
+    declared = ("#types\t" + "\t".join(types) + "\n").encode()
     source = log(VALUES)
     assert len(parse_zeek_conn_log(source)) == 1  # legacy #types omitted
     assert len(parse_zeek_conn_log(source.replace(
         field_header, field_header + declared, 1,
     ))) == 1
     for malformed in (
-        b"#types\\n",
-        b"#types_extra\\tignored\\n",
-        declared.replace(b"\\tcount\\n", b"\\t\\n", 1),
-        declared.replace(b"\\tcount\\n", b"\\t count\\n", 1),
+        b"#types\n",
+        b"#types_extra\tignored\n",
+        declared.replace(b"\tcount\n", b"\t\n", 1),
+        declared.replace(b"\tcount\n", b"\t count\n", 1),
     ):
         raw = source.replace(field_header, field_header + malformed, 1)
         with pytest.raises(ValueError, match="Zeek types header"):
