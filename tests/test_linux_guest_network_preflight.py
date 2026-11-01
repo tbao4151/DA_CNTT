@@ -55,6 +55,9 @@ def test_valid_owned_linux_guest_snapshot_is_not_isolation_attestation(tmp_path)
     "via_gateway", "missing_scope_route", "duplicate_nic", "duplicate_address",
     "loopback_nonlocal_v4", "loopback_global_ipv6", "loopback_wrong_prefix",
     "loopback_duplicate", "loopback_malformed_prefix",
+    "wrong_prefsrc_v4", "wrong_prefsrc_v6", "invalid_prefsrc",
+    "route_encap", "source_specific_route", "nested_nexthops",
+    "non_main_route_table", "route_src_selector",
 ])
 def test_unsafe_or_inconsistent_linux_guest_snapshots_fail_closed(tmp_path, problem):
     addresses, v4, v6 = _fixtures()
@@ -94,6 +97,22 @@ def test_unsafe_or_inconsistent_linux_guest_snapshots_fail_closed(tmp_path, prob
         addresses[0]["addr_info"].append(dict(addresses[0]["addr_info"][0]))
     elif problem == "loopback_malformed_prefix":
         addresses[0]["addr_info"][0]["prefixlen"] = True
+    elif problem == "wrong_prefsrc_v4":
+        v4[0]["prefsrc"] = "192.168.56.99"
+    elif problem == "wrong_prefsrc_v6":
+        v6[0]["prefsrc"] = "fe80::dead"
+    elif problem == "invalid_prefsrc":
+        v4[0]["prefsrc"] = None
+    elif problem == "route_encap":
+        v4[0]["encap"] = {"type": "ip", "dst": "192.168.56.30"}
+    elif problem == "source_specific_route":
+        v6[0]["from"] = "fe80::/64"
+    elif problem == "nested_nexthops":
+        v4[0]["nexthops"] = [{"via": "192.168.56.1"}]
+    elif problem == "non_main_route_table":
+        v4[0]["table"] = "100"
+    elif problem == "route_src_selector":
+        v4[0]["src"] = "192.168.56.99"
     result = _run(tmp_path, (addresses, v4, v6))
     assert result.returncode == 1
     assert result.stdout == ""
@@ -105,6 +124,16 @@ def test_standard_dual_stack_loopback_is_accepted(tmp_path):
     addresses, v4, v6 = _fixtures()
     addresses[0]["addr_info"].append(
         {"family": "inet6", "local": "::1", "prefixlen": 128})
+    result = _run(tmp_path, (addresses, v4, v6))
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["linux_guest_configuration_screen_passed"] is True
+
+
+def test_route_prefsrc_matching_approved_guest_addresses_is_accepted(tmp_path):
+    addresses, v4, v6 = _fixtures()
+    v4[0]["prefsrc"] = "192.168.56.20"
+    v6[0]["prefsrc"] = "fe80::1234"
+    v4[0]["table"] = "main"
     result = _run(tmp_path, (addresses, v4, v6))
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["linux_guest_configuration_screen_passed"] is True
