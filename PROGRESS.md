@@ -1,4 +1,4 @@
-## 2026-11-01: Zeek ASCII control-marker and extension-schema integrity (feature PR; CI pending)
+## 2026-11-01: Zeek ASCII control-marker and extension-schema integrity ([PR #335](https://github.com/tbao4151/DA_CNTT/pull/335); CI pending)
 
 - Verified `main` at `1df053352c9ef8fbe2584509ff4bdfac9c755e9f`: [PR #334](https://github.com/tbao4151/DA_CNTT/pull/334) merged; its exact-head Ubuntu [#41317681535](https://github.com/tbao4151/DA_CNTT/actions/runs/41317681535), Windows [#41317681554](https://github.com/tbao4151/DA_CNTT/actions/runs/41317681554) and Real Zeek synthetic [#41317681540](https://github.com/tbao4151/DA_CNTT/actions/runs/41317681540) succeeded. Post-merge main quality [#41319530617](https://github.com/tbao4151/DA_CNTT/actions/runs/41319530617) succeeded. No open PR before this feature branch.
 - Hardened the bounded offline parser to reject malformed `#fields`/`#types` control-marker spellings, blank or whitespace-bearing extension field names, and blank/whitespace-bearing type tokens. Preserved optional `#types`, well-formed extension columns, existing Windows entrypoints and the separate opt-in semantic type verification gate.
