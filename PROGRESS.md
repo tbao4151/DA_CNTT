@@ -1,3 +1,9 @@
+## 2026-11-02: Linux guest preferred-route-source and metadata integrity ([PR #338](https://github.com/tbao4151/DA_CNTT/pull/338); exact-head CI pending)
+
+- Verified `main` at `f860a92ce67fe4499ecc7e6ed5020403ffa82bd9`: [PR #337](https://github.com/tbao4151/DA_CNTT/pull/337) merged; exact-head Ubuntu [#41332848411](https://github.com/tbao4151/DA_CNTT/actions/runs/41332848411) and Windows [#41332848529](https://github.com/tbao4151/DA_CNTT/actions/runs/41332848529) succeeded. No other open PR at feature start. Post-merge `main` CI was not independently verified.
+- The pinned Linux guest main-route screen previously accepted a route with an arbitrary `prefsrc`, route encapsulation, nested next hops, or explicit non-main table metadata despite an approved destination/NIC. Added fail-closed route-source consistency (must be assigned to approved NIC and match IP family), rejection of unsupported tunnel/source selectors and non-main table markers, eight synthetic negative cases and one valid matching-source case. Existing Windows offline test registration covers the modified test file.
+- This is a **read-only offline snapshot check**, not proof of VMware Host-only isolation or real capture. No local repository pytest, student Windows/VMware test, network traffic, attack, model, UNSW benchmark or SOC database mutation. Require exact final-head Ubuntu/Windows CI and conflict review before merge.
+
 ## 2026-11-02: Linux guest loopback address integrity (feature PR; exact-head CI pending)
 
 - Verified `main` at `440b5b49713f1f75e67e6684a1d7c027c8a7cb5d`: PR #336 merged; exact-head Ubuntu [#41327628640](https://github.com/tbao4151/DA_CNTT/actions/runs/41327628640) and Windows [#41327628665](https://github.com/tbao4151/DA_CNTT/actions/runs/41327628665) succeeded, as did post-merge main quality [#41330070723](https://github.com/tbao4151/DA_CNTT/actions/runs/41330070723). No open PR at feature start.
