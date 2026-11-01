@@ -1,5 +1,11 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: PR #319 CI regression repair (pending rerun)
+
+- GitHub Actions on PR #319 head `a9fdf09be1555c952bfad793e2027b49392774a8` failed: Ubuntu quality run #41253694126 had 11 failures (1458 passed, 2 skipped); Windows offline Zeek run #41253694156 had 5 failures (105 passed). The new strict provenance check rejected the older manual SOC triage synthetic fixture with only TEST metadata, and changed the TEST-specific error string asserted by five existing regression cases.
+- On the **same PR branch**, commit `ccd023c2d1a5792fef45698c18c72015f527006e` preserves the prior TEST-specific validation error; commit `d8bd239d2d887484e819b5be53452f00eeba26a4` supplies distinct operator-declared TRAIN/VALIDATION fixture metadata and tests that cross-split reuse cannot write a SOC case. These are code changes, **not a claim of passing CI or local Windows tests**.
+- Await fresh exact-head Ubuntu/Windows CI and a clean mergeability check before merging. No live capture, attack execution, model retraining, UNSW benchmark change, private artifact modification or real VMware test performed.
+
 ## 2026-11-01: Cross-split Zeek source provenance in held-out trace review (PR #319, CI pending)
 
 - [PR #319](https://github.com/tbao4151/DA_CNTT/pull/319), feature branch `feature/zeek-trace-cross-split-provenance-20261101` based on `main` `ce59c877b686652d6a5b31912d266cdffedb55c6` (merged PR #318); no open PR at branch creation.
