@@ -1,4 +1,4 @@
-## 2026-11-02: Combined Linux guest five-snapshot acceptance (feature CI pending)
+## 2026-11-02: Combined Linux guest five-snapshot acceptance ([PR #340](https://github.com/tbao4151/DA_CNTT/pull/340); CI pending)
 
 - [ ] Verify exact feature-head Ubuntu quality and Windows offline CI for `tests/test_linux_guest_combined_preflight.py`, including both sub-screen failure paths, changed pins, duplicate paths and no false isolation claims; confirm no conflicting PR before merge.
 - [ ] On the owned Linux Zeek guest, privately collect and independently hash original address, IPv4/IPv6 main-route and IPv4/IPv6 policy-rule JSON; run the combined offline CLI on unchanged files under Windows Python 3.12.9, preserving output, exit code, versions, timestamps and authorization. Do not alter snapshots to force PASS.
