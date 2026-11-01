@@ -166,3 +166,31 @@ no model refit, threshold tuning, alert, SOC write, or Dataset Mode change.
 
 Synthetic regression (also included in Windows offline CI):
 `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`.
+
+
+## Fixed-protocol probability error (feature PR; CI pending)
+
+The read-only NEW-log evaluation additionally reports
+`protocol_probability_quality` for four **predeclared** protocol groups
+(`tcp/udp/icmp/other`). Each group reports support, mean model
+Attack probability, operator-labeled Attack prevalence and **Brier score**
+(mean squared error between the pinned probability and supplied binary label).
+The global Brier score is the support-weighted mean of the four groups.
+An empty group reports JSON null for its three rates/scores, not zero.
+Groups below 30 flows carry a descriptive low-support warning.
+
+These diagnostics use recomputed, SHA-256-pinned Zeek research probabilities
+and the same supplied annotations as the confusion matrices. They do not
+refit a model, calibrate its probabilities, change its validation threshold,
+or reveal UID, IP, port, raw protocol strings or individual labels.
+A lower Brier score indicates better agreement with the **supplied labels**
+on this capture; it is not proof of calibration or external generalization.
+The groups may differ in attack prevalence, host composition or session
+conditions. Brier score combines reliability and discrimination, so comparing
+it across groups with different prevalence requires caution.
+
+No physical VMware Host-only isolation, independent ground truth, live
+detection or host/session-adjusted uncertainty is established. Do not use
+the held-out NEW-log results to tune probabilities or select a model.
+Synthetic regression (included in Ubuntu and Windows offline workflows):
+`py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`.
