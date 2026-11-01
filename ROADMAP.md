@@ -1,5 +1,13 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Current acceptance gate after PR #330 (verified main)
+
+- [x] PR #330 merged on `main` as `aafec3c233dc3dcd2dd9940ea23e070155f5e2a2`; Ubuntu [#41294345318](https://github.com/tbao4151/DA_CNTT/actions/runs/41294345318), Windows offline [#41294345303](https://github.com/tbao4151/DA_CNTT/actions/runs/41294345303) and main quality [#41295852825](https://github.com/tbao4151/DA_CNTT/actions/runs/41295852825) succeeded. Historical unchecked CI items below are retained as dated notes, **not current pending PRs**.
+- [ ] Verify the current-state inventory PR with exact-head Ubuntu and Windows CI and no merge conflict before merging. Its static contract cannot attest real lab activity.
+- [ ] On Windows 11, run `py -3.12 -m pytest -q tests/test_sentinel_status_contract.py` after merge, then follow `docs/FIRST_VMWARE_HOSTONLY_EVIDENCE_SESSION.md` for independent host/guest isolation review and a first benign original PCAP/Zeek session. Preserve original bytes, hashes and approval evidence privately.
+- [ ] Obtain independent labels and host/session-disjoint research captures before interpreting protocol/Wilson/Brier metrics; measure offline batch runtime and genuine packet-to-case timing **separately**. Do not label synthetic CI as a live experiment or run Red network execution.
+
+
 ## 2026-11-01: Single-parse NEW Zeek protocol aggregation (feature CI pending)
 
 - [ ] Confirm exact feature-head Ubuntu quality and Windows offline Zeek checks pass, including the new parse-reuse regression and existing protocol error/Brier assertions; verify no competing PR or conflict before merging.
