@@ -20,6 +20,32 @@ MAX_REPETITIONS = 20
 MAX_WARMUP = 3
 
 
+def describe_batch_variability(durations_ns: Sequence[int]) -> dict[str, object]:
+    """Descriptive within-run spread; no independence or CI claim.
+
+    This helper accepts integer monotonic durations, not event timestamps.
+    It intentionally reports no confidence interval from 1..20 repetitions.
+    """
+    if not durations_ns or any(type(ns) is not int or ns <= 0 for ns in durations_ns):
+        raise ValueError("Positive integer monotonic durations required")
+    median_ns = statistics.median(durations_ns)
+    mad_ns = statistics.median(abs(ns - median_ns) for ns in durations_ns)
+    smallest, largest = min(durations_ns), max(durations_ns)
+    return {
+        "observations": len(durations_ns),
+        "min_batch_ms": round(smallest / 1_000_000, 6),
+        "max_batch_ms": round(largest / 1_000_000, 6),
+        "range_batch_ms": round((largest - smallest) / 1_000_000, 6),
+        "median_absolute_deviation_ms": round(mad_ns / 1_000_000, 6),
+        "confidence_interval_estimated": False,
+        "interpretation": (
+            "Descriptive variation among repeated offline whole-log scoring "
+            "calls on this process only; not an uncertainty interval, "
+            "live throughput or event-to-SOC detection latency."
+        ),
+    }
+
+
 def benchmark_offline_new_log_scoring(
     source_data: bytes,
     model: Mapping[str, object],
@@ -103,6 +129,7 @@ def benchmark_offline_new_log_scoring(
             "preflight, JSON serialization and downstream SOC handling."
         ),
         "per_batch_duration_ms": [round(ns / 1_000_000, 6) for ns in durations_ns],
+        "batch_timing_variability": describe_batch_variability(durations_ns),
         "median_batch_ms": round(median_ns / 1_000_000, 6),
         "p95_nearest_rank_batch_ms": round(p95_ns / 1_000_000, 6),
         "median_throughput_flows_per_sec": round(
