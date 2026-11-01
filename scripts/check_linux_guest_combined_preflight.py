@@ -30,7 +30,7 @@ def assess(addresses, routes_v4, routes_v6, rules_v4, rules_v6, *,
     all_tables_supplied = routes_all_v4 is not None
     if all_tables_supplied:
         assess_all_tables(routes_v4, routes_v6, routes_all_v4,
-                          routes_all_v6, adapter=adapter)
+                          routes_all_v6, adapter=adapter, cidr=cidr)
     return {
         "report_version": 1,
         "mode": "offline_linux_guest_combined_snapshot_screen_only",
