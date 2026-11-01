@@ -63,7 +63,7 @@ def test_batch_timing_has_honest_semantics_and_no_sensitive_rows(tmp_path):
     variability = report["batch_timing_variability"]
     assert variability["observations"] == report["repetitions"]
     assert variability["min_batch_ms"] <= report["median_batch_ms"]
-    assert variability["median_batch_ms"] <= variability["max_batch_ms"]
+    assert report["median_batch_ms"] <= variability["max_batch_ms"]
     assert variability["range_batch_ms"] >= 0
     assert variability["median_absolute_deviation_ms"] >= 0
     assert variability["confidence_interval_estimated"] is False
