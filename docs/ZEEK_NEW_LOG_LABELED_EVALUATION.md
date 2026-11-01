@@ -109,3 +109,34 @@ fields. Wilson intervals remain descriptive flow-level summaries, not
 host/session-cluster-adjusted inference. No new-label-driven selection,
 threshold tuning, ground-truth authentication, or real lab performance is
 claimed. Keep private raw logs and labels outside Git.
+
+## Fixed protocol-stratified FP/FN audit (feature PR; CI pending)
+
+The same pinned, recomputed NEW-log predictions and operator-supplied UID
+annotations now produce an additive `protocol_error_analysis` field.
+It partitions flows into exactly four predefined buckets:
+`tcp`, `udp`, `icmp`, and `other`. Each bucket reports its own
+TP/FP/TN/FN, support, attack precision, attack recall and false-positive rate.
+The four confusion matrices must sum to the global confusion matrix.
+Zero-denominator metrics are JSON null, not zero.
+
+The bucket membership is taken from the original parsed, SHA-256-pinned Zeek
+log, not from a mutable prediction report or an inferred UNSW field. Original
+UIDs must align in order with recomputed predictions; unexpected protocol
+strings are aggregated under `other` rather than emitted verbatim.
+No IPs, UIDs, ports, paths, individual labels or free-text protocol names
+appear in the aggregate field. Every bucket with fewer than 30 flows is
+marked `insufficient_flow_support=true` (a caution threshold, not a
+statistical guarantee). A bucket can also be single-class and have undefined
+recall or FPR despite exceeding 30 flows.
+
+This is a descriptive **error analysis**, not a new classifier, threshold
+selection, host/session-clustered confidence interval or operational alert.
+Protocol can itself be a learned Zeek feature, so group-level differences
+may reflect capture/session confounding rather than a generalizable attack
+signature. Do not tune on the NEW capture and then report it as untouched.
+The existing UNSW-NB15 Dataset Mode metrics remain separate.
+
+Regression: `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`.
+CI fixtures are synthetic; only independently labeled, authorized Host-only
+captures can support a real lab research claim.
