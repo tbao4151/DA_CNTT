@@ -1,5 +1,12 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Require all original split annotation pins for NEW-log labeled evaluation (PR #326, CI pending)
+
+- After PR #325 merged as `c9dbc79f05167ac1241e3f4fc64af8fadd001df7`, main quality CI #41277726437 succeeded; no open PR at branch creation. The read-only `scripts/evaluate_zeek_new_log_labels.py` previously loaded the declared TRAIN/VALIDATION/TEST manifest without `require_label_sha256=True`, permitting an otherwise pinned manifest with unpinned original split annotation bytes. This was weaker than the NEW-log scoring/manual SOC gates.
+- Tightened only this evaluation CLI to require every original `labels_sha256` and independently check the manifest digest in the loader. Updated synthetic evaluation fixtures to pin original split annotations and added negative regressions for an omitted label digest even after manifest/model re-pinning and for modified original annotation bytes. No UNSW-NB15 benchmark, Red execution, network capture, model training or SQLite writes were changed.
+- Feature PR CI is **pending**. No local Windows/VMware test, genuine capture, independent label adjudication, measured live latency or new detection-performance result is claimed. A hash pin establishes declared byte consistency, not label truth.
+
+
 ## 2026-11-01: PR #325 exact-head CI failure repaired in synthetic SOC test (rerun pending)
 
 - On feature head `1acf0079fa8aed7b7d3b2d5fc9a313fd392b496e`, Ubuntu quality run #41274080834 failed with **1 failed / 1518 passed / 2 skipped** and Windows offline Zeek run #41274080844 failed with **1 failed / 17 passed** in the explicitly registered UI test step. Real Zeek synthetic run #41274080853 succeeded. Both failures were the same test-only assertion in `tests/test_zeek_new_log_ui_soc.py`: `fetchone()[0][0]` indexed the first character of the SQLite `verdict` string, producing `U` instead of comparing `Unclassified`.

@@ -1,5 +1,12 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Strict original annotation pins in NEW-log labeled evaluation ([PR #326](https://github.com/tbao4151/DA_CNTT/pull/326))
+
+- [ ] Confirm exact feature-head Ubuntu quality and Windows offline Zeek CI, including `tests/test_zeek_new_log_evaluation.py`; inspect for competing PRs/conflicts and merge only after both pass.
+- [ ] On student Windows 11, record each original TRAIN/VALIDATION/TEST annotation SHA-256 independently, preserve unchanged original logs and manifest/model outside Git, then run the read-only labeled NEW-log evaluation. Reject a missing split pin or altered original label file; do not silently re-pin modified historical evidence.
+- [ ] Independently validate labels and host/session holdout, then report genuine Precision/Recall/FPR and uncertainty separately from synthetic CI. Byte integrity alone is not ground truth or live detection evidence.
+
+
 ## 2026-11-01: PR #325 CI assertion repair awaiting fresh checks
 
 - [ ] Check Ubuntu and Windows CI for the **latest feature head** after `a52e220f0eb6c631bd5d75d9c5060290292e56b5`. Earlier head `1acf0079fa8aed7b7d3b2d5fc9a313fd392b496e` failed in both required workflows because the synthetic SQLite verdict assertion indexed a string twice. Real Zeek synthetic passed, but does not replace the required checks.

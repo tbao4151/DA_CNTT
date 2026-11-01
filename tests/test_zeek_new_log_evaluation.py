@@ -23,6 +23,14 @@ CIDRS = ["192.168.56.0/24"]
 def inputs(tmp_path):
     manifest, _, model, new = _inputs(tmp_path)
     private = manifest.parent
+    # Match the strict, independently pinned annotation contract of NEW-log
+    # scoring and SOC handoff. Synthetic labels are not genuine ground truth.
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    for capture in spec["captures"]:
+        label_path = private / capture["labels_path"]
+        capture["labels_sha256"] = hashlib.sha256(label_path.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(spec, allow_nan=False), encoding="utf-8")
+    model["input_manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
     raw = new.read_bytes()
     model_bytes = json.dumps(model, allow_nan=False).encode("utf-8")
     model_path = private / "model.json"
@@ -177,6 +185,42 @@ def test_cli_refuses_reserved_test_and_mismatched_annotation_pin(inputs):
     assert run.returncode == 1
     assert not run.stdout
     assert "192.168.56" not in run.stderr
+
+
+
+def test_cli_refuses_missing_annotation_pin_even_after_manifest_and_model_repin(inputs):
+    spec = json.loads(inputs["manifest"].read_text(encoding="utf-8"))
+    del spec["captures"][0]["labels_sha256"]
+    inputs["manifest"].write_text(json.dumps(spec), encoding="utf-8")
+    # An operator can re-hash both manifest and model. The strict CLI must
+    # still refuse an unpinned source annotation before publishing metrics.
+    model = json.loads(inputs["model_path"].read_text(encoding="utf-8"))
+    model["input_manifest_sha256"] = hashlib.sha256(
+        inputs["manifest"].read_bytes()
+    ).hexdigest()
+    inputs["model_path"].write_text(json.dumps(model), encoding="utf-8")
+    cmd = _command(inputs)
+    cmd[cmd.index("--expected-model-sha256") + 1] = hashlib.sha256(
+        inputs["model_path"].read_bytes()
+    ).hexdigest()
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    assert result.returncode == 1
+    assert not result.stdout
+    assert str(inputs["manifest"]) not in result.stderr
+    assert not list(inputs["manifest"].parent.glob("*.sqlite3"))
+
+
+def test_cli_refuses_modified_original_split_annotations(inputs):
+    spec = json.loads(inputs["manifest"].read_text(encoding="utf-8"))
+    path = inputs["manifest"].parent / spec["captures"][1]["labels_path"]
+    path.write_bytes(path.read_bytes() + b"\n")
+    result = subprocess.run(
+        _command(inputs), capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 1
+    assert not result.stdout
+    assert str(path) not in result.stderr
+    assert not list(inputs["manifest"].parent.glob("*.sqlite3"))
 
 
 def test_predeclared_always_normal_reference_has_no_model_selection(inputs):
