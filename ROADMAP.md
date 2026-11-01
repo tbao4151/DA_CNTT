@@ -1,11 +1,10 @@
-## 2026-11-01: Protocol-stratified NEW Zeek error analysis (feature PR; CI pending)
+# DA005 — Lộ trình phát triển có thể kiểm chứng
+
+## 2026-11-01: Protocol-stratified NEW Zeek error analysis ([PR #327](https://github.com/tbao4151/DA_CNTT/pull/327); CI pending)
 
 - [ ] Verify exact feature-head Ubuntu quality and Windows offline Zeek CI for fixed-bucket `tcp/udp/icmp/other` TP/FP/TN/FN, undefined single-class rates, aggregate reconciliation and identifier-free JSON; confirm no conflicting PR, then merge only when required checks pass.
 - [ ] On the student Windows 11 laptop, run `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py` after merge. With authorized, independently annotated Host-only captures, preserve original Zeek/PCAP, hashes and split provenance outside Git; record per-protocol support and errors without exposing private flow identifiers.
 - [ ] Report protocol differences as descriptive, not host/session-adjusted accuracy. Continue independent labeling and genuine telemetry-to-SOC timing; do not tune thresholds on NEW labels or reinterpret synthetic CI as VMware validation.
-
-# DA005 — Lộ trình phát triển có thể kiểm chứng
-
 ## 2026-11-01: Strict original annotation pins in NEW-log labeled evaluation ([PR #326](https://github.com/tbao4151/DA_CNTT/pull/326))
 
 - [ ] Confirm exact feature-head Ubuntu quality and Windows offline Zeek CI, including `tests/test_zeek_new_log_evaluation.py`; inspect for competing PRs/conflicts and merge only after both pass.
