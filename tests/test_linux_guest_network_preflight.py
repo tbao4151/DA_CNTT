@@ -53,6 +53,8 @@ def test_valid_owned_linux_guest_snapshot_is_not_isolation_attestation(tmp_path)
     "extra_active_nic", "extra_addressed_nic", "global_ipv6", "wrong_ipv4",
     "default_v4", "default_v6", "external_v4_route", "external_v6_route",
     "via_gateway", "missing_scope_route", "duplicate_nic", "duplicate_address",
+    "loopback_nonlocal_v4", "loopback_global_ipv6", "loopback_wrong_prefix",
+    "loopback_duplicate", "loopback_malformed_prefix",
 ])
 def test_unsafe_or_inconsistent_linux_guest_snapshots_fail_closed(tmp_path, problem):
     addresses, v4, v6 = _fixtures()
@@ -80,11 +82,32 @@ def test_unsafe_or_inconsistent_linux_guest_snapshots_fail_closed(tmp_path, prob
         addresses.append(dict(addresses[1]))
     elif problem == "duplicate_address":
         addresses[1]["addr_info"].append(dict(addresses[1]["addr_info"][0]))
+    elif problem == "loopback_nonlocal_v4":
+        addresses[0]["addr_info"].append(
+            {"family": "inet", "local": "192.168.56.21", "prefixlen": 24})
+    elif problem == "loopback_global_ipv6":
+        addresses[0]["addr_info"].append(
+            {"family": "inet6", "local": "2001:db8::1", "prefixlen": 128})
+    elif problem == "loopback_wrong_prefix":
+        addresses[0]["addr_info"][0]["prefixlen"] = 16
+    elif problem == "loopback_duplicate":
+        addresses[0]["addr_info"].append(dict(addresses[0]["addr_info"][0]))
+    elif problem == "loopback_malformed_prefix":
+        addresses[0]["addr_info"][0]["prefixlen"] = True
     result = _run(tmp_path, (addresses, v4, v6))
     assert result.returncode == 1
     assert result.stdout == ""
     assert "refused" in result.stderr
     assert str(tmp_path) not in result.stderr
+
+
+def test_standard_dual_stack_loopback_is_accepted(tmp_path):
+    addresses, v4, v6 = _fixtures()
+    addresses[0]["addr_info"].append(
+        {"family": "inet6", "local": "::1", "prefixlen": 128})
+    result = _run(tmp_path, (addresses, v4, v6))
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["linux_guest_configuration_screen_passed"] is True
 
 
 def test_changed_bytes_rejected_even_when_original_pin_is_valid(tmp_path):

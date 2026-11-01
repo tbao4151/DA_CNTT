@@ -1,3 +1,9 @@
+## 2026-11-02: Linux guest loopback address integrity (feature PR; exact-head CI pending)
+
+- Verified `main` at `440b5b49713f1f75e67e6684a1d7c027c8a7cb5d`: PR #336 merged; exact-head Ubuntu [#41327628640](https://github.com/tbao4151/DA_CNTT/actions/runs/41327628640) and Windows [#41327628665](https://github.com/tbao4151/DA_CNTT/actions/runs/41327628665) succeeded, as did post-merge main quality [#41330070723](https://github.com/tbao4151/DA_CNTT/actions/runs/41330070723). No open PR at feature start.
+- Found that the Linux `ip -j address show` preflight skipped `lo` address entries entirely. Added fail-closed validation allowing only conventional `127.0.0.1/8` and `::1/128`, at most once each, and synthetic tests for non-loopback addresses, malformed/duplicate loopback entries and valid dual-stack loopback.
+- No independent local repository pytest (GitHub clone DNS unavailable), no student Windows/Linux/VMware experiment, capture, labels, model change, SOC mutation or network activity. New exact-head Ubuntu/Windows CI must pass before merge. Snapshot integrity does not prove Host-only isolation, policy routing, DNS, forwarding or authorization.
+
 ## 2026-11-01: Linux Zeek guest pinned Host-only configuration preflight (feature branch; CI pending)
 
 - Verified `main` at `0466bea18121c65b3976864fc576703f3716134b` after PR #335 merged; exact-head Ubuntu/Windows/Real-Zeek synthetic CI and post-merge main quality succeeded. No open PR at feature start.

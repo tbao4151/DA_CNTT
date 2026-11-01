@@ -1,3 +1,9 @@
+## 2026-11-02: Linux guest loopback address integrity acceptance (feature CI pending)
+
+- [ ] Require exact-head Ubuntu quality and Windows offline CI to pass the expanded Linux guest preflight tests, including valid dual-stack `lo`, non-loopback address on `lo`, duplicate entry and malformed prefix refusal; check mergeability and competing PRs before merge.
+- [ ] On the owned Linux Zeek guest, capture the complete original `ip -j address show` JSON and both main-route snapshots outside Git, pin independent SHA-256 and review all `lo` addresses before interpreting a PASS. Do not modify original snapshots to satisfy the screen.
+- [ ] Independently inspect VMware VMnet/NICs, policy routing, forwarding, DNS and authorization before any lab traffic. No physical isolation or live detection claim follows from synthetic CI.
+
 ## 2026-11-01: Linux Zeek guest offline configuration screening acceptance (feature CI pending)
 
 - [ ] Require exact-head Ubuntu quality and Windows offline CI success for the new pinned Linux guest snapshot CLI, including unsafe-route/address and malformed-input refusal; confirm no competing PR or conflict before merging.
