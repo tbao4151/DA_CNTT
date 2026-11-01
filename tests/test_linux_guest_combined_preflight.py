@@ -54,6 +54,8 @@ def test_combined_pass_is_explicitly_not_isolation_or_authorization(tmp_path):
     assert report["five_distinct_sha256_pinned_snapshots_checked"] is True
     assert report["linux_guest_main_route_snapshot_passed"] is True
     assert report["linux_guest_policy_rules_snapshot_passed"] is True
+    assert report["seven_distinct_sha256_pinned_snapshots_checked"] is False
+    assert report["all_routing_tables_in_supplied_snapshots_checked"] is False
     for key in ("other_routing_tables_checked", "dns_and_forwarding_checked",
                 "vmware_hostonly_isolation_verified", "traffic_authorized",
                 "network_activity_performed"):
@@ -109,3 +111,72 @@ def test_duplicate_json_keys_refused_even_when_rehashed(tmp_path):
     result = _run(tmp_path, _snapshots(), tamper=tamper)
     assert result.returncode == 1
     assert result.stdout == ""
+
+
+def _run_with_all_tables(tmp_path, snapshots, *, problem=None):
+    """Exercise the opt-in seven-snapshot CLI using only synthetic private files."""
+    def extra(args, root):
+        all_v4 = [dict(route, table="main") for route in snapshots[1]]
+        all_v6 = [dict(route, table="main") for route in snapshots[2]]
+        all_v4.append({"table": "local", "type": "local",
+                       "dst": "127.0.0.1", "dev": "lo"})
+        all_v6.append({"table": "local", "type": "local",
+                       "dst": "::1", "dev": "lo"})
+        if problem == "alternate_v4":
+            all_v4.append({"table": 100, "dst": "10.0.0.0/8", "dev": "ens33"})
+        elif problem == "alternate_v6":
+            all_v6.append({"table": "default", "dst": "2001:db8::/32", "dev": "ens33"})
+        elif problem == "extra_main":
+            all_v4.append({"table": "main", "dst": "10.0.0.0/8", "dev": "ens33"})
+        elif problem == "missing_main":
+            all_v6.pop(0)
+        elif problem == "local_gateway":
+            all_v4[-1]["gateway"] = "192.168.56.1"
+        elif problem == "local_default":
+            all_v4[-1]["dst"] = "0.0.0.0/0"
+        elif problem == "local_wrong_family":
+            all_v4[-1]["dst"] = "::1"
+        elif problem == "local_wrong_dev":
+            all_v4[-1]["dev"] = "eth9"
+        elif problem == "local_wrong_type":
+            all_v4[-1]["type"] = "unicast"
+        for role, data in (("routes-all-v4", all_v4), ("routes-all-v6", all_v6)):
+            if problem == "missing_pair" and role == "routes-all-v6":
+                break
+            path = root / (role + ".json")
+            raw = json.dumps(data).encode("utf-8")
+            path.write_bytes(raw)
+            args.extend(["--" + role, str(path),
+                         "--expected-" + role + "-sha256",
+                         hashlib.sha256(raw).hexdigest()])
+        if problem == "changed_pin":
+            (root / "routes-all-v4.json").write_bytes(b"[]")
+        elif problem == "duplicate_path":
+            args[args.index("--routes-all-v4") + 1] = str(root / "routes-v4.json")
+    return _run(tmp_path, snapshots, tamper=extra)
+
+
+def test_optional_seven_snapshot_all_table_screen_accepts_consistent_private_inputs(tmp_path):
+    result = _run_with_all_tables(tmp_path, _snapshots())
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report["seven_distinct_sha256_pinned_snapshots_checked"] is True
+    assert report["all_routing_tables_in_supplied_snapshots_checked"] is True
+    assert report["other_routing_tables_checked"] is False
+    assert report["vmware_hostonly_isolation_verified"] is False
+    assert "192.168.56.20" not in result.stdout
+    assert str(tmp_path) not in result.stdout
+
+
+@pytest.mark.parametrize("problem", [
+    "alternate_v4", "alternate_v6", "extra_main", "missing_main",
+    "local_gateway", "local_default", "local_wrong_family",
+    "local_wrong_dev", "local_wrong_type", "changed_pin",
+    "missing_pair", "duplicate_path",
+])
+def test_optional_all_table_gate_refuses_unsafe_or_incomplete_snapshots(tmp_path, problem):
+    result = _run_with_all_tables(tmp_path, _snapshots(), problem=problem)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert str(tmp_path) not in result.stderr

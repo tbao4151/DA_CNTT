@@ -1,3 +1,9 @@
+## 2026-11-02: Optional pinned all-routing-table Linux guest screen (feature PR; CI pending)
+
+- Verified main at `79141a25dbcd387587bf2e9a0351d20d7db1359a`: PR #340 merged; its exact-head Ubuntu [#41347856113](https://github.com/tbao4151/DA_CNTT/actions/runs/41347856113) and Windows [#41347856172](https://github.com/tbao4151/DA_CNTT/actions/runs/41347856172) passed; post-merge main quality [#41350469927](https://github.com/tbao4151/DA_CNTT/actions/runs/41350469927) passed. No open PR at feature start.
+- Added an **optional** two-snapshot, SHA-256-pinned Linux IPv4/IPv6 all-routing-table consistency screen to the existing five-snapshot offline combined CLI, preserving the original five-file command. It rejects non-local alternate tables, unsafe local entries, default routes and main-table mismatches in supplied files; added synthetic positive/negative subprocess tests and operator instructions.
+- The new output explicitly distinguishes `all_routing_tables_in_supplied_snapshots_checked` from `other_routing_tables_checked=false` (no live kernel inspection). Isolated helper smoke passed (one valid, three unsafe cases rejected); full repository pytest and exact-head GitHub CI not yet verified. No student VMware run, traffic, PCAP, AI scoring, SOC write, model/dataset/benchmark change or public deployment.
+
 ## 2026-11-02: Combined five-snapshot Linux guest preflight ([PR #340](https://github.com/tbao4151/DA_CNTT/pull/340); exact-head CI pending)
 
 - Verified `main` at `00f8c21a53d22e938e9faf9e51ee91a6a4440419`: PR #339 merged; exact-head Ubuntu [#41343240612](https://github.com/tbao4151/DA_CNTT/actions/runs/41343240612) and Windows [#41343240674](https://github.com/tbao4151/DA_CNTT/actions/runs/41343240674) passed. Post-merge main quality [#41345314246](https://github.com/tbao4151/DA_CNTT/actions/runs/41345314246) passed. No open PR before starting this feature.

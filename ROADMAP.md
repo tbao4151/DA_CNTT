@@ -1,3 +1,9 @@
+## 2026-11-02: Optional Linux all-routing-table snapshot acceptance (feature CI pending)
+
+- [ ] Require exact feature-head Ubuntu quality and Windows offline CI for the expanded combined preflight, including seven-file PASS, unknown table, local-route, mismatch, altered pin, duplicate path and incomplete optional-pair refusal. Confirm no conflicting PR and mergeability before merge.
+- [ ] On the owned Linux Zeek VM, privately capture and independently hash both `ip -j -4/-6 route show table all` outputs in addition to the five existing snapshots; preserve original bytes, capture times and CLI exit code on Windows 11 Python 3.12.9.
+- [ ] Independently inspect kernel routing, VMware VMnet/NIC modes, DNS, firewall, forwarding, IPv6 and written scope. Pinned snapshots are not an atomic kernel read, isolation certificate, authorization or live AI detection; still require real Host-only PCAP/Zeek, independent labels and telemetry-to-SOC measurements.
+
 ## 2026-11-02: Combined Linux guest five-snapshot acceptance ([PR #340](https://github.com/tbao4151/DA_CNTT/pull/340); CI pending)
 
 - [ ] Verify exact feature-head Ubuntu quality and Windows offline CI for `tests/test_linux_guest_combined_preflight.py`, including both sub-screen failure paths, changed pins, duplicate paths and no false isolation claims; confirm no conflicting PR before merge.
