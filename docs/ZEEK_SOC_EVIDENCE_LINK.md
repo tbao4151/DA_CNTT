@@ -116,3 +116,33 @@ py -3.12 -m pytest -q tests/test_zeek_soc_case_link_cli.py
 
 The default CLI output and the existing read-only evidence verifier are
 unchanged when `--timing-json` is omitted.
+
+
+## Pinned research queue at SOC case creation (01/11/2026)
+
+When manual triage uses all three optional research queue inputs
+(`--research-alert-bundle`, `--expected-research-alert-bundle-sha256`,
+`--research-alert-ref`), the write boundary first reconstructs and verifies
+the saved queue from the pinned Zeek/model/manifest evidence. For a **new**
+case, the initial SQLite creation audit now records the exact queue SHA-256 and
+selected research reference. The strict read-only case-link verifier checks
+these two original-audit values against the separately supplied queue pins,
+in addition to recomputing the entire queue. It refuses altered, missing or
+mismatched bindings without modifying SQLite.
+
+Existing source+UID cases are idempotently reused and their initial audit is
+**never rewritten**. If a case was originally created without a queue binding,
+the strict queue-aware verifier will refuse it; do not edit its historical
+audit to make it pass. Use the legacy verifier without queue flags for that
+case, clearly marking that the queue was not bound at creation. The default
+creation path without queue inputs and the existing read-only verification
+path remain compatible.
+
+A successful strict check supports only *software consistency of the recorded
+creation audit*, not cryptographic authenticity of SQLite, historical causation,
+operator authorization, independent labels, physical Host-only isolation or
+operational AI detection. The new regression cases use synthetic fixtures only.
+
+```powershell
+py -3.12 -m pytest -q tests/test_zeek_research_queue_soc_e2e.py tests/test_zeek_soc_evidence_link.py
+```
