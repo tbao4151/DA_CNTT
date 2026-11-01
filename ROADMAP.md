@@ -1,5 +1,13 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+
+## 2026-11-01: Original SOC audit binding for pinned research queue (feature PR, CI pending)
+
+- [ ] Verify exact feature-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI; inspect synthetic queue -> manual Unclassified SOC -> strict read-only verifier, legacy case compatibility and altered-audit rejection. Confirm no competing PR or merge conflict; merge only after required checks pass.
+- [ ] On authorized Windows/VMware Host-only, independently preserve the exported research queue SHA-256, selected reference, original Zeek/model/report/manifest/annotations and private SQLite creation audit. Verify a **newly created** case with strict queue pins; preserve legacy case audit unchanged if the case was previously created without queue binding.
+- [ ] Move from software-consistent research candidate evidence to independently labeled host/session-disjoint evaluation and real lab telemetry-to-case measurement. Do not treat a pinned mutable SQLite audit as forensic proof, physical isolation or operational attack detection.
+
+
 ## 2026-11-01: Optional end-to-end research queue / SOC evidence verification ([PR #322](https://github.com/tbao4151/DA_CNTT/pull/322))
 
 - [ ] Confirm exact feature-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI, inspect new synthetic queue -> analyst Unclassified SOC -> read-only evidence-link tests, confirm mergeability and avoid overlapping PRs; merge only after all required checks pass.
