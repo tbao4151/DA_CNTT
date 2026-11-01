@@ -177,6 +177,21 @@ Preserve the original authorized Zeek file and its independently pinned
 SHA-256; test malformed copies, not the original evidence.
 
 
+## Shared parser Zeek close-time consistency (01/11/2026)
+
+The offline shared parser now requires an optional `#close` marker to carry a
+calendar-valid `YYYY-MM-DD-HH-MM-SS` timestamp. When `#open` is also declared,
+`#close` cannot precede `#open`. A matching or later close is allowed; legacy
+minimal logs with no `#open` or `#close` remain supported. This prevents an
+invalid or reversed log-boundary timestamp from being silently accepted by
+research, quality or manual SOC consumers. The parser does **not** infer
+packet-to-alert latency or authenticate the timestamps, Zeek process, PCAP,
+clock synchronization, physical Host-only isolation or independent labels.
+Do not alter original private evidence to pass the check; investigate a refusal.
+
+On Windows Python 3.12.9 run
+`py -3.12 -m pytest -q tests/test_zeek_telemetry.py`.
+
 ## Optional Zeek ASCII sentinel and conn-path metadata (29/10/2026)
 
 The shared bounded `conn.log` parser now validates optional Zeek ASCII
