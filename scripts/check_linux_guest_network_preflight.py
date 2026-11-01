@@ -172,6 +172,20 @@ def assess(addresses, routes_v4, routes_v6, *, adapter: str, cidr: str):
                     or any(key in route for key in ("gateway", "via", "multipath", "nhid"))
                     or route.get("type", "unicast") != "unicast"):
                 raise ValueError("Unapproved guest route or gateway")
+            if any(key in route for key in ("encap", "newdst", "nexthops", "from", "src")):
+                raise ValueError("Unsupported encapsulated or source-specific guest route")
+            if "table" in route and route["table"] not in ("main", 254):
+                raise ValueError("Route snapshot contains non-main routing table")
+            if "prefsrc" in route:
+                preferred = route["prefsrc"]
+                if not isinstance(preferred, str) or "%" in preferred:
+                    raise ValueError("Invalid preferred route source")
+                try:
+                    source_ip = ipaddress.ip_address(preferred)
+                except ValueError as exc:
+                    raise ValueError("Invalid preferred route source") from exc
+                if source_ip.version != version or str(source_ip) not in seen_addresses:
+                    raise ValueError("Preferred route source not assigned to approved adapter")
             try:
                 network = ipaddress.ip_network(destination, strict=False)
             except ValueError as exc:
