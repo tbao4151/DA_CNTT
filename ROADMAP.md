@@ -1,5 +1,11 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Zeek close-time structural integrity acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline Zeek CI success on the exact feature head, including malformed `#close` timestamps, close-before-open rejection, equal/later acceptance and existing parser compatibility; confirm no competing PR/conflict before merge.
+- [ ] On student Windows 11 run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py` after merge, then independently preserve original Host-only PCAP/Zeek bytes, SHA-256, Zeek version and VM network evidence. Investigate clock reversal rather than editing original logs.
+- [ ] Keep structural header checks distinct from authentic capture, independent attack labels, host/session holdout, packet-to-alert/SOC latency and operational AI detection. Next scientific gate remains real authorized Host-only capture and pinned evidence chain.
+
 ## 2026-11-01: Offline scoring variability acceptance ([PR #333](https://github.com/tbao4151/DA_CNTT/pull/333))
 
 - [ ] CI repair gate: earlier Ubuntu [#41309754168](https://github.com/tbao4151/DA_CNTT/actions/runs/41309754168) and Windows [#41309753938](https://github.com/tbao4151/DA_CNTT/actions/runs/41309753938) failed on a wrong test key (`variability["median_batch_ms"]`). Verify the corrected assertion against the top-level median on the newest feature head and require both workflows to pass before merging PR #333.
