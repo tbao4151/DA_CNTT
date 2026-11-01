@@ -10,6 +10,8 @@ import json
 from collections.abc import Mapping, Sequence
 
 from .ranking_metrics import summarize_binary_ranking
+from .protocol_error_analysis import summarize_protocol_error_rates
+from .zeek import parse_zeek_conn_log
 from .new_log_inference import score_new_zeek_log
 from .new_log_review import review_pinned_new_log_report
 from .uncertainty import summarize_detection_uncertainty
@@ -179,6 +181,9 @@ def evaluate_new_log_operator_labels(
             "attack_f1": f1,
         },
         "flow_level_uncertainty": summarize_detection_uncertainty(confusion),
+        "protocol_error_analysis": summarize_protocol_error_rates(
+            parse_zeek_conn_log(source_data), predictions, labels,
+        ),
         "threshold_free_ranking_metrics": summarize_binary_ranking(
             [row["attack_probability"] for row in predictions],
             [labels[row["uid"]] for row in predictions],
