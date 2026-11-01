@@ -148,6 +148,33 @@ def test_zeek_close_is_optional_but_terminal():
             parse_zeek_conn_log(invalid)
 
 
+
+
+@pytest.mark.parametrize("invalid_close", [
+    b"#close\\tgarbage\\n",
+    b"#close\\t2026-02-30-17-00-00\\n",
+    b"#close\\t2026-10-29-25-00-00\\n",
+    b"#close\\t2026-10-29-17-00-00-extra\\n",
+    b"#close\\t2026-10-29-17-00-00\\tother\\n",
+])
+def test_zeek_close_requires_calendar_valid_timestamp(invalid_close):
+    with pytest.raises(ValueError, match="Zeek close marker timestamp"):
+        parse_zeek_conn_log(log(VALUES) + invalid_close)
+
+
+def test_zeek_close_must_not_precede_declared_open():
+    original = log(VALUES)
+    declared = original.replace(
+        b"#fields\\t", b"#open\\t2026-10-29-17-00-00\\n#fields\\t", 1,
+    )
+    for closed_at in (b"2026-10-29-16-59-59", b"2026-10-28-17-00-00"):
+        with pytest.raises(ValueError, match="Zeek close marker precedes open marker"):
+            parse_zeek_conn_log(declared + b"#close\\t" + closed_at + b"\\n")
+    # Equality and a later close are valid; legacy files without #open remain valid.
+    for closed_at in (b"2026-10-29-17-00-00", b"2026-10-29-17-00-01"):
+        assert len(parse_zeek_conn_log(declared + b"#close\\t" + closed_at + b"\\n")) == 1
+    assert len(parse_zeek_conn_log(original + b"#close\\t2026-10-29-17-00-00\\n")) == 1
+
 def test_canonical_zeek_ascii_sentinels_preserve_missing_vs_empty_service():
     # Zeek's default ASCII metadata is optional for minimal fixtures, but
     # when present it must describe the parser's actual missing-value rules.
