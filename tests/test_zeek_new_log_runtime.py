@@ -13,7 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from blue_team_ai.runtime_benchmark import benchmark_offline_new_log_scoring
+from blue_team_ai.runtime_benchmark import (
+    benchmark_offline_new_log_scoring, describe_batch_variability,
+)
 from evaluate_zeek_lab import load_experiment_manifest
 from test_zeek_partition_guard import _inputs
 
@@ -58,6 +60,15 @@ def test_batch_timing_has_honest_semantics_and_no_sensitive_rows(tmp_path):
     assert len(report["per_batch_duration_ms"]) == 3
     assert all(t > 0 for t in report["per_batch_duration_ms"])
     assert report["median_batch_ms"] > 0
+    variability = report["batch_timing_variability"]
+    assert variability["observations"] == report["repetitions"]
+    assert variability["min_batch_ms"] <= report["median_batch_ms"]
+    assert report["median_batch_ms"] <= variability["max_batch_ms"]
+    assert variability["range_batch_ms"] >= 0
+    assert variability["median_absolute_deviation_ms"] >= 0
+    assert variability["confidence_interval_estimated"] is False
+    assert "latency" in variability["interpretation"]
+
     assert report["p95_nearest_rank_batch_ms"] >= report["median_batch_ms"]
     assert report["detection_latency_measured"] is False
     assert report["automated_alerts"] is False
@@ -65,6 +76,25 @@ def test_batch_timing_has_honest_semantics_and_no_sensitive_rows(tmp_path):
     assert "192.168.56" not in json.dumps(report)
     assert "NEW1" not in json.dumps(report)
     assert not list(tmp_path.rglob("*.sqlite3"))
+
+
+def test_batch_variability_known_values_and_one_repetition():
+    values = describe_batch_variability([1_000_000, 2_000_000, 4_000_000])
+    assert values["observations"] == 3
+    assert values["min_batch_ms"] == 1
+    assert values["max_batch_ms"] == 4
+    assert values["range_batch_ms"] == 3
+    assert values["median_absolute_deviation_ms"] == 1
+    assert values["confidence_interval_estimated"] is False
+    one = describe_batch_variability([7_000_000])
+    assert one["range_batch_ms"] == 0
+    assert one["median_absolute_deviation_ms"] == 0
+
+
+@pytest.mark.parametrize("invalid", [[], [0], [-1], [True], [1.5]])
+def test_batch_variability_rejects_invalid_durations(invalid):
+    with pytest.raises(ValueError):
+        describe_batch_variability(invalid)
 
 
 @pytest.mark.parametrize("change", [
@@ -113,6 +143,9 @@ def test_cli_read_only_and_refuses_modified_hash(tmp_path):
     assert completed.returncode == 0, completed.stderr
     report = json.loads(completed.stdout)
     assert report["repetitions"] == 2
+    assert report["batch_timing_variability"]["observations"] == 2
+    assert report["batch_timing_variability"]["confidence_interval_estimated"] is False
+
     assert report["detection_latency_measured"] is False
     phases = report["cli_phase_timing"]
     assert phases["method"] == "perf_counter_ns_same_process"

@@ -1,5 +1,14 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Descriptive offline NEW-log scoring variability ([PR #333](https://github.com/tbao4151/DA_CNTT/pull/333); exact-head CI pending)
+
+- CI repair follow-up: exact-head Ubuntu quality run [#41309754168](https://github.com/tbao4151/DA_CNTT/actions/runs/41309754168) failed (1 failed, 1550 passed, 2 skipped); Windows offline run [#41309753938](https://github.com/tbao4151/DA_CNTT/actions/runs/41309753938) also failed. The integration test incorrectly read `median_batch_ms` from the new variability object, although that median remains a top-level report field. Corrected only the test assertion on this same PR branch in commit `4970d5517ad84f508951717f1ed48cd72bafa844`; fresh exact-head CI **must** pass before merge. No independent laptop test.
+
+- Checked `main` at `26fd37aef9dc51b2db7bc2318429445a72bc2e36`; PR #332 was merged and exact-head Ubuntu quality [#41304979306](https://github.com/tbao4151/DA_CNTT/actions/runs/41304979306) and Windows offline Zeek [#41304979312](https://github.com/tbao4151/DA_CNTT/actions/runs/41304979312) succeeded. No open PR was found before creating this feature branch.
+- Added `batch_timing_variability` to the read-only offline Zeek scoring runtime report: minimum, maximum, range and median absolute deviation (MAD) of the same repeated in-memory scoring durations, computed from unrounded monotonic nanoseconds. A single repetition produces zero spread by definition; `confidence_interval_estimated=false` explicitly avoids implying statistical confidence or independence.
+- Added known-value, invalid-input, integration and CLI regression assertions in `tests/test_zeek_new_log_runtime.py`; updated `docs/ZEEK_NEW_LOG_RUNTIME_BENCHMARK.md`. A local isolated math smoke check passed; repository pytest was **not** run locally (GitHub clone DNS unavailable). **Feature-head Ubuntu/Windows CI is pending; do not merge without successful exact-head checks and no conflict.**
+- No student Windows/VMware measurement, traffic, model retraining, operational alert, SOC write, independent label validation or official UNSW benchmark change.
+
 ## 2026-11-01: Offline NEW-log CLI phase timing ([PR #332](https://github.com/tbao4151/DA_CNTT/pull/332); exact-head CI pending)
 
 - Checked `main` at `e22604fa9c941f03ad94c0569fc81aeb9741f06a` after PR #331 merged; post-merge quality [#41303051095](https://github.com/tbao4151/DA_CNTT/actions/runs/41303051095) passed, and no open PR was found at branch creation.

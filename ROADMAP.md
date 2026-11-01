@@ -1,5 +1,13 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Offline scoring variability acceptance ([PR #333](https://github.com/tbao4151/DA_CNTT/pull/333))
+
+- [ ] CI repair gate: earlier Ubuntu [#41309754168](https://github.com/tbao4151/DA_CNTT/actions/runs/41309754168) and Windows [#41309753938](https://github.com/tbao4151/DA_CNTT/actions/runs/41309753938) failed on a wrong test key (`variability["median_batch_ms"]`). Verify the corrected assertion against the top-level median on the newest feature head and require both workflows to pass before merging PR #333.
+
+- [ ] Verify exact feature-head Ubuntu quality and Windows offline Zeek CI, including known-value MAD/range, invalid durations and the existing CLI subprocess; confirm mergeability and no competing PR before merge.
+- [ ] On student Windows 11 Python 3.12.9, run `py -3.12 -m pytest -q tests/test_zeek_new_log_runtime.py` and then the private pinned runtime CLI on original authorized Host-only evidence. Preserve original SHA-256, CPU/RAM, software versions and at least several independently repeated runs outside Git.
+- [ ] Report min/max/range/MAD as descriptive within-run variability only; do not interpret one repetition's zero spread as stability or present CI synthetic timings as laptop performance, statistical confidence, event-to-alert latency or operational attack detection. Real VMware Host-only evidence, independent labels and SOC case timing remain separate gates.
+
 ## 2026-11-01: Offline CLI phase runtime acceptance ([PR #332](https://github.com/tbao4151/DA_CNTT/pull/332))
 
 - [ ] Verify final feature-head Ubuntu quality and Windows offline Zeek CI, the existing runtime subprocess regression and mergeability. Merge only after both required checks pass without conflicts; CI timings are synthetic-runner timings, not laptop results.
