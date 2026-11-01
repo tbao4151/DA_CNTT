@@ -213,7 +213,7 @@ def test_cli_refuses_missing_annotation_pin_even_after_manifest_and_model_repin(
 def test_cli_refuses_modified_original_split_annotations(inputs):
     spec = json.loads(inputs["manifest"].read_text(encoding="utf-8"))
     path = inputs["manifest"].parent / spec["captures"][1]["labels_path"]
-    path.write_bytes(path.read_bytes() + b"\\n")
+    path.write_bytes(path.read_bytes() + b"\n")
     result = subprocess.run(
         _command(inputs), capture_output=True, text=True, check=False,
     )
