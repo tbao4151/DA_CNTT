@@ -175,6 +175,12 @@ def create_new_log_candidate_case(
             if verified_import is not None else
             "Original PCAP provenance NOT software-checked. "
         )
+        + (
+            "Pinned research queue selection rechecked: "
+            f"bundle_sha256={research_bundle_sha256}; "
+            f"research_alert_ref={research_alert_ref}. "
+            if research_bundle_data is not None else ""
+        )
         + "Authorization, Host-only isolation and ground truth are unverified."
     )
     # Share the existing research idempotency namespace: one source+UID should
