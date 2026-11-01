@@ -1,6 +1,15 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
 
+## 2026-11-01: Protocol Brier diagnostic gate (feature PR; CI pending)
+
+- [ ] Check exact feature-head Ubuntu quality and Windows offline Zeek workflows, including known-value per-protocol Brier, empty buckets, invalid score rejection, strict UID alignment, privacy and pinned NEW-log integration. Confirm no competing PR or merge conflict before merging.
+- [ ] On student Windows 11 after merge, run `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`; with independently labeled authorized VMware Host-only Zeek, archive original PCAP/log, hashes, capture session, host identity, model/report and the new aggregate Brier results outside Git.
+- [ ] Interpret protocol Brier scores against operator-supplied labels only; differing prevalence and correlated host/session flows prevent unqualified group comparisons. Do not select/calibrate thresholds from held-out NEW-log data or present synthetic CI as a real lab experiment. Primary gate remains verified Host-only capture -> independently labeled Zeek -> research candidate -> manual SOC case with measured times.
+
+
+
+
 ## 2026-11-01: Protocol-specific uncertainty with explicit denominators (feature CI pending)
 
 - [ ] Verify exact feature-head Ubuntu quality and Windows offline Zeek workflows, particularly zero-denominator nulls, fixed bucket reconciliation, 100-normal-flow single-class warning, and absence of raw identifiers. Confirm no competing PR or conflict; merge only after required checks succeed.
