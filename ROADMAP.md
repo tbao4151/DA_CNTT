@@ -1,4 +1,4 @@
-## 2026-11-01: Zeek header control-marker integrity acceptance (feature CI pending)
+## 2026-11-01: Zeek header control-marker integrity acceptance ([PR #335](https://github.com/tbao4151/DA_CNTT/pull/335); CI pending)
 
 - [ ] Require exact feature-head Ubuntu quality and Windows offline Zeek success, including malformed `#fields`/`#types` marker rejection, blank/whitespace field and type names, and backward compatibility with valid extensions and omitted `#types`. Confirm no conflicting PR before merging.
 - [ ] On student Windows 11 Python 3.12.9, run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py` after merge; retain original privately hashed Zeek/PCAP and independent lab scope/clock evidence. Do not edit the original source to make a failed quality check pass.
