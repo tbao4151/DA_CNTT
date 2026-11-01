@@ -1,5 +1,11 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Optional end-to-end research queue / SOC evidence verification ([PR #322](https://github.com/tbao4151/DA_CNTT/pull/322))
+
+- [ ] Confirm exact feature-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI, inspect new synthetic queue -> analyst Unclassified SOC -> read-only evidence-link tests, confirm mergeability and avoid overlapping PRs; merge only after all required checks pass.
+- [ ] On authorized student Windows/VMware Host-only, retain independently pinned original Zeek/PCAP, TRAIN/VALIDATION/TEST manifest and labels, research model, NEW-log report, exported queue and private SOC SQLite. Verify one analyst-selected queue reference using the optional queue flags; record original hashes and real offline processing times outside Git. Never interpret this as operational alerting, verified attack detection or event-to-SOC latency.
+
+
 ## 2026-11-01: Opt-in deterministic Zeek model replay (feature PR, CI pending)
 
 - [ ] Check exact feature-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI, review regression and no-conflict status, then merge only if both pass. `--recompute-model-predictions` is optional, refits the separate Zeek Logistic Regression on original TRAIN, selects threshold on VALIDATION, and checks held-out TEST scores and metrics against a v6 private trace; it does not change official UNSW benchmark.

@@ -1,5 +1,18 @@
 # DA005 Cyber Lab — offline Zeek experiment CLI (research only)
 
+## Optional read-only research queue to existing SOC case check
+
+After a private, separately pinned NEW-log research queue has been exported and **an analyst explicitly created** an Unclassified SOC case, `scripts/verify_zeek_soc_case_link.py` can additionally verify that the selected `record_index` and `research_alert_ref` belong to the complete original queue. Supply the existing mandatory `--model`, `--expected-model-sha256`, `--log`, `--expected-log-sha256`, `--report`, `--manifest`, `--expected-manifest-sha256`, `--db`, `--case-id`, `--record-index` and `--cidr` flags, plus **all three** optional flags:
+
+~~~powershell
+--research-alert-bundle "C:/DA005-private/zeek-experiment/new/research-alerts.json" `
+--expected-research-alert-bundle-sha256 "<independently-recorded-64-character-lowercase-SHA256>" `
+--research-alert-ref "<selected-original-64-character-reference>"
+~~~
+
+The queue JSON must be a distinct private file alongside the original NEW `conn.log`. The verifier rechecks all declared capture partitions, recomputes the entire research queue from pinned source/model/report, verifies the original candidate reference and reads the existing SQLite case in read-only mode. It does **not** create cases, change the original SOC audit note, authenticate ground truth or prove that the queue originally caused case creation. Omitting the three optional flags retains the previous verifier behavior. Optional `--timing-json` includes a separate software-only queue recheck stage; it is not event-to-alert latency. Synthetic CI checks are not Windows/VMware measurements.
+
+
 This command runs a **local, offline** Logistic Regression experiment on
 independently annotated Zeek ASCII conn.log files. It does **not** capture
 traffic, create attacks, save a deployable model, generate alerts, or touch
