@@ -1,6 +1,6 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
-## 2026-11-01: NEW-log threshold-free ranking diagnostics (feature PR; CI pending)
+## 2026-11-01: NEW-log threshold-free ranking diagnostics ([PR #324](https://github.com/tbao4151/DA_CNTT/pull/324); repaired Windows test import, CI rerun pending)
 
 - [ ] Verify exact feature-head Ubuntu quality and Windows offline Zeek CI, especially tied-score ROC AUC/AP and single-class `null` behavior; confirm no competing PR or conflict, then merge only after checks pass.
 - [ ] On student Windows 11 with authorized Host-only captures, retain original Zeek/PCAP, independently pinned annotations and manifest; run the existing NEW-log label evaluation and archive ranking metrics, prevalence, host/session distribution and software versions privately. Do not tune the model or threshold using NEW/held-out labels.
