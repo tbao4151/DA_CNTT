@@ -140,3 +140,29 @@ The existing UNSW-NB15 Dataset Mode metrics remain separate.
 Regression: `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`.
 CI fixtures are synthetic; only independently labeled, authorized Host-only
 captures can support a real lab research claim.
+
+
+## Protocol-specific descriptive Wilson intervals (feature PR; CI pending)
+
+The existing fixed `tcp/udp/icmp/other` buckets now additionally expose
+`flow_level_wilson_intervals` for attack precision, attack recall and
+false-positive rate. The denominators are, respectively, TP+FP (predicted
+Attack), TP+FN (operator-labeled Attack) and FP+TN (operator-labeled Normal).
+Each interval includes `successes`, `trials`, `estimate`, `lower`,
+`upper` and `method=wilson_score_95_percent`. Zero trials produce JSON
+null estimates/bounds, not false zeroes. Empty protocol buckets are retained.
+
+The pre-existing `insufficient_flow_support` warning (bucket flow count <30)
+is preserved. A separate `small_denominator_warning` now checks the smallest
+of the **three actual rate denominators** against 30; a bucket with 100 normal
+flows and no attacks/positive predictions is still flagged. These cutoffs are
+cautions, not inferential guarantees.
+
+These intervals assume independent flow observations. Flows from the same
+host, scenario or capture session can be correlated, and the intervals are
+**not host/session-cluster adjusted**. They cannot validate operator labels,
+network isolation, a live attack or generalization. The analysis is read-only;
+no model refit, threshold tuning, alert, SOC write, or Dataset Mode change.
+
+Synthetic regression (also included in Windows offline CI):
+`py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`.
