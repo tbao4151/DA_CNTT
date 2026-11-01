@@ -153,8 +153,10 @@ def test_pinned_queue_manual_handoff_creates_one_unclassified_case(tmp_path):
     assert row["state"] == "New"
     assert "NEW-log OFFLINE research candidate" in row["analyst_note"]
     assert "source_sha256=" in row["analyst_note"]
-    # Preserve the existing canonical creation-audit contract.
-    assert "research_bundle_sha256=" not in row["analyst_note"]
+    # Newly created cases bind the original verified queue to the creation audit.
+    assert "bundle_sha256=" + _sha(output.read_bytes()) in row["analyst_note"]
+    assert "research_alert_ref=" + selected["research_alert_ref"] in row["analyst_note"]
+    assert "NOT a verified attack" in row["analyst_note"]
     second = _run(command)
     assert second.returncode == 0, second.stderr
     assert len(list_cases(db)) == 1
