@@ -50,3 +50,15 @@ def test_status_inventory_preserves_scientific_and_safety_boundaries():
         assert required.lower() in text.lower(), required
     assert "operational live detection verified" not in text.lower()
     assert "red team execution enabled" not in text.lower()
+
+
+def test_status_inventory_table_has_distinct_markdown_rows():
+    text = STATUS.read_text(encoding="utf-8")
+    section = text.split("## Những thành phần đã có trong repository", 1)[1]
+    table = section.split("Các trang Streamlit nằm", 1)[0]
+    rows = [line for line in table.splitlines() if line.strip().startswith("|")]
+    assert len(rows) >= 10  # header, separator and at least eight implemented modules
+    for row in rows:
+        assert row.endswith("|"), row
+        assert row.count("|") == 4, row  # exactly three Markdown columns
+        assert r"\n|" not in row, row  # literal escape must not join two rows
