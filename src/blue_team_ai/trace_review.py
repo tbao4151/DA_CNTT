@@ -133,7 +133,7 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
         if not isinstance(part, dict) or set(part) != {
             "flows", "source_sha256", "host_groups", "sessions",
         }:
-            raise ValueError("Invalid research split provenance")
+            raise ValueError("Invalid held-out test provenance" if split == "test" else "Invalid research split provenance")
         sources = part["source_sha256"]
         if (
             type(part["flows"]) is not int
@@ -152,7 +152,7 @@ def review_private_zeek_trace(source_data: bytes, trace_data: bytes) -> dict[str
             or part["sessions"] != len(sources)
             or part["host_groups"] > part["sessions"]
         ):
-            raise ValueError("Invalid research split provenance")
+            raise ValueError("Invalid held-out test provenance" if split == "test" else "Invalid research split provenance")
         for source in sources:
             if source in source_owners:
                 raise ValueError("Cross-split source SHA-256 reuse in research trace")
