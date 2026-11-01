@@ -53,6 +53,7 @@ def test_pinned_queue_to_unclassified_soc_case_to_read_only_verification(tmp_pat
     checked = _run(base + pinned)
     assert checked.returncode == 0, checked.stderr
     assert "pinned_research_queue_reverified=true" in checked.stdout
+    assert "candidate selection and creation audit" in checked.stdout
     assert "offline_soc_evidence_link_verified=true" in checked.stdout
     assert "sqlite_read_only=true" in checked.stdout
     assert "192.168.56." not in checked.stdout
@@ -66,11 +67,17 @@ def test_pinned_queue_to_unclassified_soc_case_to_read_only_verification(tmp_pat
         assert case == ("Unclassified", None)
         assert conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM case_events").fetchone()[0] == 1
+        note = conn.execute("SELECT note FROM case_events ORDER BY event_id LIMIT 1").fetchone()[0]
+        assert "bundle_sha256=" + pinned[
+            pinned.index("--expected-research-alert-bundle-sha256") + 1
+        ] in note
+        assert "research_alert_ref=" + selected["research_alert_ref"] in note
 
     timed = _run(base + pinned + ["--timing-json"])
     assert timed.returncode == 0, timed.stderr
     report = json.loads(timed.stdout)
     assert report["pinned_research_queue_reverified"] is True
+    assert report["pinned_research_queue_creation_audit_verified"] is True
     assert report["sqlite_read_only"] is True
     assert report["operational_alert_verified"] is False
     assert report["event_to_soc_case_latency_measured"] is False
@@ -83,6 +90,7 @@ def test_pinned_queue_to_unclassified_soc_case_to_read_only_verification(tmp_pat
     legacy_report = json.loads(legacy.stdout)
     assert legacy_report["pinned_research_queue_reverified"] is False
     assert "optional_pinned_research_queue_reverification" not in legacy_report["stage_duration_ms"]
+    assert legacy_report["pinned_research_queue_creation_audit_verified"] is False
     assert db.read_bytes() == before
 
 
@@ -129,5 +137,37 @@ def test_queue_case_link_refuses_unverified_handoff_without_db_writes(tmp_path, 
     assert "verification refused" in refused.stderr
     assert "192.168.56." not in refused.stderr
     assert "NEW1" not in refused.stderr
+    assert str(tmp_path) not in refused.stderr
+    assert db.read_bytes() == before
+
+
+@pytest.mark.parametrize("mutation", ["bundle_digest", "alert_reference", "remove_binding"])
+def test_queue_creation_audit_pin_tampering_refused_without_writes(tmp_path, mutation):
+    base, pinned, bundle, db, selected = _verification(tmp_path)
+    digest = pinned[pinned.index("--expected-research-alert-bundle-sha256") + 1]
+    clause = (
+        "Pinned research queue selection rechecked: "
+        f"bundle_sha256={digest}; "
+        f"research_alert_ref={selected['research_alert_ref']}. "
+    )
+    with sqlite3.connect(db) as conn:
+        note = conn.execute(
+            "SELECT note FROM case_events ORDER BY event_id LIMIT 1"
+        ).fetchone()[0]
+        assert clause in note
+        if mutation == "bundle_digest":
+            altered = note.replace(clause, clause.replace(digest, "0" * 64))
+        elif mutation == "alert_reference":
+            altered = note.replace(
+                clause, clause.replace(selected["research_alert_ref"], "0" * 64)
+            )
+        else:
+            altered = note.replace(clause, "")
+        conn.execute("UPDATE case_events SET note=? WHERE event_id=1", (altered,))
+    before = db.read_bytes()
+    refused = _run(base + pinned)
+    assert refused.returncode == 1
+    assert refused.stdout == ""
+    assert "verification refused" in refused.stderr
     assert str(tmp_path) not in refused.stderr
     assert db.read_bytes() == before
