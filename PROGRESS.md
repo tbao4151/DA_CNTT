@@ -1,5 +1,12 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Verified main status inventory after PR #330
+
+- Confirmed no open PR at branch creation. PR #330 merged as `aafec3c233dc3dcd2dd9940ea23e070155f5e2a2`; exact-head Ubuntu quality [#41294345318](https://github.com/tbao4151/DA_CNTT/actions/runs/41294345318) and Windows offline [#41294345303](https://github.com/tbao4151/DA_CNTT/actions/runs/41294345303) passed, as did post-merge main quality [#41295852825](https://github.com/tbao4151/DA_CNTT/actions/runs/41295852825).
+- Refreshed `docs/SENTINEL_LAB_IMPLEMENTATION_STATUS.md` to distinguish implemented Dataset/Zeek research/Red planning code from unverified real Host-only capture, independent labels, operational detection and latency. Added a static architecture/documentation contract test; no benchmark, model, SOC SQLite, traffic, or lab data changed.
+- The earlier dated `CI pending` entries below are historical snapshots, **not** current PR status. The new inventory PR must pass its own Ubuntu and Windows CI before merge. No student laptop test was performed.
+
+
 ## 2026-11-01: Reuse one parsed NEW Zeek log for protocol diagnostics (feature PR; CI pending)
 
 - Rechecked `main` at `f9eb1f20b7b157238c6b123f600b868ebfa441cd`: PR #329 merged; exact-head Ubuntu #41289836460 and Windows #41289836420 passed, and post-merge main quality #41291875867 passed. No open PR at branch creation.
