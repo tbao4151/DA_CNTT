@@ -1,5 +1,13 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Optional pinned research queue -> existing SOC case link (feature PR, CI pending)
+
+- Based on `main` `107d4114c929d78d2ecae255b254ab6f88420d27` (PR #321 merged, main quality #41261902686 succeeded); no open PR at branch creation. This increment targets the read-only end-to-end evidence handoff rather than further PCAP diagnostics.
+- Added opt-in `--research-alert-bundle`, `--expected-research-alert-bundle-sha256`, and `--research-alert-ref` to `scripts/verify_zeek_soc_case_link.py`. Rebuilds and verifies the entire saved research queue from pinned original Zeek/model/report/manifest and checks the selected original index/ref before read-only SQLite snapshot/audit verification. All three options are required together. Default CLI remains compatible.
+- Added synthetic CLI regression covering offline scoring -> exported queue -> explicit analyst-created Unclassified case -> read-only verification, plus tampered/repinned queue, wrong reference/index, duplicate JSON keys, incomplete options and unchanged SQLite bytes. CI is **pending**; no independent local pytest, student Windows/VMware capture, authentic ground truth or live SOC alert claimed.
+- Scientific limit: a queue-to-case consistency check cannot prove physical isolation, actual attack, historical completeness or event-to-alert latency. The existing case creation audit deliberately remains unchanged and does not persist a queue hash; the verifier rechecks the supplied queue only when explicitly requested.
+
+
 ## 2026-11-01: Optional original Zeek model-replay verification (feature PR, CI pending)
 
 - Based on `main` merge `1a3b9679d4dafb79d6c6cbb475769991910762bc` after PR #320 final-head Ubuntu quality #41257716978 and Windows offline #41257716983 passed; post-merge main run #41259701630 was still running when this branch was created. No open PR at branch creation.
