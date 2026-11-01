@@ -1,5 +1,12 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: Opt-in deterministic Zeek model replay (feature PR, CI pending)
+
+- [ ] Check exact feature-head Ubuntu Python 3.12.9 quality and Windows offline Zeek CI, review regression and no-conflict status, then merge only if both pass. `--recompute-model-predictions` is optional, refits the separate Zeek Logistic Regression on original TRAIN, selects threshold on VALIDATION, and checks held-out TEST scores and metrics against a v6 private trace; it does not change official UNSW benchmark.
+- [ ] On authorized student Windows/VMware Host-only, independently retain the private manifest, original Zeek captures, pinned annotation digests and research trace; run the opt-in replay, save result and actual wall-clock execution time outside Git. Document sklearn/runtime versions, verify independent labels and isolation separately. A passing deterministic replay is not evidence of real-world attack-detection performance.
+- [ ] Confirm post-merge main CI for PR #320 merge `1a3b9679d4dafb79d6c6cbb475769991910762bc` (run #41259701630 was still in progress when this feature branch began).
+
+
 ## 2026-11-01: All-original offline Zeek evidence verification (feature PR, CI pending)
 
 - [ ] Verify exact-head Ubuntu quality and Windows offline CI for `feature/zeek-all-split-original-evidence-review-20261101`, inspect the synthetic tests and conflict status, then merge only after all required checks pass. The new read-only verifier compares private original TRAIN/VALIDATION/TEST captures, annotation UID/labels and SHA-256 to held-out research trace; no model training or operational alerting.
