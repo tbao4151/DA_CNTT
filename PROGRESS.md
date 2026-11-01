@@ -1,3 +1,9 @@
+## 2026-11-01: Linux Zeek guest pinned Host-only configuration preflight (feature branch; CI pending)
+
+- Verified `main` at `0466bea18121c65b3976864fc576703f3716134b` after PR #335 merged; exact-head Ubuntu/Windows/Real-Zeek synthetic CI and post-merge main quality succeeded. No open PR at feature start.
+- Added a read-only cross-platform CLI to validate **three independently pinned operator-supplied Linux guest iproute2 JSON snapshots** (addresses, IPv4 main routes, IPv6 main routes). It refuses extra active/addressed NICs, non-lab IPv4, non-link-local IPv6, gateways, default/out-of-scope main routes, duplicate JSON keys and changed bytes; outputs no raw IP/path. Added synthetic regression and Windows Python 3.12.9 CI registration, plus operator runbook.
+- **Feature-head CI pending; no independent student Windows/Linux/VMware run, real capture, label validation, operational alert, SOC mutation, model training, UNSW benchmark change or network execution.** Passing snapshot checks cannot prove physical Host-only isolation, authorization, policy routing, DNS, forwarding or capture authenticity.
+
 ## 2026-11-01: Zeek ASCII control-marker and extension-schema integrity ([PR #335](https://github.com/tbao4151/DA_CNTT/pull/335); CI pending)
 
 - Verified `main` at `1df053352c9ef8fbe2584509ff4bdfac9c755e9f`: [PR #334](https://github.com/tbao4151/DA_CNTT/pull/334) merged; its exact-head Ubuntu [#41317681535](https://github.com/tbao4151/DA_CNTT/actions/runs/41317681535), Windows [#41317681554](https://github.com/tbao4151/DA_CNTT/actions/runs/41317681554) and Real Zeek synthetic [#41317681540](https://github.com/tbao4151/DA_CNTT/actions/runs/41317681540) succeeded. Post-merge main quality [#41319530617](https://github.com/tbao4151/DA_CNTT/actions/runs/41319530617) succeeded. No open PR before this feature branch.
