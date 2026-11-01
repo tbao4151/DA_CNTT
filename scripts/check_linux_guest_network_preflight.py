@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PIN = re.compile(r"[0-9a-f]{64}\\Z")
+PIN = re.compile(r"[0-9a-f]{64}\Z")
 MAX_JSON_BYTES = 256 * 1024
 PRIVATE_BLOCKS = tuple(map(ipaddress.IPv4Network, (
     "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16",
