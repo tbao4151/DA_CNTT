@@ -67,6 +67,7 @@ def parse_zeek_conn_log(
     seen_types = False
     seen_set_separator = False
     seen_open = False
+    open_wallclock: datetime | None = None
     seen_unset_field = False
     seen_empty_field = False
     seen_path = False
@@ -86,6 +87,15 @@ def parse_zeek_conn_log(
             if (not line.startswith("#close\t") or not line[len("#close\t"):]
                     or fields is None or not seen_data):
                 raise ValueError("Invalid or premature Zeek close marker")
+            closed_at = line[len("#close\t"):]
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}", closed_at):
+                raise ValueError("Invalid Zeek close marker timestamp")
+            try:
+                close_wallclock = datetime.strptime(closed_at, "%Y-%m-%d-%H-%M-%S")
+            except ValueError as exc:
+                raise ValueError("Invalid Zeek close marker timestamp") from exc
+            if open_wallclock is not None and close_wallclock < open_wallclock:
+                raise ValueError("Zeek close marker precedes open marker")
             closed = True
             continue
         if line.startswith("#separator"):
@@ -109,7 +119,7 @@ def parse_zeek_conn_log(
             if not re.fullmatch(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}", opened_at):
                 raise ValueError("Invalid Zeek open marker timestamp")
             try:
-                datetime.strptime(opened_at, "%Y-%m-%d-%H-%M-%S")
+                open_wallclock = datetime.strptime(opened_at, "%Y-%m-%d-%H-%M-%S")
             except ValueError as exc:
                 raise ValueError("Invalid Zeek open marker timestamp") from exc
             seen_open = True
