@@ -55,6 +55,9 @@ def test_valid_owned_linux_guest_snapshot_is_not_isolation_attestation(tmp_path)
     "via_gateway", "missing_scope_route", "duplicate_nic", "duplicate_address",
     "loopback_nonlocal_v4", "loopback_global_ipv6", "loopback_wrong_prefix",
     "loopback_duplicate", "loopback_malformed_prefix",
+    "wrong_prefsrc_v4", "wrong_prefsrc_v6", "invalid_prefsrc",
+    "route_encap", "source_specific_route", "nested_nexthops",
+    "non_main_route_table", "route_src_selector",
 ])
 def test_unsafe_or_inconsistent_linux_guest_snapshots_fail_closed(tmp_path, problem):
     addresses, v4, v6 = _fixtures()
