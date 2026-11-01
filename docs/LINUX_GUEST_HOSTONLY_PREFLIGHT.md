@@ -48,7 +48,13 @@ no unexpected or duplicate address on `lo` (only `127.0.0.1/8` and
 and only direct lab/link-local routes in the **declared main-table snapshots**.
 The IPv4 lab subnet must be a narrow RFC1918 CIDR. It rejects a default route,
 gateway, out-of-scope route, malformed JSON, duplicate JSON keys and changed
-source bytes. It does not export raw addresses, interface names or file paths.
+source bytes. For a route with an explicit `prefsrc`, the source must be an
+address assigned to the approved NIC and match the route IP family. The screen
+also rejects route encapsulation, nested next hops, source-specific route
+selectors, and explicit non-main routing-table entries; these are not needed
+for the minimal approved Host-only topology. Standard iproute2 route flags and
+a matching local `prefsrc` remain supported. It does not export raw
+addresses, interface names or file paths.
 
 **Important limitation:** A PASS is only configuration consistency for
 operator-provided bytes. The script cannot inspect hidden policy routes,
