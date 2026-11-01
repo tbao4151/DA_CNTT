@@ -1,4 +1,4 @@
-## 2026-11-02: Pinned Linux guest forwarding sysctl snapshot screen (feature PR; CI pending)
+## 2026-11-02: Pinned Linux guest forwarding sysctl snapshot screen ([PR #343](https://github.com/tbao4151/DA_CNTT/pull/343); CI pending)
 
 - Verified `main` at `aee58c723bcdfb9b952a1f4bc535909e0bf78146`: PR #342 merged; exact-head Ubuntu [#41358198387](https://github.com/tbao4151/DA_CNTT/actions/runs/41358198387) and Windows [#41358198465](https://github.com/tbao4151/DA_CNTT/actions/runs/41358198465) succeeded; post-merge main quality [#41360956713](https://github.com/tbao4151/DA_CNTT/actions/runs/41360956713) succeeded. No open PR at feature start.
 - Added an independent read-only, SHA-256-pinned screen for seven explicit Linux IPv4/IPv6 forwarding sysctls (global, default and approved interface), with fail-closed zero-only values, bounded private input and synthetic Windows/Ubuntu tests. Existing five/seven-snapshot CLIs, models, Dataset Mode and SOC remain unchanged.
