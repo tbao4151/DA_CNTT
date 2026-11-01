@@ -13,7 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.new_log_evaluation import evaluate_new_log_operator_labels
-from blue_team_ai.protocol_error_analysis import summarize_protocol_error_rates
+from blue_team_ai.protocol_error_analysis import (
+    summarize_protocol_error_rates, summarize_protocol_probability_quality,
+)
 from blue_team_ai.new_log_inference import score_new_zeek_log
 from test_zeek_partition_guard import _inputs
 
@@ -459,3 +461,83 @@ def test_pinned_new_log_evaluation_includes_protocol_wilson_without_raw_uids(inp
     )
     assert "NEW1" not in json.dumps(audit)
     assert "NEW2" not in json.dumps(audit)
+
+
+
+def test_protocol_probability_quality_known_brier_values_and_empty_buckets():
+    events = [
+        {"uid": "private-a", "proto": "tcp"},
+        {"uid": "private-b", "proto": "tcp"},
+        {"uid": "private-c", "proto": "udp"},
+        {"uid": "private-d", "proto": "unknown-private-proto"},
+    ]
+    probabilities = [0.2, 0.8, 0.7, 0.1]
+    predictions = [
+        {"uid": event["uid"], "research_candidate": p >= 0.5,
+         "attack_probability": p}
+        for event, p in zip(events, probabilities, strict=True)
+    ]
+    labels = {"private-a": 0, "private-b": 1, "private-c": 0, "private-d": 1}
+    audit = summarize_protocol_probability_quality(events, predictions, labels)
+    assert tuple(audit["buckets"]) == ("tcp", "udp", "icmp", "other")
+    assert audit["buckets"]["tcp"]["brier_score"] == pytest.approx(0.04)
+    assert audit["buckets"]["tcp"]["mean_predicted_attack_probability"] == 0.5
+    assert audit["buckets"]["tcp"]["operator_labeled_attack_prevalence"] == 0.5
+    assert audit["buckets"]["udp"]["brier_score"] == pytest.approx(0.49)
+    assert audit["buckets"]["other"]["brier_score"] == pytest.approx(0.81)
+    assert audit["overall_brier_score"] == pytest.approx(0.345)
+    assert audit["buckets"]["icmp"]["support"] == 0
+    assert audit["buckets"]["icmp"]["brier_score"] is None
+    assert audit["buckets"]["icmp"]["mean_predicted_attack_probability"] is None
+    assert audit["buckets"]["icmp"]["operator_labeled_attack_prevalence"] is None
+    assert audit["buckets"]["icmp"]["insufficient_flow_support"] is True
+    assert audit["probabilities_calibrated_verified"] is False
+    assert audit["host_session_cluster_adjusted"] is False
+    serialized = json.dumps(audit, allow_nan=False)
+    for forbidden in ("private-a", "private-b", "unknown-private-proto"):
+        assert forbidden not in serialized
+
+
+@pytest.mark.parametrize("score", [
+    None, True, "0.5", -0.01, 1.01, float("nan"), float("inf"),
+])
+def test_protocol_probability_quality_refuses_missing_or_invalid_score(score):
+    with pytest.raises(ValueError):
+        summarize_protocol_probability_quality(
+            [{"uid": "private", "proto": "tcp"}],
+            [{"uid": "private", "research_candidate": False,
+              "attack_probability": score}],
+            {"private": 0},
+        )
+
+
+def test_protocol_probability_quality_reuses_strict_uid_label_alignment():
+    with pytest.raises(ValueError):
+        summarize_protocol_probability_quality(
+            [{"uid": "private", "proto": "tcp"}],
+            [{"uid": "different", "research_candidate": True,
+              "attack_probability": 0.9}],
+            {"private": 1},
+        )
+
+
+def test_protocol_probability_quality_integrates_with_pinned_new_log(inputs):
+    report = _evaluate(inputs)
+    quality = report["protocol_probability_quality"]
+    predictions = inputs["report"]["predictions"]
+    labels = inputs["annotations"]["labels_by_uid"]
+    expected = sum(
+        (row["attack_probability"] - labels[row["uid"]]) ** 2
+        for row in predictions
+    ) / len(predictions)
+    assert quality["overall_brier_score"] == pytest.approx(expected)
+    assert sum(b["support"] for b in quality["buckets"].values()) == (
+        report["confusion_matrix"]["support"]
+    )
+    assert quality["threshold_selection_performed"] is False
+    assert quality["independent_ground_truth_verified"] is False
+    assert quality["probabilities_calibrated_verified"] is False
+    serialized = json.dumps(quality, allow_nan=False)
+    assert "NEW1" not in serialized
+    assert "NEW2" not in serialized
+    assert "192.168.56." not in serialized

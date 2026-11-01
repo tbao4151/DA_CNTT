@@ -1,6 +1,16 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
 
+## 2026-11-01: Fixed-protocol Brier probability diagnostics (feature branch; CI pending)
+
+- Rechecked `main` at `a93b472307bc7af080ccec210b63ed4b2113263a`: PR #328 was merged; exact-head Ubuntu #41285493799 and Windows #41285493827 succeeded, and post-merge main quality #41287892787 succeeded. No open PR at the start of this slice. Feature branch: `feature/zeek-protocol-brier-diagnostics-20261101`.
+- Added `summarize_protocol_probability_quality` and integrated an additive `protocol_probability_quality` aggregate into the read-only pinned NEW Zeek operator-labeled evaluation. Fixed `tcp/udp/icmp/other` groups report support, mean pinned Attack probability, operator-labeled prevalence and Brier score; empty groups remain null and raw UID/IP/port/unknown protocol strings are never exported. The overall Brier score reconciles to the support-weighted protocol scores.
+- Added synthetic known-value, malformed/missing/nonfinite probability, UID mismatch, privacy and pinned NEW-log integration tests in `tests/test_zeek_new_log_evaluation.py`. Existing Ubuntu and Windows offline workflows already execute this file. No independent local pytest result: container Git clone failed DNS. **Feature-head CI pending**; do not merge before exact-head Ubuntu/Windows success and no conflict.
+- This is descriptive agreement with operator labels, not probability calibration, label authentication, independent host/session holdout, real VMware traffic, live detection or an operational alert. No model retraining, threshold change, Dataset Mode benchmark change, network execution, SQLite write or public deployment.
+
+
+
+
 ## 2026-11-01: Per-protocol descriptive Wilson uncertainty (feature branch; CI pending)
 
 - Verified PR #327 merged as `b2885a39721b2692a9157b77d275c748d8af733d`; exact-head Ubuntu #41283533856 and Windows #41283533887 passed, and post-merge main quality #41284317363 passed. No open PR when starting this slice. Feature branch `feature/zeek-protocol-wilson-intervals-20261101` from that main SHA.
