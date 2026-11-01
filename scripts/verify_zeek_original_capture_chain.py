@@ -7,7 +7,6 @@ No training, network traffic, alerts, SQLite writes, or report files are created
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 from pathlib import Path
@@ -85,7 +84,9 @@ def verify_original_capture_chain(
     for row in rows:
         if not isinstance(row, dict):
             raise ValueError("Invalid private TEST trace row")
-        key = (row.get("source_sha256"), row.get("uid"))
+        if not isinstance(row.get("source_sha256"), str) or not isinstance(row.get("uid"), str):
+            raise ValueError("Invalid private TEST source/UID")
+        key = (row["source_sha256"], row["uid"])
         if key in trace_labels:
             raise ValueError("Duplicate private TEST source/UID")
         if key not in original_labels or type(row.get("operator_supplied_label")) is not int:
