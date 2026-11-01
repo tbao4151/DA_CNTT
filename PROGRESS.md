@@ -1,12 +1,11 @@
-## 2026-11-01: Fixed-bucket NEW-log protocol error audit (feature PR; CI pending)
+# DA005 — Nhật ký tiến độ có căn cứ
+
+## 2026-11-01: Fixed-bucket NEW-log protocol error audit ([PR #327](https://github.com/tbao4151/DA_CNTT/pull/327); CI pending)
 
 - Based on `main` `74eae867017b2f3de7d872f73eb8d4816b063acf` after PR #326 merged; post-merge quality run #41281541682 succeeded. No open PR at branch creation. New feature branch `feature/zeek-new-log-protocol-fp-audit-20261101`.
 - Added privacy-preserving, protocol-stratified confusion matrices and precision/recall/FPR for the **existing pinned, recomputed offline NEW Zeek predictions** and supplied UID labels. Only fixed `tcp/udp/icmp/other` buckets are exported; raw UIDs, IPs, ports, protocol free text and individual labels are not. The bucket totals reconcile with global confusion counts; undefined rates stay null and support below 30 is flagged.
 - Added synthetic regressions for global reconciliation, unknown-protocol coalescing, missing denominator behavior, input alignment and privacy. Existing Windows offline workflow already runs `tests/test_zeek_new_log_evaluation.py`. This feature does not change model fitting, validation threshold, Dataset Mode/UNSW, SQLite, Red Team or network behavior.
 - **CI pending on feature head**; no independent laptop Windows/VMware experiment, authentic labels, host-cluster-adjusted uncertainty or live detection result is claimed. Protocol-stratified flow metrics can expose errors but cannot establish generalization across hosts/sessions.
-
-# DA005 — Nhật ký tiến độ có căn cứ
-
 ## 2026-11-01: Require all original split annotation pins for NEW-log labeled evaluation (PR #326, CI pending)
 
 - After PR #325 merged as `c9dbc79f05167ac1241e3f4fc64af8fadd001df7`, main quality CI #41277726437 succeeded; no open PR at branch creation. The read-only `scripts/evaluate_zeek_new_log_labels.py` previously loaded the declared TRAIN/VALIDATION/TEST manifest without `require_label_sha256=True`, permitting an otherwise pinned manifest with unpinned original split annotation bytes. This was weaker than the NEW-log scoring/manual SOC gates.
