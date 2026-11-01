@@ -1,5 +1,14 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+
+## 2026-11-01: Pin verified research queue in original SOC creation audit (feature PR; CI pending)
+
+- Based on `main` `1324e387433050bacd59e5ec93f7b64f8fda5b30` after PR #322 merged; main quality run #41266007407 succeeded, and no open PR was found at branch creation. Feature branch: `feature/zeek-research-queue-creation-audit-pin-20261101`.
+- On opt-in pinned research queue manual triage, the original Unclassified SOC case creation note now records the verified queue SHA-256 and selected research reference. The read-only evidence-link verifier checks both original-audit pins against independently supplied strict queue inputs, in addition to the existing complete queue recomputation. Cases originally created without the binding remain idempotently reusable, but strict queue-audit verification refuses their missing historical pin rather than rewriting the audit.
+- Added synthetic regression for bound queue verification, altered/missing creation audit pins, legacy cases, read-only SQLite behavior and default compatibility. Documentation updated. CI has **not** been verified on this feature branch; no independent local pytest, student Windows/VMware capture, real labels, attack detection or live SOC alert is claimed.
+- Scientific limit: locally mutable SQLite audit and software-consistent queue bytes do not authenticate the operator, independent ground truth, physical network isolation or historical causation. Dataset Mode/UNSW benchmark and Red Team execution remain unchanged.
+
+
 ## 2026-11-01: Optional pinned research queue -> existing SOC case link ([PR #322](https://github.com/tbao4151/DA_CNTT/pull/322), CI pending)
 
 - Based on `main` `107d4114c929d78d2ecae255b254ab6f88420d27` (PR #321 merged, main quality #41261902686 succeeded); no open PR at branch creation. This increment targets the read-only end-to-end evidence handoff rather than further PCAP diagnostics.

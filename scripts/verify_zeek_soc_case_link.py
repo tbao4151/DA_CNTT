@@ -174,6 +174,13 @@ def main(argv: list[str] | None = None) -> int:
             expected_pcap_sha256=(
                 imported["pcap_sha256"] if imported is not None else None
             ),
+            expected_research_bundle_sha256=(
+                args.expected_research_alert_bundle_sha256
+                if bundle_path is not None else None
+            ),
+            expected_research_alert_ref=(
+                args.research_alert_ref if bundle_path is not None else None
+            ),
         )
         stage_ns["recomputed_inference_and_soc_evidence_link"] = (
             time.perf_counter_ns() - stage_started_ns
@@ -208,6 +215,9 @@ def main(argv: list[str] | None = None) -> int:
             "original_evidence_consistency_verified": True,
             "sqlite_read_only": True,
             "pinned_research_queue_reverified": bundle_path is not None,
+            "pinned_research_queue_creation_audit_verified": (
+                result["pinned_research_queue_creation_audit_verified"]
+            ),
             "new_soc_case_created": False,
             "operational_alert_verified": False,
             "attack_ground_truth_verified": False,
@@ -229,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
     if all(value is not None for value in import_options):
         print("offline_pcap_import_reverified=true (bytes and declared scope only)")
     if bundle_path is not None:
-        print("pinned_research_queue_reverified=true (candidate selection only)")
+        print("pinned_research_queue_reverified=true (candidate selection and creation audit)")
     print("sqlite_read_only=true; stored_snapshot_and_initial_audit_match=true")
     print("NOT verified: independent labels, physical Host-only isolation, "
           "operational alerts, real attack detection or event-to-SOC latency.")

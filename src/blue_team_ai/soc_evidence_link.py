@@ -41,7 +41,9 @@ def _verify_creation_note(
     expected_manifest_sha256: str | None,
     expected_import_report_sha256: str | None,
     expected_pcap_sha256: str | None,
-) -> None:
+    expected_research_bundle_sha256: str | None,
+    expected_research_alert_ref: str | None,
+) -> bool:
     """Require the complete canonical creation note, not scattered substrings.
 
     The optional digest pins bind the stored operator-declared manifest/PCAP
@@ -51,6 +53,9 @@ def _verify_creation_note(
     if not isinstance(note, str) or not note.startswith(prefix) or not note.endswith(ending):
         raise ValueError("Initial SOC audit does not match pinned research inference")
     remaining = note[len(prefix):-len(ending)]
+    if ((expected_research_bundle_sha256 is None)
+            != (expected_research_alert_ref is None)):
+        raise ValueError("Research queue audit pins must be supplied together")
 
     attestation = "TRAIN/VALIDATION/TEST exclusion is an operator attestation only. "
     if remaining.startswith(attestation):
@@ -72,6 +77,26 @@ def _verify_creation_note(
     if expected_manifest_sha256 is not None and manifest_digest != expected_manifest_sha256:
         raise ValueError("SOC audit manifest pin differs from verified manifest")
 
+    # The queue claim is optional for legacy cases. When independently pinned
+    # queue inputs are supplied, the ORIGINAL creation audit must contain the
+    # exact verified bundle digest and selected reference. A reused legacy
+    # source+UID case must not acquire provenance retroactively.
+    queue = re.fullmatch(
+        r"(.+?)(?:Pinned research queue selection rechecked: "
+        r"bundle_sha256=([0-9a-f]{64}); "
+        r"research_alert_ref=([0-9a-f]{64})\. )",
+        remaining,
+    )
+    if queue is not None:
+        remaining, queue_digest, queue_ref = queue.groups()
+    else:
+        queue_digest = queue_ref = None
+    if expected_research_bundle_sha256 is not None and (
+        queue_digest != expected_research_bundle_sha256
+        or queue_ref != expected_research_alert_ref
+    ):
+        raise ValueError("SOC creation audit lacks matching pinned research queue")
+
     if remaining == "Original PCAP provenance NOT software-checked. ":
         import_digest = pcap_digest = None
     else:
@@ -90,6 +115,8 @@ def _verify_creation_note(
             or (expected_pcap_sha256 is not None
                 and pcap_digest != expected_pcap_sha256)):
         raise ValueError("SOC audit PCAP pins differ from verified import")
+    return (expected_research_bundle_sha256 is not None
+            and queue_digest == expected_research_bundle_sha256)
 
 
 def verify_new_log_soc_case_link(
@@ -105,6 +132,8 @@ def verify_new_log_soc_case_link(
     expected_manifest_sha256: str | None = None,
     expected_import_report_sha256: str | None = None,
     expected_pcap_sha256: str | None = None,
+    expected_research_bundle_sha256: str | None = None,
+    expected_research_alert_ref: str | None = None,
 ) -> dict[str, object]:
     """Verify one existing case against original NEW-log bytes without writes.
 
@@ -190,11 +219,13 @@ def verify_new_log_soc_case_link(
         f"research_attack_probability={prediction['attack_probability']:.8f}; "
         f"validation_threshold={recomputed['selected_validation_threshold']:.8f}. "
     )
-    _verify_creation_note(
+    queue_creation_audit_verified = _verify_creation_note(
         initial_note, prefix=note_prefix,
         expected_manifest_sha256=expected_manifest_sha256,
         expected_import_report_sha256=expected_import_report_sha256,
         expected_pcap_sha256=expected_pcap_sha256,
+        expected_research_bundle_sha256=expected_research_bundle_sha256,
+        expected_research_alert_ref=expected_research_alert_ref,
     )
 
     return {
@@ -207,6 +238,7 @@ def verify_new_log_soc_case_link(
         "report_sha256": review["report_sha256"],
         "stored_flow_snapshot_matches_original": True,
         "initial_audit_matches_recomputed_inference": True,
+        "pinned_research_queue_creation_audit_verified": queue_creation_audit_verified,
         "sqlite_read_only": True,
         "independent_labels_verified": False,
         "declared_partition_history_verified": False,
