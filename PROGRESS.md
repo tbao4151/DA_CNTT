@@ -1,4 +1,4 @@
-## 2026-11-02: Combined five-snapshot Linux guest preflight (feature PR; exact-head CI pending)
+## 2026-11-02: Combined five-snapshot Linux guest preflight ([PR #340](https://github.com/tbao4151/DA_CNTT/pull/340); exact-head CI pending)
 
 - Verified `main` at `00f8c21a53d22e938e9faf9e51ee91a6a4440419`: PR #339 merged; exact-head Ubuntu [#41343240612](https://github.com/tbao4151/DA_CNTT/actions/runs/41343240612) and Windows [#41343240674](https://github.com/tbao4151/DA_CNTT/actions/runs/41343240674) passed. Post-merge main quality [#41345314246](https://github.com/tbao4151/DA_CNTT/actions/runs/41345314246) passed. No open PR before starting this feature.
 - Added `scripts/check_linux_guest_combined_preflight.py`: one offline invocation validates five **distinct, independently SHA-256-pinned** private Linux guest snapshots (NICs, IPv4/IPv6 main routes, IPv4/IPv6 policy rules) using both existing validators; any failure refuses with no success JSON. Added synthetic regression tests, explicit Windows CI step, private operator runbook and first-session reference. Individual CLIs remain compatible.
