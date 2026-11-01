@@ -56,6 +56,13 @@ for the minimal approved Host-only topology. Standard iproute2 route flags and
 a matching local `prefsrc` remain supported. It does not export raw
 addresses, interface names or file paths.
 
+**Additional independent policy-rule gate:** save pinned IPv4/IPv6
+`ip -j rule show` snapshots and run
+[the Linux policy-rule screen](LINUX_GUEST_POLICY_RULES_PREFLIGHT.md).
+The three-file main-route screen does not inspect policy rules; the new
+screen does not inspect all route-table contents. Both remain offline and
+neither alone or together proves Host-only isolation.
+
 **Important limitation:** A PASS is only configuration consistency for
 operator-provided bytes. The script cannot inspect hidden policy routes,
 iptables/nftables, DNS, forwarding, VMware adapter mode, physical egress,

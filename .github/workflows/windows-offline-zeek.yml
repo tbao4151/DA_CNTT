@@ -71,6 +71,8 @@ jobs:
           pwsh -NoProfile -ExecutionPolicy Bypass -File tests/windows_guest_snapshot_smoke.ps1
       - name: Linux Zeek guest pinned address and main-route snapshot screen (synthetic only)
         run: python -m pytest -q tests/test_linux_guest_network_preflight.py
+      - name: Linux guest policy-routing rule snapshot screen (synthetic only)
+        run: python -m pytest -q tests/test_linux_guest_policy_rules.py
       - name: Offline paired Windows host and guest configuration checks (synthetic only)
         run: python -m pytest -q tests/test_paired_network_preflight.py
       - name: Integrated private lab evidence chain (synthetic offline only)

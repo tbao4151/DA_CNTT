@@ -1,3 +1,9 @@
+## 2026-11-02: Linux guest pinned policy-rule snapshot screen (feature PR pending exact-head CI)
+
+- Verified `main` at `18ede1ee774441f8b9d181c02b7485dba060f8c6`: PR #338 merged; its exact feature-head Ubuntu [#41338272985](https://github.com/tbao4151/DA_CNTT/actions/runs/41338272985) and Windows [#41338273017](https://github.com/tbao4151/DA_CNTT/actions/runs/41338273017) completed SUCCESS. No open PR before starting this feature. Post-merge `main` CI not independently confirmed.
+- Added an independent read-only CLI for two SHA-256-pinned, operator-supplied `ip -j -4/-6 rule show` JSON snapshots. It accepts only the conventional default IPv4/IPv6 routing-policy rules, rejects extra selectors/alternate tables and malformed snapshots, and explicitly does not certify VMware isolation, all route-table contents or authorization. Added synthetic tests, Windows CI registration and runbook; existing Linux NIC/main-route CLI is unchanged.
+- Local isolated synthetic tests used a minimal stand-in for the shared JSON loader (20 passed); **not** full-repository pytest or laptop/VMware verification. Exact feature-head Ubuntu/Windows CI and mergeability are required before merge. No new network activity, capture, AI inference, labels, SOC writes, dataset/model/benchmark changes or deployment.
+
 ## 2026-11-02: Linux guest preferred-route-source and metadata integrity ([PR #338](https://github.com/tbao4151/DA_CNTT/pull/338); exact-head CI pending)
 
 - Verified `main` at `f860a92ce67fe4499ecc7e6ed5020403ffa82bd9`: [PR #337](https://github.com/tbao4151/DA_CNTT/pull/337) merged; exact-head Ubuntu [#41332848411](https://github.com/tbao4151/DA_CNTT/actions/runs/41332848411) and Windows [#41332848529](https://github.com/tbao4151/DA_CNTT/actions/runs/41332848529) succeeded. No other open PR at feature start. Post-merge `main` CI was not independently verified.
