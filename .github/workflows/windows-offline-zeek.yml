@@ -41,7 +41,7 @@ jobs:
       - name: Offline Zeek import, provenance, scoring, SOC and held-out contracts
         run: python -m pytest -q tests/test_zeek_lab_cli.py tests/test_zeek_telemetry_quality.py tests/test_zeek_declared_types.py tests/test_zeek_event_window.py tests/test_offline_pcap_import.py tests/test_offline_pcap_scoring_gate.py tests/test_new_log_timestamp_scoring_gate.py tests/test_offline_pcap_soc_triage_gate.py tests/test_zeek_new_log_inference.py tests/test_zeek_new_log_scoring_partition_gate.py tests/test_zeek_new_log_atomic_output.py tests/test_zeek_new_log_runtime.py tests/test_zeek_research_alert_bundle.py tests/test_zeek_soc_evidence_link.py tests/test_zeek_soc_case_link_cli.py tests/test_zeek_manual_triage.py tests/test_zeek_strict_input_gates.py tests/test_zeek_originator_split.py tests/test_zeek_port_ablation.py
       - name: Zeek baseline session variability and private trace compatibility (synthetic only)
-        run: python -m pytest -q tests/test_zeek_offline_baseline.py tests/test_zeek_host_variability.py tests/test_zeek_trace_review.py
+        run: python -m pytest -q tests/test_zeek_offline_baseline.py tests/test_zeek_host_variability.py tests/test_zeek_trace_review.py tests/test_zeek_original_capture_chain.py
       - name: TRAIN/VALIDATION Zeek feature-shift preflight (synthetic only)
         run: python -m pytest -q tests/test_zeek_feature_shift.py
       - name: TRAIN/VALIDATION Zeek label-group confounding screen (synthetic only)

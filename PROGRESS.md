@@ -1,5 +1,17 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: All-original Zeek capture/held-out trace consistency verification (feature PR, CI pending)
+
+- Based on main squash merge `e9ca2b6445f4a63eef8323a9df7ce3887a2a7aca` after PR #319 final-head Ubuntu quality #41255386562 and Windows offline #41255386541 succeeded; no open PR when this feature branch was created. PR #319's earlier failed CI was repaired on its branch before merge.
+- Added `scripts/verify_zeek_original_capture_chain.py`: a read-only private CLI that loads ALL original TRAIN/VALIDATION/TEST Zeek captures and UID annotations through the existing bounded manifest loader, checks original SHA-256 and partition metadata against the report, confirms the report's manifest SHA-256, compares every held-out UID/label to original operator annotations, and invokes the existing trace reviewer on every TEST source. Optional `--require-label-sha256` enforces separately recorded annotation-file digests. No source paths, IPs, UIDs, labels or host IDs are emitted.
+- Added synthetic regression in `tests/test_zeek_original_capture_chain.py` for valid multi-source TEST, changed TRAIN source declaration, altered original capture, forged TEST labels, incomplete TEST coverage, manifest digest mismatch, optional annotation pin refusal and private path boundary. Updated the Windows offline workflow to run this regression explicitly, plus private Windows instructions. CI on the feature PR is pending; no independent local pytest, student Windows/VMware capture, independent ground-truth validation, model training, attack execution or SQLite writes are claimed.
+- Scientific limitation: hashing originals and checking self-consistency does NOT authenticate their acquisition, model training history, labels, host-only isolation or real attack detection. Dataset Mode/UNSW benchmark and Red Team execution unchanged.
+
+## 2026-11-01: PR #319 merged after repaired CI
+
+- [PR #319](https://github.com/tbao4151/DA_CNTT/pull/319) merged as `e9ca2b6445f4a63eef8323a9df7ce3887a2a7aca` after exact final head `b1ce8ac3cb57c42fefb169d059a9011770d8765c` passed Ubuntu #41255386562 and Windows #41255386541; mergeability confirmed true. Earlier failures on `a9fdf09be1555c952bfad793e2027b49392774a8` were addressed on the same PR. No post-merge main CI result or Windows laptop run is claimed here.
+
+
 ## 2026-11-01: PR #319 CI regression repair (pending rerun)
 
 - GitHub Actions on PR #319 head `a9fdf09be1555c952bfad793e2027b49392774a8` failed: Ubuntu quality run #41253694126 had 11 failures (1458 passed, 2 skipped); Windows offline Zeek run #41253694156 had 5 failures (105 passed). The new strict provenance check rejected the older manual SOC triage synthetic fixture with only TEST metadata, and changed the TEST-specific error string asserted by five existing regression cases.
