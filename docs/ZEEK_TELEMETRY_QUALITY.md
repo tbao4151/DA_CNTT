@@ -233,3 +233,20 @@ malformed copies rather than editing source evidence.
 
 Windows Python 3.12.9 regression:
 py -3.12 -m pytest -q tests/test_zeek_telemetry.py tests/test_zeek_manual_triage.py
+
+
+## Zeek ASCII header marker integrity (01/11/2026)
+
+The shared offline `conn.log` parser now rejects malformed `#fields`
+and `#types` control-marker spellings instead of treating them as ignorable
+comments. A declared field list must not contain empty names or whitespace
+inside names; a present type list must have nonempty, whitespace-free type
+tokens and the same number of entries as `#fields`. Unrelated, well-formed
+extension field names remain supported, and legacy logs without `#types`
+remain supported. Semantic type compatibility is **still checked separately**
+with `--require-zeek-types`; this parser change does not make that gate
+mandatory or claim source authenticity.
+
+Synthetic-only regression: `py -3.12 -m pytest -q tests/test_zeek_telemetry.py`.
+A successful structural parse does not establish real Host-only isolation,
+independent labels, capture provenance or AI detection performance.

@@ -139,19 +139,32 @@ def parse_zeek_conn_log(
                 raise ValueError("Invalid, duplicate or late Zeek conn path marker")
             seen_path = True
             continue
-        if line.startswith("#fields\t"):
+        if line.startswith("#fields"):
+            # A malformed control marker must not fall through to the generic
+            # comment handler; blank/whitespace extension names can otherwise
+            # pass row-count validation and silently alter the source schema.
+            if not line.startswith("#fields\t"):
+                raise ValueError("Invalid Zeek fields header")
             if fields is not None or seen_data:
                 raise ValueError("Duplicate Zeek fields header")
             fields = line.split("\t")[1:]
-            if len(fields) != len(set(fields)) or not REQUIRED.issubset(fields):
+            if (len(fields) != len(set(fields))
+                    or any(not name or any(char.isspace() for char in name)
+                           for name in fields)
+                    or not REQUIRED.issubset(fields)):
                 raise ValueError("Invalid or incomplete Zeek conn.log fields")
             continue
-        if line.startswith("#types\t"):
-            # A declared schema cannot change after records begin. Keep the
-            # historical optional #types behavior for minimal offline fixtures;
-            # strict field-type validation remains an explicit quality gate.
-            if (fields is None or seen_types or seen_data
-                    or len(line.split("\t")) - 1 != len(fields)):
+        if line.startswith("#types"):
+            # Keep optional #types for legacy minimal logs. Strict semantic
+            # field-type verification remains a separate opt-in quality gate,
+            # but malformed marker syntax and blank type names must fail here.
+            if (not line.startswith("#types\t") or fields is None
+                    or seen_types or seen_data):
+                raise ValueError("Duplicate, late or mismatched Zeek types header")
+            declared_types = line.split("\t")[1:]
+            if (len(declared_types) != len(fields)
+                    or any(not type_name or any(char.isspace() for char in type_name)
+                           for type_name in declared_types)):
                 raise ValueError("Duplicate, late or mismatched Zeek types header")
             seen_types = True
             continue
