@@ -5,8 +5,8 @@
 After a private, separately pinned NEW-log research queue has been exported and **an analyst explicitly created** an Unclassified SOC case, `scripts/verify_zeek_soc_case_link.py` can additionally verify that the selected `record_index` and `research_alert_ref` belong to the complete original queue. Supply the existing mandatory `--model`, `--expected-model-sha256`, `--log`, `--expected-log-sha256`, `--report`, `--manifest`, `--expected-manifest-sha256`, `--db`, `--case-id`, `--record-index` and `--cidr` flags, plus **all three** optional flags:
 
 ~~~powershell
---research-alert-bundle "C:/DA005-private/zeek-experiment/new/research-alerts.json" \`
---expected-research-alert-bundle-sha256 "<independently-recorded-64-character-lowercase-SHA256>" \`
+--research-alert-bundle "C:/DA005-private/zeek-experiment/new/research-alerts.json" `
+--expected-research-alert-bundle-sha256 "<independently-recorded-64-character-lowercase-SHA256>" `
 --research-alert-ref "<selected-original-64-character-reference>"
 ~~~
 
