@@ -152,3 +152,28 @@ independent report SHA-256, upload the exact `conn.log` and prediction JSON,
 verify with all three optional fields, and manually create one case. Alter a
 **copy** of the PCAP after preview and confirm SOC write is refused; never
 modify the only original capture.
+
+
+
+## Optional verified research queue binding in the Blue Team manual SOC form
+
+After the original NEW Zeek log, model, report and declared TRAIN/VALIDATION/TEST
+manifest pass the existing checks, the analyst may provide **all three** optional
+fields in the manual SOC form: a private exported `research-alerts.json` path,
+its SHA-256 recorded separately before review, and the selected
+`research_alert_ref` from that export. Leave all three empty for legacy
+manual review. The selected reference must correspond to the original Zeek row
+chosen in the UI, not the sorted table position.
+
+At the explicit SOC write boundary, the UI wrapper reopens the bounded queue
+file outside Git, checks distinct private paths, and delegates to the existing
+full queue recomputation and selected-row verification. The original creation
+audit of a **new** Unclassified case records the verified queue digest and
+reference. If the case was previously created without queue binding, reusing
+it does not rewrite historical audit: use the strict read-only evidence-link
+CLI to identify an unbound legacy case rather than claiming a new binding.
+
+No queue is generated automatically; no attack verdict, operational alert,
+network traffic, or verified VMware capture is produced. The operator must
+retain original private queue bytes and independent digest for later audit.
+Synthetic regression: `py -3.12 -m pytest -q tests/test_zeek_new_log_ui_soc.py`.

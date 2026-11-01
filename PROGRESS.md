@@ -1,5 +1,24 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: PR #325 exact-head CI failure repaired in synthetic SOC test (rerun pending)
+
+- On feature head `1acf0079fa8aed7b7d3b2d5fc9a313fd392b496e`, Ubuntu quality run #41274080834 failed with **1 failed / 1518 passed / 2 skipped** and Windows offline Zeek run #41274080844 failed with **1 failed / 17 passed** in the explicitly registered UI test step. Real Zeek synthetic run #41274080853 succeeded. Both failures were the same test-only assertion in `tests/test_zeek_new_log_ui_soc.py`: `fetchone()[0][0]` indexed the first character of the SQLite `verdict` string, producing `U` instead of comparing `Unclassified`.
+- Corrected the assertion to `fetchone()[0]` on the **existing PR #325 feature branch** (commit `a52e220f0eb6c631bd5d75d9c5060290292e56b5`). No production behavior, model, SQLite schema, benchmark, or network execution was changed. This is a narrowly scoped test assertion repair, not evidence that the new queue binding is validated.
+- Await new **exact-head** Ubuntu and Windows CI (plus Real Zeek if triggered), inspect no-conflict status and only then merge. No independent local pytest, student Windows 11/VMware experiment, independent labels, or real detection-latency measurements were performed.
+
+
+## 2026-11-01: PR #325 Windows UI regression gate (feature head CI pending)
+
+- Review found the new `tests/test_zeek_new_log_ui_soc.py` was not explicitly executed by the Windows offline workflow. Updated `.github/workflows/windows-offline-zeek.yml` on the **same** feature branch to run that test, and added `pages/3_New_Log_Review.py` to the workflow path filter. Commit `410e1d69ac69d3f8405477d79cdb26e8df03ffce`; prior PR-head CI is superseded by this change.
+- Await **new exact-head** Ubuntu and Windows CI, plus mergeability, before merge. This is synthetic Windows runner coverage only; no local Windows/VMware lab run or independently verified attack/label evidence.
+
+## 2026-11-01: Optional pinned research queue binding in Blue Team UI (feature PR; CI pending)
+
+- Based on `main` merge #324 `461f29eda8a66fcf8a6fa8e9740f3ae7948b99ae` with no open PR at branch preparation; main post-merge CI #41273437717 was in progress. Scope: extend the existing manual NEW-log Streamlit SOC write boundary with an optional independently pinned research queue path, SHA-256 and selected alert reference.
+- The wrapper validates all-or-none queue inputs and distinct private paths, reads bounded bytes, and delegates full pinned queue recomputation and original-row verification to existing Blue Team code before an explicit Unclassified SOC write. Legacy UI calls remain unchanged; existing unbound case audits are never rewritten.
+- Added synthetic positive/negative queue-to-audit regression and UI documentation. CI on this feature head is not yet verified; no local Windows/VMware experiment, independent ground truth, live detection, or operational alert is claimed.
+
+
 ## 2026-11-01: PR #324 Windows CI import-path repair (rerun pending)
 
 - PR #324 final head `d8c0e83e9a37f8436cd1b33047b01a793712286b`: Windows offline run #41271932813 **failed** during the new ranking test collection with `ModuleNotFoundError: No module named 'blue_team_ai'`; its earlier 246 import/provenance/SOC tests and 121 baseline/trace tests passed. The new test omitted the existing repository's explicit `src/` sys.path setup. This is a test-import regression, not evidence of ranking calculation failure.

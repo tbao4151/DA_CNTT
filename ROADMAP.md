@@ -1,5 +1,24 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: PR #325 CI assertion repair awaiting fresh checks
+
+- [ ] Check Ubuntu and Windows CI for the **latest feature head** after `a52e220f0eb6c631bd5d75d9c5060290292e56b5`. Earlier head `1acf0079fa8aed7b7d3b2d5fc9a313fd392b496e` failed in both required workflows because the synthetic SQLite verdict assertion indexed a string twice. Real Zeek synthetic passed, but does not replace the required checks.
+- [ ] Confirm PR #325 has no conflicts or competing changes before merging. Keep optional queue pins and original SOC audit behavior unchanged; never claim this synthetic test is proof of a real VMware Host-only capture.
+- [ ] On the student Windows laptop, run `py -3.12 -m pytest -q tests/test_zeek_new_log_ui_soc.py` after merge, then preserve real Host-only PCAP/Zeek, independent SHA-256, labels and SOC audit privately before scientific evaluation.
+
+
+## 2026-11-01: PR #325 Windows manual SOC UI gate follow-up
+
+- [ ] Verify the **new final-head** Ubuntu and Windows CI after commit `410e1d69ac69d3f8405477d79cdb26e8df03ffce`, including the explicitly registered `tests/test_zeek_new_log_ui_soc.py` Windows step. Merge only when both pass and PR remains conflict-free; older successful runs cannot authorize this new head.
+- [ ] On student Windows, use only private, independently hashed NEW-log research queue/manifest/model and explicitly approved Host-only captures; preserve the original Unclassified SOC audit and measure manual case latency separately from AI scoring time.
+
+## 2026-11-01: Blue Team UI optional research queue → original SOC audit (feature PR; CI pending)
+
+- [ ] Confirm final-head Ubuntu and Windows offline Zeek CI for optional queue binding, review manual-form behavior and no-conflict status, then merge only if both pass.
+- [ ] On authorized student Windows 11, independently preserve the private research queue JSON and SHA-256, select the matching original Zeek row/reference in Blue Team UI and verify a **new** Unclassified SOC creation audit. A previously unbound case cannot acquire a historical queue pin by reuse.
+- [ ] Continue toward independently labeled VMware Host-only captures and measured telemetry → research candidate → analyst SOC timing. Synthetic UI/SQLite tests do not establish physical isolation, real attack detection, or operational alerting.
+
+
 ## 2026-11-01: NEW-log threshold-free ranking diagnostics ([PR #324](https://github.com/tbao4151/DA_CNTT/pull/324); repaired Windows test import, CI rerun pending)
 
 - [ ] Verify exact feature-head Ubuntu quality and Windows offline Zeek CI, especially tied-score ROC AUC/AP and single-class `null` behavior; confirm no competing PR or conflict, then merge only after checks pass.

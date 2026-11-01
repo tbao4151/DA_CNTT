@@ -74,6 +74,9 @@ def create_ui_candidate_case(
     offline_import_report_path: str | Path | None = None,
     offline_import_report_sha256: str | None = None,
     offline_import_pcap_path: str | Path | None = None,
+    research_alert_bundle_path: str | Path | None = None,
+    expected_research_alert_bundle_sha256: str | None = None,
+    research_alert_ref: str | None = None,
 ) -> int:
     """UI write boundary: reload pinned private evidence, then manual SOC triage.
 
@@ -118,6 +121,20 @@ def create_ui_candidate_case(
         inputs.update((report_file, pcap_file, conn_file))
         if len(inputs) != 5:
             raise ValueError("PCAP, Zeek log, report, model and manifest must be distinct")
+    queue_options = (
+        research_alert_bundle_path, expected_research_alert_bundle_sha256,
+        research_alert_ref,
+    )
+    if any(value is not None for value in queue_options) and not all(
+        value is not None for value in queue_options
+    ):
+        raise ValueError("All three pinned research queue inputs are required")
+    queue_file = None
+    if research_alert_bundle_path is not None:
+        queue_file = _private_file(Path(research_alert_bundle_path))
+        if queue_file in inputs or queue_file.suffix.lower() != ".json":
+            raise ValueError("Research queue must be distinct private JSON")
+        inputs.add(queue_file)
     database = _private_db(Path(db_path), inputs)
     manifest_bytes = _read_bounded(manifest_file, MAX_MANIFEST_BYTES)
     if (
@@ -139,6 +156,10 @@ def create_ui_candidate_case(
     model = load_pinned_zeek_research_model(
         model_file, expected_sha256=expected_model_sha256,
     )
+    bundle_data = (
+        _read_bounded(queue_file, MAX_RESEARCH_ALERT_BUNDLE_BYTES)
+        if queue_file is not None else None
+    )
     return create_new_log_candidate_case(
         database, source_data=source_data, model=model,
         report_data=report_data, expected_log_sha256=expected_log_sha256,
@@ -152,6 +173,9 @@ def create_ui_candidate_case(
         offline_import_report_sha256=offline_import_report_sha256,
         offline_import_pcap_path=pcap_file,
         offline_import_log_path=conn_file,
+        research_bundle_data=bundle_data,
+        research_bundle_sha256=expected_research_alert_bundle_sha256,
+        research_alert_ref=research_alert_ref,
     )
 
 
