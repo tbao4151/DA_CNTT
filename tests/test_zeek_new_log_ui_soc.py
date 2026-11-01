@@ -201,7 +201,7 @@ def test_ui_pinned_queue_creates_bound_unclassified_case(tmp_path):
     assert create_ui_candidate_case(**args) == case_id
     with sqlite3.connect(args["db_path"]) as conn:
         assert conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0] == 1
-        assert conn.execute("SELECT verdict FROM cases").fetchone()[0][0] == "Unclassified"
+        assert conn.execute("SELECT verdict FROM cases").fetchone()[0] == "Unclassified"
         note = conn.execute(
             "SELECT note FROM case_events ORDER BY event_id LIMIT 1"
         ).fetchone()[0]
