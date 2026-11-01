@@ -1,5 +1,11 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: Zeek close-time structural integrity (feature PR; CI pending)
+
+- Verified `main` at `f3c428bc8d6aa97936f6a4942d51288320ef2f1c`: PR #333 merged, exact-head Ubuntu [#41312087769](https://github.com/tbao4151/DA_CNTT/actions/runs/41312087769) and Windows [#41312087775](https://github.com/tbao4151/DA_CNTT/actions/runs/41312087775) succeeded, and post-merge main quality [#41314545634](https://github.com/tbao4151/DA_CNTT/actions/runs/41314545634) succeeded. No open PR at start.
+- Tightened shared offline Zeek ASCII parser: optional `#close` must contain a calendar-valid timestamp and cannot precede declared `#open`. Kept optional metadata and legacy minimal logs compatible; no capture/network execution, inference, SOC writes, benchmark or model changes.
+- Added synthetic regression for malformed/reversed/equal/later close markers, explicit Windows Python 3.12.9 CI coverage and updated telemetry quality guidance. Feature-head CI must pass before merge; local repository pytest unavailable because GitHub clone DNS failed. No student laptop/VMware run or capture authenticity claimed.
+
 ## 2026-11-01: Descriptive offline NEW-log scoring variability ([PR #333](https://github.com/tbao4151/DA_CNTT/pull/333); exact-head CI pending)
 
 - CI repair follow-up: exact-head Ubuntu quality run [#41309754168](https://github.com/tbao4151/DA_CNTT/actions/runs/41309754168) failed (1 failed, 1550 passed, 2 skipped); Windows offline run [#41309753938](https://github.com/tbao4151/DA_CNTT/actions/runs/41309753938) also failed. The integration test incorrectly read `median_batch_ms` from the new variability object, although that median remains a top-level report field. Corrected only the test assertion on this same PR branch in commit `4970d5517ad84f508951717f1ed48cd72bafa844`; fresh exact-head CI **must** pass before merge. No independent laptop test.
