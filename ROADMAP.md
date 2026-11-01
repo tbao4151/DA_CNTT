@@ -1,3 +1,9 @@
+## 2026-11-02: Linux guest route-source integrity acceptance ([PR #338](https://github.com/tbao4151/DA_CNTT/pull/338); CI pending)
+
+- [ ] Verify exact-final-head Ubuntu quality and Windows offline Zeek CI, including wrong/malformed `prefsrc`, encapsulated/source-specific routes, nested next hops, non-main table marker and accepted matching IPv4/IPv6 `prefsrc`; check competing PRs and conflicts before merge.
+- [ ] On the owned Linux Zeek guest, save original `ip -j address show`, `ip -j -4 route show` and `ip -j -6 route show` privately with independently recorded SHA-256; run the pinned offline screen without altering snapshots and archive its output/exit code.
+- [ ] Independently inspect all routing tables and rules, forwarding, DNS, VMnet/NIC modes and written authorization before traffic. Continue real Host-only PCAP/Zeek evidence, independent labels and telemetry-to-SOC timing. Synthetic CI is not an isolation or live-detection certificate.
+
 ## 2026-11-02: Linux guest loopback address integrity acceptance (feature CI pending)
 
 - [ ] Require exact-head Ubuntu quality and Windows offline CI to pass the expanded Linux guest preflight tests, including valid dual-stack `lo`, non-loopback address on `lo`, duplicate entry and malformed prefix refusal; check mergeability and competing PRs before merge.
