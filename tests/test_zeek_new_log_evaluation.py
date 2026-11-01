@@ -377,3 +377,85 @@ def test_protocol_error_audit_rejects_unaligned_or_untrusted_inputs(
         summarize_protocol_error_rates(
             [{"uid": "one", "proto": "tcp"}], bad_predictions, bad_labels,
         )
+
+
+
+def test_protocol_wilson_intervals_use_correct_bucket_denominators():
+    events = [
+        {"uid": f"p-{i}", "proto": "tcp"}
+        for i in range(40)
+    ]
+    # TP=8, FP=2, TN=18, FN=12. All three denominators differ.
+    predictions = [
+        {"uid": f"p-{i}", "research_candidate": i < 10}
+        for i in range(40)
+    ]
+    labels = {f"p-{i}": int(i < 8 or i >= 28) for i in range(40)}
+    audit = summarize_protocol_error_rates(events, predictions, labels)
+    tcp = audit["buckets"]["tcp"]
+    assert tcp["confusion_matrix"] == {
+        "tp": 8, "fp": 2, "tn": 18, "fn": 12, "support": 40,
+    }
+    intervals = tcp["flow_level_wilson_intervals"]
+    assert intervals["attack_precision"]["successes"] == 8
+    assert intervals["attack_precision"]["trials"] == 10
+    assert intervals["attack_precision"]["estimate"] == 0.8
+    assert intervals["attack_recall"]["successes"] == 8
+    assert intervals["attack_recall"]["trials"] == 20
+    assert intervals["attack_recall"]["estimate"] == 0.4
+    assert intervals["false_positive_rate"]["successes"] == 2
+    assert intervals["false_positive_rate"]["trials"] == 20
+    assert intervals["false_positive_rate"]["estimate"] == 0.1
+    assert all(0 <= item["lower"] <= item["estimate"] <= item["upper"] <= 1
+               for item in intervals.values())
+    assert tcp["insufficient_flow_support"] is False
+    assert tcp["small_denominator_warning"] is True
+    assert audit["host_session_cluster_adjusted"] is False
+    assert "host/session-cluster adjusted" in audit["interpretation"]
+
+
+def test_protocol_wilson_empty_buckets_remain_null():
+    audit = summarize_protocol_error_rates(
+        [{"uid": "private", "proto": "tcp"}],
+        [{"uid": "private", "research_candidate": False}],
+        {"private": 0},
+    )
+    for name in ("udp", "icmp", "other"):
+        bucket = audit["buckets"][name]
+        assert bucket["confusion_matrix"]["support"] == 0
+        assert bucket["small_denominator_warning"] is True
+        assert all(value["estimate"] is None and value["trials"] == 0
+                   and value["lower"] is None and value["upper"] is None
+                   for value in bucket["flow_level_wilson_intervals"].values())
+    tcp = audit["buckets"]["tcp"]["flow_level_wilson_intervals"]
+    assert tcp["attack_precision"]["estimate"] is None
+    assert tcp["attack_recall"]["estimate"] is None
+    assert tcp["false_positive_rate"]["estimate"] == 0.0
+    assert json.dumps(audit, allow_nan=False)
+    assert "private" not in json.dumps(audit)
+
+
+def test_protocol_wilson_large_single_class_bucket_warns_on_denominators():
+    events = [{"uid": f"n-{i}", "proto": "udp"} for i in range(100)]
+    predictions = [{"uid": f"n-{i}", "research_candidate": False}
+                   for i in range(100)]
+    labels = {f"n-{i}": 0 for i in range(100)}
+    udp = summarize_protocol_error_rates(events, predictions, labels)["buckets"]["udp"]
+    assert udp["insufficient_flow_support"] is False
+    assert udp["small_denominator_warning"] is True
+    intervals = udp["flow_level_wilson_intervals"]
+    assert intervals["attack_precision"]["trials"] == 0
+    assert intervals["attack_recall"]["trials"] == 0
+    assert intervals["false_positive_rate"]["trials"] == 100
+    assert intervals["false_positive_rate"]["estimate"] == 0.0
+    assert 0 < intervals["false_positive_rate"]["upper"] < 1
+
+
+def test_pinned_new_log_evaluation_includes_protocol_wilson_without_raw_uids(inputs):
+    audit = _evaluate(inputs)["protocol_error_analysis"]
+    tcp = audit["buckets"]["tcp"]
+    assert tcp["flow_level_wilson_intervals"]["attack_precision"]["method"] == (
+        "wilson_score_95_percent"
+    )
+    assert "NEW1" not in json.dumps(audit)
+    assert "NEW2" not in json.dumps(audit)

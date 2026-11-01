@@ -1,5 +1,13 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+
+## 2026-11-01: Protocol-specific uncertainty with explicit denominators (feature CI pending)
+
+- [ ] Verify exact feature-head Ubuntu quality and Windows offline Zeek workflows, particularly zero-denominator nulls, fixed bucket reconciliation, 100-normal-flow single-class warning, and absence of raw identifiers. Confirm no competing PR or conflict; merge only after required checks succeed.
+- [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py` after merge. With authorized Host-only capture and independently reviewed annotations, preserve original log/PCAP, hashes, model/manifest and source/session evidence privately.
+- [ ] Interpret bucket Wilson intervals as descriptive **flow-level** intervals only; report host/session correlation and unknown label truth. Do not claim cluster-adjusted uncertainty, real-time latency, or operational attack detection. Next empirical gate remains real VMware Host-only capture through verified research candidate to analyst SOC case.
+
+
 ## 2026-11-01: Protocol-stratified NEW Zeek error analysis ([PR #327](https://github.com/tbao4151/DA_CNTT/pull/327); CI pending)
 
 - [ ] Verify exact feature-head Ubuntu quality and Windows offline Zeek CI for fixed-bucket `tcp/udp/icmp/other` TP/FP/TN/FN, undefined single-class rates, aggregate reconciliation and identifier-free JSON; confirm no conflicting PR, then merge only when required checks pass.

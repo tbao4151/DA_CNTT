@@ -1,5 +1,13 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+
+## 2026-11-01: Per-protocol descriptive Wilson uncertainty (feature branch; CI pending)
+
+- Verified PR #327 merged as `b2885a39721b2692a9157b77d275c748d8af733d`; exact-head Ubuntu #41283533856 and Windows #41283533887 passed, and post-merge main quality #41284317363 passed. No open PR when starting this slice. Feature branch `feature/zeek-protocol-wilson-intervals-20261101` from that main SHA.
+- Extended the existing four fixed NEW-log protocol buckets with **descriptive 95% Wilson intervals** for precision (TP/(TP+FP)), recall (TP/(TP+FN)) and FPR (FP/(FP+TN)); zero denominators remain null. Added a denominator-specific warning in addition to the existing bucket support warning, and synthetic regressions for aligned counts, empty buckets, single-class groups, private identifiers and the integrated evaluation. Existing Windows offline workflow already includes `tests/test_zeek_new_log_evaluation.py`.
+- No model/threshold retraining, benchmark change, network execution, SOC/SQLite mutation, or raw UID/IP/port export. **Feature-head CI pending**; no independent student Windows/VMware experiment, authenticated labels, host/session-adjusted inference, or live detection result claimed. Wilson intervals assume independent flows and may be overconfident with correlated hosts/sessions.
+
+
 ## 2026-11-01: Fixed-bucket NEW-log protocol error audit ([PR #327](https://github.com/tbao4151/DA_CNTT/pull/327); CI pending)
 
 - Based on `main` `74eae867017b2f3de7d872f73eb8d4816b063acf` after PR #326 merged; post-merge quality run #41281541682 succeeded. No open PR at branch creation. New feature branch `feature/zeek-new-log-protocol-fp-audit-20261101`.

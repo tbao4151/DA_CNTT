@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
+from .uncertainty import wilson_interval
+
 PROTOCOL_BUCKETS = ("tcp", "udp", "icmp", "other")
 MIN_INTERPRETABLE_BUCKET_SUPPORT = 30
 
@@ -76,6 +78,12 @@ def summarize_protocol_error_rates(
             "attack_precision": tp / (tp + fp) if tp + fp else None,
             "attack_recall": tp / (tp + fn) if tp + fn else None,
             "false_positive_rate": fp / (fp + tn) if fp + tn else None,
+            "flow_level_wilson_intervals": {
+                "attack_precision": wilson_interval(tp, tp + fp),
+                "attack_recall": wilson_interval(tp, tp + fn),
+                "false_positive_rate": wilson_interval(fp, fp + tn),
+            },
+            "small_denominator_warning": min(tp + fp, tp + fn, fp + tn) < MIN_INTERPRETABLE_BUCKET_SUPPORT,
             "insufficient_flow_support": support < MIN_INTERPRETABLE_BUCKET_SUPPORT,
         }
     return {
@@ -91,6 +99,8 @@ def summarize_protocol_error_rates(
             "Fixed protocol strata of a single offline capture, using supplied "
             "labels and the unchanged validation-selected threshold. Small or "
             "single-class buckets are descriptive only; no host/session-adjusted "
-            "uncertainty, operational alerts, or physical isolation is established."
+            "uncertainty, operational alerts, or physical isolation is established. "
+            "Wilson intervals treat correlated flows as independent and are "
+            "not host/session-cluster adjusted."
         ),
     }
