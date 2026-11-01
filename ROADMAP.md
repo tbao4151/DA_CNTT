@@ -1,5 +1,12 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
+## 2026-11-01: All-original offline Zeek evidence verification (feature PR, CI pending)
+
+- [ ] Verify exact-head Ubuntu quality and Windows offline CI for `feature/zeek-all-split-original-evidence-review-20261101`, inspect the synthetic tests and conflict status, then merge only after all required checks pass. The new read-only verifier compares private original TRAIN/VALIDATION/TEST captures, annotation UID/labels and SHA-256 to held-out research trace; no model training or operational alerting.
+- [ ] On the student's authorized Windows/VMware Host-only environment, preserve original PCAP/Zeek and independent labels outside Git; run `scripts/verify_zeek_original_capture_chain.py` with all original files and `--require-label-sha256` when annotations are pinned. Retain independent isolation, clock and ground-truth evidence. Passing software checks does not authenticate a real attack or live detection.
+- [x] PR #319 merged as `e9ca2b6445f4a63eef8323a9df7ce3887a2a7aca` after final-head Ubuntu #41255386562 and Windows #41255386541 succeeded; earlier red CI was fixed. Post-merge main CI not verified here.
+
+
 ## 2026-11-01: PR #319 failed CI remediation
 
 - [ ] Recheck PR #319 on its **latest commit** after fixing 11 Ubuntu / 5 Windows failures: verify both required CI workflows pass, inspect changes and mergeability, then merge only if conflict-free. Earlier red checks on `a9fdf09be1555c952bfad793e2027b49392774a8` must not be presented as passing.
