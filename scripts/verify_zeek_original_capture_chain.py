@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -15,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.labeled_dataset import SPLITS, build_labeled_lab_dataset
+from blue_team_ai.offline_baseline import evaluate_offline_zeek_baseline
 from blue_team_ai.trace_review import MAX_PRIVATE_TRACE_BYTES, review_private_zeek_trace
 from evaluate_zeek_lab import (
     _invalid_constant,
@@ -26,6 +28,7 @@ from evaluate_zeek_lab import (
 def verify_original_capture_chain(
     manifest_path: str | Path, trace_path: str | Path, *,
     require_label_sha256: bool = False,
+    recompute_model_predictions: bool = False,
 ) -> dict[str, object]:
     """Verify source bytes, split metadata, and TEST labels/UIDs, without writes.
 
@@ -34,6 +37,8 @@ def verify_original_capture_chain(
     """
     if type(require_label_sha256) is not bool:
         raise ValueError("Annotation pin requirement must be boolean")
+    if type(recompute_model_predictions) is not bool:
+        raise ValueError("Model replay requirement must be boolean")
     manifest = Path(manifest_path).resolve(strict=True)
     trace = Path(trace_path).resolve(strict=True)
     if not manifest.is_file() or not trace.is_file() or not trace.is_relative_to(manifest.parent):
@@ -102,6 +107,54 @@ def verify_original_capture_chain(
             # confusion matrix, Wilson diagnostics, and exact original UID join.
             review_private_zeek_trace(capture["log_bytes"], trace_bytes)
             verified_test_sources += 1
+    if recompute_model_predictions:
+        # This is a separate opt-in scientific reproducibility check. Fit a
+        # fresh Zeek-only model using the original TRAIN captures, select the
+        # threshold on VALIDATION, and compare held-out TEST probabilities.
+        # The standard source-consistency mode never trains a model.
+        if type(report.get("report_version")) is not int or report["report_version"] != 6:
+            raise ValueError("Model replay requires current Zeek research report v6")
+        replay = evaluate_offline_zeek_baseline(dataset, include_private_test_trace=True)
+        for field in (
+            "model", "preprocessing", "threshold_selection", "feature_schema_version",
+            "feature_columns", "selected_threshold",
+        ):
+            if report.get(field) != replay[field]:
+                raise ValueError("Private trace differs from recomputed model protocol")
+        for split in ("validation", "test"):
+            expected = replay[f"{split}_metrics"]
+            observed = report.get(f"{split}_metrics")
+            if not isinstance(observed, dict) or set(observed) != set(expected):
+                raise ValueError("Private trace differs from recomputed model metrics")
+            for name, value in expected.items():
+                current = observed[name]
+                if name in ("tp", "fp", "tn", "fn", "support"):
+                    matched = type(current) is int and current == value
+                else:
+                    matched = (
+                        type(current) in (int, float)
+                        and math.isfinite(current)
+                        and math.isclose(current, value, rel_tol=0.0, abs_tol=1e-8)
+                    )
+                if not matched:
+                    raise ValueError("Private trace differs from recomputed model metrics")
+        expected_flows = {
+            (row["source_sha256"], row["uid"]): row
+            for row in replay["private_test_trace"]["flows"]
+        }
+        if len(expected_flows) != len(rows):
+            raise ValueError("Private trace differs from recomputed model coverage")
+        for row in rows:
+            original = expected_flows.get((row["source_sha256"], row["uid"]))
+            if (
+                original is None
+                or row["predicted_attack"] is not original["predicted_attack"]
+                or not math.isclose(
+                    row["attack_probability"], original["attack_probability"],
+                    rel_tol=0.0, abs_tol=1e-8,
+                )
+            ):
+                raise ValueError("Private trace differs from recomputed model probabilities")
     return {
         "mode": "offline_all_split_original_capture_trace_review",
         "original_capture_sources_verified": len(captures),
@@ -111,6 +164,7 @@ def verify_original_capture_chain(
         "declared_split_metadata_matches_originals": True,
         "test_labels_match_original_annotations": True,
         "annotation_sha256_pins_required": require_label_sha256,
+        "model_predictions_recomputed": recompute_model_predictions,
         "capture_authenticity_verified": False,
         "independent_ground_truth_verified": False,
         "model_provenance_authenticated": False,
@@ -125,11 +179,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--trace", required=True, type=Path)
     parser.add_argument("--require-label-sha256", action="store_true")
+    parser.add_argument("--recompute-model-predictions", action="store_true",
+                        help="Opt in to refit Zeek-only research baseline and verify held-out probabilities")
     args = parser.parse_args(argv)
     try:
         result = verify_original_capture_chain(
             args.manifest, args.trace,
             require_label_sha256=args.require_label_sha256,
+            recompute_model_predictions=args.recompute_model_predictions,
         )
     except (OSError, ValueError, UnicodeError, TypeError, KeyError) as exc:
         # Never echo user-supplied paths, IPs, UIDs or labels to stdout.
