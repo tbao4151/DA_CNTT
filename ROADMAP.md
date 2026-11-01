@@ -1,6 +1,6 @@
 # DA005 — Lộ trình phát triển có thể kiểm chứng
 
-## 2026-11-01: Strict original annotation pins in NEW-log labeled evaluation (feature PR)
+## 2026-11-01: Strict original annotation pins in NEW-log labeled evaluation ([PR #326](https://github.com/tbao4151/DA_CNTT/pull/326))
 
 - [ ] Confirm exact feature-head Ubuntu quality and Windows offline Zeek CI, including `tests/test_zeek_new_log_evaluation.py`; inspect for competing PRs/conflicts and merge only after both pass.
 - [ ] On student Windows 11, record each original TRAIN/VALIDATION/TEST annotation SHA-256 independently, preserve unchanged original logs and manifest/model outside Git, then run the read-only labeled NEW-log evaluation. Reject a missing split pin or altered original label file; do not silently re-pin modified historical evidence.
