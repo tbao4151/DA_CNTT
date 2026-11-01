@@ -40,6 +40,10 @@ def _inputs():
         "input_manifest_sha256": "a" * 64,
         "feature_schema_version": 1,
         "provenance": {
+            # Synthetic metadata for the independent TRAIN and VALIDATION splits;
+            # these digests are NOT hashes of independently verified captures.
+            "train": {"flows": 2, "source_sha256": ["b" * 64], "host_groups": 1, "sessions": 1},
+            "validation": {"flows": 2, "source_sha256": ["c" * 64], "host_groups": 1, "sessions": 1},
             "test": {"flows": 2, "source_sha256": [digest], "host_groups": 1, "sessions": 1},
         },
         "selected_threshold": 0.5,
@@ -148,6 +152,19 @@ def test_inconsistent_wilson_interval_fails_closed_before_soc_write(tmp_path):
     altered = json.loads(trace)
     altered["test_detection_uncertainty"]["attack_recall"]["lower"] = 0.123456789
     with pytest.raises(ValueError, match="Wilson uncertainty mismatch"):
+        create_research_candidate_case(
+            db, source_data=raw, trace_data=json.dumps(altered).encode(),
+            record_index=1, analyst_confirmed=True,
+        )
+    assert not db.exists()
+
+
+def test_cross_split_source_reuse_refused_before_soc_write(tmp_path):
+    raw, trace = _inputs()
+    db = tmp_path / "cyber.sqlite3"
+    altered = json.loads(trace)
+    altered["provenance"]["train"]["source_sha256"] = [hashlib.sha256(raw).hexdigest()]
+    with pytest.raises(ValueError, match="Cross-split source SHA-256 reuse"):
         create_research_candidate_case(
             db, source_data=raw, trace_data=json.dumps(altered).encode(),
             record_index=1, analyst_confirmed=True,
