@@ -1,5 +1,10 @@
 # DA005 — Nhật ký tiến độ có căn cứ
 
+## 2026-11-01: PR #325 Windows UI regression gate (feature head CI pending)
+
+- Review found the new `tests/test_zeek_new_log_ui_soc.py` was not explicitly executed by the Windows offline workflow. Updated `.github/workflows/windows-offline-zeek.yml` on the **same** feature branch to run that test, and added `pages/3_New_Log_Review.py` to the workflow path filter. Commit `410e1d69ac69d3f8405477d79cdb26e8df03ffce`; prior PR-head CI is superseded by this change.
+- Await **new exact-head** Ubuntu and Windows CI, plus mergeability, before merge. This is synthetic Windows runner coverage only; no local Windows/VMware lab run or independently verified attack/label evidence.
+
 ## 2026-11-01: Optional pinned research queue binding in Blue Team UI (feature PR; CI pending)
 
 - Based on `main` merge #324 `461f29eda8a66fcf8a6fa8e9740f3ae7948b99ae` with no open PR at branch preparation; main post-merge CI #41273437717 was in progress. Scope: extend the existing manual NEW-log Streamlit SOC write boundary with an optional independently pinned research queue path, SHA-256 and selected alert reference.
