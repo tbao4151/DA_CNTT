@@ -130,8 +130,8 @@ def summarize_protocol_probability_quality(
         probability = prediction.get("attack_probability")
         if (
             type(probability) not in (int, float)
+            or not 0 <= probability <= 1
             or not math.isfinite(probability)
-            or not 0.0 <= probability <= 1.0
         ):
             raise ValueError("Expected finite Zeek attack probability in [0,1]")
         bucket = event["proto"] if event["proto"] in PROTOCOL_BUCKETS[:-1] else "other"
