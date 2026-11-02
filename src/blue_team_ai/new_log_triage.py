@@ -78,6 +78,7 @@ def create_new_log_candidate_case(
             pcap_path=offline_import_pcap_path,
             log_path=offline_import_log_path,
             lab_cidrs=lab_cidrs,
+            require_pcap_framing=True,
         )
         if (verified_import["zeek_conn_sha256"] != expected_log_sha256
                 or hashlib.sha256(source_data).hexdigest() != expected_log_sha256):
@@ -169,7 +170,8 @@ def create_new_log_candidate_case(
             "TRAIN/VALIDATION/TEST exclusion is an operator attestation only. "
         )
         + (
-            "Pinned original PCAP/import report/Zeek byte integrity and declared "
+            "Pinned original PCAP/import report/Zeek byte integrity and "
+            "classic PCAP packet framing checked (NOT packet-to-flow correlation); declared "
             f"scope rechecked: import_report_sha256={verified_import['report_sha256']}; "
             f"pcap_sha256={verified_import['pcap_sha256']}. "
             if verified_import is not None else
