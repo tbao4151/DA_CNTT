@@ -1,3 +1,9 @@
+## 2026-11-03: Required Blue offline runtime counters (feature CI pending) ([PR #360](https://github.com/tbao4151/DA_CNTT/pull/360))
+
+- [ ] Verify exact final feature-head Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS, no competing PR, and no merge conflicts before merging.
+- [ ] Regression: accept both actual CLI counter pairs, reject any omitted counter or score research-candidate count above flow count, retain duplicate/invalid stdout refusal and unchanged timing JSON contract.
+- [ ] Student Windows 11: run `py -3.12 -m pytest -q tests/test_offline_blue_runtime_summary.py` and preserve real exit codes, unedited stdout hashes, capture/model provenance outside Git. No CI synthetic run counts as student G1–G8 evidence.
+
 ## 2026-11-03: Strict Blue runtime stdout acceptance (feature CI pending) ([PR #359](https://github.com/tbao4151/DA_CNTT/pull/359))
 
 - [ ] Verify final feature-head Ubuntu quality and Windows offline Python 3.12.9 CI **SUCCESS** on the exact commit, no conflicting PR and clean mergeability before merge.

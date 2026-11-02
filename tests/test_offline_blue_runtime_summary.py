@@ -21,6 +21,7 @@ def sha(data: bytes) -> str:
 def stdout(stage: str, total: str = "6.000000") -> bytes:
     if stage == "score":
         return ("Private offline Zeek research predictions written (NOT operational alerts).\n"
+                "flow_count=12\nresearch_candidate_count=2\n"
                 f"offline_new_log_score_publish_duration_ms={total}\n"
                 "offline_new_log_score_duration_ms=3.000000\n"
                 "offline_new_log_json_serialization_duration_ms=1.000000\n"
@@ -29,6 +30,7 @@ def stdout(stage: str, total: str = "6.000000") -> bytes:
                 "offline_new_log_score_publish_boundary=score_json_atomic_publish\n"
                 "detection_latency_measured=false; preflight_capture_zeek_excluded=true\n").encode()
     return ("Private OFFLINE research alert-candidate bundle published (NOT operational alerts).\n"
+            "research_alert_candidates_exported=2\ncandidates_outside_manual_triage_window=0\n"
             f"offline_research_queue_export_duration_ms={total}\n"
             "offline_research_queue_recompute_duration_ms=3.000000\n"
             "offline_research_queue_json_serialization_duration_ms=1.000000\n"
@@ -154,7 +156,6 @@ def test_parser_accepts_actual_cli_counter_and_notice_contract(stage):
     raw = stdout(stage).decode("utf-8")
     if stage == "score":
         notices = (
-            "flow_count=12\nresearch_candidate_count=2\n"
             "Pinned declared TRAIN/VALIDATION/TEST and flow identity non-reuse screened.\n"
             "This does NOT independently verify capture history or label truth.\n"
             "Original PCAP/Zeek one-second timestamp presence checked before scoring.\n"
@@ -163,8 +164,6 @@ def test_parser_accepts_actual_cli_counter_and_notice_contract(stage):
         )
     else:
         notices = (
-            "research_alert_candidates_exported=2\n"
-            "candidates_outside_manual_triage_window=0\n"
             "No automatic SOC case, live capture, confirmed attack or operational alert.\n"
         )
     first, rest = raw.split("\n", 1)
@@ -185,6 +184,24 @@ def test_parser_rejects_unrecognized_stdout_without_partial_success(stage, unexp
         unexpected = "Private offline Zeek research predictions written (NOT operational alerts)."
     with pytest.raises(ValueError, match="Unexpected offline CLI stdout line"):
         parse_timing_stdout(stdout(stage) + (unexpected + "\n").encode(), stage)
+
+
+@pytest.mark.parametrize("stage,counter,line", [
+    ("score", "flow_count", b"flow_count=12\n"),
+    ("score", "research_candidate_count", b"research_candidate_count=2\n"),
+    ("queue", "research_alert_candidates_exported", b"research_alert_candidates_exported=2\n"),
+    ("queue", "candidates_outside_manual_triage_window", b"candidates_outside_manual_triage_window=0\n"),
+])
+def test_parser_rejects_missing_required_cli_counter(stage, counter, line):
+    assert line in stdout(stage)
+    with pytest.raises(ValueError, match="Missing required offline CLI counters"):
+        parse_timing_stdout(stdout(stage).replace(line, b""), stage)
+
+
+def test_parser_rejects_more_score_candidates_than_flows():
+    raw = stdout("score").replace(b"research_candidate_count=2", b"research_candidate_count=13")
+    with pytest.raises(ValueError, match="Research candidates exceed flow count"):
+        parse_timing_stdout(raw, "score")
 
 
 @pytest.mark.parametrize("stage,counter", [

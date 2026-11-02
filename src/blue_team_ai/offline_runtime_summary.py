@@ -102,7 +102,7 @@ _COUNTER_VALUE = re.compile(r"[0-9]{1,12}\Z")
 
 def _validate_non_timing_lines(lines: list[str], stage: str) -> None:
     """Refuse unrecognized CLI stdout, including appended failures or other stages."""
-    seen_counters: set[str] = set()
+    seen_counters: dict[str, int] = {}
     for line in lines:
         if line.startswith("offline_") or line.startswith("detection_latency_measured="):
             continue  # Strict timing-key validation is performed below.
@@ -111,9 +111,13 @@ def _validate_non_timing_lines(lines: list[str], stage: str) -> None:
         key, sep, value = line.partition("=")
         if (sep and key in _NON_TIMING_COUNTERS[stage]
                 and key not in seen_counters and _COUNTER_VALUE.fullmatch(value)):
-            seen_counters.add(key)
+            seen_counters[key] = int(value)
             continue
         raise ValueError("Unexpected offline CLI stdout line")
+    if set(seen_counters) != _NON_TIMING_COUNTERS[stage]:
+        raise ValueError("Missing required offline CLI counters")
+    if stage == "score" and seen_counters["research_candidate_count"] > seen_counters["flow_count"]:
+        raise ValueError("Research candidates exceed flow count")
 
 
 def parse_timing_stdout(raw: bytes, stage: str) -> dict[str, Decimal]:
