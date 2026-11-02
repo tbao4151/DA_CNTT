@@ -102,8 +102,8 @@ def test_current_status_does_not_equate_ci_with_vmware_evidence():
     # Require an explicit GitHub snapshot without pinning this contract to a
     # particular historical PR/commit (future reconciliations must stay possible).
     assert re.search(r"`main` tại `[0-9a-f]{40}`", current)
-    assert re.search(r"PR #\\d+", current)
-    assert len(re.findall(r"actions/runs/\\d+", current)) >= 3
+    assert re.search(r"PR #\d+", current)
+    assert len(re.findall(r"actions/runs/\d+", current)) >= 3
     assert "Ubuntu" in current and "Windows" in current
     assert "post-merge" in current and "SUCCESS" in current
     assert "CANCELLED" in current  # cancelled jobs must not be accepted as green
