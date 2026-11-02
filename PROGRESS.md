@@ -1,3 +1,9 @@
+## 2026-11-02: Optional RFC 791 checksum gate in read-only SOC verification (feature branch; CI pending)
+
+- Checked main at `b0703f71ec53cc16bed9eef5d58e30eaa024d7dd`: PR #348 merged; post-merge main Ubuntu quality [#41398442994](https://github.com/tbao4151/DA_CNTT/actions/runs/41398442994) SUCCESS. No open PR at feature start.
+- Integrated existing offline PCAP IPv4 header checksum verification into `scripts/verify_zeek_soc_case_link.py` as an explicit opt-in that requires pinned original import triplet and tuple corroboration. Added privacy-safe JSON/plain-text status, legacy-default false flags, synthetic acceptance/refusal tests and operator documentation. No change to the checksum algorithm, model, Dataset Mode, SQLite case, or original evidence.
+- **Feature-head CI pending**; no successful full-repository local pytest (container GitHub DNS unavailable). This is an RFC 791 header consistency check, not capture authenticity, Zeek packet-to-flow identity, physical VMware isolation, independent attack labels or real detection. No student laptop/VMware capture, network activity, Red Team execution or public deployment.
+
 ## 2026-11-02: Scientific acceptance matrix and status-inventory regression ([PR #348](https://github.com/tbao4151/DA_CNTT/pull/348); CI pending)
 
 - Verified `main` at `329e3243945b752ddbdc3ffa5ce6f246bea0798c`: PR #347 merged; exact-head Ubuntu [#41389724529](https://github.com/tbao4151/DA_CNTT/actions/runs/41389724529) and Windows [#41389724552](https://github.com/tbao4151/DA_CNTT/actions/runs/41389724552) SUCCESS; post-merge main quality [#41392752250](https://github.com/tbao4151/DA_CNTT/actions/runs/41392752250) SUCCESS. No open PR at feature start.
