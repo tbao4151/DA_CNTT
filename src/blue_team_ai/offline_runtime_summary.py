@@ -77,6 +77,45 @@ def _read_regular(path: Path, limit: int) -> bytes:
     return raw
 
 
+# Keep the stdout evidence contract aligned with the two CLI success paths.
+# Unknown diagnostics must not be silently discarded as if the command succeeded.
+_NON_TIMING_NOTICES = {
+    "score": frozenset({
+        "Private offline Zeek research predictions written (NOT operational alerts).",
+        "Pinned declared TRAIN/VALIDATION/TEST and flow identity non-reuse screened.",
+        "This does NOT independently verify capture history or label truth.",
+        "Original PCAP/Zeek one-second timestamp presence checked before scoring.",
+        "This is NOT proof of packet-to-flow derivation or capture authenticity.",
+        "No SOC case, network traffic, label evaluation or live detection performed.",
+    }),
+    "queue": frozenset({
+        "Private OFFLINE research alert-candidate bundle published (NOT operational alerts).",
+        "No automatic SOC case, live capture, confirmed attack or operational alert.",
+    }),
+}
+_NON_TIMING_COUNTERS = {
+    "score": frozenset({"flow_count", "research_candidate_count"}),
+    "queue": frozenset({"research_alert_candidates_exported", "candidates_outside_manual_triage_window"}),
+}
+_COUNTER_VALUE = re.compile(r"[0-9]{1,12}\\Z")
+
+
+def _validate_non_timing_lines(lines: list[str], stage: str) -> None:
+    """Refuse unrecognized CLI stdout, including appended failures or other stages."""
+    seen_counters: set[str] = set()
+    for line in lines:
+        if line.startswith("offline_") or line.startswith("detection_latency_measured="):
+            continue  # Strict timing-key validation is performed below.
+        if line in _NON_TIMING_NOTICES[stage]:
+            continue
+        key, sep, value = line.partition("=")
+        if (sep and key in _NON_TIMING_COUNTERS[stage]
+                and key not in seen_counters and _COUNTER_VALUE.fullmatch(value)):
+            seen_counters.add(key)
+            continue
+        raise ValueError("Unexpected offline CLI stdout line")
+
+
 def parse_timing_stdout(raw: bytes, stage: str) -> dict[str, Decimal]:
     """Require all expected successful CLI markers and consistent phase sums."""
     if stage not in _STAGES:
@@ -86,6 +125,7 @@ def parse_timing_stdout(raw: bytes, stage: str) -> dict[str, Decimal]:
     except UnicodeError as exc:
         raise ValueError("Non-UTF8 timing input") from exc
     spec = _STAGES[stage]
+    _validate_non_timing_lines(lines, stage)
     if lines.count(spec["success"]) != 1 or lines.count(spec["disclaimer"]) != 1:
         raise ValueError("Missing successful offline boundary")
     expected = {spec[key] for key in ("total", "compute", "serialization", "publication")}
