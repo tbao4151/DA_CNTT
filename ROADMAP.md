@@ -1,3 +1,10 @@
+## 2026-11-02: NEW-log SOC idempotency evidence-consistency acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact feature head; check open PRs, mergeability and conflicts before merging.
+- [ ] Confirm repeated NEW-log selection with unchanged pinned evidence reuses exactly one Unclassified case; changed model/report evidence or modified initial audit refuses reuse without creating a second case. Preserve legacy held-out/manual case behavior and existing SQLite data.
+- [ ] On Windows 11 Python 3.12.9, run `py -3.12 -m pytest -q tests/test_zeek_new_log_triage.py tests/test_zeek_research_triage.py tests/test_zeek_manual_triage.py` after merge; keep original evidence private.
+- [ ] Complete authorized VMware Host-only G1–G8 evidence independently; synthetic CI cannot prove isolation, live detection, authentic labels or packet-to-SOC latency.
+
 ## 2026-11-02: Current acceptance checkpoint after PR #350
 
 - [x] [PR #350](https://github.com/tbao4151/DA_CNTT/pull/350) merged at `b664431d1a8bcc9bc67b525a925969de2c988204` after final-head Ubuntu [#41413131352](https://github.com/tbao4151/DA_CNTT/actions/runs/41413131352) and Windows [#41413131364](https://github.com/tbao4151/DA_CNTT/actions/runs/41413131364) **SUCCESS**; main post-merge quality [#41415135255](https://github.com/tbao4151/DA_CNTT/actions/runs/41415135255) **SUCCESS**. Earlier timeout-cancelled run #41409210711 is not accepted as green.
