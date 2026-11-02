@@ -25,7 +25,21 @@ def _sha(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def _prepare(tmp_path: Path, *, matching_pcap: bool = False, timestamp_offset: int = 0):
+
+def _with_valid_ipv4_header_checksum(frame: bytes) -> bytes:
+    """Synthetic checksum only; does not establish PCAP capture authenticity."""
+    raw = bytearray(frame)
+    ihl = (raw[14] & 0x0F) * 4
+    raw[24:26] = b"\x00\x00"
+    total = sum(int.from_bytes(raw[i:i + 2], "big") for i in range(14, 14 + ihl, 2))
+    while total >> 16:
+        total = (total & 0xFFFF) + (total >> 16)
+    struct.pack_into("!H", raw, 24, (~total) & 0xFFFF)
+    return bytes(raw)
+
+
+def _prepare(tmp_path: Path, *, matching_pcap: bool = False, timestamp_offset: int = 0,
+             valid_ipv4_checksum: bool = False):
     triage, bundle, db, selected = _pinned_manual_handoff(tmp_path)
     log = Path(triage[triage.index("--log") + 1])
     log_bytes = log.read_bytes()
@@ -55,6 +69,8 @@ def _prepare(tmp_path: Path, *, matching_pcap: bool = False, timestamp_offset: i
                 sport=event["src_port"], dport=event["dst_port"],
                 proto=6 if event["proto"] == "tcp" else 17,
             )
+            if valid_ipv4_checksum:
+                packet = _with_valid_ipv4_header_checksum(packet)
             stamp = datetime.fromisoformat(event["event_time_utc"]).timestamp()
             seconds = int(stamp) + timestamp_offset
             micros = round((stamp - int(stamp)) * 1_000_000)
@@ -307,3 +323,76 @@ def test_soc_readonly_distinct_packet_flag_fails_closed_without_dependencies(tmp
     assert refused.returncode == 1
     assert refused.stdout == ""
     assert db.read_bytes() == before
+
+
+def test_soc_readonly_opt_in_ipv4_checksum_rechecks_pinned_originals(tmp_path):
+    verify, provenance, db, pcap, import_report = _prepare(
+        tmp_path, matching_pcap=True, valid_ipv4_checksum=True,
+    )
+    originals = {path: path.read_bytes() for path in (db, pcap, import_report)}
+    legacy = _run(verify + provenance + [
+        "--require-pcap-zeek-tuples", "--timing-json",
+    ])
+    assert legacy.returncode == 0, legacy.stderr
+    old = json.loads(legacy.stdout)
+    assert old["pcap_ipv4_header_checksum_required"] is False
+    assert old["pcap_ipv4_header_checksum_verified"] is False
+
+    strict = _run(verify + provenance + [
+        "--require-pcap-zeek-tuples", "--require-pcap-zeek-timestamps",
+        "--require-distinct-pcap-packets", "--require-pcap-ipv4-header-checksum",
+        "--timing-json",
+    ])
+    assert strict.returncode == 0, strict.stderr
+    report = json.loads(strict.stdout)
+    assert report["pcap_ipv4_header_checksum_required"] is True
+    assert report["pcap_ipv4_header_checksum_verified"] is True
+    assert report["pcap_zeek_matched_flow_count"] == 2
+    assert report["distinct_pcap_packets_corroborated"] is True
+    assert report["physical_host_only_isolation_verified"] is False
+    assert report["packet_to_flow_identity_verified"] is False
+    plain = _run(verify + provenance + [
+        "--require-pcap-zeek-tuples", "--require-pcap-ipv4-header-checksum",
+    ])
+    assert plain.returncode == 0, plain.stderr
+    assert "offline_pcap_ipv4_header_checksum_verified=true" in plain.stdout
+    assert all(path.read_bytes() == raw for path, raw in originals.items())
+
+
+def test_soc_readonly_ipv4_checksum_requires_tuple_and_full_provenance(tmp_path):
+    verify, provenance, db, pcap, import_report = _prepare(
+        tmp_path, matching_pcap=True, valid_ipv4_checksum=True,
+    )
+    before = db.read_bytes()
+    for flags in (
+        ["--require-pcap-ipv4-header-checksum"],
+        provenance + ["--require-pcap-ipv4-header-checksum"],
+        ["--require-pcap-zeek-tuples", "--require-pcap-ipv4-header-checksum"],
+    ):
+        refused = _run(verify + flags)
+        assert refused.returncode == 1
+        assert refused.stdout == ""
+        assert "verification refused" in refused.stderr
+        assert str(tmp_path) not in refused.stderr
+    assert db.read_bytes() == before
+
+
+def test_soc_readonly_ipv4_checksum_refuses_repinned_zero_checksum(tmp_path):
+    # This fixture is independently pinned but intentionally has a zero IPv4
+    # checksum. A valid SHA-256 and matching five-tuple must not bypass the
+    # optional RFC 791 header check.
+    verify, provenance, db, pcap, import_report = _prepare(
+        tmp_path, matching_pcap=True,
+    )
+    before = {path: path.read_bytes() for path in (db, pcap, import_report)}
+    tuples = _run(verify + provenance + ["--require-pcap-zeek-tuples"])
+    assert tuples.returncode == 0, tuples.stderr
+    refused = _run(verify + provenance + [
+        "--require-pcap-zeek-tuples", "--require-pcap-ipv4-header-checksum",
+        "--timing-json",
+    ])
+    assert refused.returncode == 1
+    assert refused.stdout == ""
+    assert "verification refused" in refused.stderr
+    assert str(tmp_path) not in refused.stderr
+    assert all(path.read_bytes() == raw for path, raw in before.items())
