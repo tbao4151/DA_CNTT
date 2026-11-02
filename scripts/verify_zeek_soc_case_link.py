@@ -46,6 +46,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--offline-import-report", type=Path)
     parser.add_argument("--expected-offline-import-report-sha256")
     parser.add_argument("--offline-import-pcap", type=Path)
+    parser.add_argument(
+        "--require-pcap-framing", action="store_true",
+        help="Opt-in bounded classic-PCAP packet framing recheck; requires all three offline import options",
+    )
     parser.add_argument("--research-alert-bundle", type=Path,
                         help="Optional original private research candidate queue")
     parser.add_argument("--expected-research-alert-bundle-sha256",
@@ -93,6 +97,8 @@ def main(argv: list[str] | None = None) -> int:
             args.offline_import_pcap,
         )
         imported = None
+        if args.require_pcap_framing and not all(value is not None for value in import_options):
+            raise ValueError("PCAP framing recheck requires all three pinned import options")
         if any(value is not None for value in import_options):
             if not all(value is not None for value in import_options):
                 raise ValueError("PCAP provenance options must be provided together")
@@ -104,6 +110,7 @@ def main(argv: list[str] | None = None) -> int:
                 import_report,
                 expected_report_sha256=args.expected_offline_import_report_sha256,
                 pcap_path=import_pcap, log_path=log_path, lab_cidrs=args.cidr,
+                require_pcap_framing=args.require_pcap_framing,
             )
             if imported["zeek_conn_sha256"] != args.expected_log_sha256:
                 raise ValueError("PCAP import does not match independently pinned log")
@@ -213,6 +220,13 @@ def main(argv: list[str] | None = None) -> int:
                 "excludes CLI startup, argument parsing and JSON stdout serialization."
             ),
             "original_evidence_consistency_verified": True,
+            "pcap_framing_required": args.require_pcap_framing,
+            "pcap_framing_verified": (
+                imported["pcap_framing_verified"] if imported is not None else False
+            ),
+            "pcap_packet_count": (
+                imported["pcap_packet_count"] if imported is not None else None
+            ),
             "sqlite_read_only": True,
             "pinned_research_queue_reverified": bundle_path is not None,
             "pinned_research_queue_creation_audit_verified": (
@@ -238,6 +252,8 @@ def main(argv: list[str] | None = None) -> int:
     print("pinned_declared_partitions_screened=true (not complete historical proof)")
     if all(value is not None for value in import_options):
         print("offline_pcap_import_reverified=true (bytes and declared scope only)")
+    if args.require_pcap_framing:
+        print("offline_pcap_packet_framing_reverified=true (NOT packet-to-Zeek correlation)")
     if bundle_path is not None:
         print("pinned_research_queue_reverified=true (candidate selection and creation audit)")
     print("sqlite_read_only=true; stored_snapshot_and_initial_audit_match=true")

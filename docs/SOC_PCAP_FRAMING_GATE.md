@@ -39,3 +39,37 @@ isolation, independently assigned labels, or attack detection. The separate
 manual VMware review remain independent gates. The Zeek model is separate
 from the 42-feature UNSW-NB15 model. No network capture, Red Team execution,
 automatic alert or public deployment is introduced by this change.
+
+## Optional read-only SOC case-link framing recheck (02/11/2026)
+
+After an analyst has created an **Unclassified** research case with pinned
+PCAP provenance, the separate `scripts/verify_zeek_soc_case_link.py` CLI
+can now opt into re-reading and checking **classic-PCAP packet framing** at
+verification time. Supply the same three `--offline-import-*` arguments
+as at case creation, together with the existing model, log, report, manifest,
+case ID and independent hashes. Append:
+
+```powershell
+  --require-pcap-framing --timing-json
+```
+
+This opt-in flag **refuses** unless the complete import provenance triplet
+is present. It rechecks bounded original PCAP packet framing in addition to
+the pre-existing import hashes/scope and the read-only SQLite case/audit
+link. The timing JSON explicitly distinguishes `pcap_framing_required`,
+`pcap_framing_verified` and `pcap_packet_count`; the default legacy
+invocation retains `false/false/null` for these fields. The plain-text
+success message states `offline_pcap_packet_framing_reverified=true` only
+after a successful strict check.
+
+This does **not** establish that the packet bytes are decodable Ethernet,
+correspond to the Zeek tuples, or were captured from an isolated VM. It does
+not change or create SOC cases and does not authenticate old audit notes.
+A prior success must not replace a fresh read-only check when the evidence
+could have changed. Keep the original files and SHA-256 pins private.
+
+Synthetic regression (Windows CI and Ubuntu CI, not a laptop experiment):
+
+```powershell
+py -3.12 -m pytest -q tests/test_zeek_soc_readonly_pcap_framing.py
+```
