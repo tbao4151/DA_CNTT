@@ -6,7 +6,7 @@
 
 Mốc mã nguồn đối chiếu mới: `main` tại `329e3243945b752ddbdc3ffa5ce6f246bea0798c` sau khi [PR #347](https://github.com/tbao4151/DA_CNTT/pull/347) được hợp nhất. Ubuntu quality [#41389724529](https://github.com/tbao4151/DA_CNTT/actions/runs/41389724529) và Windows offline [#41389724552](https://github.com/tbao4151/DA_CNTT/actions/runs/41389724552) đều **SUCCESS** trên đúng feature head `d5bf02d4394f0e0c345f707d1cd21ed9f5470321`; post-merge main quality [#41392752250](https://github.com/tbao4151/DA_CNTT/actions/runs/41392752250) **SUCCESS**. Đây là bằng chứng CI phần mềm, **không** phải phiên thử nghiệm VMware/Windows của sinh viên.
 
-Các thay đổi sau mốc lịch sử PR #330 bao gồm bộ kiểm tra cấu hình Linux guest ngoại tuyến, PCAP framing, kiểm chứng read-only tuple/timestamp và tùy chọn yêu cầu packet riêng biệt khi đối chiếu SOC case. Chúng **không** biến dữ liệu replay/synthetic thành live, không xác thực nguồn PCAP, không chứng minh Zeek sinh đúng flow từ packet, không tự động tạo operational alert. Tài liệu dưới đây phân biệt rõ chức năng phần mềm đã có với bằng chứng khoa học còn thiếu.
+Các thay đổi sau mốc lịch sử PR #330 bao gồm bộ kiểm tra cấu hình Linux guest ngoại tuyến, PCAP framing, kiểm chứng read-only tuple/timestamp và tùy chọn yêu cầu packet riêng biệt khi đối chiếu SOC case. Chúng **không** biến dữ liệu replay/synthetic thành live, không xác thực nguồn PCAP, không chứng minh Zeek sinh đúng flow từ packet (packet-to-flow identity), không tự động tạo operational alert. Tài liệu dưới đây phân biệt rõ chức năng phần mềm đã có với bằng chứng khoa học còn thiếu.
 
 ## Ma trận cổng nghiệm thu khoa học (trạng thái tại 02/11/2026)
 
