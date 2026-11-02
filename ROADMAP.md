@@ -1,3 +1,10 @@
+## 2026-11-02: Offline NEW-log class-balance diagnostics acceptance ([PR #355](https://github.com/tbao4151/DA_CNTT/pull/355); feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS on the exact final feature head; check competing PRs and merge conflicts before merge.
+- [ ] Confirm balanced accuracy/MCC are derived solely from fixed confusion counts, both constant baselines are reported, single-class/constant-prediction undefined denominators are JSON null, and no private identifiers or SOC writes are introduced.
+- [ ] On student Windows 11 after merge run `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`; preserve the actual Python version, exit code, and private evidence separately.
+- [ ] Complete G1–G8 with independently approved VMware Host-only PCAP/Zeek originals, independently reviewed labels and host/session holdout; synthetic class-balance metrics do not establish attack truth or operational detection.
+
 ## 2026-11-02: Strict NEW-log SOC duplicate-key JSON evidence acceptance (feature CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS on the exact final feature head; check competing PRs and merge conflicts before merge. Isolated JSON parser checks are not a substitute for full repository CI.

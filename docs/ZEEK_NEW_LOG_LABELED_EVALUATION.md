@@ -50,6 +50,25 @@ scope, exact-byte TRAIN/VALIDATION/TEST reuse, and conservative normalized
 UID/time/five-tuple overlap with the original declared captures. The original
 manifest and all its captures/annotations must be available.
 
+## Class-imbalance diagnostics (offline, additive)
+
+The read-only evaluation now includes `class_balance_diagnostics` for the
+fixed Zeek research predictions and both predeclared always-Normal / always-Attack
+references. It reports attack recall, Normal-class recall (specificity),
+**balanced accuracy** (mean of the two recalls), and **Matthews correlation
+coefficient (MCC)**, together with four explicit class/prediction denominators.
+When either observed class is absent, balanced accuracy is JSON null. MCC is
+JSON null if any of its four denominator factors is zero (including constant
+predictions); it is **not** silently replaced by zero. Both fixed constant
+references have balanced accuracy 0.5 only when both observed classes exist.
+
+These are descriptive **network-flow-level** quantities computed from the same
+operator-supplied labels and fixed predictions. They do not establish authentic
+attack truth, independent host/session holdout, operational alert quality, or
+statistical significance. They must not be used to choose a threshold or model
+on the NEW capture. The original UNSW-NB15 Dataset Mode benchmark is unchanged.
+Regression: `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`.
+
 ## Scientific limits
 
 The labels are operator supplied, not authenticated by the software. The

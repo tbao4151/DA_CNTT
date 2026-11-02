@@ -564,3 +564,66 @@ def test_protocol_probability_quality_integrates_with_pinned_new_log(inputs):
     assert "NEW1" not in serialized
     assert "NEW2" not in serialized
     assert "192.168.56." not in serialized
+
+
+# Synthetic-only class-balance diagnostics. No independent labels or VMware capture.
+from blue_team_ai.class_balance_metrics import summarize_class_balance
+
+
+def test_class_balance_mixed_counts_and_undefined_denominators():
+    mixed = summarize_class_balance({"tp": 8, "fp": 2, "tn": 18, "fn": 12, "support": 40})
+    assert mixed["attack_recall"] == pytest.approx(0.4)
+    assert mixed["normal_recall_specificity"] == pytest.approx(0.9)
+    assert mixed["balanced_accuracy"] == pytest.approx(0.65)
+    assert mixed["matthews_correlation_coefficient"] == pytest.approx(0.34641016151377546)
+    assert mixed["operator_labeled_attack_support"] == 20
+    assert mixed["operator_labeled_normal_support"] == 20
+    assert mixed["independent_ground_truth_verified"] is False
+
+    for counts in (
+        {"tp": 0, "fp": 0, "tn": 3, "fn": 0, "support": 3},
+        {"tp": 2, "fp": 0, "tn": 0, "fn": 0, "support": 2},
+    ):
+        undefined = summarize_class_balance(counts)
+        assert undefined["balanced_accuracy"] is None
+        assert undefined["matthews_correlation_coefficient"] is None
+        json.dumps(undefined, allow_nan=False)
+
+    always_normal = summarize_class_balance(
+        {"tp": 0, "fp": 0, "tn": 3, "fn": 2, "support": 5}
+    )
+    assert always_normal["balanced_accuracy"] == 0.5
+    assert always_normal["matthews_correlation_coefficient"] is None
+    assert summarize_class_balance(
+        {"tp": 2, "fp": 0, "tn": 3, "fn": 0, "support": 5}
+    )["matthews_correlation_coefficient"] == pytest.approx(1.0)
+    assert summarize_class_balance(
+        {"tp": 0, "fp": 3, "tn": 0, "fn": 2, "support": 5}
+    )["matthews_correlation_coefficient"] == pytest.approx(-1.0)
+
+
+@pytest.mark.parametrize("invalid", [
+    {"tp": True, "fp": 0, "tn": 0, "fn": 0, "support": 1},
+    {"tp": -1, "fp": 1, "tn": 0, "fn": 0, "support": 0},
+    {"tp": 1, "fp": 0, "tn": 0, "fn": 0, "support": 2},
+    {"tp": 0, "fp": 0, "tn": 0, "fn": 0, "support": 0},
+    {"tp": 1, "fp": 0, "tn": 0, "fn": 0},
+])
+def test_class_balance_rejects_inconsistent_confusion_counts(invalid):
+    with pytest.raises(ValueError):
+        summarize_class_balance(invalid)
+
+
+def test_new_log_class_balance_is_derived_only_from_fixed_confusion(inputs):
+    result = _evaluate(inputs)
+    observed = result["confusion_matrix"]
+    assert result["class_balance_diagnostics"] == summarize_class_balance(observed)
+    for key in ("fixed_always_normal_reference", "fixed_always_attack_reference"):
+        reference = result[key]
+        diagnostics = reference["class_balance_diagnostics"]
+        assert diagnostics == summarize_class_balance(reference["confusion_matrix"])
+        assert diagnostics["matthews_correlation_coefficient"] is None
+        assert diagnostics["balanced_accuracy"] == pytest.approx(0.5)
+    serialized = json.dumps(result["class_balance_diagnostics"], allow_nan=False)
+    assert "NEW1" not in serialized and "192.168.56." not in serialized
+    assert result["class_balance_diagnostics"]["independent_ground_truth_verified"] is False
