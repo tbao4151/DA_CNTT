@@ -1,4 +1,4 @@
-## 2026-11-03: Require complete Blue offline runtime counters (feature; CI pending)
+## 2026-11-03: Require complete Blue offline runtime counters (feature; CI pending) ([PR #360](https://github.com/tbao4151/DA_CNTT/pull/360))
 
 - Verified `main` at `0537e9426e78d16bf991519e3585a26756082b18`; [PR #359](https://github.com/tbao4151/DA_CNTT/pull/359) merged. Its exact-head Ubuntu [#41493046383](https://github.com/tbao4151/DA_CNTT/actions/runs/41493046383) and Windows [#41493046384](https://github.com/tbao4151/DA_CNTT/actions/runs/41493046384) were SUCCESS; post-merge main quality [#41497814815](https://github.com/tbao4151/DA_CNTT/actions/runs/41497814815) was SUCCESS. No open PR before branch creation.
 - The paired read-only runtime summary now refuses score/queue stdout missing either documented counter and score candidate counts greater than flow counts. Synthetic tests cover omitted counters and impossible counts while retaining the CLI timing/output contract. Feature-head CI and student Windows/VMware experiments are not yet verified at authoring.
