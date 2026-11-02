@@ -1,3 +1,9 @@
+## 2026-11-02: Read-only SOC PCAP/Zeek tuple corroboration acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline Zeek CI SUCCESS on exact feature head, confirm no competing PR/conflict before merge.
+- [ ] On Windows 11 Python 3.12.9, run `py -3.12 -m pytest -q tests/test_zeek_soc_readonly_pcap_framing.py` after merge. Privately preserve original PCAP/conn.log/import-report SHA-256 and existing SOC case; optionally run read-only `verify_zeek_soc_case_link.py` with complete pinned import triplet and `--require-pcap-zeek-tuples --require-pcap-zeek-timestamps --timing-json`.
+- [ ] Separately verify VMware Host-only isolation, authorization, packet-to-flow limitations, independently reviewed attack labels, host/session holdout, and actual event-to-alert/SOC timing. A tuple/timestamp PASS is not capture authenticity or real detection.
+
 ## 2026-11-02: PR #345 read-only PCAP SOC verifier CI repair gate
 
 - [ ] Confirm Ubuntu quality and Windows offline CI pass on the **final** PR #345 head after canonical `conn.log` synthetic fixture repair; earlier runs #41376231512 and #41376231480 failed and do not count as acceptance.
