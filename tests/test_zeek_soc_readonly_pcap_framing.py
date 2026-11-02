@@ -9,20 +9,23 @@ import json
 import sqlite3
 import struct
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from test_zeek_research_alert_bundle import _pinned_manual_handoff, _run
+from test_pcap_zeek_tuple import pcap_packet
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from blue_team_ai.lab_scope import inspect_zeek_lab_scope
+from blue_team_ai.zeek import parse_zeek_conn_log
 
 
 def _sha(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def _prepare(tmp_path: Path):
+def _prepare(tmp_path: Path, *, matching_pcap: bool = False, timestamp_offset: int = 0):
     triage, bundle, db, selected = _pinned_manual_handoff(tmp_path)
     log = Path(triage[triage.index("--log") + 1])
     log_bytes = log.read_bytes()
@@ -39,11 +42,30 @@ def _prepare(tmp_path: Path):
 
     # A structurally framed synthetic packet; intentionally NOT a Zeek tuple.
     pcap = tmp_path / "original.pcap"
-    raw = (
-        bytes.fromhex("d4c3b2a1")
-        + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
-        + struct.pack("<IIII", 100, 123, 4, 4) + b"test"
+    header = bytes.fromhex("d4c3b2a1") + struct.pack(
+        "<HHIIII", 2, 4, 0, 0, 65535, 1,
     )
+    if matching_pcap:
+        # Construct packet headers from the two synthetic Zeek rows; the
+        # bytes are fixtures, not a capture or evidence Zeek generated them.
+        records = []
+        for event in parse_zeek_conn_log(log_bytes):
+            packet = pcap_packet(
+                src=event["src_ip"], dst=event["dst_ip"],
+                sport=event["src_port"], dport=event["dst_port"],
+                proto=6 if event["proto"] == "tcp" else 17,
+            )
+            stamp = datetime.fromisoformat(event["event_time_utc"]).timestamp()
+            seconds = int(stamp) + timestamp_offset
+            micros = round((stamp - int(stamp)) * 1_000_000)
+            records.append(
+                struct.pack("<IIII", seconds, micros, len(packet), len(packet))
+                + packet
+            )
+        raw = header + b"".join(records)
+    else:
+        # Valid framing, deliberately NOT an Ethernet/Zeek tuple match.
+        raw = header + struct.pack("<IIII", 100, 123, 4, 4) + b"test"
     pcap.write_bytes(raw)
     import_report = log.parent / "offline_import_report.json"
     report = {
@@ -148,4 +170,85 @@ def test_strict_soc_readonly_rejects_repinned_header_only_pcap(tmp_path):
     assert refused.stdout == ""
     assert "verification refused" in refused.stderr
     assert str(tmp_path) not in refused.stderr
+    assert db.read_bytes() == before
+
+
+def test_soc_readonly_opt_in_tuple_and_timestamp_corroboration(tmp_path):
+    verify, provenance, db, pcap, import_report = _prepare(
+        tmp_path, matching_pcap=True,
+    )
+    before = {p: p.read_bytes() for p in (db, pcap, import_report)}
+    legacy = _run(verify + provenance + ["--timing-json"])
+    assert legacy.returncode == 0, legacy.stderr
+    old = json.loads(legacy.stdout)
+    assert old["pcap_zeek_tuples_required"] is False
+    assert old["pcap_zeek_tuples_corroborated"] is False
+    assert old["pcap_zeek_matched_flow_count"] is None
+
+    strict = _run(verify + provenance + [
+        "--require-pcap-zeek-tuples", "--require-pcap-zeek-timestamps", "--timing-json",
+    ])
+    assert strict.returncode == 0, strict.stderr
+    report = json.loads(strict.stdout)
+    assert report["pcap_framing_verified"] is True
+    assert report["pcap_packet_count"] == 2
+    assert report["pcap_zeek_tuples_corroborated"] is True
+    assert report["pcap_zeek_timestamps_corroborated"] is True
+    assert report["pcap_zeek_matched_flow_count"] == 2
+    assert report["packet_to_flow_identity_verified"] is False
+    assert report["attack_ground_truth_verified"] is False
+    assert report["event_to_soc_case_latency_measured"] is False
+    plain = _run(verify + provenance + [
+        "--require-pcap-zeek-tuples", "--require-pcap-zeek-timestamps",
+    ])
+    assert plain.returncode == 0, plain.stderr
+    assert "NOT packet-to-flow identity" in plain.stdout
+    assert "within 1 second only" in plain.stdout
+    assert all(path.read_bytes() == data for path, data in before.items())
+
+
+def test_soc_readonly_tuple_gate_refuses_framed_but_unrelated_packet(tmp_path):
+    verify, provenance, db, pcap, import_report = _prepare(tmp_path)
+    before = db.read_bytes()
+    framing = _run(verify + provenance + ["--require-pcap-framing"])
+    assert framing.returncode == 0, framing.stderr
+    refused = _run(verify + provenance + ["--require-pcap-zeek-tuples"])
+    assert refused.returncode == 1
+    assert refused.stdout == ""
+    assert "verification refused" in refused.stderr
+    assert str(tmp_path) not in refused.stderr
+    assert db.read_bytes() == before
+
+
+def test_soc_readonly_timestamp_gate_rejects_distant_matching_tuples(tmp_path):
+    verify, provenance, db, pcap, import_report = _prepare(
+        tmp_path, matching_pcap=True, timestamp_offset=10,
+    )
+    before = db.read_bytes()
+    tuples = _run(verify + provenance + ["--require-pcap-zeek-tuples"])
+    assert tuples.returncode == 0, tuples.stderr
+    refused = _run(verify + provenance + [
+        "--require-pcap-zeek-tuples", "--require-pcap-zeek-timestamps",
+    ])
+    assert refused.returncode == 1
+    assert refused.stdout == ""
+    assert "verification refused" in refused.stderr
+    assert db.read_bytes() == before
+
+
+def test_soc_readonly_tuple_flags_require_complete_provenance(tmp_path):
+    verify, provenance, db, pcap, import_report = _prepare(
+        tmp_path, matching_pcap=True,
+    )
+    before = db.read_bytes()
+    for options in (
+        ["--require-pcap-zeek-tuples"],
+        provenance[:4] + ["--require-pcap-zeek-tuples"],
+        provenance + ["--require-pcap-zeek-timestamps"],
+    ):
+        refused = _run(verify + options)
+        assert refused.returncode == 1
+        assert refused.stdout == ""
+        assert "verification refused" in refused.stderr
+        assert str(tmp_path) not in refused.stderr
     assert db.read_bytes() == before

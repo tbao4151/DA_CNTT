@@ -18,6 +18,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.labeled_dataset import build_labeled_lab_dataset
 from blue_team_ai.offline_pcap_verify import verify_offline_pcap_import
+from blue_team_ai.pcap_structure import MAX_CLASSIC_PCAP_BYTES
+from blue_team_ai.pcap_zeek_tuple import corroborate_pcap_zeek_tuples
 from blue_team_ai.partition_guard import verify_declared_partition_exclusion
 from blue_team_ai.research_alerts import (
     MAX_RESEARCH_ALERT_BUNDLE_BYTES, verify_pinned_research_alert_selection,
@@ -28,6 +30,7 @@ from blue_team_ai.new_log_review import MAX_NEW_LOG_REPORT_BYTES
 from blue_team_ai.zeek import MAX_LOG_BYTES
 from evaluate_zeek_lab import MAX_MANIFEST_BYTES, load_experiment_manifest
 from triage_zeek_new_log import _private_file, _read_bounded
+from verify_pcap_zeek_tuple import _pinned_private_bytes
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -49,6 +52,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--require-pcap-framing", action="store_true",
         help="Opt-in bounded classic-PCAP packet framing recheck; requires all three offline import options",
+    )
+    parser.add_argument(
+        "--require-pcap-zeek-tuples", action="store_true",
+        help="Opt-in: corroborate every IPv4 TCP/UDP Zeek tuple against pinned Ethernet PCAP",
+    )
+    parser.add_argument(
+        "--require-pcap-zeek-timestamps", action="store_true",
+        help="Requires tuple gate; corroborate flow starts within one second of matching packets",
     )
     parser.add_argument("--research-alert-bundle", type=Path,
                         help="Optional original private research candidate queue")
@@ -97,8 +108,12 @@ def main(argv: list[str] | None = None) -> int:
             args.offline_import_pcap,
         )
         imported = None
-        if args.require_pcap_framing and not all(value is not None for value in import_options):
-            raise ValueError("PCAP framing recheck requires all three pinned import options")
+        tuple_report = None
+        if args.require_pcap_zeek_timestamps and not args.require_pcap_zeek_tuples:
+            raise ValueError("PCAP/Zeek timestamp check requires tuple corroboration")
+        if ((args.require_pcap_framing or args.require_pcap_zeek_tuples)
+                and not all(value is not None for value in import_options)):
+            raise ValueError("Strict PCAP checks require all three pinned import options")
         if any(value is not None for value in import_options):
             if not all(value is not None for value in import_options):
                 raise ValueError("PCAP provenance options must be provided together")
@@ -114,6 +129,21 @@ def main(argv: list[str] | None = None) -> int:
             )
             if imported["zeek_conn_sha256"] != args.expected_log_sha256:
                 raise ValueError("PCAP import does not match independently pinned log")
+            if args.require_pcap_zeek_tuples:
+                # Re-read the bounded originals against their independently
+                # checked import hashes; this is presence, never flow identity.
+                pcap_bytes = _pinned_private_bytes(
+                    import_pcap, imported["pcap_sha256"], limit=MAX_CLASSIC_PCAP_BYTES,
+                )
+                zeek_bytes = _pinned_private_bytes(
+                    log_path, args.expected_log_sha256, limit=MAX_LOG_BYTES,
+                )
+                tuple_report = corroborate_pcap_zeek_tuples(
+                    pcap_bytes, zeek_bytes,
+                    require_timestamp_corroboration=args.require_pcap_zeek_timestamps,
+                )
+                if tuple_report["matched_zeek_flow_count"] != imported["flow_count"]:
+                    raise ValueError("PCAP/Zeek tuple count differs from pinned import")
 
         stage_ns["private_input_and_optional_pcap_preflight"] = (
             time.perf_counter_ns() - stage_started_ns
@@ -220,13 +250,27 @@ def main(argv: list[str] | None = None) -> int:
                 "excludes CLI startup, argument parsing and JSON stdout serialization."
             ),
             "original_evidence_consistency_verified": True,
-            "pcap_framing_required": args.require_pcap_framing,
+            "pcap_framing_required": (
+                args.require_pcap_framing or args.require_pcap_zeek_tuples
+            ),
             "pcap_framing_verified": (
-                imported["pcap_framing_verified"] if imported is not None else False
+                (imported is not None and imported["pcap_framing_verified"])
+                or tuple_report is not None
             ),
             "pcap_packet_count": (
-                imported["pcap_packet_count"] if imported is not None else None
+                tuple_report["pcap_packet_count"] if tuple_report is not None
+                else imported["pcap_packet_count"] if imported is not None else None
             ),
+            "pcap_zeek_tuples_required": args.require_pcap_zeek_tuples,
+            "pcap_zeek_tuples_corroborated": tuple_report is not None,
+            "pcap_zeek_timestamps_required": args.require_pcap_zeek_timestamps,
+            "pcap_zeek_timestamps_corroborated": (
+                tuple_report is not None and tuple_report["timestamps_correlated"]
+            ),
+            "pcap_zeek_matched_flow_count": (
+                tuple_report["matched_zeek_flow_count"] if tuple_report else None
+            ),
+            "packet_to_flow_identity_verified": False,
             "sqlite_read_only": True,
             "pinned_research_queue_reverified": bundle_path is not None,
             "pinned_research_queue_creation_audit_verified": (
@@ -254,6 +298,10 @@ def main(argv: list[str] | None = None) -> int:
         print("offline_pcap_import_reverified=true (bytes and declared scope only)")
     if args.require_pcap_framing:
         print("offline_pcap_packet_framing_reverified=true (NOT packet-to-Zeek correlation)")
+    if args.require_pcap_zeek_tuples:
+        print("offline_pcap_zeek_tuple_presence_corroborated=true (NOT packet-to-flow identity)")
+    if args.require_pcap_zeek_timestamps:
+        print("offline_pcap_zeek_start_timestamps_corroborated=true (within 1 second only)")
     if bundle_path is not None:
         print("pinned_research_queue_reverified=true (candidate selection and creation audit)")
     print("sqlite_read_only=true; stored_snapshot_and_initial_audit_match=true")
