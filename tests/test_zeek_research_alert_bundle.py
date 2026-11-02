@@ -257,7 +257,7 @@ def test_opt_in_research_queue_export_runtime_scoped_and_json_deterministic(tmp_
     )
     durations = []
     for key in parts:
-        phase = re.search(rf"^{key}=(\\d+\\.\\d{{6}})$", timed.stdout, re.MULTILINE)
+        phase = re.search(rf"^{key}=(\d+\.\d{{6}})$", timed.stdout, re.MULTILINE)
         assert phase is not None
         durations.append(float(phase.group(1)))
     assert all(value >= 0 for value in durations)

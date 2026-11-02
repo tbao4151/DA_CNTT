@@ -162,7 +162,7 @@ def test_opt_in_score_publication_timing_keeps_report_bytes_identical(tmp_path):
     )
     durations = []
     for key in parts:
-        phase = re.search(rf"^{key}=(\\d+\\.\\d{{6}})$", timed.stdout, re.MULTILINE)
+        phase = re.search(rf"^{key}=(\d+\.\d{{6}})$", timed.stdout, re.MULTILINE)
         assert phase is not None
         durations.append(float(phase.group(1)))
     assert all(value >= 0 for value in durations)
