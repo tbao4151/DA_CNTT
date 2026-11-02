@@ -284,6 +284,7 @@ def main(argv: list[str] | None = None) -> int:
                 import_report_path,
                 expected_report_sha256=args.expected_offline_import_report_sha256,
                 pcap_path=import_pcap_path, log_path=log_path, lab_cidrs=args.cidr,
+                require_pcap_framing=True,
             )
             if verified_import["zeek_conn_sha256"] != args.expected_log_sha256:
                 raise ValueError("Pinned new-log bytes differ from verified PCAP import")

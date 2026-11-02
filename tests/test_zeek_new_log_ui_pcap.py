@@ -6,10 +6,12 @@ physical VMware isolation, PCAP authenticity, attack labels or detection.
 from __future__ import annotations
 
 import hashlib
+import json
+import struct
 
 import pytest
 
-from test_offline_pcap_verify import imported  # noqa: F401 - pytest fixture
+from test_offline_pcap_verify import imported, repin  # noqa: F401 - pytest fixture
 from test_zeek_new_log_ui_soc import _ui_args
 from blue_team_ai.new_log_workspace import prepare_new_log_review
 from siem_ai.core import list_cases
@@ -17,6 +19,19 @@ from triage_zeek_new_log import create_ui_candidate_case
 
 
 def _pinned_ui_args(tmp_path, imported):
+    # The shared import fixture deliberately uses a malformed header-only PCAP
+    # to test legacy byte integrity. Manual SOC provenance now requires at
+    # least one framed packet. This remains synthetic, NOT Zeek correlation.
+    raw = (
+        bytes.fromhex("d4c3b2a1")
+        + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+        + struct.pack("<IIII", 100, 123, 4, 4) + b"test"
+    )
+    imported["pcap"].write_bytes(raw)
+    report = json.loads(imported["report"].read_text(encoding="utf-8"))
+    report["pcap_sha256"] = hashlib.sha256(raw).hexdigest()
+    report["pcap_size_bytes"] = len(raw)
+    repin(imported, report)
     source = imported["log"].read_bytes()
     args = _ui_args(tmp_path, source_data=source)
     args.update(
@@ -36,8 +51,27 @@ def test_ui_pinned_pcap_creates_one_unclassified_case(imported, tmp_path):
     assert cases.iloc[0]["verdict"] == "Unclassified"
     note = cases.iloc[0]["analyst_note"]
     assert "Pinned original PCAP/import report/Zeek byte integrity" in note
+    assert "classic PCAP packet framing checked" in note
+    assert "NOT packet-to-flow correlation" in note
     assert imported["pin"] in note
     assert hashlib.sha256(imported["pcap"].read_bytes()).hexdigest() in note
+
+
+def test_ui_repinned_header_only_pcap_refused_before_sqlite(imported, tmp_path):
+    args = _pinned_ui_args(tmp_path, imported)
+    header_only = (
+        bytes.fromhex("d4c3b2a1")
+        + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+    )
+    imported["pcap"].write_bytes(header_only)
+    report = json.loads(imported["report"].read_text(encoding="utf-8"))
+    report["pcap_sha256"] = hashlib.sha256(header_only).hexdigest()
+    report["pcap_size_bytes"] = len(header_only)
+    repin(imported, report)
+    args["offline_import_report_sha256"] = imported["pin"]
+    with pytest.raises(ValueError, match="no packet"):
+        create_ui_candidate_case(**args)
+    assert not args["db_path"].exists()
 
 
 def test_ui_pcap_changed_after_candidate_preview_blocks_write(imported, tmp_path):

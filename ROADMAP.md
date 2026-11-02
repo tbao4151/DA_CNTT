@@ -1,3 +1,15 @@
+## 2026-11-02: PR #344 UI provenance fixture CI repair acceptance
+
+- [ ] Confirm Ubuntu quality, Windows offline and Real Zeek synthetic workflows succeed on PR #344's **latest** head after UI fixture repair commit `a0696161fcabef758bf9d686574af6de91ea37e6`; check no competing PR or merge conflict before merging. Prior Ubuntu run [#41368588451](https://github.com/tbao4151/DA_CNTT/actions/runs/41368588451) failed one UI test and is not acceptable evidence.
+- [ ] Confirm the UI positive fixture creates exactly one Unclassified case from a well-framed synthetic PCAP, and the independently re-pinned header-only negative refuses before SQLite. Preserve the shared legacy import fixture for byte-consistency-only tests; no synthetic packet-to-Zeek correlation or live provenance claim.
+- [ ] Run `py -3.12 -m pytest -q tests/test_zeek_new_log_ui_pcap.py tests/test_offline_pcap_soc_triage_gate.py` on student Windows 11, then independently collect authorized Host-only original PCAP/Zeek, hashes, labels and timing outside Git. Synthetic CI is not a real capture.
+
+## 2026-11-02: Manual NEW-log SOC classic-PCAP framing acceptance ([PR #344](https://github.com/tbao4151/DA_CNTT/pull/344); exact-head CI pending)
+
+- [ ] Require Ubuntu quality, Windows offline and Real Zeek synthetic CI SUCCESS on the exact feature head, including a valid framed synthetic packet, refusal of re-pinned malformed PCAPs, read-only SOC link verification for new/legacy audit wording and forged-claim rejection; verify mergeability and absence of competing PRs before merge. Initial Real Zeek run #41368299115 failed on the old audit wording and has been repaired on the feature branch; do not count that failed run as acceptance.
+- [ ] On student Windows 11 Python 3.12.9, run `py -3.12 -m pytest -q tests/test_offline_pcap_soc_triage_gate.py` and repeat manual SOC triage with **unchanged**, privately SHA-256-pinned PCAP, Zeek log, import report, model and split manifest. Preserve the original files, command exit status, analyst confirmation and SQLite case export outside Git.
+- [ ] Independently verify VMware Host-only isolation and authorized capture, PCAP-to-Zeek tuple/time correspondence, held-out host/session partitions, ground truth and measured packet-to-case latency. PCAP framing and offline CI alone are not operational detection evidence; retain Dataset Mode benchmark unchanged.
+
 ## 2026-11-02: Linux forwarding snapshot acceptance ([PR #343](https://github.com/tbao4151/DA_CNTT/pull/343); CI pending)
 
 - [ ] Require exact feature-head Ubuntu quality and Windows offline CI success for seven nonzero forwarding settings, missing/duplicate/extra keys, tampered SHA-256 and valid LF/CRLF; confirm no competing PR or merge conflict before merging.
