@@ -155,6 +155,19 @@ def test_opt_in_score_publication_timing_keeps_report_bytes_identical(tmp_path):
     match = re.search(r"^offline_new_log_score_publish_duration_ms=(\d+\.\d{6})$",
                       timed.stdout, flags=re.MULTILINE)
     assert match and float(match.group(1)) >= 0
+    parts = (
+        "offline_new_log_score_duration_ms",
+        "offline_new_log_json_serialization_duration_ms",
+        "offline_new_log_json_publish_duration_ms",
+    )
+    durations = []
+    for key in parts:
+        phase = re.search(rf"^{key}=(\d+\.\d{{6}})$", timed.stdout, re.MULTILINE)
+        assert phase is not None
+        durations.append(float(phase.group(1)))
+    assert all(value >= 0 for value in durations)
+    assert abs(sum(durations) - float(match.group(1))) < 0.00001
+    assert "offline_new_log_timing_clock=perf_counter_ns_same_process" in timed.stdout
     assert "offline_new_log_score_publish_boundary=score_json_atomic_publish" in timed.stdout
     assert "detection_latency_measured=false; preflight_capture_zeek_excluded=true" in timed.stdout
     assert "duration_ms" not in timed_output.read_text(encoding="utf-8")
@@ -168,6 +181,8 @@ def test_opt_in_score_publication_timing_never_reports_on_failure(tmp_path):
     assert failed.returncode == 1
     assert not output.exists()
     assert "offline_new_log_score_publish_duration_ms=" not in failed.stdout
+    assert "offline_new_log_score_duration_ms=" not in failed.stdout
+    assert "offline_new_log_json_publish_duration_ms=" not in failed.stdout
     assert "offline_new_log_score_publish_boundary=" not in failed.stdout
     assert str(manifest) not in failed.stderr
 

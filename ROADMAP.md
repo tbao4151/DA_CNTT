@@ -1,3 +1,10 @@
+## 2026-11-02: Verify Blue Team monotonic offline phase breakdown (feature CI pending)
+
+- [ ] Require exact final-head Ubuntu quality and Windows Python 3.12.9 offline CI SUCCESS, no conflicting PR, and clean mergeability before merge. Do not count main CI or intermediate commits as feature-head CI.
+- [ ] Confirm timed score and research queue outputs expose nonnegative compute, serialization and publication phases summing to the compatible total (within rounding); untimed output and pinned private JSON remain byte-identical. Failures must not emit timing metrics.
+- [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_zeek_new_log_scoring_partition_gate.py tests/test_zeek_research_alert_bundle.py`, then measure authorized private inputs with the two opt-in CLI flags and archive hashes/command output outside Git.
+- [ ] Do not interpret monotonic CLI processing duration as UTC stage timestamps or packet-to-alert/SOC latency; complete G1–G8 with independently verified Host-only capture, labels and manual SOC evidence. Red execution OFF; official UNSW benchmark unchanged.
+
 ## 2026-11-02: PR #356 CI repair gate (new head pending)
 
 - [ ] Verify corrected top-level and nested duplicate-key regression rejects both records with the public `Malformed timing record` error; the earlier [Ubuntu #41459291287](https://github.com/tbao4151/DA_CNTT/actions/runs/41459291287) and [Windows #41459291543](https://github.com/tbao4151/DA_CNTT/actions/runs/41459291543) failures must **not** be counted as PASS.

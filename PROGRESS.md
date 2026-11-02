@@ -1,3 +1,9 @@
+## 2026-11-02: Blue Team offline monotonic scoring/queue phase breakdown (feature; CI not yet verified)
+
+- Verified `main` at `c88876b16bbe10f992d2baefc6e25d318499a997`, no open PR, and post-merge main quality [#41470289901](https://github.com/tbao4151/DA_CNTT/actions/runs/41470289901) SUCCESS after PR #356. Existing operator-entered offline SOC timing is not packet-to-alert latency.
+- Added opt-in same-process `perf_counter_ns` subphase timings to pinned NEW-log scoring and research queue export: compute/recompute, JSON serialization and atomic publication. Preserved existing total timing keys, default CLI behavior and byte-identical private report/queue schema. Synthetic regression assertions cover nonnegative phases, rounded total consistency and no timing on refusal.
+- **At authoring:** feature-head Ubuntu/Windows CI and student Windows/VMware execution are not verified. Measurements exclude input/manifest preflight, capture, Zeek, cross-command waiting and manual SOC. No new attack traffic, model changes, SQLite writes, UNSW benchmark changes or live alert claims; G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-02: PR #356 exact-head CI regression repair (awaiting rerun)
 
 - [PR #356](https://github.com/tbao4151/DA_CNTT/pull/356) head `3d76fd1920953f2ca2d94df0012d0bf0789d302e` failed Ubuntu [#41459291287](https://github.com/tbao4151/DA_CNTT/actions/runs/41459291287) (1731 passed, 1 failed, 2 skipped) and Windows [#41459291543](https://github.com/tbao4151/DA_CNTT/actions/runs/41459291543) (12 passed, 1 failed in new timing tests). Both failures were the same test expecting the internal `Duplicate` exception text while the public verifier intentionally normalizes malformed JSON errors to `Malformed timing record`.
