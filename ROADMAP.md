@@ -1,4 +1,4 @@
-## 2026-11-03: Offline Blue actual subprocess exit receipts (feature CI pending)
+## 2026-11-03: Offline Blue actual subprocess exit receipts ([PR #363](https://github.com/tbao4151/DA_CNTT/pull/363); feature CI pending)
 
 - [ ] Exact final PR-head Ubuntu Python 3.12.9 and Windows offline CI must succeed; require no competing PR and no merge conflicts before merge.
 - [ ] Synthetic tests must prove real subprocess exit codes cannot be replaced by success-looking stdout, malformed/timeout/missing-output cases remain failed, no existing evidence is overwritten, and only fixed offline Blue scripts are launched.
