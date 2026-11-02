@@ -1,3 +1,9 @@
+## 2026-11-02: Scientific acceptance matrix and status-inventory regression (feature PR; CI pending)
+
+- Verified `main` at `329e3243945b752ddbdc3ffa5ce6f246bea0798c`: PR #347 merged; exact-head Ubuntu [#41389724529](https://github.com/tbao4151/DA_CNTT/actions/runs/41389724529) and Windows [#41389724552](https://github.com/tbao4151/DA_CNTT/actions/runs/41389724552) SUCCESS; post-merge main quality [#41392752250](https://github.com/tbao4151/DA_CNTT/actions/runs/41392752250) SUCCESS. No open PR at feature start.
+- Updated `docs/SENTINEL_LAB_IMPLEMENTATION_STATUS.md` with an eight-gate CODE_PRESENT versus PENDING_STUDENT_EVIDENCE matrix and explicit current main/CI provenance. Added static regression tests to keep the matrix, entrypoints and safety/scientific distinctions from silently disappearing. Historical PR #330 material remains labeled as historical, not current state.
+- This slice changes documentation/tests only; **feature-head CI pending**. No local full-repository pytest (GitHub clone DNS blocked), student VMware run, authentic capture, independent labels, model accuracy, event-to-SOC latency or operational Red/Blue execution claimed. No benchmark/model/SQLite changes.
+
 ## 2026-11-02: Read-only SOC distinct-PCAP-packet availability gate ([PR #347](https://github.com/tbao4151/DA_CNTT/pull/347); CI pending)
 
 - Verified `main` at `cc48f39ec2385f671692c4083d3a367e92df016d`: PR #346 merged after exact-head Ubuntu [#41384682467](https://github.com/tbao4151/DA_CNTT/actions/runs/41384682467) and Windows [#41384682660](https://github.com/tbao4151/DA_CNTT/actions/runs/41384682660) SUCCESS. No open PR before starting this slice.
