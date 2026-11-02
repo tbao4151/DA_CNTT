@@ -140,7 +140,7 @@ py -3.12 scripts/capture_offline_blue_cli.py --stage score `
 
 For `--stage queue`, pass the **queue CLI's** complete pinned arguments,
 including the independently SHA-256-pinned prediction report and declared
-TRAIN/VALIDATION/TEST manifest. Use a new `--output` name for every run.
+TRAIN/VALIDATION/TEST manifest. Use a new `--output` name for every run. The recorder refuses any pre-existing output JSON (including an empty file), so stale results cannot be mistaken for a successful subprocess publication. This is a preflight guard, not an atomic cross-process lock.
 The recorder never overwrites existing stdout/stderr/receipt names and never
 executes a user-supplied script or shell command. Retain the receipt privately:
 `trial-001-score.receipt.json`, alongside `.stdout.txt` and `.stderr.txt`.
