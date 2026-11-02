@@ -1,4 +1,4 @@
-## 2026-11-03: Required Blue offline runtime counters (feature CI pending)
+## 2026-11-03: Required Blue offline runtime counters (feature CI pending) ([PR #360](https://github.com/tbao4151/DA_CNTT/pull/360))
 
 - [ ] Verify exact final feature-head Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS, no competing PR, and no merge conflicts before merging.
 - [ ] Regression: accept both actual CLI counter pairs, reject any omitted counter or score research-candidate count above flow count, retain duplicate/invalid stdout refusal and unchanged timing JSON contract.
