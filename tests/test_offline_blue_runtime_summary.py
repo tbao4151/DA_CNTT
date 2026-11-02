@@ -147,3 +147,52 @@ def test_parser_rejects_non_utf8_and_mismatched_stage():
         parse_timing_stdout(b"\xff", "score")
     with pytest.raises(ValueError):
         parse_timing_stdout(stdout("score"), "queue")
+
+
+@pytest.mark.parametrize("stage", ["score", "queue"])
+def test_parser_accepts_actual_cli_counter_and_notice_contract(stage):
+    raw = stdout(stage).decode("utf-8")
+    if stage == "score":
+        notices = (
+            "flow_count=12\nresearch_candidate_count=2\n"
+            "Pinned declared TRAIN/VALIDATION/TEST and flow identity non-reuse screened.\n"
+            "This does NOT independently verify capture history or label truth.\n"
+            "Original PCAP/Zeek one-second timestamp presence checked before scoring.\n"
+            "This is NOT proof of packet-to-flow derivation or capture authenticity.\n"
+            "No SOC case, network traffic, label evaluation or live detection performed.\n"
+        )
+    else:
+        notices = (
+            "research_alert_candidates_exported=2\n"
+            "candidates_outside_manual_triage_window=0\n"
+            "No automatic SOC case, live capture, confirmed attack or operational alert.\n"
+        )
+    first, rest = raw.split("\n", 1)
+    complete = (first + "\n" + notices + rest).encode("utf-8")
+    assert parse_timing_stdout(complete, stage)["total"] == 6
+
+
+@pytest.mark.parametrize("stage", ["score", "queue"])
+@pytest.mark.parametrize("unexpected", [
+    "Traceback (most recent call last):",
+    "ERROR: command failed after printing success",
+    "unexpected_counter=1",
+    "flow_count=-1",
+    "Private OFFLINE research alert-candidate bundle published (NOT operational alerts).",
+])
+def test_parser_rejects_unrecognized_stdout_without_partial_success(stage, unexpected):
+    if stage == "queue" and unexpected.startswith("Private OFFLINE"):
+        unexpected = "Private offline Zeek research predictions written (NOT operational alerts)."
+    with pytest.raises(ValueError, match="Unexpected offline CLI stdout line"):
+        parse_timing_stdout(stdout(stage) + (unexpected + "\n").encode(), stage)
+
+
+@pytest.mark.parametrize("stage,counter", [
+    ("score", "flow_count"),
+    ("queue", "research_alert_candidates_exported"),
+])
+def test_parser_rejects_duplicate_or_non_numeric_cli_counters(stage, counter):
+    for values in ("1\n" + counter + "=2", "NaN", "9" * 30):
+        extra = (counter + "=" + values + "\n").encode()
+        with pytest.raises(ValueError, match="Unexpected offline CLI stdout line"):
+            parse_timing_stdout(stdout(stage) + extra, stage)
