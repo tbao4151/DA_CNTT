@@ -252,3 +252,58 @@ def test_soc_readonly_tuple_flags_require_complete_provenance(tmp_path):
         assert "verification refused" in refused.stderr
         assert str(tmp_path) not in refused.stderr
     assert db.read_bytes() == before
+
+
+def test_soc_readonly_opt_in_distinct_pcap_packet_records(tmp_path):
+    verify, provenance, db, pcap, import_report = _prepare(
+        tmp_path, matching_pcap=True,
+    )
+    before = {path: path.read_bytes() for path in (db, pcap, import_report)}
+    strict = _run(verify + provenance + [
+        "--require-pcap-zeek-tuples", "--require-pcap-zeek-timestamps",
+        "--require-distinct-pcap-packets", "--timing-json",
+    ])
+    assert strict.returncode == 0, strict.stderr
+    report = json.loads(strict.stdout)
+    assert report["distinct_pcap_packets_required"] is True
+    assert report["distinct_pcap_packets_corroborated"] is True
+    assert report["pcap_zeek_matched_flow_count"] == 2
+    assert report["distinct_pcap_assigned_offset_p95_ms"] is not None
+    assert report["packet_to_flow_identity_verified"] is False
+    legacy = _run(verify + provenance + ["--timing-json"])
+    assert legacy.returncode == 0, legacy.stderr
+    old = json.loads(legacy.stdout)
+    assert old["distinct_pcap_packets_required"] is False
+    assert old["distinct_pcap_packets_corroborated"] is False
+    assert old["distinct_pcap_assigned_offset_p95_ms"] is None
+    plain = _run(verify + provenance + [
+        "--require-pcap-zeek-tuples", "--require-pcap-zeek-timestamps",
+        "--require-distinct-pcap-packets",
+    ])
+    assert plain.returncode == 0, plain.stderr
+    assert "offline_distinct_pcap_packet_records_corroborated=true" in plain.stdout
+    assert all(path.read_bytes() == raw for path, raw in before.items())
+
+
+def test_soc_readonly_distinct_packet_flag_fails_closed_without_dependencies(tmp_path):
+    verify, provenance, db, pcap, import_report = _prepare(
+        tmp_path, matching_pcap=True,
+    )
+    before = db.read_bytes()
+    for flags in (
+        ["--require-distinct-pcap-packets"],
+        ["--require-pcap-zeek-tuples", "--require-distinct-pcap-packets"],
+        ["--require-pcap-zeek-timestamps", "--require-distinct-pcap-packets"],
+    ):
+        refused = _run(verify + provenance + flags)
+        assert refused.returncode == 1
+        assert refused.stdout == ""
+        assert "verification refused" in refused.stderr
+        assert str(tmp_path) not in refused.stderr
+    refused = _run(verify + [
+        "--require-pcap-zeek-tuples", "--require-pcap-zeek-timestamps",
+        "--require-distinct-pcap-packets",
+    ])
+    assert refused.returncode == 1
+    assert refused.stdout == ""
+    assert db.read_bytes() == before
