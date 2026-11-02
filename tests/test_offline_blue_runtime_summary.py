@@ -22,6 +22,7 @@ def stdout(stage: str, total: str = "6.000000") -> bytes:
     if stage == "score":
         return ("Private offline Zeek research predictions written (NOT operational alerts).\n"
                 "flow_count=12\nresearch_candidate_count=2\n"
+                "No SOC case, network traffic, label evaluation or live detection performed.\n"
                 f"offline_new_log_score_publish_duration_ms={total}\n"
                 "offline_new_log_score_duration_ms=3.000000\n"
                 "offline_new_log_json_serialization_duration_ms=1.000000\n"
@@ -31,6 +32,7 @@ def stdout(stage: str, total: str = "6.000000") -> bytes:
                 "detection_latency_measured=false; preflight_capture_zeek_excluded=true\n").encode()
     return ("Private OFFLINE research alert-candidate bundle published (NOT operational alerts).\n"
             "research_alert_candidates_exported=2\ncandidates_outside_manual_triage_window=0\n"
+            "No automatic SOC case, live capture, confirmed attack or operational alert.\n"
             f"offline_research_queue_export_duration_ms={total}\n"
             "offline_research_queue_recompute_duration_ms=3.000000\n"
             "offline_research_queue_json_serialization_duration_ms=1.000000\n"
@@ -160,12 +162,9 @@ def test_parser_accepts_actual_cli_counter_and_notice_contract(stage):
             "This does NOT independently verify capture history or label truth.\n"
             "Original PCAP/Zeek one-second timestamp presence checked before scoring.\n"
             "This is NOT proof of packet-to-flow derivation or capture authenticity.\n"
-            "No SOC case, network traffic, label evaluation or live detection performed.\n"
         )
     else:
-        notices = (
-            "No automatic SOC case, live capture, confirmed attack or operational alert.\n"
-        )
+        notices = ""
     first, rest = raw.split("\n", 1)
     complete = (first + "\n" + notices + rest).encode("utf-8")
     assert parse_timing_stdout(complete, stage)["total"] == 6
@@ -213,3 +212,28 @@ def test_parser_rejects_duplicate_or_non_numeric_cli_counters(stage, counter):
         extra = (counter + "=" + values + "\n").encode()
         with pytest.raises(ValueError, match="Unexpected offline CLI stdout line"):
             parse_timing_stdout(stdout(stage) + extra, stage)
+
+
+@pytest.mark.parametrize("stage,mandatory", [
+    ("score", "No SOC case, network traffic, label evaluation or live detection performed."),
+    ("queue", "No automatic SOC case, live capture, confirmed attack or operational alert."),
+])
+def test_parser_requires_single_mandatory_safety_notice(stage, mandatory):
+    marker = (mandatory + "\n").encode("utf-8")
+    original = stdout(stage)
+    assert marker in original
+    with pytest.raises(ValueError, match="Missing required offline CLI notice"):
+        parse_timing_stdout(original.replace(marker, b""), stage)
+    with pytest.raises(ValueError, match="Duplicate offline CLI notice"):
+        parse_timing_stdout(original + marker, stage)
+
+
+@pytest.mark.parametrize("notice", [
+    "Pinned declared TRAIN/VALIDATION/TEST and flow identity non-reuse screened.",
+    "This does NOT independently verify capture history or label truth.",
+    "Original PCAP/Zeek one-second timestamp presence checked before scoring.",
+    "This is NOT proof of packet-to-flow derivation or capture authenticity.",
+])
+def test_parser_refuses_unpaired_score_provenance_notice(notice):
+    with pytest.raises(ValueError, match="Incomplete optional offline CLI notice pair"):
+        parse_timing_stdout(stdout("score") + (notice + "\n").encode(), "score")
