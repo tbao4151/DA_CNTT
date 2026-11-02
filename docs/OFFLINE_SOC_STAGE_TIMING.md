@@ -195,3 +195,15 @@ Synthetic-only regression (not a student VMware run):
 ```powershell
 py -3.12 -m pytest -q tests/test_offline_blue_runtime_summary.py
 ```
+
+
+### Offline CLI notice integrity (synthetic parser contract)
+
+The read-only runtime summary requires exactly one stage-specific safety notice
+from each successful score/queue stdout. Optional score provenance notices must
+appear in complete two-line pairs (declared partition screening and its caveat;
+PCAP/Zeek timestamp presence and its caveat). Duplicate notices, missing mandatory
+notices, and unpaired provenance/caveat lines are refused. This prevents a
+truncated or selectively edited stdout transcript from being treated as a valid
+measurement; it does **not** authenticate the process exit code, command-line
+arguments, original capture, or operator-maintained SHA-256 pins.
