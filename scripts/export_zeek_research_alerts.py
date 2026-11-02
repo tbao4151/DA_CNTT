@@ -96,10 +96,13 @@ def main(argv: list[str] | None = None) -> int:
             declared_dataset=dataset,
             declared_captures=captures,
         )
+        recomputed_ns = time.perf_counter_ns() if args.measure_research_export_runtime else None
         payload = json.dumps(bundle, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+        serialized_ns = time.perf_counter_ns() if args.measure_research_export_runtime else None
         _write_new_report_atomically(output, payload)
         if args.measure_research_export_runtime:
-            elapsed_ns = time.perf_counter_ns() - started_ns
+            published_ns = time.perf_counter_ns()
+            elapsed_ns = published_ns - started_ns
     except (ValueError, OSError, TypeError, UnicodeError, OverflowError, KeyError, RecursionError):
         print("Private offline research alert-candidate export refused.", file=sys.stderr)
         return 1
@@ -109,6 +112,10 @@ def main(argv: list[str] | None = None) -> int:
     print("No automatic SOC case, live capture, confirmed attack or operational alert.")
     if args.measure_research_export_runtime:
         print(f"offline_research_queue_export_duration_ms={elapsed_ns / 1_000_000:.6f}")
+        print(f"offline_research_queue_recompute_duration_ms={(recomputed_ns - started_ns) / 1_000_000:.6f}")
+        print(f"offline_research_queue_json_serialization_duration_ms={(serialized_ns - recomputed_ns) / 1_000_000:.6f}")
+        print(f"offline_research_queue_json_publish_duration_ms={(published_ns - serialized_ns) / 1_000_000:.6f}")
+        print("offline_research_queue_timing_clock=perf_counter_ns_same_process")
         print("offline_research_queue_export_boundary=verified_recompute_json_publish")
         print("detection_latency_measured=false; capture_zeek_analyst_wait_excluded=true")
     return 0

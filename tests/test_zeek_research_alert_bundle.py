@@ -250,6 +250,19 @@ def test_opt_in_research_queue_export_runtime_scoped_and_json_deterministic(tmp_
                       timed.stdout, re.MULTILINE)
     assert match is not None
     assert float(match.group(1)) >= 0
+    parts = (
+        "offline_research_queue_recompute_duration_ms",
+        "offline_research_queue_json_serialization_duration_ms",
+        "offline_research_queue_json_publish_duration_ms",
+    )
+    durations = []
+    for key in parts:
+        phase = re.search(rf"^{key}=(\\d+\\.\\d{{6}})$", timed.stdout, re.MULTILINE)
+        assert phase is not None
+        durations.append(float(phase.group(1)))
+    assert all(value >= 0 for value in durations)
+    assert abs(sum(durations) - float(match.group(1))) < 0.00001
+    assert "offline_research_queue_timing_clock=perf_counter_ns_same_process" in timed.stdout
     assert "offline_research_queue_export_boundary=verified_recompute_json_publish" in timed.stdout
     assert "detection_latency_measured=false; capture_zeek_analyst_wait_excluded=true" in timed.stdout
     assert "192.168.56." not in timed.stdout
@@ -271,6 +284,8 @@ def test_opt_in_research_queue_export_runtime_refuses_bad_pin_without_timing(tmp
     assert failed.returncode == 1
     assert not output.exists()
     assert "offline_research_queue_export_duration_ms=" not in failed.stdout
+    assert "offline_research_queue_recompute_duration_ms=" not in failed.stdout
+    assert "offline_research_queue_json_publish_duration_ms=" not in failed.stdout
     assert "refused" in failed.stderr
     assert "192.168.56." not in failed.stderr
     assert str(tmp_path) not in failed.stderr

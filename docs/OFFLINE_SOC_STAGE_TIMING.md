@@ -79,3 +79,32 @@ py -3.12 -m pytest -q tests/test_offline_soc_stage_timing.py
 
 GitHub Actions passing is not a Windows laptop/VMware experiment. Dataset
 Mode UNSW-NB15, model thresholds, SQLite and Red Team execution are unchanged.
+
+## Measured offline software subphases (GitHub feature; not a VMware run)
+
+The existing opt-in flags on the two offline CLIs now emit three additional
+**monotonic, same-process** durations after successful publication only:
+
+- `scripts/score_zeek_new_log.py --measure-inference-publication-runtime`:
+  `offline_new_log_score_duration_ms` (scope/parser/features/model scoring),
+  `offline_new_log_json_serialization_duration_ms`, and
+  `offline_new_log_json_publish_duration_ms` (private atomic hard-link).
+- `scripts/export_zeek_research_alerts.py --measure-research-export-runtime`:
+  `offline_research_queue_recompute_duration_ms` (verified queue construction),
+  `offline_research_queue_json_serialization_duration_ms`, and
+  `offline_research_queue_json_publish_duration_ms`.
+
+The original total `*_duration_ms` fields remain for compatibility.
+All values use `time.perf_counter_ns()`; subphases add to the total within
+six-decimal rounding. These are **software processing times** inside each
+CLI, not UTC timestamps. Input loading, manifest preflight, packet capture,
+Zeek processing, inter-command waiting, analyst decision time and SOC case
+creation are excluded. Do **not** add independent process measurements to
+claim packet-event-to-alert or end-to-end SOC latency. Capture the command
+output and exact input/output hashes privately; no timing is embedded in
+pinned prediction/queue JSON, and failed publication emits no timing.
+
+These synthetic-only regressions are already part of the Windows offline CI:
+`tests/test_zeek_new_log_scoring_partition_gate.py` and
+`tests/test_zeek_research_alert_bundle.py`. Student Windows/VMware results
+remain unverified until run with authorized original evidence.
