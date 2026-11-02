@@ -1,3 +1,10 @@
+## 2026-11-03: Offline Blue actual subprocess exit receipts ([PR #363](https://github.com/tbao4151/DA_CNTT/pull/363); feature CI pending)
+
+- [ ] Exact final PR-head Ubuntu Python 3.12.9 and Windows offline CI must succeed; require no competing PR and no merge conflicts before merge.
+- [ ] Synthetic tests must prove real subprocess exit codes cannot be replaced by success-looking stdout, malformed/timeout/missing-output cases remain failed, no existing evidence is overwritten, and only fixed offline Blue scripts are launched. In particular, pre-existing JSON output must fail before launching the subprocess; no stale output may be counted as fresh publication.
+- [ ] Student Windows 11: run at least 3 genuine paired private score/queue trials with distinct output names and retain stdout/stderr/receipts and original PCAP/Zeek/model/manifest pins. Inspect receipt exit codes before making the separate pinned runtime summary; the summary does not yet verify receipts automatically.
+- [ ] G1-G8 VMware Host-only acceptance still requires authorized original captures, independent labels, holdout evaluation and SOC evidence. No live detection or network execution is claimed.
+
 ## 2026-11-03: Windows-safe offline Blue stdout evidence names ([PR #362](https://github.com/tbao4151/DA_CNTT/pull/362); feature CI pending)
 
 - [ ] Require exact final PR-head Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS, no competing PR and clean mergeability before merge.
