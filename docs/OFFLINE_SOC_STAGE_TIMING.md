@@ -108,3 +108,78 @@ These synthetic-only regressions are already part of the Windows offline CI:
 `tests/test_zeek_new_log_scoring_partition_gate.py` and
 `tests/test_zeek_research_alert_bundle.py`. Student Windows/VMware results
 remain unverified until run with authorized original evidence.
+
+
+## Repeated paired offline Blue CLI runtime trials (research summary only)
+
+Use the **new read-only** \`scripts/summarize_offline_blue_runtime.py\` after
+the score and research-queue CLIs have completed **successfully** on an
+authorized private capture. Collect **3–50 paired trials** (one score and
+one queue stdout file per trial), using both opt-in monotonic timing flags
+documented above. Each run must have its own **new output JSON name** because
+publication intentionally refuses overwrite. Record exact command, exit code,
+machine load, Python version, warm/cold state, model/log/manifest/output
+SHA-256 and any changed inputs in a separate private notebook. The summary
+tool does **not** verify comparability of different trials.
+
+Save each successful CLI stdout in a UTF-8 text file beside the manifest,
+outside the Git checkout. For example, capture a command's stdout using
+PowerShell redirection to \`trial-001-score.txt\`; check \`$LASTEXITCODE -eq 0\`
+before including it. Do the same for the research queue CLI and each
+additional trial. **Do not fabricate or copy synthetic timing output into a
+scientific report.** Compute the SHA-256 of every retained stdout file:
+
+\`\`\`powershell
+Get-FileHash "C:/DA005-private/session-001/trial-001-score.txt" -Algorithm SHA256
+Get-FileHash "C:/DA005-private/session-001/trial-001-queue.txt" -Algorithm SHA256
+\`\`\`
+
+Create \`runtime-trials.json\` in that same private directory. The following
+is a **contract example only**, with placeholder hashes and filenames;
+repeat the paired object for at least three genuine successful trials:
+
+\`\`\`json
+{
+  "version": 1,
+  "trials": [
+    {
+      "score_stdout": "trial-001-score.txt",
+      "score_sha256": "<LOWERCASE_SHA256_OF_ORIGINAL_SCORE_STDOUT>",
+      "queue_stdout": "trial-001-queue.txt",
+      "queue_sha256": "<LOWERCASE_SHA256_OF_ORIGINAL_QUEUE_STDOUT>"
+    }
+  ]
+}
+\`\`\`
+
+The example intentionally has **only one trial** and will be rejected until
+at least three distinct pairs are recorded. All names must be simple
+basenames; absolute paths, traversal, symlinks, duplicate files, oversized
+inputs, changed pins, duplicate JSON keys, missing/extra timing fields,
+non-monotonic clock declarations and inconsistent phase totals are refused.
+The manifest itself must be independently SHA-256 pinned:
+
+\`\`\`powershell
+Get-FileHash "C:/DA005-private/session-001/runtime-trials.json" -Algorithm SHA256
+py -3.12 scripts/summarize_offline_blue_runtime.py \`
+  --manifest "C:/DA005-private/session-001/runtime-trials.json" \`
+  --expected-manifest-sha256 "<REAL_MANIFEST_SHA256>"
+\`\`\`
+
+On success the CLI prints **aggregate JSON only**: per-stage and per-phase
+min/median/mean/nearest-rank p95/max in milliseconds, plus sample count and
+explicit unverified scientific flags. It never emits private file names,
+source logs, IPs, UIDs or timestamps. Nearest-rank p95 with a small sample
+is highly unstable (with three trials it is the maximum); report the sample
+count and uncertainty, not just p95. The tool checks the integrity of
+operator-supplied stdout bytes, **not** the provenance of PCAP/Zeek, the
+original CLI exit status, cross-trial equivalence, ground truth, VMware
+isolation, real-time latency or SOC case creation. It cannot establish
+packet-to-alert or end-to-end detection performance. No model, Dataset Mode
+benchmark, Red Team execution or SQLite data are changed.
+
+Synthetic-only regression (not a student VMware run):
+
+\`\`\`powershell
+py -3.12 -m pytest -q tests/test_offline_blue_runtime_summary.py
+\`\`\`
