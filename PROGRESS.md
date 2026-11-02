@@ -1,3 +1,9 @@
+## 2026-11-02: Strict NEW-log SOC duplicate-key JSON evidence gate (feature CI pending)
+
+- Rechecked main after [PR #353](https://github.com/tbao4151/DA_CNTT/pull/353) merged at `6b278a25598494d30fdc9cc7f7d1a85fe24ec4d7`; exact feature-head Ubuntu [#41434381195](https://github.com/tbao4151/DA_CNTT/actions/runs/41434381195) and Windows [#41434381204](https://github.com/tbao4151/DA_CNTT/actions/runs/41434381204) were SUCCESS. No open PR when this branch was created.
+- Narrow strict-idempotency fix: Python's default JSON decoder silently accepts duplicate object keys and keeps the last value, so a modified stored SOC evidence snapshot could compare equal to the original. Strict NEW-log reuse now refuses any duplicate object key (including nested keys); a synthetic regression injects an earlier forged `uid` key and confirms refusal without creating or rewriting cases/events. Legacy Dataset/manual case readers and the stored schema are unchanged.
+- Three isolated Python JSON-parser checks passed locally; full repository pytest was not run locally because GitHub clone DNS was unavailable. Exact-head GitHub CI pending. No new model, authorized VMware capture, independent labels, live alert or event-to-SOC latency claimed; G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-02: NEW-log SOC original snapshot/creation-event integrity (feature CI pending)
 
 - Verified `main` at `6066ee242de5f1dda3db05234d4649a3731f3849`: [PR #352](https://github.com/tbao4151/DA_CNTT/pull/352) merged; feature-head Ubuntu [#41427321685](https://github.com/tbao4151/DA_CNTT/actions/runs/41427321685), Windows [#41427321843](https://github.com/tbao4151/DA_CNTT/actions/runs/41427321843), Real Zeek synthetic [#41427321635](https://github.com/tbao4151/DA_CNTT/actions/runs/41427321635) and main quality [#41430474052](https://github.com/tbao4151/DA_CNTT/actions/runs/41430474052) all SUCCESS. No open PR at branch creation.
