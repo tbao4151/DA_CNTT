@@ -1,3 +1,9 @@
+## 2026-11-02: Offline NEW-log class-imbalance diagnostics (feature CI pending)
+
+- Verified main at `5fc18210bc5f3b2ffbd5a5b9f6062128994d0ae7`: [PR #354](https://github.com/tbao4151/DA_CNTT/pull/354) merged, exact-head Ubuntu [#41442506298](https://github.com/tbao4151/DA_CNTT/actions/runs/41442506298) and Windows [#41442506139](https://github.com/tbao4151/DA_CNTT/actions/runs/41442506139) SUCCESS; main quality [#41446115928](https://github.com/tbao4151/DA_CNTT/actions/runs/41446115928) SUCCESS. No open PR at feature start.
+- Added additive descriptive balanced accuracy/MCC and explicit class denominators to the pinned NEW-log operator-labeled evaluation and both fixed always-Normal/always-Attack references. Undefined rates are null; no model fitting or threshold selection. Added synthetic integration and invalid-denominator regressions in the existing Windows-covered evaluation test file.
+- Feature-head GitHub CI pending; standalone arithmetic sanity cases checked separately, not a full repository pytest or laptop experiment. No authentic VMware capture, independent attack labels, SOC alert, new model, network traffic, or event-to-case latency claimed. G1–G8 remain PENDING_STUDENT_EVIDENCE; Dataset Mode benchmark and SQLite untouched.
+
 ## 2026-11-02: Strict NEW-log SOC duplicate-key JSON evidence gate (feature CI pending)
 
 - Rechecked main after [PR #353](https://github.com/tbao4151/DA_CNTT/pull/353) merged at `6b278a25598494d30fdc9cc7f7d1a85fe24ec4d7`; exact feature-head Ubuntu [#41434381195](https://github.com/tbao4151/DA_CNTT/actions/runs/41434381195) and Windows [#41434381204](https://github.com/tbao4151/DA_CNTT/actions/runs/41434381204) were SUCCESS. No open PR when this branch was created.

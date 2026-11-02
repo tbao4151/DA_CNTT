@@ -11,6 +11,7 @@ from collections.abc import Mapping, Sequence
 
 from .ranking_metrics import summarize_binary_ranking
 from .alert_burden import summarize_research_candidate_burden
+from .class_balance_metrics import summarize_class_balance
 from .protocol_error_analysis import (
     summarize_protocol_error_rates, summarize_protocol_probability_quality,
 )
@@ -136,6 +137,7 @@ def evaluate_new_log_operator_labels(
         "flow_level_uncertainty": summarize_detection_uncertainty(
             normal_reference_confusion
         ),
+        "class_balance_diagnostics": summarize_class_balance(normal_reference_confusion),
         "interpretation": (
             "fixed_nonlearned_reference_not_selected_from_new_labels; "
             "zero_alerts_imply_zero_recall_when_attacks_are_present"
@@ -166,6 +168,7 @@ def evaluate_new_log_operator_labels(
         "flow_level_uncertainty": summarize_detection_uncertainty(
             attack_reference_confusion
         ),
+        "class_balance_diagnostics": summarize_class_balance(attack_reference_confusion),
         "interpretation": (
             "fixed_nonlearned_reference_not_selected_from_new_labels; "
             "all_flows_alerted_full_recall_and_full_fpr_when_both_classes_exist"
@@ -181,6 +184,7 @@ def evaluate_new_log_operator_labels(
         "selected_validation_threshold": model["selected_threshold"],
         "confusion_matrix": confusion,
         "research_candidate_burden": summarize_research_candidate_burden(confusion),
+        "class_balance_diagnostics": summarize_class_balance(confusion),
         "metrics": {
             "attack_precision": precision,
             "attack_recall": recall,
