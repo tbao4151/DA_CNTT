@@ -1,3 +1,9 @@
+## 2026-11-02: Read-only SOC case PCAP framing recheck acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows Python 3.12.9 CI SUCCESS on the exact feature head, confirm no competing PR or merge conflict, then merge. The synthetic fixture has one framed packet but no genuine Zeek tuple correspondence.
+- [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_zeek_soc_readonly_pcap_framing.py`, then separately verify an **existing** privately pinned Unclassified case with the three offline import arguments plus `--require-pcap-framing --timing-json`. Preserve original bytes, hashes, exit status, SQLite case export and processing timing outside Git.
+- [ ] Independently verify Host-only isolation, authorized capture origin, PCAP-to-Zeek tuple/time correspondence, held-out host/session labels and event-to-case timing. A framing PASS is not packet-to-flow identity, live detection or a valid Cyber Lab accuracy metric.
+
 ## 2026-11-02: PR #344 UI provenance fixture CI repair acceptance
 
 - [ ] Confirm Ubuntu quality, Windows offline and Real Zeek synthetic workflows succeed on PR #344's **latest** head after UI fixture repair commit `a0696161fcabef758bf9d686574af6de91ea37e6`; check no competing PR or merge conflict before merging. Prior Ubuntu run [#41368588451](https://github.com/tbao4151/DA_CNTT/actions/runs/41368588451) failed one UI test and is not acceptable evidence.

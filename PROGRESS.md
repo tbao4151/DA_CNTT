@@ -1,3 +1,9 @@
+## 2026-11-02: Read-only NEW-log SOC PCAP framing recheck (feature PR; CI pending)
+
+- Verified `main` at `68686d1624dc46d743c0cc64c063c248ffb50123`: PR #344 merged; its exact-head Ubuntu quality #41370733096, Windows offline #41370733109 and Real Zeek synthetic #41370733106 completed SUCCESS. Post-merge main quality #41373362526 completed SUCCESS. No open PR at branch creation.
+- Added opt-in `--require-pcap-framing` to the existing **read-only** SOC case-link CLI. It refuses without the complete pinned import triplet, rechecks classic PCAP packet framing with the existing bounded verifier, and reports explicit framing status/count in optional processing-only JSON. Default behavior and historical SOC notes are unchanged.
+- Added synthetic end-to-end research queue -> explicit Unclassified case -> read-only verification regressions for valid framed bytes, legacy mode, incomplete provenance and re-pinned header-only refusal; registered tests in Windows Python 3.12.9 CI. Exact-head CI pending; no student Windows/VMware experiment, real packet-to-Zeek correspondence, operational alert, attack truth, network activity, model/UNSW benchmark change or public deployment.
+
 ## 2026-11-02: PR #344 CI repair — UI manual SOC PCAP fixture (exact-head CI pending)
 
 - On PR #344 head `7ecc9b687d3e7eaecfcd9220e858bd08e77649c7`, Ubuntu quality run [#41368588451](https://github.com/tbao4151/DA_CNTT/actions/runs/41368588451) failed with **1 failed, 1675 passed, 2 skipped**. The failing test was `tests/test_zeek_new_log_ui_pcap.py::test_ui_pinned_pcap_creates_one_unclassified_case`: it reused the shared legacy import fixture whose 24-byte global PCAP header has invalid version/snaplen and no packet records. Windows offline [#41368588360](https://github.com/tbao4151/DA_CNTT/actions/runs/41368588360) and Real Zeek synthetic [#41368588490](https://github.com/tbao4151/DA_CNTT/actions/runs/41368588490) succeeded on that prior head; Ubuntu failure blocks merge.
