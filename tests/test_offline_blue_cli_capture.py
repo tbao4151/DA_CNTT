@@ -116,6 +116,18 @@ def test_invalid_invocation_refused_before_running(tmp_path, monkeypatch, trial,
         recorder.capture_stage("queue", tmp_path, trial, argv)
 
 
+@pytest.mark.parametrize("existing_content", [b'{"stale":true}', b""])
+def test_preexisting_output_is_refused_before_process_launch(tmp_path, monkeypatch, existing_content):
+    args, output = _args(tmp_path)
+    output.write_bytes(existing_content)
+    monkeypatch.setattr(recorder.subprocess, "run", lambda *a, **kw: pytest.fail("must not execute"))
+    with pytest.raises(ValueError, match="Existing private output"):
+        recorder.capture_stage("score", tmp_path, "001", args)
+    assert output.read_bytes() == existing_content
+    assert not (tmp_path / "trial-001-score.receipt.json").exists()
+    assert not (tmp_path / "trial-001-score.stdout.txt").exists()
+
+
 def test_cli_refuses_without_executing_or_exposing_paths(tmp_path, capsys):
     status = recorder.main(["--stage", "score", "--evidence-dir", str(tmp_path),
                             "--trial-id", "001", "--", "--help"])
