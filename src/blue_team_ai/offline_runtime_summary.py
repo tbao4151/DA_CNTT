@@ -98,15 +98,30 @@ _NON_TIMING_COUNTERS = {
     "queue": frozenset({"research_alert_candidates_exported", "candidates_outside_manual_triage_window"}),
 }
 _COUNTER_VALUE = re.compile(r"[0-9]{1,12}\Z")
+_REQUIRED_NOTICES = {
+    "score": "No SOC case, network traffic, label evaluation or live detection performed.",
+    "queue": "No automatic SOC case, live capture, confirmed attack or operational alert.",
+}
+_SCORE_NOTICE_PAIRS = (
+    ("Pinned declared TRAIN/VALIDATION/TEST and flow identity non-reuse screened.",
+     "This does NOT independently verify capture history or label truth."),
+    ("Original PCAP/Zeek one-second timestamp presence checked before scoring.",
+     "This is NOT proof of packet-to-flow derivation or capture authenticity."),
+)
+
 
 
 def _validate_non_timing_lines(lines: list[str], stage: str) -> None:
     """Refuse unrecognized CLI stdout, including appended failures or other stages."""
     seen_counters: dict[str, int] = {}
+    seen_notices: set[str] = set()
     for line in lines:
         if line.startswith("offline_") or line.startswith("detection_latency_measured="):
             continue  # Strict timing-key validation is performed below.
         if line in _NON_TIMING_NOTICES[stage]:
+            if line in seen_notices:
+                raise ValueError("Duplicate offline CLI notice")
+            seen_notices.add(line)
             continue
         key, sep, value = line.partition("=")
         if (sep and key in _NON_TIMING_COUNTERS[stage]
@@ -114,6 +129,12 @@ def _validate_non_timing_lines(lines: list[str], stage: str) -> None:
             seen_counters[key] = int(value)
             continue
         raise ValueError("Unexpected offline CLI stdout line")
+    if _REQUIRED_NOTICES[stage] not in seen_notices:
+        raise ValueError("Missing required offline CLI notice")
+    if stage == "score":
+        for first, second in _SCORE_NOTICE_PAIRS:
+            if (first in seen_notices) != (second in seen_notices):
+                raise ValueError("Incomplete optional offline CLI notice pair")
     if set(seen_counters) != _NON_TIMING_COUNTERS[stage]:
         raise ValueError("Missing required offline CLI counters")
     if stage == "score" and seen_counters["research_candidate_count"] > seen_counters["flow_count"]:
