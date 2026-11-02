@@ -1,4 +1,4 @@
-## 2026-11-02: Manual NEW-log SOC classic-PCAP framing acceptance (feature CI pending)
+## 2026-11-02: Manual NEW-log SOC classic-PCAP framing acceptance ([PR #344](https://github.com/tbao4151/DA_CNTT/pull/344); exact-head CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact feature head, including a valid framed synthetic packet and refusal of independently re-pinned header-only, truncated and invalid-fraction PCAPs; verify mergeability and absence of competing PRs before merge.
 - [ ] On student Windows 11 Python 3.12.9, run `py -3.12 -m pytest -q tests/test_offline_pcap_soc_triage_gate.py` and repeat manual SOC triage with **unchanged**, privately SHA-256-pinned PCAP, Zeek log, import report, model and split manifest. Preserve the original files, command exit status, analyst confirmation and SQLite case export outside Git.
