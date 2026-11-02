@@ -1,4 +1,4 @@
-## 2026-11-03: Capture actual offline Blue subprocess exit receipts (feature; CI pending)
+## 2026-11-03: Capture actual offline Blue subprocess exit receipts ([PR #363](https://github.com/tbao4151/DA_CNTT/pull/363); feature CI pending)
 
 - Rechecked `main` at `53fecd25771faa3441d2d61cac13e9b119ad469d`: [PR #362](https://github.com/tbao4151/DA_CNTT/pull/362) merged, exact-head Ubuntu [#41522016421](https://github.com/tbao4151/DA_CNTT/actions/runs/41522016421), Windows [#41522016533](https://github.com/tbao4151/DA_CNTT/actions/runs/41522016533), and post-merge main [#41526534738](https://github.com/tbao4151/DA_CNTT/actions/runs/41526534738) all SUCCESS; no open PR at feature start.
 - Added an opt-in, fixed-script offline Blue CLI subprocess recorder: captures actual return code, stdout/stderr SHA-256, command metadata, JSON output hash, timeout and fail-closed timing-stdout validity in private no-overwrite receipts. It does not alter the scoring or research queue scripts, runtime summary schema, model, UNSW benchmark, SQLite, Red Team or network.
