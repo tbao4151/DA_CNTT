@@ -10,6 +10,7 @@ import json
 from collections.abc import Mapping, Sequence
 
 from .ranking_metrics import summarize_binary_ranking
+from .alert_burden import summarize_research_candidate_burden
 from .protocol_error_analysis import (
     summarize_protocol_error_rates, summarize_protocol_probability_quality,
 )
@@ -179,6 +180,7 @@ def evaluate_new_log_operator_labels(
         "annotation_sha256": expected_annotation_sha256,
         "selected_validation_threshold": model["selected_threshold"],
         "confusion_matrix": confusion,
+        "research_candidate_burden": summarize_research_candidate_burden(confusion),
         "metrics": {
             "attack_precision": precision,
             "attack_recall": recall,

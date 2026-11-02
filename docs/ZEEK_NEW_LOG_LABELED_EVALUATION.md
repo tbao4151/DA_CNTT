@@ -194,3 +194,33 @@ detection or host/session-adjusted uncertainty is established. Do not use
 the held-out NEW-log results to tune probabilities or select a model.
 Synthetic regression (included in Ubuntu and Windows offline workflows):
 `py -3.12 -m pytest -q tests/test_zeek_new_log_evaluation.py`.
+
+## Research candidate review burden (offline descriptive, additive)
+
+The read-only NEW-log evaluation now includes `research_candidate_burden`,
+computed exclusively from its already verified TP/FP/TN/FN and operator-supplied
+UID labels. It reports research candidate count and rate, candidate count per
+1,000 observed flows, false candidates per 1,000 observed flows, false
+candidates per 1,000 **operator-labeled Normal** flows, missed attacks per
+1,000 **operator-labeled Attack** flows, and the fraction of candidates that
+disagree with the supplied labels. The denominator for each rate is named
+explicitly; a zero denominator yields JSON `null` rather than an invented
+zero. The `small_class_support_warning` flag is true when either supplied
+class has fewer than 30 flows.
+
+For example, TP=8, FP=2, TN=18, FN=12 gives 10 research candidates from
+40 flows (250 candidates per 1,000 observed flows), 2 false candidates
+(50 per 1,000 observed flows; 100 per 1,000 supplied Normal flows) and
+12 missed supplied Attacks (600 per 1,000 supplied Attack flows).
+This arithmetic example is **synthetic**, not a measured VMware outcome.
+
+These are hypothetical review *queue* counts, not analyst time, confirmed
+attack truth, actual SOC case volume, operational alerts or live performance.
+Flow-level denominators can conceal repeated host/session observations.
+The fixed validation threshold, original model and official UNSW-NB15
+benchmark are unchanged; do not use NEW-log results to select a threshold.
+The report exposes no UIDs, IPs, individual labels or private file paths.
+
+Software regression on Windows Python 3.12.9:
+`py -3.12 -m pytest -q tests/test_zeek_alert_burden.py tests/test_zeek_new_log_evaluation.py`.
+GitHub CI synthetic checks are not student laptop/VMware experiments.
