@@ -1,8 +1,8 @@
 """Static architecture inventory guard; no VMware, network, AI fitting or SOC writes."""
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 STATUS = ROOT / "docs" / "SENTINEL_LAB_IMPLEMENTATION_STATUS.md"
@@ -106,7 +106,7 @@ def test_current_status_does_not_equate_ci_with_vmware_evidence():
     assert len(re.findall(r"actions/runs/\d+", current)) >= 3
     assert "Ubuntu" in current and "Windows" in current
     assert "post-merge" in current and "SUCCESS" in current
-    assert "CANCELLED" in current  # cancelled jobs must not be accepted as green
+    assert "CI synthetic" in current  # software CI is not VMware evidence
     assert "PENDING_STUDENT_EVIDENCE" in current
     assert "không" in current.lower()
     assert "VMware" in current
