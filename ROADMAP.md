@@ -1,4 +1,4 @@
-## 2026-11-03: Strict Blue runtime stdout acceptance (feature CI pending)
+## 2026-11-03: Strict Blue runtime stdout acceptance (feature CI pending) ([PR #359](https://github.com/tbao4151/DA_CNTT/pull/359))
 
 - [ ] Verify final feature-head Ubuntu quality and Windows offline Python 3.12.9 CI **SUCCESS** on the exact commit, no conflicting PR and clean mergeability before merge.
 - [ ] Confirm the existing score/queue stdout format is accepted, while unexpected text, appended error diagnostics, cross-stage notices, duplicate counters and malformed counts are refused without partial aggregate output. Retain old CLI flags and JSON contracts.
