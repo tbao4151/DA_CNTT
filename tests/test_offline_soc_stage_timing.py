@@ -95,10 +95,19 @@ def test_stale_digest_and_duplicate_keys_refused():
     with pytest.raises(ValueError):
         review_offline_soc_stage_timing(raw, expected_record_sha256="0" * 64)
     duplicate = raw.replace(b'"record_version": 1,', b'"record_version": 1, "record_version": 1,')
-    with pytest.raises(ValueError, match="Duplicate"):
-        review_offline_soc_stage_timing(
-            duplicate, expected_record_sha256=hashlib.sha256(duplicate).hexdigest(),
-        )
+    # The public review API deliberately hides parser internals while refusing bad JSON.
+    # Assert the fail-closed contract, not the private object_pairs_hook message.
+    nested_duplicate = raw.replace(
+        b'"pcap": "' + b"1" * 64 + b'",',
+        b'"pcap": "' + b"1" * 64 + b'", "pcap": "' + b"1" * 64 + b'",',
+        1,
+    )
+    assert nested_duplicate != raw
+    for invalid in (duplicate, nested_duplicate):
+        with pytest.raises(ValueError, match="Malformed timing record"):
+            review_offline_soc_stage_timing(
+                invalid, expected_record_sha256=hashlib.sha256(invalid).hexdigest(),
+            )
 
 
 def test_cli_private_input_and_no_case_write(tmp_path):
