@@ -26,6 +26,15 @@ def _prepare(tmp_path: Path):
     triage, bundle, db, selected = _pinned_manual_handoff(tmp_path)
     log = Path(triage[triage.index("--log") + 1])
     log_bytes = log.read_bytes()
+    # The research helper names this file new-conn.log; the original offline
+    # PCAP import contract requires the exact basename conn.log. Make a
+    # byte-identical synthetic-only copy and point triage at that copy.
+    # The research queue and independent SHA pins remain byte-consistent.
+    conn = log.with_name("conn.log")
+    assert not conn.exists()
+    conn.write_bytes(log_bytes)
+    triage[triage.index("--log") + 1] = str(conn)
+    log = conn
     scope = inspect_zeek_lab_scope(log_bytes, ["192.168.56.0/24"])
 
     # A structurally framed synthetic packet; intentionally NOT a Zeek tuple.
