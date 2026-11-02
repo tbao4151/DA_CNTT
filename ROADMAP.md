@@ -1,3 +1,10 @@
+## 2026-11-03: Pinned paired Blue CLI receipt integrity acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS on exact final feature head; verify clean mergeability and no competing PR before merge.
+- [ ] Synthetic regression must accept 3 genuine-format score/queue receipt pairs and reject failed exit, changed stdout, nonempty stderr, changed published JSON, wrong script/stage, missing file, duplicate trial and malformed/duplicate JSON keys without executing any subprocess or leaking private paths.
+- [ ] Student Windows: retain 3–50 actual paired runs outside Git; independently hash the private receipt manifest and run `py -3.12 scripts/verify_offline_blue_receipts.py` with the pinned manifest. Keep original outputs and command receipts. This verifies local consistency only, not process authenticity, trial independence or packet-to-alert latency.
+- [ ] G1–G8 VMware Host-only evidence, independent labels, held-out Blue evaluation and analyst-confirmed SOC case remain pending. Red execution OFF; UNSW-NB15 benchmark unchanged.
+
 ## 2026-11-03: Offline Blue actual subprocess exit receipts ([PR #363](https://github.com/tbao4151/DA_CNTT/pull/363); feature CI pending)
 
 - [ ] Exact final PR-head Ubuntu Python 3.12.9 and Windows offline CI must succeed; require no competing PR and no merge conflicts before merge.
