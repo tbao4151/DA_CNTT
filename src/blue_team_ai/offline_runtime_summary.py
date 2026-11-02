@@ -21,6 +21,7 @@ MAX_TRIALS = 50
 MAX_DURATION_MS = Decimal("3600000")
 SIX_PLACES = Decimal("0.000001")
 _NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,100}\Z")
+_WINDOWS_DEVICE_STEM = re.compile(r"(?:con|prn|aux|nul|com[1-9]|lpt[1-9])\Z", re.IGNORECASE)
 _PIN = re.compile(r"[0-9a-f]{64}\Z")
 _DURATION = re.compile(r"[0-9]+\.[0-9]{6}\Z")
 
@@ -226,9 +227,14 @@ def summarize_pinned_runs(manifest_path: Path, expected_manifest_sha256: str, re
             raise ValueError("Invalid paired trial")
         for stage in ("score", "queue"):
             name = trial[f"{stage}_stdout"]
-            if not isinstance(name, str) or not _NAME.fullmatch(name) or name in (".", "..") or name in used:
+            if (not isinstance(name, str) or not _NAME.fullmatch(name)
+                    or name.endswith(".")
+                    or _WINDOWS_DEVICE_STEM.fullmatch(name.split(".", 1)[0])):
+                raise ValueError("Invalid Windows-safe private stdout name")
+            normalized_name = name.casefold()
+            if normalized_name in used:
                 raise ValueError("Invalid or reused private stdout name")
-            used.add(name)
+            used.add(normalized_name)
             expected = _check_pin(trial[f"{stage}_sha256"])
             file_path = source.parent / name
             original = _read_regular(file_path, MAX_STDOUT_BYTES)
