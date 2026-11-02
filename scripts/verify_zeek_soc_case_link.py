@@ -65,6 +65,10 @@ def main(argv: list[str] | None = None) -> int:
         "--require-distinct-pcap-packets", action="store_true",
         help="Opt-in one distinct PCAP packet record per Zeek row within one second; requires tuple and timestamp gates",
     )
+    parser.add_argument(
+        "--require-pcap-ipv4-header-checksum", action="store_true",
+        help="Opt-in: require valid RFC 791 IPv4 header checksums; requires tuple gate and pinned PCAP",
+    )
     parser.add_argument("--research-alert-bundle", type=Path,
                         help="Optional original private research candidate queue")
     parser.add_argument("--expected-research-alert-bundle-sha256",
@@ -115,6 +119,8 @@ def main(argv: list[str] | None = None) -> int:
         tuple_report = None
         if args.require_pcap_zeek_timestamps and not args.require_pcap_zeek_tuples:
             raise ValueError("PCAP/Zeek timestamp check requires tuple corroboration")
+        if args.require_pcap_ipv4_header_checksum and not args.require_pcap_zeek_tuples:
+            raise ValueError("IPv4 header checksum gate requires PCAP/Zeek tuple corroboration")
         if args.require_distinct_pcap_packets and not (
             args.require_pcap_zeek_tuples and args.require_pcap_zeek_timestamps
         ):
@@ -150,6 +156,7 @@ def main(argv: list[str] | None = None) -> int:
                     pcap_bytes, zeek_bytes,
                     require_timestamp_corroboration=args.require_pcap_zeek_timestamps,
                     require_distinct_packet_corroboration=args.require_distinct_pcap_packets,
+                    require_ipv4_header_checksum=args.require_pcap_ipv4_header_checksum,
                 )
                 if tuple_report["matched_zeek_flow_count"] != imported["flow_count"]:
                     raise ValueError("PCAP/Zeek tuple count differs from pinned import")
@@ -270,6 +277,10 @@ def main(argv: list[str] | None = None) -> int:
                 tuple_report["pcap_packet_count"] if tuple_report is not None
                 else imported["pcap_packet_count"] if imported is not None else None
             ),
+            "pcap_ipv4_header_checksum_required": args.require_pcap_ipv4_header_checksum,
+            "pcap_ipv4_header_checksum_verified": (
+                tuple_report is not None and tuple_report["ipv4_header_checksum_verified"]
+            ),
             "pcap_zeek_tuples_required": args.require_pcap_zeek_tuples,
             "pcap_zeek_tuples_corroborated": tuple_report is not None,
             "pcap_zeek_timestamps_required": args.require_pcap_zeek_timestamps,
@@ -319,6 +330,8 @@ def main(argv: list[str] | None = None) -> int:
         print("offline_pcap_zeek_tuple_presence_corroborated=true (NOT packet-to-flow identity)")
     if args.require_pcap_zeek_timestamps:
         print("offline_pcap_zeek_start_timestamps_corroborated=true (within 1 second only)")
+    if args.require_pcap_ipv4_header_checksum:
+        print("offline_pcap_ipv4_header_checksum_verified=true (NOT capture authenticity)")
     if args.require_distinct_pcap_packets:
         print("offline_distinct_pcap_packet_records_corroborated=true (NOT packet-to-flow identity)")
     if bundle_path is not None:
