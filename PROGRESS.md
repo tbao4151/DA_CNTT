@@ -1,4 +1,4 @@
-## 2026-11-03: Fail-closed Blue runtime safety/provenance notices (feature CI pending; PR to be assigned)
+## 2026-11-03: Fail-closed Blue runtime safety/provenance notices (feature CI pending) ([PR #361](https://github.com/tbao4151/DA_CNTT/pull/361))
 
 - Rechecked main `07fc66ebadfae0e795e277eff7567a5af9c07e08`: PR #360 merged; exact-head Ubuntu [#41503290747](https://github.com/tbao4151/DA_CNTT/actions/runs/41503290747), Windows [#41503290832](https://github.com/tbao4151/DA_CNTT/actions/runs/41503290832), and post-merge main [#41507087557](https://github.com/tbao4151/DA_CNTT/actions/runs/41507087557) were SUCCESS; no open PR at branch creation.
 - Narrow offline Blue runtime stdout validation: require stage-specific safety notice exactly once; require both members of each optional score provenance/disclaimer pair, and refuse duplicate notices. Synthetic regression tests added; final feature CI pending. No change to model, Dataset Mode benchmark, SQLite, private artifacts or Red execution.
