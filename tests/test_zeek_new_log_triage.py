@@ -124,6 +124,71 @@ def test_existing_case_with_tampered_initial_audit_cannot_be_reused(tmp_path, ev
     assert len(case_history(db, original_id)) == 1
 
 
+def _assert_existing_case_with_tampered_snapshot_cannot_be_reused(tmp_path, evidence, corrupt_json):
+    """A matching audit note alone must not bless a changed stored flow snapshot."""
+    import sqlite3
+
+    db = tmp_path / "cyber.sqlite3"
+    args = _args(evidence)
+    original_id = create_new_log_candidate_case(db, **args)
+    with sqlite3.connect(db) as connection:
+        connection.execute(
+            "UPDATE cases SET evidence_json=? WHERE case_id=?",
+            (corrupt_json, original_id),
+        )
+    with pytest.raises(ValueError, match="different pinned creation evidence"):
+        create_new_log_candidate_case(db, **args)
+    assert len(list_cases(db)) == 1
+    assert len(case_history(db, original_id)) == 1
+    with sqlite3.connect(db) as connection:
+        assert connection.execute(
+            "SELECT evidence_json FROM cases WHERE case_id=?", (original_id,)
+        ).fetchone()[0] == corrupt_json
+
+
+@pytest.mark.parametrize("corrupt_json", ['{"uid":"forged"}', "{invalid-json", "[]"])
+def test_stale_original_snapshot_refuses_idempotent_reuse(tmp_path, evidence, corrupt_json):
+    _assert_existing_case_with_tampered_snapshot_cannot_be_reused(
+        tmp_path, evidence, corrupt_json
+    )
+
+
+@pytest.mark.parametrize(("old_state", "new_state"), [
+    ("Investigating", "New"),
+    (None, "Resolved"),
+])
+def test_tampered_creation_transition_refuses_reuse(
+    tmp_path, evidence, old_state, new_state,
+):
+    import sqlite3
+
+    db = tmp_path / "cyber.sqlite3"
+    args = _args(evidence)
+    case_id = create_new_log_candidate_case(db, **args)
+    with sqlite3.connect(db) as connection:
+        connection.execute(
+            "UPDATE case_events SET old_state=?, new_state=? WHERE case_id=? "
+            "AND old_state IS NULL",
+            (old_state, new_state, case_id),
+        )
+    with pytest.raises(ValueError, match="different pinned creation evidence"):
+        create_new_log_candidate_case(db, **args)
+    assert len(list_cases(db)) == 1
+    assert len(case_history(db, case_id)) == 1
+
+
+def test_analyst_status_update_does_not_break_original_evidence_reuse(tmp_path, evidence):
+    from siem_ai.core import update_case
+
+    db = tmp_path / "cyber.sqlite3"
+    args = _args(evidence)
+    case_id = create_new_log_candidate_case(db, **args)
+    update_case(db, case_id, "Investigating", "Analyst reviewed synthetic flow")
+    assert create_new_log_candidate_case(db, **args) == case_id
+    assert len(list_cases(db)) == 1
+    assert len(case_history(db, case_id)) == 2
+
+
 def test_repeat_and_concurrent_selection_deduplicates(tmp_path, evidence):
     from concurrent.futures import ThreadPoolExecutor
     db = tmp_path / "cyber.sqlite3"

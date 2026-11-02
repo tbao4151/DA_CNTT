@@ -1,3 +1,9 @@
+## 2026-11-02: NEW-log SOC original snapshot/creation-event integrity (feature CI pending)
+
+- Verified `main` at `6066ee242de5f1dda3db05234d4649a3731f3849`: [PR #352](https://github.com/tbao4151/DA_CNTT/pull/352) merged; feature-head Ubuntu [#41427321685](https://github.com/tbao4151/DA_CNTT/actions/runs/41427321685), Windows [#41427321843](https://github.com/tbao4151/DA_CNTT/actions/runs/41427321843), Real Zeek synthetic [#41427321635](https://github.com/tbao4151/DA_CNTT/actions/runs/41427321635) and main quality [#41430474052](https://github.com/tbao4151/DA_CNTT/actions/runs/41430474052) all SUCCESS. No open PR at branch creation.
+- Identified remaining strict-idempotency gap: matching first audit note and flow digest alone did not recheck persisted `evidence_json` or the original `New` creation event. Proposed fail-closed verification of both, including malformed JSON, without changing or duplicating the case. Legitimate later analyst state updates must still permit identical-evidence reuse. Synthetic regression tests added and explicitly registered in Windows offline CI; feature CI pending.
+- No student Windows/VMware execution, new capture, attack truth, live alert or packet-to-SOC latency is claimed. UNSW-NB15 benchmark, trained models, Red Team execution and private SQLite data remain unchanged. G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-02: NEW-log SOC idempotency evidence-consistency gate (feature CI pending)
 
 - Verified main at `36607a15fd80991146b0bfe07e116ee88b750a37`: PR #351 merged; main quality [#41422564441](https://github.com/tbao4151/DA_CNTT/actions/runs/41422564441) SUCCESS; exact feature-head PR #351 Ubuntu [#41419706874](https://github.com/tbao4151/DA_CNTT/actions/runs/41419706874) and Windows [#41419707032](https://github.com/tbao4151/DA_CNTT/actions/runs/41419707032) SUCCESS. No open PR when this feature branch was created.

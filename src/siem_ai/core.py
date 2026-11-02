@@ -141,14 +141,22 @@ def create_case(
                     # audit recorded a newly pinned model/report/PCAP/manifest.
                     # Compare the FIRST event, not the mutable analyst note.
                     original = conn.execute(
-                        "SELECT c.flow_id, c.verdict, c.confidence, "
-                        "(SELECT e.note FROM case_events e WHERE e.case_id=c.case_id "
-                        "ORDER BY e.event_id LIMIT 1) "
-                        "FROM cases c WHERE c.case_id=?",
+                        "SELECT c.flow_id, c.verdict, c.confidence, c.evidence_json, "
+                        "e.old_state, e.new_state, e.note "
+                        "FROM cases c LEFT JOIN case_events e ON e.event_id=("
+                        "SELECT MIN(event_id) FROM case_events WHERE case_id=c.case_id"
+                        ") WHERE c.case_id=?",
                         (int(existing[0]),),
                     ).fetchone()
-                    if original != (
-                        flow_id(row), verdict, confidence, creation_note.strip()
+                    try:
+                        stored_evidence = json.loads(original[3]) if original else None
+                    except (TypeError, ValueError):
+                        stored_evidence = None
+                    if (
+                        original is None
+                        or original[:3] != (flow_id(row), verdict, confidence)
+                        or stored_evidence != evidence
+                        or original[4:] != (None, "New", creation_note.strip())
                     ):
                         raise ValueError(
                             "Existing research case has different pinned creation evidence"
