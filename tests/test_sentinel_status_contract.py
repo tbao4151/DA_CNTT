@@ -62,3 +62,45 @@ def test_status_inventory_table_has_distinct_markdown_rows():
         assert row.endswith("|"), row
         assert row.count("|") == 4, row  # exactly three Markdown columns
         assert r"\n|" not in row, row  # literal escape must not join two rows
+
+
+def test_scientific_acceptance_matrix_is_explicit_and_has_real_contracts():
+    text = STATUS.read_text(encoding="utf-8")
+    matrix = text.split("## Ma trận cổng nghiệm thu khoa học", 1)[1].split(
+        "## ", 1
+    )[0]
+    rows = [line for line in matrix.splitlines() if line.startswith("|")]
+    assert len(rows) == 10  # header + separator + G1..G8
+    for row in rows:
+        assert row.endswith("|"), row
+        assert row.count("|") == 5, row
+    for gate in range(1, 9):
+        matching = [row for row in rows if row.startswith(f"| G{gate} ")]
+        assert len(matching) == 1, gate
+        assert "CODE_PRESENT; PENDING_STUDENT_EVIDENCE" in matching[0]
+    for path in (
+        "scripts/check_linux_guest_combined_preflight.py",
+        "scripts/import_offline_pcap.py",
+        "scripts/verify_zeek_soc_case_link.py",
+        "scripts/evaluate_zeek_lab.py",
+        "src/blue_team_ai/new_log_evaluation.py",
+        "src/blue_team_ai/research_alerts.py",
+        "scripts/benchmark_zeek_new_log_runtime.py",
+        "src/red_team_ai/scenario_policy.py",
+    ):
+        assert (ROOT / path).is_file(), path
+        assert f"`{path}`" in matrix, path
+
+
+def test_current_status_does_not_equate_ci_with_vmware_evidence():
+    text = STATUS.read_text(encoding="utf-8")
+    current = text.split("## Trạng thái kiểm chứng hiện tại", 1)[1].split(
+        "## Ma trận", 1
+    )[0]
+    assert "329e3243945b752ddbdc3ffa5ce6f246bea0798c" in current
+    assert "PR #347" in current
+    assert "41389724529" in current and "41389724552" in current
+    assert "41392752250" in current
+    assert "không" in current.lower()
+    assert "VMware" in current
+    assert "packet-to-flow" in current
