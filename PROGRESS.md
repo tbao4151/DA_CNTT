@@ -1,3 +1,9 @@
+## 2026-11-03: Fail-closed Blue offline runtime stdout contract (feature; CI pending)
+
+- Rechecked `main` at `011fa34e4c52b9ff7b67e6ea8d1ec4c7c45a3a48`: [PR #358](https://github.com/tbao4151/DA_CNTT/pull/358) **MERGED**, with exact-head Ubuntu [#41484884207](https://github.com/tbao4151/DA_CNTT/actions/runs/41484884207) and Windows [#41484884317](https://github.com/tbao4151/DA_CNTT/actions/runs/41484884317) **SUCCESS**. No other PR open at branch creation. Post-merge main CI not verified in this entry.
+- Hardened the read-only pinned paired runtime-summary parser: in addition to strict timing keys, it now permits only documented score/queue CLI notices and bounded numeric counters; unexpected output, cross-stage success messages, duplicate/invalid counters or appended failure text are rejected rather than silently ignored. Added synthetic acceptance/refusal regression tests and documented that SHA-256 alone cannot prove process exit code or stdout provenance.
+- At authoring, new feature-head GitHub CI and student Windows/VMware execution are **not yet verified**. No new PCAP/Zeek, labels, live detection, SOC case, model, benchmark or Red Team execution; G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-02: Pinned paired Blue offline runtime summary (feature; exact-head CI pending) ([PR #358](https://github.com/tbao4151/DA_CNTT/pull/358))
 
 - Rechecked `main` at `f88de1163aa8e5cdc26338a67848803f2914b6fc`: [PR #357](https://github.com/tbao4151/DA_CNTT/pull/357) merged after exact-head Ubuntu [#41475054024](https://github.com/tbao4151/DA_CNTT/actions/runs/41475054024), Windows [#41475054246](https://github.com/tbao4151/DA_CNTT/actions/runs/41475054246) and Real Zeek synthetic [#41475053980](https://github.com/tbao4151/DA_CNTT/actions/runs/41475053980) SUCCESS. No open PR before this branch. Post-merge main CI not claimed.
