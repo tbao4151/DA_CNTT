@@ -124,7 +124,7 @@ def test_existing_case_with_tampered_initial_audit_cannot_be_reused(tmp_path, ev
     assert len(case_history(db, original_id)) == 1
 
 
-def test_existing_case_with_tampered_snapshot_cannot_be_reused(tmp_path, evidence, corrupt_json):
+def _assert_existing_case_with_tampered_snapshot_cannot_be_reused(tmp_path, evidence, corrupt_json):
     """A matching audit note alone must not bless a changed stored flow snapshot."""
     import sqlite3
 
@@ -148,7 +148,7 @@ def test_existing_case_with_tampered_snapshot_cannot_be_reused(tmp_path, evidenc
 
 @pytest.mark.parametrize("corrupt_json", ['{"uid":"forged"}', "{invalid-json", "[]"])
 def test_stale_original_snapshot_refuses_idempotent_reuse(tmp_path, evidence, corrupt_json):
-    test_existing_case_with_tampered_snapshot_cannot_be_reused(
+    _assert_existing_case_with_tampered_snapshot_cannot_be_reused(
         tmp_path, evidence, corrupt_json
     )
 
