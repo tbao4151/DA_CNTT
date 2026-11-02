@@ -72,9 +72,14 @@ state `New`. Its initial audit note records source, model, report and CIDR
 digests, original Zeek UID, research probability and validation threshold,
 plus explicit scientific limitations. The case is created only after the
 original report is reverified **at write time**. Repeated requests for the
-same source SHA-256 + UID reuse the existing research case and initial audit,
-including requests concurrent with other analyst sessions. Manual cases
-created through the legacy Cyber Lab interface are unaffected.
+same source SHA-256 + UID reuse the existing research case **only when the
+original creation audit and flow identity match exactly**, including requests
+concurrent with other analyst sessions. If a revised model, report, manifest,
+queue, or PCAP pin changes the creation evidence for the same source/UID,
+the NEW-log path refuses reuse instead of silently presenting the old case as
+newly verified. It does not overwrite the old audit or create a second case.
+Inspect the existing case and its original evidence separately. Legacy
+held-out research and manual Cyber Lab callers retain their previous behavior.
 
 The `--db` destination must be a private `.sqlite3` file outside the Git
 repository; no tracked dataset, model or existing database is deleted. Use
@@ -115,8 +120,7 @@ refuses the new capture if its bytes equal any declared split (including TEST), 
 The same checks are repeated **inside the manual case write path**. This identity screen is conservative and does not prove semantic non-reuse when UID, timestamp or endpoints change. Either
 missing flag, invalid input or mismatch fails closed before any SQLite write.
 The legacy commands without this optional pair remain compatible and explicitly
-report that declared TEST exclusion is **not** software-checked. An existing
-idempotent case may be reused without rewriting its original audit note.
+report that declared TEST exclusion is **not** software-checked. An existing NEW-log idempotent case may be reused only when its original audit note matches the currently pinned creation evidence; it is never silently rewritten.
 
 This is not proof of preregistration, true independent labels, semantic flow-level
 non-reuse after identifiers change, physical isolation, or detection accuracy. Keep
