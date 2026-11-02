@@ -1,3 +1,9 @@
+## 2026-11-02: Distinct PCAP packet-record SOC verification acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact feature head; verify mergeability and absence of competing PRs before merge.
+- [ ] On Windows Python 3.12.9, run `py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py tests/test_zeek_soc_readonly_pcap_framing.py` after merge; retain private original SHA-256-pinned PCAP, Zeek log and SOC case evidence.
+- [ ] Use `--require-pcap-zeek-tuples --require-pcap-zeek-timestamps --require-distinct-pcap-packets` only on approved offline captures. Distinct packet availability is not packet-to-flow identity, capture authenticity, independent labels, operational attack detection or event-to-SOC latency. Capture real VMware Host-only evidence before research acceptance.
+
 ## 2026-11-02: Read-only SOC PCAP/Zeek tuple corroboration acceptance (feature CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline Zeek CI SUCCESS on exact feature head, confirm no competing PR/conflict before merge.
