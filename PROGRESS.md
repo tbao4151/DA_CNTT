@@ -1,3 +1,9 @@
+## 2026-11-03: Read-only pinned paired Blue CLI receipt verifier (feature PR; CI pending)
+
+- Checked main at `c2e7387a822f4ff41c4b81e91eaf3c4770e24536`: PR #363 merged, exact-head Ubuntu [#41535140144](https://github.com/tbao4151/DA_CNTT/actions/runs/41535140144) and Windows [#41535140078](https://github.com/tbao4151/DA_CNTT/actions/runs/41535140078) SUCCESS; post-merge main quality [#41539287641](https://github.com/tbao4151/DA_CNTT/actions/runs/41539287641) SUCCESS; no open PR at feature start.
+- Added a read-only verifier for 3–50 private paired score/queue receipts with an independently pinned manifest. Checks stage/trial identity, actual recorded zero exit codes, fixed Blue script path, timing flag, stdout/stderr bytes and hashes, parsed timing contract, and retained published JSON hash; outputs only aggregate booleans/count. Added synthetic tamper/failure regressions and Windows CI registration. The existing runtime summary and Dataset benchmark remain unchanged.
+- At authoring: exact final feature-head Ubuntu/Windows CI not yet verified, no real student Windows/VMware execution, no new PCAP/Zeek, independent labels or SOC evidence. Operator-controlled receipt/hash files are not cryptographic process authentication; G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Capture actual offline Blue subprocess exit receipts ([PR #363](https://github.com/tbao4151/DA_CNTT/pull/363); feature CI pending)
 
 - Rechecked `main` at `53fecd25771faa3441d2d61cac13e9b119ad469d`: [PR #362](https://github.com/tbao4151/DA_CNTT/pull/362) merged, exact-head Ubuntu [#41522016421](https://github.com/tbao4151/DA_CNTT/actions/runs/41522016421), Windows [#41522016533](https://github.com/tbao4151/DA_CNTT/actions/runs/41522016533), and post-merge main [#41526534738](https://github.com/tbao4151/DA_CNTT/actions/runs/41526534738) all SUCCESS; no open PR at feature start.

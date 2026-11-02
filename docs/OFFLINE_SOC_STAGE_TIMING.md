@@ -258,3 +258,55 @@ notices, and unpaired provenance/caveat lines are refused. This prevents a
 truncated or selectively edited stdout transcript from being treated as a valid
 measurement; it does **not** authenticate the process exit code, command-line
 arguments, original capture, or operator-maintained SHA-256 pins.
+
+
+## Independently pinned paired subprocess receipts (read-only verifier)
+
+After collecting at least three paired score/queue trials with
+`scripts/capture_offline_blue_cli.py`, retain all twelve original stdout/stderr
+files, six receipt JSON files and six published output JSON files in an
+existing private directory **outside the repository**. Do not rename or edit
+these files. Prepare a separate UTF-8 receipt manifest in the same directory:
+
+```json
+{
+  "version": 1,
+  "trials": [
+    {
+      "trial_id": "001",
+      "score_receipt": "trial-001-score.receipt.json",
+      "score_sha256": "<actual lowercase SHA-256 of score receipt>",
+      "queue_receipt": "trial-001-queue.receipt.json",
+      "queue_sha256": "<actual lowercase SHA-256 of queue receipt>"
+    }
+  ]
+}
+```
+
+The example contains only one pair for readability; **3–50 distinct pairs**
+are mandatory. Compute the SHA-256 of the final manifest independently
+using `Get-FileHash -Algorithm SHA256`. Run on the **same Windows
+checkout** where the recorded CLI script paths and retained output files exist:
+
+```powershell
+py -3.12 scripts/verify_offline_blue_receipts.py --manifest "E:\PRIVATE\receipt-manifest.json" --expected-manifest-sha256 "<64 lowercase hex characters>"
+py -3.12 -m pytest -q tests/test_offline_blue_receipt_verify.py
+```
+
+The verifier checks the independently pinned manifest and receipt bytes,
+the actual recorded zero exit codes, stage/trial IDs, fixed allowlisted
+script paths, expected timing flag, original stdout/stderr hashes and
+lengths, complete stage-specific timing stdout, and the retained published
+JSON SHA-256. It never launches a process, writes a case or sends traffic.
+It returns **only aggregate verification flags**; private paths, command
+arguments, IPs and timestamps remain local. A missing or changed file
+fails closed. The separate existing runtime summary still uses its own
+pinned stdout manifest; this verifier does not silently convert that
+summary into an authenticated benchmark.
+
+**Scientific boundary:** An operator who can rewrite both private
+files and their independently supplied hashes can forge a consistent
+receipt set. A successful verification is a local consistency check,
+not proof of original subprocess identity, independent trial inputs,
+VMware Host-only isolation, PCAP authenticity, Attack/Normal labels,
+packet-to-alert latency, operational alerts or SOC case creation.
