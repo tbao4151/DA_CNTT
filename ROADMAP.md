@@ -1,3 +1,10 @@
+## 2026-11-02: Offline SOC stage timing acceptance (feature CI pending)
+
+- [ ] Require exact-final-head Ubuntu quality and Windows Python 3.12.9 CI SUCCESS; check concurrent PRs and merge conflicts before merging.
+- [ ] Verify malformed, stale-pinned, duplicate-key, out-of-order, non-UTC and missing-stage records are refused. Ensure aggregate timing reports explicitly state `packet_event_to_detection_latency_measured=false` and no private timestamps/UIDs/IPs or SQLite writes are produced.
+- [ ] On student Windows 11 after merge, run `py -3.12 -m pytest -q tests/test_offline_soc_stage_timing.py`; follow `docs/OFFLINE_SOC_STAGE_TIMING.md` only after actual authorized Host-only capture, Zeek processing, research review and manually created SOC case. Preserve independent evidence hashes, clock setup and exact commands outside Git.
+- [ ] G1–G8 still require authentic PCAP/Zeek and independent labels/holdout; operator-entered offline capture-complete-to-case time is not packet-event-to-alert detection latency.
+
 ## 2026-11-02: Offline NEW-log class-balance diagnostics acceptance ([PR #355](https://github.com/tbao4151/DA_CNTT/pull/355); feature CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS on the exact final feature head; check competing PRs and merge conflicts before merge.
