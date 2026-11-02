@@ -1,4 +1,4 @@
-## 2026-11-02: Scientific acceptance matrix and status-inventory regression (feature PR; CI pending)
+## 2026-11-02: Scientific acceptance matrix and status-inventory regression ([PR #348](https://github.com/tbao4151/DA_CNTT/pull/348); CI pending)
 
 - Verified `main` at `329e3243945b752ddbdc3ffa5ce6f246bea0798c`: PR #347 merged; exact-head Ubuntu [#41389724529](https://github.com/tbao4151/DA_CNTT/actions/runs/41389724529) and Windows [#41389724552](https://github.com/tbao4151/DA_CNTT/actions/runs/41389724552) SUCCESS; post-merge main quality [#41392752250](https://github.com/tbao4151/DA_CNTT/actions/runs/41392752250) SUCCESS. No open PR at feature start.
 - Updated `docs/SENTINEL_LAB_IMPLEMENTATION_STATUS.md` with an eight-gate CODE_PRESENT versus PENDING_STUDENT_EVIDENCE matrix and explicit current main/CI provenance. Added static regression tests to keep the matrix, entrypoints and safety/scientific distinctions from silently disappearing. Historical PR #330 material remains labeled as historical, not current state.
