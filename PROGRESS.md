@@ -1,3 +1,8 @@
+## 2026-11-02: PR #356 exact-head CI regression repair (awaiting rerun)
+
+- [PR #356](https://github.com/tbao4151/DA_CNTT/pull/356) head `3d76fd1920953f2ca2d94df0012d0bf0789d302e` failed Ubuntu [#41459291287](https://github.com/tbao4151/DA_CNTT/actions/runs/41459291287) (1731 passed, 1 failed, 2 skipped) and Windows [#41459291543](https://github.com/tbao4151/DA_CNTT/actions/runs/41459291543) (12 passed, 1 failed in new timing tests). Both failures were the same test expecting the internal `Duplicate` exception text while the public verifier intentionally normalizes malformed JSON errors to `Malformed timing record`.
+- Updated the regression to assert the actual fail-closed public contract for top-level and nested duplicate keys, preserving the generic privacy-safe error and all existing evidence restrictions. Test change commit `4d9685e9c52a8bfc055ecaa2a397e1abea7d4ff2`; exact-new-head CI **not yet verified** at repair time. No student Windows/VMware run or end-to-end latency evidence claimed.
+
 ## 2026-11-02: Operator-recorded offline SOC stage timing review (feature PR; CI pending)
 
 - Verified main at `786b10807c9f96f5943d7aa54b9f75f4591bbb03`: PR #355 merged after exact-head Ubuntu [#41450797331](https://github.com/tbao4151/DA_CNTT/actions/runs/41450797331) and Windows [#41450797750](https://github.com/tbao4151/DA_CNTT/actions/runs/41450797750) SUCCESS. No open PR when the feature branch was created.
