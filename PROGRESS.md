@@ -1,3 +1,9 @@
+## 2026-11-03: Fail-closed Blue runtime safety/provenance notices (feature CI pending) ([PR #361](https://github.com/tbao4151/DA_CNTT/pull/361))
+
+- Rechecked main `07fc66ebadfae0e795e277eff7567a5af9c07e08`: PR #360 merged; exact-head Ubuntu [#41503290747](https://github.com/tbao4151/DA_CNTT/actions/runs/41503290747), Windows [#41503290832](https://github.com/tbao4151/DA_CNTT/actions/runs/41503290832), and post-merge main [#41507087557](https://github.com/tbao4151/DA_CNTT/actions/runs/41507087557) were SUCCESS; no open PR at branch creation.
+- Narrow offline Blue runtime stdout validation: require stage-specific safety notice exactly once; require both members of each optional score provenance/disclaimer pair, and refuse duplicate notices. Synthetic regression tests added; final feature CI pending. No change to model, Dataset Mode benchmark, SQLite, private artifacts or Red execution.
+- This is a parser/evidence-contract check, not authentication of command exit codes or live detection. Student VMware Host-only G1-G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Require complete Blue offline runtime counters (feature; CI pending) ([PR #360](https://github.com/tbao4151/DA_CNTT/pull/360))
 
 - Verified `main` at `0537e9426e78d16bf991519e3585a26756082b18`; [PR #359](https://github.com/tbao4151/DA_CNTT/pull/359) merged. Its exact-head Ubuntu [#41493046383](https://github.com/tbao4151/DA_CNTT/actions/runs/41493046383) and Windows [#41493046384](https://github.com/tbao4151/DA_CNTT/actions/runs/41493046384) were SUCCESS; post-merge main quality [#41497814815](https://github.com/tbao4151/DA_CNTT/actions/runs/41497814815) was SUCCESS. No open PR before branch creation.
