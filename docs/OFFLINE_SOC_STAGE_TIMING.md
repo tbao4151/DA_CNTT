@@ -122,6 +122,16 @@ machine load, Python version, warm/cold state, model/log/manifest/output
 SHA-256 and any changed inputs in a separate private notebook. The summary
 tool does **not** verify comparability of different trials.
 
+The runtime-summary parser accepts only the two documented CLI success messages,
+their fixed explanatory notices, bounded nonnegative decimal counters, and the
+expected monotonic timing fields. It **refuses unexpected stdout text** (including
+appended errors, output from the wrong CLI, duplicate counters, and unrecognized
+diagnostics) instead of silently treating the file as a successful run. Preserve
+the original UTF-8 stdout bytes: do not edit warnings out of a failed command.
+The SHA-256 pin authenticates equality to the operator-retained file, **not**
+the command exit status or the origin of that file; independently record and
+check each actual process exit code before including a trial.
+
 Save each successful CLI stdout in a UTF-8 text file beside the manifest,
 outside the Git checkout. For example, capture a command's stdout using
 PowerShell redirection to `trial-001-score.txt`; check `$LASTEXITCODE -eq 0`
