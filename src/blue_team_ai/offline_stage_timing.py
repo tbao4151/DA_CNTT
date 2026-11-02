@@ -36,8 +36,13 @@ def _bad_constant(_value: str) -> None:
 
 def review_offline_soc_stage_timing(
     record_data: bytes, *, expected_record_sha256: str,
+    observed_evidence_sha256: dict[str, str] | None = None,
 ) -> dict[str, object]:
-    """Return only aggregate stage durations; never infer packet-event latency."""
+    """Aggregate offline stages; optionally compare caller-observed file digests.
+
+    The CLI hashes actual private files. A direct API caller must establish the
+    provenance of observed hashes separately; this function cannot do so.
+    """
     if (type(record_data) is not bytes or not 0 < len(record_data) <= MAX_TIMING_RECORD_BYTES
             or type(expected_record_sha256) is not str
             or _SHA.fullmatch(expected_record_sha256) is None
@@ -61,6 +66,16 @@ def review_offline_soc_stage_timing(
             or any(type(pins[key]) is not str or _SHA.fullmatch(pins[key]) is None
                    for key in _EVIDENCE)):
         raise ValueError("Expected five declared evidence SHA-256 references")
+    evidence_verified = observed_evidence_sha256 is not None
+    if evidence_verified:
+        if (type(observed_evidence_sha256) is not dict
+                or set(observed_evidence_sha256) != set(_EVIDENCE)
+                or any(type(observed_evidence_sha256[key]) is not str
+                       or _SHA.fullmatch(observed_evidence_sha256[key]) is None
+                       or not hmac.compare_digest(
+                           observed_evidence_sha256[key], pins[key])
+                       for key in _EVIDENCE)):
+            raise ValueError("Original evidence bytes do not match declared SHA-256")
     timestamps = record["timestamps_utc"]
     if type(timestamps) is not dict or set(timestamps) != set(_STAGES):
         raise ValueError("Expected exact ordered stage timestamp fields")
@@ -100,7 +115,7 @@ def review_offline_soc_stage_timing(
             (parsed[-1] - parsed[0]).total_seconds() * 1000, 3
         ),
         "declared_evidence_pin_count": len(_EVIDENCE),
-        "evidence_file_bytes_verified": False,
+        "evidence_file_bytes_verified": evidence_verified,
         "operator_clock_verified": False,
         "physical_host_only_isolation_verified": False,
         "capture_authenticity_verified": False,
@@ -110,8 +125,11 @@ def review_offline_soc_stage_timing(
         "interpretation": (
             "Descriptive elapsed times from operator-entered UTC timestamps "
             "for offline stages only. This is NOT packet-event-to-alert latency. "
-            "The record's SHA-256 checks only its own bytes; declared evidence "
-            "hashes, clock basis, case creation and capture origin are not "
-            "independently verified. Keep original evidence and clock notes private."
+            ("Five supplied private evidence file digests match the record; "
+             if evidence_verified else
+             "Declared evidence hashes have not been checked against files; ")
+            + "clock basis, manual case creation, capture origin and isolation "
+              "are not independently verified. Keep original evidence and "
+              "clock notes private."
         ),
     }
