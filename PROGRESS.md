@@ -1,4 +1,4 @@
-## 2026-11-03: Fail-closed Blue offline runtime stdout contract (feature; CI pending)
+## 2026-11-03: Fail-closed Blue offline runtime stdout contract (feature; CI pending) ([PR #359](https://github.com/tbao4151/DA_CNTT/pull/359))
 
 - Rechecked `main` at `011fa34e4c52b9ff7b67e6ea8d1ec4c7c45a3a48`: [PR #358](https://github.com/tbao4151/DA_CNTT/pull/358) **MERGED**, with exact-head Ubuntu [#41484884207](https://github.com/tbao4151/DA_CNTT/actions/runs/41484884207) and Windows [#41484884317](https://github.com/tbao4151/DA_CNTT/actions/runs/41484884317) **SUCCESS**. No other PR open at branch creation. Post-merge main CI not verified in this entry.
 - Hardened the read-only pinned paired runtime-summary parser: in addition to strict timing keys, it now permits only documented score/queue CLI notices and bounded numeric counters; unexpected output, cross-stage success messages, duplicate/invalid counters or appended failure text are rejected rather than silently ignored. Added synthetic acceptance/refusal regression tests and documented that SHA-256 alone cannot prove process exit code or stdout provenance.
