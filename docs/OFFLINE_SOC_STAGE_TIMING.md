@@ -123,8 +123,10 @@ SHA-256 and any changed inputs in a separate private notebook. The summary
 tool does **not** verify comparability of different trials.
 
 The runtime-summary parser accepts only the two documented CLI success messages,
-their fixed explanatory notices, bounded nonnegative decimal counters, and the
-expected monotonic timing fields. It **refuses unexpected stdout text** (including
+their fixed explanatory notices, **both mandatory stage-specific bounded nonnegative decimal counters**, and the
+expected monotonic timing fields. Score research-candidate count must not exceed
+its flow count. Missing counters or impossible candidate/flow counts are refused
+rather than accepted as successful trials. It **refuses unexpected stdout text** (including
 appended errors, output from the wrong CLI, duplicate counters, and unrecognized
 diagnostics) instead of silently treating the file as a successful run. Preserve
 the original UTF-8 stdout bytes: do not edit warnings out of a failed command.
