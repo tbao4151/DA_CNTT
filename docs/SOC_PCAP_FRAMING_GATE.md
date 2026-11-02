@@ -117,3 +117,34 @@ A PASS does **not** establish capture authenticity, VMware Host-only
 isolation, authorization, independently assigned attack labels, detection
 quality, packet-to-flow identity, or operational alert timing. Keep original
 files and hashes outside Git, and do not modify evidence to satisfy a gate.
+
+
+## Optional distinct packet-record availability for read-only SOC verification (02/11/2026)
+
+For a stricter **offline consistency screen**, the SOC verifier can require a
+*different original PCAP packet record* for every Zeek IPv4 TCP/UDP row.
+After supplying the full independently pinned import triplet and existing SOC
+verification arguments, append all three dependent flags:
+
+```powershell
+  --require-pcap-zeek-tuples --require-pcap-zeek-timestamps --require-distinct-pcap-packets --timing-json
+```
+
+The new flag refuses unless both tuple and one-second timestamp checks are
+also enabled. It delegates to the already-tested, deterministic per-tuple
+packet-assignment checker; no packet record can be assigned twice, including
+opposite-direction matches. Repeated Zeek tuples with too few eligible PCAP
+records are refused. The JSON reports whether this stronger screen was
+requested and passed, plus aggregate assigned timestamp offset P95 in ms.
+The existing default, tuple-only, and timestamp-only modes remain unchanged.
+
+**Not identity:** two packets being available for two Zeek rows does not
+prove that Zeek derived either row from those packets, or that the PCAP is
+authentic. The greedy matching is a conservative availability screen; it can
+reject incomplete captures and is not a precision/recall, attack-label or
+live detection measurement. No original files, SOC cases, model or benchmark
+are modified. Synthetic tests:
+
+```powershell
+py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py tests/test_zeek_soc_readonly_pcap_framing.py
+```
