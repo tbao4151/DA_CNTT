@@ -77,6 +77,53 @@ def test_explicit_verified_candidate_creates_one_unclassified_case(tmp_path, evi
     assert case_evidence(db, case_id)["uid"] == evidence[3]["predictions"][_args(evidence)["record_index"]]["uid"]
 
 
+
+def test_changed_pinned_model_cannot_reuse_stale_new_log_case(tmp_path, evidence):
+    """Same source/UID is one case, but a different model must not inherit its audit."""
+    db = tmp_path / "cyber.sqlite3"
+    args = _args(evidence)
+    original_id = create_new_log_candidate_case(db, **args)
+    original_note = list_cases(db).iloc[0]["analyst_note"]
+
+    revised_model = copy.deepcopy(evidence[1])
+    revised_model["selected_threshold"] = 0.000002
+    revised_bytes = json.dumps(revised_model, allow_nan=False).encode("utf-8")
+    revised_sha = hashlib.sha256(revised_bytes).hexdigest()
+    revised_report = score_new_zeek_log(
+        evidence[0], revised_model, expected_log_sha256=evidence[4],
+        lab_cidrs=CIDR, model_sha256=revised_sha,
+    )
+    assert revised_report["predictions"][args["record_index"]]["research_candidate"] is True
+    with pytest.raises(ValueError, match="different pinned creation evidence"):
+        create_new_log_candidate_case(
+            db, **_args(
+                evidence, model=revised_model, model_sha256=revised_sha,
+                report_data=json.dumps(revised_report, allow_nan=False).encode("utf-8"),
+            ),
+        )
+    assert len(list_cases(db)) == 1
+    assert list_cases(db).iloc[0]["case_id"] == original_id
+    assert list_cases(db).iloc[0]["analyst_note"] == original_note
+    assert len(case_history(db, original_id)) == 1
+
+
+def test_existing_case_with_tampered_initial_audit_cannot_be_reused(tmp_path, evidence):
+    import sqlite3
+
+    db = tmp_path / "cyber.sqlite3"
+    args = _args(evidence)
+    original_id = create_new_log_candidate_case(db, **args)
+    with sqlite3.connect(db) as connection:
+        connection.execute(
+            "UPDATE case_events SET note=? WHERE case_id=? AND old_state IS NULL",
+            ("changed original audit", original_id),
+        )
+    with pytest.raises(ValueError, match="different pinned creation evidence"):
+        create_new_log_candidate_case(db, **args)
+    assert len(list_cases(db)) == 1
+    assert len(case_history(db, original_id)) == 1
+
+
 def test_repeat_and_concurrent_selection_deduplicates(tmp_path, evidence):
     from concurrent.futures import ThreadPoolExecutor
     db = tmp_path / "cyber.sqlite3"
