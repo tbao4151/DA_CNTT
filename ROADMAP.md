@@ -1,4 +1,4 @@
-## 2026-11-02: Evidence-based Cyber Lab acceptance matrix (feature PR; CI pending)
+## 2026-11-02: Evidence-based Cyber Lab acceptance matrix ([PR #348](https://github.com/tbao4151/DA_CNTT/pull/348); CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact final feature head; verify the eight-gate inventory tests and no competing PR/conflicts before merge. A documentation inventory check is not a functional or scientific experiment.
 - [ ] On student Windows 11 Python 3.12.9 run `py -3.12 -m pytest -q tests/test_sentinel_status_contract.py tests/test_architecture_inventory.py` after merge, then follow G1–G8 in `docs/SENTINEL_LAB_IMPLEMENTATION_STATUS.md` with private original files, independent hashes, operator approvals, timestamps and screenshots.
