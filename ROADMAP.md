@@ -1,3 +1,9 @@
+## 2026-11-02: PR #345 read-only PCAP SOC verifier CI repair gate
+
+- [ ] Confirm Ubuntu quality and Windows offline CI pass on the **final** PR #345 head after canonical `conn.log` synthetic fixture repair; earlier runs #41376231512 and #41376231480 failed and do not count as acceptance.
+- [ ] Verify no competing PR, no conflict, and read-only verification leaves the original PCAP, Zeek bytes, import report, and SQLite case unchanged before merging. On Windows 11 run `py -3.12 -m pytest -q tests/test_zeek_soc_readonly_pcap_framing.py` after merge.
+- [ ] Collect genuine authorized VMware Host-only PCAP/Zeek and independent labels on the student's laptop; framing, hashes and synthetic CI are not proof of packet-to-flow correspondence or attack detection.
+
 ## 2026-11-02: Read-only SOC case PCAP framing recheck acceptance (feature CI pending)
 
 - [ ] Require Ubuntu quality and Windows Python 3.12.9 CI SUCCESS on the exact feature head, confirm no competing PR or merge conflict, then merge. The synthetic fixture has one framed packet but no genuine Zeek tuple correspondence.
