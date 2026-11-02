@@ -263,7 +263,7 @@ arguments, original capture, or operator-maintained SHA-256 pins.
 ## Independently pinned paired subprocess receipts (read-only verifier)
 
 After collecting at least three paired score/queue trials with
-`scripts/capture_offline_blue_cli.py`, retain all six original stdout/stderr
+`scripts/capture_offline_blue_cli.py`, retain all twelve original stdout/stderr
 files, six receipt JSON files and six published output JSON files in an
 existing private directory **outside the repository**. Do not rename or edit
 these files. Prepare a separate UTF-8 receipt manifest in the same directory:
