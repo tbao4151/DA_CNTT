@@ -1,4 +1,4 @@
-## 2026-11-02: Offline NEW-log research candidate review burden (feature PR; CI pending)
+## 2026-11-02: Offline NEW-log research candidate review burden ([PR #350](https://github.com/tbao4151/DA_CNTT/pull/350); exact-head CI pending)
 
 - Verified `main` at `32938818f828d7cb264cd3a191b42aa702b3e403`: PR #349 merged, exact-head Ubuntu [#41401710056](https://github.com/tbao4151/DA_CNTT/actions/runs/41401710056) and Windows [#41401710041](https://github.com/tbao4151/DA_CNTT/actions/runs/41401710041) SUCCESS; post-merge main quality [#41405361299](https://github.com/tbao4151/DA_CNTT/actions/runs/41405361299) SUCCESS. No open PR at feature start.
 - Added a strictly confusion-derived `research_candidate_burden` to the existing read-only, pinned NEW-log labeled evaluation: explicit per-1,000 denominators, nulls for undefined class/candidate denominators, small-class warning, no raw identifiers, no model selection or SOC write. Updated Windows offline CI and operator documentation. No Dataset Mode benchmark/model/SQLite mutation.
