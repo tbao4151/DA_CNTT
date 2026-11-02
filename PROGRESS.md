@@ -1,3 +1,9 @@
+## 2026-11-02: PR #345 exact-head CI fixture repair — canonical conn.log basename
+
+- Ubuntu quality [#41376231512](https://github.com/tbao4151/DA_CNTT/actions/runs/41376231512) failed **3 tests** in `tests/test_zeek_soc_readonly_pcap_framing.py` (1677 passed, 2 skipped); Windows offline [#41376231480](https://github.com/tbao4151/DA_CNTT/actions/runs/41376231480) also failed in the registered SOC contract suite on head `a226224ca60e1900de04232601fc09fa1bb63a27`. All three failed during synthetic `_prepare` at the manual SOC write boundary, before the read-only verifier ran.
+- Root cause: the reused research helper generates `new-conn.log`, while the independently pinned offline PCAP import verifier requires the canonical `conn.log` basename. On the **same PR #345 branch**, the test now creates a byte-identical synthetic-only `conn.log` copy and points triage at it; it does not relax production validation, alter existing historical fixtures, repin real evidence, or change Dataset Mode. Repair commit `12de5dd7ad76eea3732cef46cd4bd5f532f87587`.
+- **Fresh exact-head Ubuntu and Windows CI required before merge**; no successful focused pytest, Windows laptop/VMware experiment, genuine PCAP/Zeek capture, operational alert, or end-to-end detection claimed yet. No other feature PR should be opened while this PR is unresolved.
+
 ## 2026-11-02: Read-only NEW-log SOC PCAP framing recheck (feature PR; CI pending)
 
 - Verified `main` at `68686d1624dc46d743c0cc64c063c248ffb50123`: PR #344 merged; its exact-head Ubuntu quality #41370733096, Windows offline #41370733109 and Real Zeek synthetic #41370733106 completed SUCCESS. Post-merge main quality #41373362526 completed SUCCESS. No open PR at branch creation.
