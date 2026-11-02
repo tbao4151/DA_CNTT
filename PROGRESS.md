@@ -1,3 +1,9 @@
+## 2026-11-02: Operator-recorded offline SOC stage timing review (feature PR; CI pending)
+
+- Verified main at `786b10807c9f96f5943d7aa54b9f75f4591bbb03`: PR #355 merged after exact-head Ubuntu [#41450797331](https://github.com/tbao4151/DA_CNTT/actions/runs/41450797331) and Windows [#41450797750](https://github.com/tbao4151/DA_CNTT/actions/runs/41450797750) SUCCESS. No open PR when the feature branch was created.
+- Added read-only, independently SHA-256-pinned operator UTC timeline validation for six offline stages from capture completion through explicit manual SOC case creation. Strict JSON, ordered timestamps, bounded input and aggregate-only durations; no PCAP event-time or live detection latency is inferred. Added synthetic tests, Windows CI registration and private Windows runbook.
+- At authoring, full GitHub feature CI and Windows/VMware laptop execution are **not yet verified**. The record's declared PCAP/Zeek/model/report/case hashes are format-checked only; original evidence and clock authenticity are **not** independently validated. No new traffic, model, Red execution, SQLite writes or UNSW benchmark changes. G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-02: Offline NEW-log class-imbalance diagnostics ([PR #355](https://github.com/tbao4151/DA_CNTT/pull/355); feature CI pending)
 
 - Verified main at `5fc18210bc5f3b2ffbd5a5b9f6062128994d0ae7`: [PR #354](https://github.com/tbao4151/DA_CNTT/pull/354) merged, exact-head Ubuntu [#41442506298](https://github.com/tbao4151/DA_CNTT/actions/runs/41442506298) and Windows [#41442506139](https://github.com/tbao4151/DA_CNTT/actions/runs/41442506139) SUCCESS; main quality [#41446115928](https://github.com/tbao4151/DA_CNTT/actions/runs/41446115928) SUCCESS. No open PR at feature start.
