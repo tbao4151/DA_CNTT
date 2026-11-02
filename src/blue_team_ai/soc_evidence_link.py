@@ -102,7 +102,7 @@ def _verify_creation_note(
     else:
         imported = re.fullmatch(
             r"Pinned original PCAP/import report/Zeek byte integrity and "
-            r"(?:classic PCAP packet framing checked \\(NOT packet-to-flow correlation\\); )?"
+            r"(?:classic PCAP packet framing checked \(NOT packet-to-flow correlation\); )?"
             r"declared scope rechecked: import_report_sha256=([0-9a-f]{64}); "
             r"pcap_sha256=([0-9a-f]{64})\. ",
             remaining,
