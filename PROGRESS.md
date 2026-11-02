@@ -1,3 +1,9 @@
+## 2026-11-03: Require complete Blue offline runtime counters (feature; CI pending)
+
+- Verified `main` at `0537e9426e78d16bf991519e3585a26756082b18`; [PR #359](https://github.com/tbao4151/DA_CNTT/pull/359) merged. Its exact-head Ubuntu [#41493046383](https://github.com/tbao4151/DA_CNTT/actions/runs/41493046383) and Windows [#41493046384](https://github.com/tbao4151/DA_CNTT/actions/runs/41493046384) were SUCCESS; post-merge main quality [#41497814815](https://github.com/tbao4151/DA_CNTT/actions/runs/41497814815) was SUCCESS. No open PR before branch creation.
+- The paired read-only runtime summary now refuses score/queue stdout missing either documented counter and score candidate counts greater than flow counts. Synthetic tests cover omitted counters and impossible counts while retaining the CLI timing/output contract. Feature-head CI and student Windows/VMware experiments are not yet verified at authoring.
+- No model, Dataset benchmark, SQLite, original evidence, Red execution or live alert changed; G1–G8 remain PENDING_STUDENT_EVIDENCE. Operator-provided SHA-256 does not authenticate exit status or source.
+
 ## 2026-11-03: Fail-closed Blue offline runtime stdout contract (feature; CI pending) ([PR #359](https://github.com/tbao4151/DA_CNTT/pull/359))
 
 - Rechecked `main` at `011fa34e4c52b9ff7b67e6ea8d1ec4c7c45a3a48`: [PR #358](https://github.com/tbao4151/DA_CNTT/pull/358) **MERGED**, with exact-head Ubuntu [#41484884207](https://github.com/tbao4151/DA_CNTT/actions/runs/41484884207) and Windows [#41484884317](https://github.com/tbao4151/DA_CNTT/actions/runs/41484884317) **SUCCESS**. No other PR open at branch creation. Post-merge main CI not verified in this entry.
