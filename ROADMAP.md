@@ -1,3 +1,9 @@
+## 2026-11-02: Linux forwarding snapshot acceptance ([PR #343](https://github.com/tbao4151/DA_CNTT/pull/343); CI pending)
+
+- [ ] Require exact feature-head Ubuntu quality and Windows offline CI success for seven nonzero forwarding settings, missing/duplicate/extra keys, tampered SHA-256 and valid LF/CRLF; confirm no competing PR or merge conflict before merging.
+- [ ] On the owned Linux Zeek VM, privately collect the original seven-key `sysctl` output and command exit code without changing kernel configuration; independently record SHA-256, capture time, actual interface and written scope. Run `scripts/check_linux_guest_forwarding_preflight.py` on unchanged bytes using Windows 11 Python 3.12.9.
+- [ ] Independently inspect other interfaces, VMware NIC/VMnet assignments, DNS, firewall, all routes, authorization and real Host-only PCAP/Zeek. A pinned snapshot is not live forwarding proof or evidence of AI attack detection; retain independent labels and genuine telemetry-to-SOC timing as separate research gates.
+
 ## 2026-11-02: Local-table destination scope acceptance (feature CI pending)
 
 - [ ] Require exact final feature-head Ubuntu quality and Windows offline Zeek CI success for six out-of-scope negatives and five valid kernel-local/multicast/broadcast positives, plus existing five-/seven-file regressions; confirm mergeability and no competing PR before merging.
