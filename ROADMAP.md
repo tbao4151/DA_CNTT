@@ -1,4 +1,4 @@
-## 2026-11-02: Distinct PCAP packet-record SOC verification acceptance (feature CI pending)
+## 2026-11-02: Distinct PCAP packet-record SOC verification acceptance ([PR #347](https://github.com/tbao4151/DA_CNTT/pull/347); CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact feature head; verify mergeability and absence of competing PRs before merge.
 - [ ] On Windows Python 3.12.9, run `py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py tests/test_zeek_soc_readonly_pcap_framing.py` after merge; retain private original SHA-256-pinned PCAP, Zeek log and SOC case evidence.
