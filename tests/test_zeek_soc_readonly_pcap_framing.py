@@ -110,7 +110,7 @@ def test_strict_soc_readonly_framing_requires_complete_pinned_provenance(tmp_pat
     before = db.read_bytes()
     for args in (
         ["--require-pcap-framing"],
-        provenance[:-2] + ["--require-pcap-framing"],
+        provenance[:4] + ["--require-pcap-framing"],
     ):
         refused = _run(verify + args)
         assert refused.returncode == 1
