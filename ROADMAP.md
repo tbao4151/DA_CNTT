@@ -1,3 +1,9 @@
+## 2026-11-02: Read-only SOC IPv4 checksum acceptance (feature CI pending)
+
+- [ ] Confirm Ubuntu quality and Windows offline CI SUCCESS on exact final feature head, no competing PRs, and no merge conflict before merging. The new checksum gate is optional and depends on tuple corroboration and the complete pinned PCAP import triplet.
+- [ ] On Windows Python 3.12.9 run `py -3.12 -m pytest -q tests/test_zeek_soc_readonly_pcap_framing.py tests/test_pcap_ipv4_header_checksum.py` after merge; verify original PCAP/Zeek/import report and existing SQLite case remain byte-identical during read-only checks.
+- [ ] On a genuinely authorized private Host-only capture, preserve original hashes and document any offload/partial-capture checksum limitations. Separately establish G1–G8 scientific evidence; header checksum PASS is not attack detection, packet-to-flow identity, or event-to-SOC latency.
+
 ## 2026-11-02: Evidence-based Cyber Lab acceptance matrix ([PR #348](https://github.com/tbao4151/DA_CNTT/pull/348); CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact final feature head; verify the eight-gate inventory tests and no competing PR/conflicts before merge. A documentation inventory check is not a functional or scientific experiment.
