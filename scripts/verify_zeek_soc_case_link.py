@@ -61,6 +61,10 @@ def main(argv: list[str] | None = None) -> int:
         "--require-pcap-zeek-timestamps", action="store_true",
         help="Requires tuple gate; corroborate flow starts within one second of matching packets",
     )
+    parser.add_argument(
+        "--require-distinct-pcap-packets", action="store_true",
+        help="Opt-in one distinct PCAP packet record per Zeek row within one second; requires tuple and timestamp gates",
+    )
     parser.add_argument("--research-alert-bundle", type=Path,
                         help="Optional original private research candidate queue")
     parser.add_argument("--expected-research-alert-bundle-sha256",
@@ -111,6 +115,10 @@ def main(argv: list[str] | None = None) -> int:
         tuple_report = None
         if args.require_pcap_zeek_timestamps and not args.require_pcap_zeek_tuples:
             raise ValueError("PCAP/Zeek timestamp check requires tuple corroboration")
+        if args.require_distinct_pcap_packets and not (
+            args.require_pcap_zeek_tuples and args.require_pcap_zeek_timestamps
+        ):
+            raise ValueError("Distinct PCAP packet gate requires tuple and timestamp checks")
         if ((args.require_pcap_framing or args.require_pcap_zeek_tuples)
                 and not all(value is not None for value in import_options)):
             raise ValueError("Strict PCAP checks require all three pinned import options")
@@ -141,6 +149,7 @@ def main(argv: list[str] | None = None) -> int:
                 tuple_report = corroborate_pcap_zeek_tuples(
                     pcap_bytes, zeek_bytes,
                     require_timestamp_corroboration=args.require_pcap_zeek_timestamps,
+                    require_distinct_packet_corroboration=args.require_distinct_pcap_packets,
                 )
                 if tuple_report["matched_zeek_flow_count"] != imported["flow_count"]:
                     raise ValueError("PCAP/Zeek tuple count differs from pinned import")
@@ -270,6 +279,14 @@ def main(argv: list[str] | None = None) -> int:
             "pcap_zeek_matched_flow_count": (
                 tuple_report["matched_zeek_flow_count"] if tuple_report else None
             ),
+            "distinct_pcap_packets_required": args.require_distinct_pcap_packets,
+            "distinct_pcap_packets_corroborated": (
+                tuple_report is not None and tuple_report["distinct_packet_per_flow_correlated"]
+            ),
+            "distinct_pcap_assigned_offset_p95_ms": (
+                tuple_report["distinct_assigned_packet_offset_p95_ms"]
+                if args.require_distinct_pcap_packets and tuple_report is not None else None
+            ),
             "packet_to_flow_identity_verified": False,
             "sqlite_read_only": True,
             "pinned_research_queue_reverified": bundle_path is not None,
@@ -302,6 +319,8 @@ def main(argv: list[str] | None = None) -> int:
         print("offline_pcap_zeek_tuple_presence_corroborated=true (NOT packet-to-flow identity)")
     if args.require_pcap_zeek_timestamps:
         print("offline_pcap_zeek_start_timestamps_corroborated=true (within 1 second only)")
+    if args.require_distinct_pcap_packets:
+        print("offline_distinct_pcap_packet_records_corroborated=true (NOT packet-to-flow identity)")
     if bundle_path is not None:
         print("pinned_research_queue_reverified=true (candidate selection and creation audit)")
     print("sqlite_read_only=true; stored_snapshot_and_initial_audit_match=true")

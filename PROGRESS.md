@@ -1,3 +1,9 @@
+## 2026-11-02: Read-only SOC distinct-PCAP-packet availability gate ([PR #347](https://github.com/tbao4151/DA_CNTT/pull/347); CI pending)
+
+- Verified `main` at `cc48f39ec2385f671692c4083d3a367e92df016d`: PR #346 merged after exact-head Ubuntu [#41384682467](https://github.com/tbao4151/DA_CNTT/actions/runs/41384682467) and Windows [#41384682660](https://github.com/tbao4151/DA_CNTT/actions/runs/41384682660) SUCCESS. No open PR before starting this slice.
+- Exposed the existing conservative distinct-packet-per-Zeek-row matcher as an explicit opt-in at the read-only SOC case verification CLI. Requires independently pinned PCAP import triplet, tuple presence and one-second timestamp gate. JSON discloses required/verified status and assigned-offset P95 without claiming packet-to-flow identity. Added synthetic integration and reuse-refusal regression tests, Windows-covered test paths, operator documentation.
+- **CI not yet verified on this feature head**; no local full-repository pytest (GitHub DNS clone blocked), student laptop/VMware capture, independent attack labels, operational alert or latency claimed. Dataset Mode, SQLite and model remain unchanged. Merge only after exact-head Ubuntu/Windows CI success and conflict review.
+
 ## 2026-11-02: Opt-in read-only SOC PCAP/Zeek tuple presence and timestamp recheck (feature PR; CI pending)
 
 - Verified `main` at `fc6492e1f9f4cc1fcd13c70815e37f61eeaea830`: PR #345 merged after exact-head Ubuntu quality [#41378765078](https://github.com/tbao4151/DA_CNTT/actions/runs/41378765078) and Windows offline [#41378765042](https://github.com/tbao4151/DA_CNTT/actions/runs/41378765042) SUCCESS; post-merge main quality [#41381199719](https://github.com/tbao4151/DA_CNTT/actions/runs/41381199719) SUCCESS. No open PR when feature branch was created.
