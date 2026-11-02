@@ -73,3 +73,47 @@ Synthetic regression (Windows CI and Ubuntu CI, not a laptop experiment):
 ```powershell
 py -3.12 -m pytest -q tests/test_zeek_soc_readonly_pcap_framing.py
 ```
+
+## Optional read-only SOC PCAP/Zeek tuple and timestamp corroboration (02/11/2026)
+
+The existing `scripts/verify_pcap_zeek_tuple.py` already supports strict,
+bounded classic Ethernet PCAP/Zeek **five-tuple presence** checks. The
+read-only SOC case-link verifier now optionally invokes that same checker
+*after* the original PCAP import triplet has been independently SHA-256
+checked and *before* verifying the stored case link.
+
+Use the normal private, pinned `scripts/verify_zeek_soc_case_link.py`
+invocation (model, log, report, manifest, case, CIDR and all three
+`--offline-import-*` arguments), then append:
+
+```powershell
+  --require-pcap-zeek-tuples --require-pcap-zeek-timestamps --timing-json
+```
+
+`--require-pcap-zeek-tuples` requires all three import options and checks
+that every Zeek row is IPv4 TCP/UDP and has a matching direction-neutral
+five-tuple in the original classic Ethernet PCAP. This includes strict
+PCAP framing and supported packet-header validation. A single packet
+can corroborate multiple Zeek rows, so it is **not** packet-to-flow
+identity or proof of complete capture. VLAN, IPv6, fragments and other
+unsupported traffic are rejected rather than silently treated as matching.
+
+`--require-pcap-zeek-timestamps` requires the tuple option and further
+requires a matching PCAP packet timestamp within **one second** of each
+Zeek flow start. It is a clock/tuple consistency screen, not event-to-alert
+latency. Both options remain disabled by default to preserve historical
+case verification. The optional JSON reports tuple/timestamp requirements,
+corroboration flags, matched flow count, and
+`packet_to_flow_identity_verified=false`. No source IPs, packet bytes or
+private paths are emitted in the success report.
+
+Run the synthetic regression locally after merging:
+
+```powershell
+py -3.12 -m pytest -q tests/test_zeek_soc_readonly_pcap_framing.py
+```
+
+A PASS does **not** establish capture authenticity, VMware Host-only
+isolation, authorization, independently assigned attack labels, detection
+quality, packet-to-flow identity, or operational alert timing. Keep original
+files and hashes outside Git, and do not modify evidence to satisfy a gate.
