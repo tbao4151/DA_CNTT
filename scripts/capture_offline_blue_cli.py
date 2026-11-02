@@ -46,6 +46,12 @@ def _cli_output_path(args: list[str]) -> Path:
     path = Path(args[index + 1]).absolute()
     if path.is_relative_to(ROOT) or path.suffix.lower() != ".json" or not path.parent.is_dir():
         raise ValueError("Private JSON output outside repository required")
+    # An old JSON file must never be mistaken for output from this subprocess.
+    # Also refuse symlinks, including parent directories resolving into the repo.
+    if path.exists() or path.is_symlink():
+        raise ValueError("Existing private output must not be reused or overwritten")
+    if path.parent.resolve(strict=True).is_relative_to(ROOT.resolve()):
+        raise ValueError("Private JSON output outside repository required")
     return path
 
 
