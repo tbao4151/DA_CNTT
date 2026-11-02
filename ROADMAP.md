@@ -1,3 +1,9 @@
+## 2026-11-02: Manual NEW-log SOC classic-PCAP framing acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact feature head, including a valid framed synthetic packet and refusal of independently re-pinned header-only, truncated and invalid-fraction PCAPs; verify mergeability and absence of competing PRs before merge.
+- [ ] On student Windows 11 Python 3.12.9, run `py -3.12 -m pytest -q tests/test_offline_pcap_soc_triage_gate.py` and repeat manual SOC triage with **unchanged**, privately SHA-256-pinned PCAP, Zeek log, import report, model and split manifest. Preserve the original files, command exit status, analyst confirmation and SQLite case export outside Git.
+- [ ] Independently verify VMware Host-only isolation and authorized capture, PCAP-to-Zeek tuple/time correspondence, held-out host/session partitions, ground truth and measured packet-to-case latency. PCAP framing and offline CI alone are not operational detection evidence; retain Dataset Mode benchmark unchanged.
+
 ## 2026-11-02: Linux forwarding snapshot acceptance ([PR #343](https://github.com/tbao4151/DA_CNTT/pull/343); CI pending)
 
 - [ ] Require exact feature-head Ubuntu quality and Windows offline CI success for seven nonzero forwarding settings, missing/duplicate/extra keys, tampered SHA-256 and valid LF/CRLF; confirm no competing PR or merge conflict before merging.
