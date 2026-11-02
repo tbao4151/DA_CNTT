@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 STATUS = ROOT / "docs" / "SENTINEL_LAB_IMPLEMENTATION_STATUS.md"
@@ -12,6 +13,7 @@ ENTRYPOINTS = (
     "src/blue_team_ai/zeek.py",
     "src/blue_team_ai/offline_baseline.py",
     "src/blue_team_ai/new_log_evaluation.py",
+    "src/blue_team_ai/alert_burden.py",
     "src/blue_team_ai/protocol_error_analysis.py",
     "src/red_team_ai/scenario_policy.py",
     "src/shared/offline_handoff.py",
@@ -97,10 +99,23 @@ def test_current_status_does_not_equate_ci_with_vmware_evidence():
     current = text.split("## Trạng thái kiểm chứng hiện tại", 1)[1].split(
         "## Ma trận", 1
     )[0]
-    assert "329e3243945b752ddbdc3ffa5ce6f246bea0798c" in current
-    assert "PR #347" in current
-    assert "41389724529" in current and "41389724552" in current
-    assert "41392752250" in current
+    # Require an explicit GitHub snapshot without pinning this contract to a
+    # particular historical PR/commit (future reconciliations must stay possible).
+    assert re.search(r"`main` tại `[0-9a-f]{40}`", current)
+    assert re.search(r"PR #\\d+", current)
+    assert len(re.findall(r"actions/runs/\\d+", current)) >= 3
+    assert "Ubuntu" in current and "Windows" in current
+    assert "post-merge" in current and "SUCCESS" in current
+    assert "CANCELLED" in current  # cancelled jobs must not be accepted as green
+    assert "PENDING_STUDENT_EVIDENCE" in current
     assert "không" in current.lower()
     assert "VMware" in current
     assert "packet-to-flow" in current
+
+
+def test_candidate_burden_is_not_misrepresented_as_operational_soc():
+    text = STATUS.read_text(encoding="utf-8")
+    assert "`src/blue_team_ai/alert_burden.py`" in text
+    assert "research_candidate_burden" in text
+    assert "không" in text.lower()
+    assert "thời gian" in text.lower()
