@@ -88,6 +88,7 @@ def create_case(
     path: str | Path, *, row: dict, verdict: str, confidence: float | None,
     creation_note: str | None = None,
     idempotency_key: str | None = None,
+    strict_idempotency_note: bool = False,
 ) -> int:
     # Existing callers retain the original empty analyst_note and default event.
     # Explicit research triage may atomically attach a bounded initial audit note.
@@ -101,6 +102,10 @@ def create_case(
         or any(char not in "0123456789abcdef" for char in idempotency_key)
     ):
         raise ValueError("Idempotency key must be a lowercase SHA-256 hex digest")
+    if type(strict_idempotency_note) is not bool or (
+        strict_idempotency_note and (idempotency_key is None or creation_note is None)
+    ):
+        raise ValueError("Strict idempotency requires a key and creation note")
     ensure_case_db(path)
     if verdict not in ("Attack", "Normal", "Unclassified"):
         raise ValueError("Invalid verdict")
@@ -131,6 +136,23 @@ def create_case(
                 (idempotency_key,),
             ).fetchone()
             if existing is not None:
+                if strict_idempotency_note:
+                    # Never silently report a prior SOC case as if its original
+                    # audit recorded a newly pinned model/report/PCAP/manifest.
+                    # Compare the FIRST event, not the mutable analyst note.
+                    original = conn.execute(
+                        "SELECT c.flow_id, c.verdict, c.confidence, "
+                        "(SELECT e.note FROM case_events e WHERE e.case_id=c.case_id "
+                        "ORDER BY e.event_id LIMIT 1) "
+                        "FROM cases c WHERE c.case_id=?",
+                        (int(existing[0]),),
+                    ).fetchone()
+                    if original != (
+                        flow_id(row), verdict, confidence, creation_note.strip()
+                    ):
+                        raise ValueError(
+                            "Existing research case has different pinned creation evidence"
+                        )
                 return int(existing[0])
         cursor = conn.execute(
             """INSERT INTO cases (flow_id,verdict,confidence,analyst_note,evidence_json,created_at,updated_at)
