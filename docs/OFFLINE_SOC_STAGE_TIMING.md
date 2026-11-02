@@ -166,7 +166,11 @@ repeat the paired object for at least three genuine successful trials:
 
 The example intentionally has **only one trial** and will be rejected until
 at least three distinct pairs are recorded. All names must be simple
-basenames; absolute paths, traversal, symlinks, duplicate files, oversized
+Windows-safe basenames: case-insensitive aliases (even if Linux would treat them
+as distinct), Windows device names such as CON.txt/NUL/LPT1 and trailing dots
+are rejected to prevent one evidence file being counted twice or resolving to
+a device on Windows. This does not prove independent command executions.
+Absolute paths, traversal, symlinks, duplicate files, oversized
 inputs, changed pins, duplicate JSON keys, missing/extra timing fields,
 non-monotonic clock declarations and inconsistent phase totals are refused.
 The manifest itself must be independently SHA-256 pinned:
