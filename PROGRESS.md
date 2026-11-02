@@ -1,4 +1,4 @@
-## 2026-11-02: Strict classic-PCAP framing at NEW-log manual SOC handoff (feature PR; exact-head CI pending)
+## 2026-11-02: Strict classic-PCAP framing at NEW-log manual SOC handoff ([PR #344](https://github.com/tbao4151/DA_CNTT/pull/344); exact-head CI pending)
 
 - Verified `main` at `1f1d8c6b5ba591f74f0d86e4d00bc4875faabb4a`: PR #343 merged; exact-head Ubuntu [#41363313130](https://github.com/tbao4151/DA_CNTT/actions/runs/41363313130) and Windows [#41363313102](https://github.com/tbao4151/DA_CNTT/actions/runs/41363313102) completed SUCCESS. No open PR at feature start. Post-merge `main` CI not independently confirmed.
 - Found a SOC provenance gap: a re-pinned header-only or malformed classic PCAP could satisfy byte-consistency checks without any valid packet records. Manual NEW-log CLI listing with PCAP provenance and the SOC write API now demand existing bounded classic-PCAP framing validation; legacy triage without PCAP remains available and explicitly disclaims provenance. Added synthetic accepted valid packet and rejected re-pinned header-only/truncated/invalid-timestamp cases in the existing Windows-covered SOC test, plus a private operator runbook.
