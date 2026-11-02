@@ -1,4 +1,4 @@
-## 2026-11-02: Pinned repeated Blue offline runtime summary acceptance (feature CI pending)
+## 2026-11-02: Pinned repeated Blue offline runtime summary acceptance (feature CI pending) ([PR #358](https://github.com/tbao4151/DA_CNTT/pull/358))
 
 - [ ] Require exact final-head Ubuntu quality and Windows Python 3.12.9 offline CI SUCCESS, no competing PR, and no merge conflicts before merge. Verify the new test is registered in Windows workflow.
 - [ ] Confirm strict SHA-256 of private manifest and each distinct successful CLI stdout, 3–50 paired score/queue trials, monotonic clock markers, phase-total consistency, fail-closed tamper/duplicate/traversal handling, aggregate-only JSON and no private file mutation.
