@@ -58,6 +58,16 @@ def assess_signal(row: dict) -> tuple[int, list[str]]:
     return min(100, len(reasons) * 30), reasons
 
 
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict:
+    """Refuse ambiguous duplicate keys in persisted research SOC evidence JSON."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate key in stored SOC evidence JSON")
+        result[key] = value
+    return result
+
+
 def ensure_case_db(path: str | Path) -> None:
     db = Path(path)
     db.parent.mkdir(parents=True, exist_ok=True)
@@ -149,7 +159,10 @@ def create_case(
                         (int(existing[0]),),
                     ).fetchone()
                     try:
-                        stored_evidence = json.loads(original[3]) if original else None
+                        stored_evidence = (
+                            json.loads(original[3], object_pairs_hook=_unique_json_object)
+                            if original else None
+                        )
                     except (TypeError, ValueError):
                         stored_evidence = None
                     if (

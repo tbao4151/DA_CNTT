@@ -77,7 +77,7 @@ original creation audit and flow identity match exactly**, including requests
 concurrent with other analyst sessions. If a revised model, report, manifest,
 queue, or PCAP pin changes the creation evidence for the same source/UID,
 the NEW-log path refuses reuse instead of silently presenting the old case as
-newly verified. It does not overwrite the old audit or create a second case. The strict reuse check also verifies the stored feature snapshot and original New-state audit transition; malformed stored JSON is rejected without rewriting the case.
+newly verified. It does not overwrite the old audit or create a second case. The strict reuse check also verifies the stored feature snapshot and original New-state audit transition; malformed stored JSON is rejected without rewriting the case. Stored JSON with duplicate object keys is also rejected, even when the last occurrence matches the original feature snapshot; this closes a JSON parser ambiguity. This remains a SQLite consistency gate, not cryptographic tamper protection.
 Inspect the existing case and its original evidence separately. Legacy
 held-out research and manual Cyber Lab callers retain their previous behavior.
 

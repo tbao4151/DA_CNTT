@@ -1,3 +1,10 @@
+## 2026-11-02: Strict NEW-log SOC duplicate-key JSON evidence acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS on the exact final feature head; check competing PRs and merge conflicts before merge. Isolated JSON parser checks are not a substitute for full repository CI.
+- [ ] Verify the synthetic regression rejects an earlier forged duplicate `uid` key in persisted `evidence_json`, leaves case count and audit unchanged, and retains successful reuse for unchanged evidence. Preserve legacy Dataset/manual behavior and private SQLite data.
+- [ ] Student Windows: after merge, run `py -3.12 -m pytest -q tests/test_zeek_new_log_triage.py tests/test_core.py tests/test_zeek_manual_triage.py` and retain exit code and environment details.
+- [ ] G1–G8 still require independently approved VMware Host-only capture, PCAP/Zeek originals and hashes, independent labels, holdout and measured event-to-SOC latency; JSON consistency does not prove database authenticity or operational detection.
+
 ## 2026-11-02: NEW-log SOC stored snapshot and first-event acceptance (feature CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact final PR head; Real Zeek synthetic smoke is path-filtered and not required for this SOC-only change unless it runs. Verify no competing PR or merge conflict before merge.

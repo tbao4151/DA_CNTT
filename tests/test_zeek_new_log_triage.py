@@ -146,6 +146,34 @@ def _assert_existing_case_with_tampered_snapshot_cannot_be_reused(tmp_path, evid
         ).fetchone()[0] == corrupt_json
 
 
+def test_duplicate_stored_snapshot_keys_refuse_reuse_without_mutation(tmp_path, evidence):
+    """A second JSON key must not be silently resolved to its last value."""
+    import sqlite3
+
+    db = tmp_path / "cyber.sqlite3"
+    args = _args(evidence)
+    case_id = create_new_log_candidate_case(db, **args)
+    with sqlite3.connect(db) as connection:
+        original = connection.execute(
+            "SELECT evidence_json FROM cases WHERE case_id=?", (case_id,)
+        ).fetchone()[0]
+        assert '"uid"' in original
+        # json.loads without object_pairs_hook silently takes the LAST uid,
+        # which matches the original and previously allowed case reuse.
+        tampered = '{"uid":"forged",' + original[1:]
+        connection.execute(
+            "UPDATE cases SET evidence_json=? WHERE case_id=?", (tampered, case_id)
+        )
+    with pytest.raises(ValueError, match="different pinned creation evidence"):
+        create_new_log_candidate_case(db, **args)
+    assert len(list_cases(db)) == 1
+    assert len(case_history(db, case_id)) == 1
+    with sqlite3.connect(db) as connection:
+        assert connection.execute(
+            "SELECT evidence_json FROM cases WHERE case_id=?", (case_id,)
+        ).fetchone()[0] == tampered
+
+
 @pytest.mark.parametrize("corrupt_json", ['{"uid":"forged"}', "{invalid-json", "[]"])
 def test_stale_original_snapshot_refuses_idempotent_reuse(tmp_path, evidence, corrupt_json):
     _assert_existing_case_with_tampered_snapshot_cannot_be_reused(
