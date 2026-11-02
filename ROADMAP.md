@@ -1,3 +1,9 @@
+## 2026-11-03: Blue runtime notice integrity acceptance (feature CI pending)
+
+- [ ] Confirm exact final feature-head Ubuntu and Windows offline CI SUCCESS and no merge conflict before merging.
+- [ ] Synthetic regression must reject missing/duplicate mandatory stage-specific safety notices and incomplete score provenance/caveat pairs, while accepting complete documented stdout from both CLIs.
+- [ ] On student Windows Python 3.12 run `py -3.12 -m pytest -q tests/test_offline_blue_runtime_summary.py` and retain genuine process exit codes, original private stdout hashes and source provenance; complete VMware Host-only G1-G8 independently.
+
 ## 2026-11-03: Required Blue offline runtime counters (feature CI pending) ([PR #360](https://github.com/tbao4151/DA_CNTT/pull/360))
 
 - [ ] Verify exact final feature-head Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS, no competing PR, and no merge conflicts before merging.
