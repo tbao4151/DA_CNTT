@@ -7,13 +7,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import struct
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-from test_offline_pcap_verify import imported
+from test_offline_pcap_verify import imported, repin
 from test_zeek_offline_baseline import _dataset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +26,19 @@ from siem_ai.core import list_cases
 
 @pytest.fixture
 def prepared(imported):
+    # The general import fixture deliberately uses a header-only PCAP to test
+    # legacy byte-consistency. SOC provenance now requires at least one valid
+    # classic-PCAP packet record, without claiming packet-to-Zeek correlation.
+    pcap_bytes = (
+        bytes.fromhex("d4c3b2a1")
+        + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+        + struct.pack("<IIII", 100, 123, 4, 4) + b"test"
+    )
+    imported["pcap"].write_bytes(pcap_bytes)
+    import_report = json.loads(imported["report"].read_text(encoding="utf-8"))
+    import_report["pcap_sha256"] = hashlib.sha256(pcap_bytes).hexdigest()
+    import_report["pcap_size_bytes"] = len(pcap_bytes)
+    repin(imported, import_report)
     model = build_zeek_research_artifact(_dataset(), input_manifest_sha256="a" * 64)
     # Fixture-only candidate coverage; not a selected research threshold.
     model["selected_threshold"] = 0.000001
@@ -89,6 +103,8 @@ def test_pinned_listing_and_manual_case_preserve_originals(prepared):
     assert len(cases) == 1
     note = cases.iloc[0]["analyst_note"]
     assert "Pinned original PCAP/import report/Zeek byte integrity" in note
+    assert "classic PCAP packet framing checked" in note
+    assert "NOT packet-to-flow correlation" in note
     assert p["pin"] in note
     assert hashlib.sha256(p["pcap"].read_bytes()).hexdigest() in note
     assert "ground truth are unverified" in note
@@ -154,6 +170,58 @@ def test_invalid_provenance_fails_closed(prepared, change):
     else:
         command[command.index("--offline-import-pcap") + 1] = str(p["report"])
     assert run(command).returncode == 1
+    assert not p["db"].exists()
+
+
+
+def _repin_pcap(p, raw):
+    p["pcap"].write_bytes(raw)
+    report = json.loads(p["report"].read_text(encoding="utf-8"))
+    report["pcap_sha256"] = hashlib.sha256(raw).hexdigest()
+    report["pcap_size_bytes"] = len(raw)
+    repin(p, report)
+    provenance = p["provenance"].copy()
+    provenance[provenance.index("--expected-offline-import-report-sha256") + 1] = p["pin"]
+    return provenance
+
+
+@pytest.mark.parametrize("malformed", ["header_only", "truncated_payload", "invalid_fraction"])
+def test_re_pinned_structurally_invalid_pcap_refuses_listing_and_soc_write(prepared, malformed):
+    # The original and import report are consistently re-pinned. A SHA match
+    # alone must not allow malformed PCAP framing to enter SOC evidence.
+    p = prepared
+    header = bytes.fromhex("d4c3b2a1") + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+    if malformed == "header_only":
+        raw = header
+    elif malformed == "truncated_payload":
+        raw = header + struct.pack("<IIII", 100, 123, 5, 5) + b"abcd"
+    else:
+        raw = header + struct.pack("<IIII", 100, 1_000_000, 4, 4) + b"test"
+    provenance = _repin_pcap(p, raw)
+    listing = run(p["base"] + provenance + ["--list-candidates"])
+    assert listing.returncode == 1
+    refused = run(p["base"] + provenance + write_args(p))
+    assert refused.returncode == 1
+    assert not p["db"].exists()
+    assert str(p["pcap"]) not in refused.stderr
+
+
+def test_direct_soc_api_rejects_re_pinned_header_only_pcap(prepared):
+    p = prepared
+    header = bytes.fromhex("d4c3b2a1") + struct.pack("<HHIIII", 2, 4, 0, 0, 65535, 1)
+    _repin_pcap(p, header)
+    with pytest.raises(ValueError, match="no packet"):
+        create_new_log_candidate_case(
+            p["db"], source_data=p["log"].read_bytes(), model=p["model"],
+            report_data=p["report_data"], expected_log_sha256=p["log_sha"],
+            model_sha256=p["model_sha"], lab_cidrs=["192.168.56.0/24"],
+            record_index=p["index"], analyst_confirmed=True,
+            operator_confirmed_authorized=True, operator_confirmed_new_capture=True,
+            offline_import_report_path=p["report"],
+            offline_import_report_sha256=p["pin"],
+            offline_import_pcap_path=p["pcap"],
+            offline_import_log_path=p["log"],
+        )
     assert not p["db"].exists()
 
 
