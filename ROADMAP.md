@@ -1,3 +1,10 @@
+## 2026-11-03: Strict Blue runtime stdout acceptance (feature CI pending)
+
+- [ ] Verify final feature-head Ubuntu quality and Windows offline Python 3.12.9 CI **SUCCESS** on the exact commit, no conflicting PR and clean mergeability before merge.
+- [ ] Confirm the existing score/queue stdout format is accepted, while unexpected text, appended error diagnostics, cross-stage notices, duplicate counters and malformed counts are refused without partial aggregate output. Retain old CLI flags and JSON contracts.
+- [ ] On student Windows 11 run `py -3.12 -m pytest -q tests/test_offline_blue_runtime_summary.py`; retain the actual exit status and hashes of unedited stdout files. A SHA-256 pin alone does not authenticate the producing process.
+- [ ] Independently complete VMware Host-only G1–G8 evidence and actual operator-controlled capture/Zeek/AI/SOC flow. Runtime statistics remain offline processing measurements, not live detection latency.
+
 ## 2026-11-02: Pinned repeated Blue offline runtime summary acceptance (feature CI pending) ([PR #358](https://github.com/tbao4151/DA_CNTT/pull/358))
 
 - [ ] Require exact final-head Ubuntu quality and Windows Python 3.12.9 offline CI SUCCESS, no competing PR, and no merge conflicts before merge. Verify the new test is registered in Windows workflow.
