@@ -1,3 +1,9 @@
+## 2026-11-03: Windows-safe offline Blue stdout evidence names ([PR #362](https://github.com/tbao4151/DA_CNTT/pull/362); feature CI pending)
+
+- [ ] Require exact final PR-head Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS, no competing PR and clean mergeability before merge.
+- [ ] Synthetic regression must reject case-insensitive aliases across trials, trailing-dot filenames and Windows reserved device stems (CON, PRN, AUX, NUL, COM1-9, LPT1-9), while accepting normal pinned private basenames and preserving read-only output.
+- [ ] Student Windows 11: run `py -3.12 -m pytest -q tests/test_offline_blue_runtime_summary.py`; retain original stdout and real exit codes privately, and complete G1-G8 on authorized VMware Host-only separately. Filename safety is not evidence of independent trials or operational detection.
+
 ## 2026-11-03: Blue runtime notice integrity acceptance (feature CI pending)
 
 - [ ] Confirm exact final feature-head Ubuntu and Windows offline CI SUCCESS and no merge conflict before merging.

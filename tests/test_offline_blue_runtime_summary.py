@@ -237,3 +237,29 @@ def test_parser_requires_single_mandatory_safety_notice(stage, mandatory):
 def test_parser_refuses_unpaired_score_provenance_notice(notice):
     with pytest.raises(ValueError, match="Incomplete optional offline CLI notice pair"):
         parse_timing_stdout(stdout("score") + (notice + "\n").encode(), "score")
+
+
+
+def test_manifest_refuses_casefold_alias_across_trials_on_windows_and_linux(tmp_path):
+    manifest, trials = fixture(tmp_path)
+    original = tmp_path / trials[0]["score_stdout"]
+    alias = original.name.upper()
+    assert alias != original.name
+    (tmp_path / alias).write_bytes(original.read_bytes())
+    trials[1]["score_stdout"] = alias
+    trials[1]["score_sha256"] = sha((tmp_path / alias).read_bytes())
+    manifest.write_text(json.dumps({"version": 1, "trials": trials}), encoding="utf-8")
+    with pytest.raises(ValueError, match="Invalid or reused private stdout name"):
+        summarize_pinned_runs(manifest, sha(manifest.read_bytes()), ROOT)
+
+
+@pytest.mark.parametrize("unsafe_name", [
+    "trial-0-score.txt.", "CON", "con.txt", "PrN.log", "AUX",
+    "NUL.data", "COM1.txt", "com9", "LPT1", "lpt9.log",
+])
+def test_manifest_refuses_windows_device_names_and_trailing_dots(tmp_path, unsafe_name):
+    manifest, trials = fixture(tmp_path)
+    trials[0]["score_stdout"] = unsafe_name
+    manifest.write_text(json.dumps({"version": 1, "trials": trials}), encoding="utf-8")
+    with pytest.raises(ValueError, match="Invalid Windows-safe private stdout name"):
+        summarize_pinned_runs(manifest, sha(manifest.read_bytes()), ROOT)
