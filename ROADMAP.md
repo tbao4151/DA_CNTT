@@ -1,3 +1,9 @@
+## 2026-11-02: PR #356 CI repair gate (new head pending)
+
+- [ ] Verify corrected top-level and nested duplicate-key regression rejects both records with the public `Malformed timing record` error; the earlier [Ubuntu #41459291287](https://github.com/tbao4151/DA_CNTT/actions/runs/41459291287) and [Windows #41459291543](https://github.com/tbao4151/DA_CNTT/actions/runs/41459291543) failures must **not** be counted as PASS.
+- [ ] Require exact-final-head Ubuntu quality and Windows Python 3.12.9 CI SUCCESS and a conflict-free PR #356 before merge. Do not merge on earlier green intermediate commits.
+- [ ] Independently validate student VMware Host-only original evidence, operator clock and actual manual SOC case; synthetic timing CI does not establish event-to-detection latency. Preserve Dataset Mode and keep Red execution OFF.
+
 ## 2026-11-02: Offline SOC stage timing acceptance (feature CI pending)
 
 - [ ] Require exact-final-head Ubuntu quality and Windows Python 3.12.9 CI SUCCESS; check concurrent PRs and merge conflicts before merging.
