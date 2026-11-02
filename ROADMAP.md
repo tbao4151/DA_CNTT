@@ -1,3 +1,9 @@
+## 2026-11-02: Evidence-based Cyber Lab acceptance matrix ([PR #348](https://github.com/tbao4151/DA_CNTT/pull/348); CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact final feature head; verify the eight-gate inventory tests and no competing PR/conflicts before merge. A documentation inventory check is not a functional or scientific experiment.
+- [ ] On student Windows 11 Python 3.12.9 run `py -3.12 -m pytest -q tests/test_sentinel_status_contract.py tests/test_architecture_inventory.py` after merge, then follow G1–G8 in `docs/SENTINEL_LAB_IMPLEMENTATION_STATUS.md` with private original files, independent hashes, operator approvals, timestamps and screenshots.
+- [ ] Do not mark any G1–G8 student evidence complete without a real authorized VMware Host-only session, independently reviewed labels, host/session holdout, read-only pinned PCAP/Zeek/SOC verification and separately defined packet-to-case latency. Red Team execution remains OFF and UNSW-NB15 historical metrics remain separate.
+
 ## 2026-11-02: Distinct PCAP packet-record SOC verification acceptance ([PR #347](https://github.com/tbao4151/DA_CNTT/pull/347); CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact feature head; verify mergeability and absence of competing PRs before merge.
