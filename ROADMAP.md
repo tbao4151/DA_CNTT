@@ -1,3 +1,10 @@
+## 2026-11-02: Pinned repeated Blue offline runtime summary acceptance (feature CI pending)
+
+- [ ] Require exact final-head Ubuntu quality and Windows Python 3.12.9 offline CI SUCCESS, no competing PR, and no merge conflicts before merge. Verify the new test is registered in Windows workflow.
+- [ ] Confirm strict SHA-256 of private manifest and each distinct successful CLI stdout, 3–50 paired score/queue trials, monotonic clock markers, phase-total consistency, fail-closed tamper/duplicate/traversal handling, aggregate-only JSON and no private file mutation.
+- [ ] On student Windows 11 run `py -3.12 -m pytest -q tests/test_offline_blue_runtime_summary.py`; then collect **actual** repeated score/queue runs with unique pinned JSON outputs, record command exit codes and environmental variability, and run `scripts/summarize_offline_blue_runtime.py` only on verified private stdout files.
+- [ ] Treat p95 with small n as descriptive, never as a latency SLA. Independently complete G1–G8 VMware Host-only original PCAP/Zeek, labels, held-out model, analyst-confirmed SOC case and event-to-case timing. No Red execution or historical UNSW benchmark changes.
+
 ## 2026-11-02: Verify Blue Team monotonic offline phase breakdown (feature CI pending)
 
 - [ ] Require exact final-head Ubuntu quality and Windows Python 3.12.9 offline CI SUCCESS, no conflicting PR, and clean mergeability before merge. Do not count main CI or intermediate commits as feature-head CI.
