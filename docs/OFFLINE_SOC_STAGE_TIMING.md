@@ -110,6 +110,53 @@ These synthetic-only regressions are already part of the Windows offline CI:
 remain unverified until run with authorized original evidence.
 
 
+## Capture genuine offline Blue CLI exit receipts on Windows (optional)
+
+The new `scripts/capture_offline_blue_cli.py` runs **only** the repository's
+`score_zeek_new_log.py` or `export_zeek_research_alerts.py` as a Python
+subprocess without a shell. It automatically enables the appropriate
+`--measure-*` timing flag and records the **actual subprocess exit code**,
+original stdout/stderr bytes and SHA-256, command arguments, UTC start/end,
+Python version and the published JSON SHA-256 in a private no-overwrite receipt.
+A zero exit code alone is insufficient: the documented stage-specific timing
+stdout must parse, stderr must be empty and the private output JSON must exist.
+Failed/timeout runs retain a receipt with
+`successful_offline_timing_trial=false`; they must not enter a benchmark.
+
+Prepare an existing private evidence directory **outside the Git checkout**.
+Use the complete pinned CLI options from
+[NEW-log scoring](ZEEK_NEW_LOG_OFFLINE_INFERENCE.md) and
+[research queue export](ZEEK_RESEARCH_ALERT_BUNDLE.md).
+For example, the command form is:
+
+```powershell
+py -3.12 scripts/capture_offline_blue_cli.py --stage score `
+  --evidence-dir "C:/DA005-private/session-001" --trial-id 001 -- `
+  --model "<PRIVATE_MODEL.json>" --expected-model-sha256 "<REAL_PIN>" `
+  --log "<PRIVATE_NEW_CONN.log>" --expected-log-sha256 "<REAL_PIN>" `
+  --cidr "<AUTHORIZED_HOSTONLY_CIDR>" `
+  --output "C:/DA005-private/session-001/score-001.json"
+```
+
+For `--stage queue`, pass the **queue CLI's** complete pinned arguments,
+including the independently SHA-256-pinned prediction report and declared
+TRAIN/VALIDATION/TEST manifest. Use a new `--output` name for every run.
+The recorder never overwrites existing stdout/stderr/receipt names and never
+executes a user-supplied script or shell command. Retain the receipt privately:
+`trial-001-score.receipt.json`, alongside `.stdout.txt` and `.stderr.txt`.
+The receipt includes private command-line paths and hashes: **do not commit it**.
+A timeout is a failed trial, not a timing sample. This wrapper does not
+collect packets, execute Red Team scenarios or create SOC cases.
+
+After recording 3–50 genuine paired score/queue runs, independently review
+the receipts and use their stdout filenames and SHA-256 in the existing
+`runtime-trials.json` manifest below. **The current summary CLI does not
+automatically verify receipts or original process exit codes**; the receipt
+is an operator-local record, not cryptographic attestation. The external
+subprocess wall duration excludes packet-to-alert latency and is not a
+substitute for the CLI's internal monotonic phase measurements. CI tests
+mock subprocesses; they are not evidence of Windows/VMware execution.
+
 ## Repeated paired offline Blue CLI runtime trials (research summary only)
 
 Use the **new read-only** `scripts/summarize_offline_blue_runtime.py` after
