@@ -97,7 +97,7 @@ _NON_TIMING_COUNTERS = {
     "score": frozenset({"flow_count", "research_candidate_count"}),
     "queue": frozenset({"research_alert_candidates_exported", "candidates_outside_manual_triage_window"}),
 }
-_COUNTER_VALUE = re.compile(r"[0-9]{1,12}\\Z")
+_COUNTER_VALUE = re.compile(r"[0-9]{1,12}\Z")
 
 
 def _validate_non_timing_lines(lines: list[str], stage: str) -> None:
