@@ -228,6 +228,25 @@ def test_repeated_zeek_tuples_are_only_existence_correlated():
     assert result["matched_zeek_flow_count"] == 2
     assert result["supported_pcap_packet_count"] == 1
     assert result["packet_to_flow_identity_verified"] is False
+    # A presence/timestamp match may reuse the only packet for two Zeek rows.
+    assert corroborate_pcap_zeek_tuples(
+        pcap(pcap_packet()), log.encode(),
+        require_timestamp_corroboration=True,
+    )["matched_zeek_flow_count"] == 2
+    with pytest.raises(ValueError, match="Insufficient distinct"):
+        corroborate_pcap_zeek_tuples(
+            pcap(pcap_packet()), log.encode(),
+            require_timestamp_corroboration=True,
+            require_distinct_packet_corroboration=True,
+        )
+    assigned = corroborate_pcap_zeek_tuples(
+        pcap(pcap_packet(), pcap_packet()), log.encode(),
+        require_timestamp_corroboration=True,
+        require_distinct_packet_corroboration=True,
+    )
+    assert assigned["distinct_packet_per_flow_correlated"] is True
+    assert assigned["matched_zeek_flow_count"] == 2
+    assert assigned["packet_to_flow_identity_verified"] is False
 
 
 def test_cli_independent_sha_pins_and_no_success_on_tamper(tmp_path, capsys):
