@@ -148,3 +148,44 @@ are modified. Synthetic tests:
 ```powershell
 py -3.12 -m pytest -q tests/test_pcap_zeek_tuple.py tests/test_zeek_soc_readonly_pcap_framing.py
 ```
+
+## Optional RFC 791 IPv4 header checksum at read-only SOC verification (02/11/2026)
+
+The standalone offline PCAP tuple checker already offers an opt-in IPv4
+header checksum gate. The **existing read-only SOC case-link verifier** can
+now apply the same check to independently pinned original PCAP bytes without
+changing the case, the original capture, the import report or SQLite.
+
+Supply the normal private model/log/report/manifest/SQLite case arguments,
+the complete original `--offline-import-report`,
+`--expected-offline-import-report-sha256`, `--offline-import-pcap` triplet,
+and append:
+
+~~~powershell
+--require-pcap-zeek-tuples --require-pcap-ipv4-header-checksum --timing-json
+~~~
+
+The checksum flag requires the tuple gate, which in turn requires all three
+pinned import arguments. Invalid or zero IPv4 header checksums cause a
+privacy-safe refusal even when the file SHA-256 and five-tuples agree.
+When enabled, every parsed IPv4 packet header is checked using RFC 791
+ones-complement checksum. ARP and other non-IPv4 Ethernet frames are not
+claimed to have an IPv4 checksum. VLAN, IPv6 and fragmented packets remain
+outside the existing strict tuple contract.
+
+The JSON fields `pcap_ipv4_header_checksum_required` and
+`pcap_ipv4_header_checksum_verified` are `false` by default and `true` only
+after successful opt-in verification. The plain-text success line explicitly
+reports `offline_pcap_ipv4_header_checksum_verified=true`.
+
+**Scientific limits:** a correct header checksum detects some accidental
+corruption; it does not authenticate capture origin, Zeek generation,
+packet-to-flow identity, independent labels, Host-only isolation, attack
+detection, or event-to-case latency. Hardware checksum offloading and
+partial/altered captures may cause false refusals. Do not edit or repin
+originals to force a PASS. These are synthetic CI tests, not student
+laptop experiments:
+
+~~~powershell
+py -3.12 -m pytest -q tests/test_zeek_soc_readonly_pcap_framing.py tests/test_pcap_ipv4_header_checksum.py
+~~~
