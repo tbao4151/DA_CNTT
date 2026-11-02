@@ -1,4 +1,4 @@
-## 2026-11-02: Offline NEW-log class-imbalance diagnostics (feature CI pending)
+## 2026-11-02: Offline NEW-log class-imbalance diagnostics ([PR #355](https://github.com/tbao4151/DA_CNTT/pull/355); feature CI pending)
 
 - Verified main at `5fc18210bc5f3b2ffbd5a5b9f6062128994d0ae7`: [PR #354](https://github.com/tbao4151/DA_CNTT/pull/354) merged, exact-head Ubuntu [#41442506298](https://github.com/tbao4151/DA_CNTT/actions/runs/41442506298) and Windows [#41442506139](https://github.com/tbao4151/DA_CNTT/actions/runs/41442506139) SUCCESS; main quality [#41446115928](https://github.com/tbao4151/DA_CNTT/actions/runs/41446115928) SUCCESS. No open PR at feature start.
 - Added additive descriptive balanced accuracy/MCC and explicit class denominators to the pinned NEW-log operator-labeled evaluation and both fixed always-Normal/always-Attack references. Undefined rates are null; no model fitting or threshold selection. Added synthetic integration and invalid-denominator regressions in the existing Windows-covered evaluation test file.
