@@ -187,10 +187,10 @@ def test_parser_rejects_unrecognized_stdout_without_partial_success(stage, unexp
 
 
 @pytest.mark.parametrize("stage,counter,line", [
-    ("score", "flow_count", b"flow_count=12\\n"),
-    ("score", "research_candidate_count", b"research_candidate_count=2\\n"),
-    ("queue", "research_alert_candidates_exported", b"research_alert_candidates_exported=2\\n"),
-    ("queue", "candidates_outside_manual_triage_window", b"candidates_outside_manual_triage_window=0\\n"),
+    ("score", "flow_count", b"flow_count=12\n"),
+    ("score", "research_candidate_count", b"research_candidate_count=2\n"),
+    ("queue", "research_alert_candidates_exported", b"research_alert_candidates_exported=2\n"),
+    ("queue", "candidates_outside_manual_triage_window", b"candidates_outside_manual_triage_window=0\n"),
 ])
 def test_parser_rejects_missing_required_cli_counter(stage, counter, line):
     assert line in stdout(stage)
