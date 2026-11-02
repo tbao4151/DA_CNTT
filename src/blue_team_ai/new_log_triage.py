@@ -193,4 +193,5 @@ def create_new_log_candidate_case(
     return create_offline_review_case(
         db_path, source_data=source_data, record_index=record_index,
         research_note=note, deduplication_key=key,
+        strict_idempotency_note=True,
     )
