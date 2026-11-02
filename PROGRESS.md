@@ -1,3 +1,9 @@
+## 2026-11-02: Pinned paired Blue offline runtime summary (feature; exact-head CI pending) ([PR #358](https://github.com/tbao4151/DA_CNTT/pull/358))
+
+- Rechecked `main` at `f88de1163aa8e5cdc26338a67848803f2914b6fc`: [PR #357](https://github.com/tbao4151/DA_CNTT/pull/357) merged after exact-head Ubuntu [#41475054024](https://github.com/tbao4151/DA_CNTT/actions/runs/41475054024), Windows [#41475054246](https://github.com/tbao4151/DA_CNTT/actions/runs/41475054246) and Real Zeek synthetic [#41475053980](https://github.com/tbao4151/DA_CNTT/actions/runs/41475053980) SUCCESS. No open PR before this branch. Post-merge main CI not claimed.
+- Added read-only paired offline Blue timing summary over 3–50 independently SHA-256-pinned successful score/queue stdout pairs, strict bounded private manifest, phase-sum checks, aggregate min/median/mean/nearest-rank p95/max, privacy-safe failure and explicit scientific non-claims. No new inference, network traffic, model fitting, Red execution, SOC write or UNSW benchmark change.
+- In isolated local synthetic reconstruction, `python -m pytest -q tests/test_offline_blue_runtime_summary.py` returned **20 passed**; this is **not** full repository pytest or Windows 11/VMware. Exact feature-head Ubuntu/Windows CI pending; no actual operator runtime data, independent labels, live latency or G1–G8 acceptance claimed.
+
 ## 2026-11-02: Blue Team offline monotonic scoring/queue phase breakdown (feature; CI not yet verified)
 
 - Verified `main` at `c88876b16bbe10f992d2baefc6e25d318499a997`, no open PR, and post-merge main quality [#41470289901](https://github.com/tbao4151/DA_CNTT/actions/runs/41470289901) SUCCESS after PR #356. Existing operator-entered offline SOC timing is not packet-to-alert latency.
