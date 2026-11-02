@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import struct
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -21,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from blue_team_ai.model_artifact import build_zeek_research_artifact
 from blue_team_ai.new_log_triage import create_new_log_candidate_case
+from blue_team_ai.soc_evidence_link import verify_new_log_soc_case_link
 from siem_ai.core import list_cases
 
 
@@ -172,6 +174,52 @@ def test_invalid_provenance_fails_closed(prepared, change):
     assert run(command).returncode == 1
     assert not p["db"].exists()
 
+
+
+
+def test_soc_link_audit_accepts_new_framing_claim_and_legacy_note(prepared):
+    p = prepared
+    created = run(p["base"] + p["provenance"] + write_args(p))
+    assert created.returncode == 0, created.stderr
+    case_id = int(list_cases(p["db"]).iloc[0]["case_id"])
+    def check_link():
+        return verify_new_log_soc_case_link(
+            p["db"], source_data=p["log"].read_bytes(), model=p["model"],
+            report_data=p["report_data"], expected_log_sha256=p["log_sha"],
+            model_sha256=p["model_sha"], lab_cidrs=["192.168.56.0/24"],
+            record_index=p["index"], case_id=case_id,
+            expected_import_report_sha256=p["pin"],
+            expected_pcap_sha256=hashlib.sha256(p["pcap"].read_bytes()).hexdigest(),
+        )
+    assert check_link()["initial_audit_matches_recomputed_inference"] is True
+    with sqlite3.connect(p["db"]) as conn:
+        note = conn.execute(
+            "SELECT note FROM case_events WHERE case_id=? ORDER BY event_id LIMIT 1",
+            (case_id,),
+        ).fetchone()[0]
+        # Simulate a case created by the previous release. The historical
+        # audit wording remains verifiable without asserting framing.
+        legacy = note.replace(
+            "classic PCAP packet framing checked (NOT packet-to-flow correlation); ", ""
+        )
+        assert legacy != note
+        conn.execute(
+            "UPDATE case_events SET note=? WHERE case_id=? AND event_id=("
+            "SELECT MIN(event_id) FROM case_events WHERE case_id=?)",
+            (legacy, case_id, case_id),
+        )
+    assert check_link()["initial_audit_matches_recomputed_inference"] is True
+    with sqlite3.connect(p["db"]) as conn:
+        forged = note.replace(
+            "NOT packet-to-flow correlation", "packet-to-flow correlation verified"
+        )
+        conn.execute(
+            "UPDATE case_events SET note=? WHERE case_id=? AND event_id=("
+            "SELECT MIN(event_id) FROM case_events WHERE case_id=?)",
+            (forged, case_id, case_id),
+        )
+    with pytest.raises(ValueError, match="Invalid PCAP provenance claim"):
+        check_link()
 
 
 def _repin_pcap(p, raw):
