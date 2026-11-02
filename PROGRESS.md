@@ -1,3 +1,9 @@
+## 2026-11-02: Offline NEW-log research candidate review burden (feature PR; CI pending)
+
+- Verified `main` at `32938818f828d7cb264cd3a191b42aa702b3e403`: PR #349 merged, exact-head Ubuntu [#41401710056](https://github.com/tbao4151/DA_CNTT/actions/runs/41401710056) and Windows [#41401710041](https://github.com/tbao4151/DA_CNTT/actions/runs/41401710041) SUCCESS; post-merge main quality [#41405361299](https://github.com/tbao4151/DA_CNTT/actions/runs/41405361299) SUCCESS. No open PR at feature start.
+- Added a strictly confusion-derived `research_candidate_burden` to the existing read-only, pinned NEW-log labeled evaluation: explicit per-1,000 denominators, nulls for undefined class/candidate denominators, small-class warning, no raw identifiers, no model selection or SOC write. Updated Windows offline CI and operator documentation. No Dataset Mode benchmark/model/SQLite mutation.
+- Isolated local pure-Python module unit tests: **9 passed** in a temporary reconstruction; the full repository and CLI integration tests have **not** been run locally because GitHub DNS clone is unavailable. Exact feature-head GitHub CI is pending; synthetic tests do not authenticate operator labels or prove real Host-only capture, operational alert volume, SOC analyst workload, or event-to-case latency.
+
 ## 2026-11-02: Optional RFC 791 checksum gate in read-only SOC verification (feature branch; CI pending)
 
 - Checked main at `b0703f71ec53cc16bed9eef5d58e30eaa024d7dd`: PR #348 merged; post-merge main Ubuntu quality [#41398442994](https://github.com/tbao4151/DA_CNTT/actions/runs/41398442994) SUCCESS. No open PR at feature start.
