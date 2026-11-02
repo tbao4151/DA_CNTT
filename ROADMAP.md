@@ -1,4 +1,4 @@
-## 2026-11-02: Offline NEW-log candidate workload evaluation acceptance (feature CI pending)
+## 2026-11-02: Offline NEW-log candidate workload evaluation acceptance ([PR #350](https://github.com/tbao4151/DA_CNTT/pull/350); CI pending)
 
 - [ ] Confirm Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS on the exact final feature head, no competing PR, no merge conflict; then merge. New tests must check correct observed/Normal/Attack/candidate denominators, nulls for zero denominators, privacy-safe aggregate output and no private file/SQLite mutations.
 - [ ] On Windows 11 run `py -3.12 -m pytest -q tests/test_zeek_alert_burden.py tests/test_zeek_new_log_evaluation.py` after merge; separately use a privately pinned authorized NEW Zeek capture, fixed model and independently reviewed annotations to record candidate workload alongside TP/FP/TN/FN. Do not tune the validation threshold on this NEW capture.
