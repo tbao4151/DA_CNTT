@@ -1,3 +1,10 @@
+## 2026-11-02: NEW-log SOC stored snapshot and first-event acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality, Windows offline and Real Zeek synthetic CI SUCCESS on the exact final PR head; verify no competing PR or merge conflict before merge.
+- [ ] Regression: changed/malformed stored `evidence_json` and altered first creation transition refuse case reuse without changing case count/history; unchanged evidence after a legitimate analyst status update still reuses the same case. Preserve legacy Dataset/manual behavior.
+- [ ] Student Windows Python 3.12.9: run `py -3.12 -m pytest -q tests/test_zeek_new_log_triage.py tests/test_core.py tests/test_zeek_manual_triage.py` after merge. Keep actual private SQLite/PCAP/Zeek evidence outside Git.
+- [ ] G1–G8 still need genuine authorized VMware Host-only capture, independently reviewed labels, holdout and measured event-to-case latency; synthetic CI does not satisfy these.
+
 ## 2026-11-02: NEW-log SOC idempotency evidence-consistency acceptance (feature CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline CI SUCCESS on the exact feature head; check open PRs, mergeability and conflicts before merging.
