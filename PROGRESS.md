@@ -1,3 +1,9 @@
+## 2026-11-03: Windows-safe pinned Blue runtime stdout filenames (feature CI pending) ([PR #362](https://github.com/tbao4151/DA_CNTT/pull/362))
+
+- Rechecked main `d153853a726fb57b47049a5152b938ed3a06b024`: PR #361 merged, exact-head Ubuntu [#41511585516](https://github.com/tbao4151/DA_CNTT/actions/runs/41511585516) and Windows [#41511585507](https://github.com/tbao4151/DA_CNTT/actions/runs/41511585507) both SUCCESS, no open PR before branch creation. Main post-merge CI not independently verified.
+- Hardened read-only private offline Blue runtime manifest filenames: refuse Windows device basenames, trailing dots and case-insensitive duplicates across score/queue trials. Added synthetic regression tests and updated Windows runbook; existing manifest schema, CLI output and timing statistics unchanged.
+- Exact final feature-head CI **PENDING** at authoring; no independent full-repository pytest or student Windows/VMware run. These filename checks do not authenticate process exit codes, trial independence, PCAP/Zeek provenance or live latency. No model, UNSW benchmark, SQLite, Red Team or network changes; G1-G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Fail-closed Blue runtime safety/provenance notices (feature CI pending) ([PR #361](https://github.com/tbao4151/DA_CNTT/pull/361))
 
 - Rechecked main `07fc66ebadfae0e795e277eff7567a5af9c07e08`: PR #360 merged; exact-head Ubuntu [#41503290747](https://github.com/tbao4151/DA_CNTT/actions/runs/41503290747), Windows [#41503290832](https://github.com/tbao4151/DA_CNTT/actions/runs/41503290832), and post-merge main [#41507087557](https://github.com/tbao4151/DA_CNTT/actions/runs/41507087557) were SUCCESS; no open PR at branch creation.
