@@ -1,3 +1,12 @@
+## 2026-11-02: Current acceptance checkpoint after PR #350
+
+- [x] [PR #350](https://github.com/tbao4151/DA_CNTT/pull/350) merged at `b664431d1a8bcc9bc67b525a925969de2c988204` after final-head Ubuntu [#41413131352](https://github.com/tbao4151/DA_CNTT/actions/runs/41413131352) and Windows [#41413131364](https://github.com/tbao4151/DA_CNTT/actions/runs/41413131364) **SUCCESS**; main post-merge quality [#41415135255](https://github.com/tbao4151/DA_CNTT/actions/runs/41415135255) **SUCCESS**. Earlier timeout-cancelled run #41409210711 is not accepted as green.
+- [x] Reconcile scientific status and regression contract so the current status no longer identifies PR #347 as the latest main. Preserve historical progress/roadmap snapshots below as historical records, not outstanding GitHub CI gates.
+- [ ] Student Windows 11 Python 3.12.9: run `py -3.12 -m pytest -q tests/test_zeek_alert_burden.py tests/test_zeek_new_log_evaluation.py tests/test_sentinel_status_contract.py` on an updated local checkout. Record exit status and version; CI is not a substitute for this run.
+- [ ] Collect independently approved VMware Host-only evidence (G1–G8): original PCAP/Zeek with hashes, host/session-disjoint independent labels, fixed Zeek model and held-out NEW-log evaluation, analyst-confirmed Unclassified SOC case, and separately measured packet-to-case timestamps. Keep Red Team execution OFF and historical UNSW-NB15 metrics separate.
+
+**Historical sections below:** older unchecked CI/merge tasks record the state when each feature branch was created. Their `CI pending` headings are not current GitHub status; use the checkpoint above and live Actions/PR state for acceptance.
+
 ## 2026-11-02: Offline NEW-log candidate workload evaluation acceptance ([PR #350](https://github.com/tbao4151/DA_CNTT/pull/350); CI pending)
 
 - [ ] Confirm Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS on the exact final feature head, no competing PR, no merge conflict; then merge. New tests must check correct observed/Normal/Attack/candidate denominators, nulls for zero denominators, privacy-safe aggregate output and no private file/SQLite mutations.
