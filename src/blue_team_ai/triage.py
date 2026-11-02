@@ -17,6 +17,7 @@ def create_offline_review_case(
     db_path: str | Path, *, source_data: bytes, record_index: int,
     research_note: str | None = None,
     deduplication_key: str | None = None,
+    strict_idempotency_note: bool = False,
 ) -> int:
     """Persist one operator-selected Zeek flow in a dedicated Cyber Lab DB.
 
@@ -36,4 +37,5 @@ def create_offline_review_case(
     return create_case(
         db_path, row=events[record_index], verdict="Unclassified", confidence=None,
         creation_note=research_note, idempotency_key=deduplication_key,
+        strict_idempotency_note=strict_idempotency_note,
     )
