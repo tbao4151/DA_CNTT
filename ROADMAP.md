@@ -1,3 +1,9 @@
+## 2026-11-02: Offline NEW-log candidate workload evaluation acceptance (feature CI pending)
+
+- [ ] Confirm Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS on the exact final feature head, no competing PR, no merge conflict; then merge. New tests must check correct observed/Normal/Attack/candidate denominators, nulls for zero denominators, privacy-safe aggregate output and no private file/SQLite mutations.
+- [ ] On Windows 11 run `py -3.12 -m pytest -q tests/test_zeek_alert_burden.py tests/test_zeek_new_log_evaluation.py` after merge; separately use a privately pinned authorized NEW Zeek capture, fixed model and independently reviewed annotations to record candidate workload alongside TP/FP/TN/FN. Do not tune the validation threshold on this NEW capture.
+- [ ] Record actual analyst review duration and actual SOC case creation timestamps **separately**; per-1,000 flow counts are not measured analyst time or operational alert volume. G1–G8 still require genuine Host-only isolation evidence, labels, holdout and packet-to-SOC timing.
+
 ## 2026-11-02: Read-only SOC IPv4 checksum acceptance (feature CI pending)
 
 - [ ] Confirm Ubuntu quality and Windows offline CI SUCCESS on exact final feature head, no competing PRs, and no merge conflict before merging. The new checksum gate is optional and depends on tuple corroboration and the complete pinned PCAP import triplet.
