@@ -34,7 +34,10 @@ def _number(value: str, name: str, *, integer: bool = False) -> float | int | No
         number = int(value) if integer else float(value)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"Invalid Zeek {name}") from exc
-    if not math.isfinite(number) or number < 0:
+    # Python int is arbitrary precision: math.isfinite(very_large_int)
+    # raises OverflowError during float coercion. Integer syntax already
+    # excludes signs; model projection applies its own 1e12 numeric ceiling.
+    if (number < 0) or (not integer and not math.isfinite(number)):
         raise ValueError(f"Invalid Zeek {name}")
     return number
 
