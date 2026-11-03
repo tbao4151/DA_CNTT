@@ -11,6 +11,10 @@ chain: the first creation event must match the case creation timestamp, every
 later `old_state` must match the previous `new_state`, timestamps must be UTC
 and nondecreasing, and the current case state/update timestamp must match the
 last event. It refuses inconsistent history without modifying the database.
+It also requires the current `cases.analyst_note` to exactly match the
+latest `case_events.note`, both for a newly created case and after legitimate
+analyst updates. Changing either side alone is refused; consistently rewriting
+both remains possible for someone with database write access.
 This is **not** a cryptographic audit ledger; a database administrator can
 rewrite both case and history consistently. Up to 1,000 events per case are
 supported by the read-only check.

@@ -1,3 +1,9 @@
+## 2026-11-03: SOC analyst-note/audit consistency acceptance ([PR #371](https://github.com/tbao4151/DA_CNTT/pull/371); feature CI pending)
+
+- [ ] Require exact final-head Ubuntu quality and Windows Python 3.12.9 offline CI SUCCESS, clean mergeability and no competing PR before merge.
+- [ ] Synthetic regression must accept an original New case and legitimate analyst updates, reject a modified `cases.analyst_note` or final `case_events.note`, including a changed note on a New case, without modifying SQLite or changing the verifier output schema.
+- [ ] Student Windows: run `py -3.12 -m pytest -q tests/test_zeek_soc_evidence_link.py tests/test_zeek_research_queue_soc_e2e.py` and inspect an actual analyst-confirmed private SOC case. G1–G8 VMware Host-only capture, independent labels and live latency remain unverified; SQLite is not an authenticated audit ledger.
+
 ## 2026-11-03: SOC audit transition-chain verification acceptance (feature CI pending)
 
 - [ ] Require exact final-head Ubuntu quality and Windows Python 3.12.9 offline CI SUCCESS, clean mergeability and no competing PR before merge.

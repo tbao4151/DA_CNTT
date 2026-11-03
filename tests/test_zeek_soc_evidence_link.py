@@ -144,6 +144,7 @@ def test_legacy_soc_case_cannot_claim_queue_pin_retroactively(tmp_path, evidence
 @pytest.mark.parametrize("mutation", [
     "case_state", "case_updated_at", "case_created_at", "old_state",
     "event_new_state", "backdated_event", "non_utc_event", "second_creation",
+    "case_analyst_note", "last_event_note",
 ])
 def test_existing_soc_case_audit_chain_tampering_is_refused_read_only(
     tmp_path, evidence, mutation
@@ -188,6 +189,16 @@ def test_existing_soc_case_audit_chain_tampering_is_refused_read_only(
                 "UPDATE case_events SET created_at='2026-11-03T12:00:00+07:00' "
                 "WHERE event_id=?", (last_id,),
             )
+        elif mutation == "case_analyst_note":
+            conn.execute(
+                "UPDATE cases SET analyst_note='Forged analyst finding' "
+                "WHERE case_id=?", (case_id,),
+            )
+        elif mutation == "last_event_note":
+            conn.execute(
+                "UPDATE case_events SET note='Forged analyst finding' "
+                "WHERE event_id=?", (last_id,),
+            )
         else:
             conn.execute(
                 "INSERT INTO case_events(case_id,old_state,new_state,note,created_at) "
@@ -195,6 +206,21 @@ def test_existing_soc_case_audit_chain_tampering_is_refused_read_only(
                 (case_id, last_time),
             )
     before = db.read_bytes()
-    with pytest.raises(ValueError, match="SOC audit|SOC case"):
+    with pytest.raises(ValueError, match="SOC audit|SOC case|SOC analyst note"):
+        _verify(db, evidence, case_id=case_id)
+    assert db.read_bytes() == before
+
+
+def test_initial_soc_case_analyst_note_must_match_creation_event(tmp_path, evidence):
+    """Even a New case cannot carry a claim absent from its creation audit."""
+    db = tmp_path / "initial-note.sqlite3"
+    case_id = create_new_log_candidate_case(db, **_args(evidence))
+    with sqlite3.connect(db) as conn:
+        conn.execute(
+            "UPDATE cases SET analyst_note='Attack independently verified' "
+            "WHERE case_id=?", (case_id,),
+        )
+    before = db.read_bytes()
+    with pytest.raises(ValueError, match="SOC analyst note"):
         _verify(db, evidence, case_id=case_id)
     assert db.read_bytes() == before
