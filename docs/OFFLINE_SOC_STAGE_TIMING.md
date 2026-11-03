@@ -353,3 +353,31 @@ latency, VMware evidence, verified trial independence, independently validated
 attack labels, or operational SOC alerts. A small-sample p95 is descriptive
 only. Operator-controlled SHA-256 pins and receipts are not cryptographic
 process attestation. All original evidence stays private and read-only.
+
+
+## Optional strict paired-input integrity (feature CI pending)
+
+Add `--require-paired-inputs` to the existing private receipt verifier
+(optionally with `--include-runtime-summary`). The stricter read-only gate
+rechecks retained model JSON (2 MiB), NEW Zeek log (15 MiB) and declared
+TRAIN/VALIDATION/TEST manifest (256 KiB) against their SHA-256 pins, requires
+identical absolute model/log/manifest paths and CIDRs across both stages and
+all 3–50 trials, and binds each queue's report path/hash to the corresponding
+score receipt's SHA-256-verified published JSON. Score runs must include a
+pinned manifest in strict mode. Unknown or duplicate flags are refused.
+Optional score-side PCAP arguments must be complete and consistent between
+trials; this gate does not independently attest PCAP provenance.
+
+```powershell
+py -3.12 scripts/verify_offline_blue_receipts.py `
+  --manifest "C:/DA005-private/session-001/receipt-manifest.json" `
+  --expected-manifest-sha256 "<REAL_LOWERCASE_SHA256>" `
+  --require-paired-inputs --include-runtime-summary
+```
+
+Use absolute input and output paths in the original recorder invocations.
+Passing confirms **retained byte equality and declared pairing**, not
+independent command execution, original capture, VMware isolation, valid
+ground truth, live alerts or packet-to-case latency. The existing default
+verifier and legacy stdout-only summary are unchanged. Synthetic test:
+`py -3.12 -m pytest -q tests/test_offline_blue_receipt_verify.py`.

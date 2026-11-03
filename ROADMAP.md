@@ -1,3 +1,10 @@
+## 2026-11-03: Strict paired Blue input integrity acceptance (feature CI pending)
+
+- [ ] Exact final-head Ubuntu and Windows Python 3.12.9 CI SUCCESS; clean mergeability and no competing PR before merge.
+- [ ] Synthetic regression verifies retained model/log/manifest bytes, common source pins/CIDRs across both stages and trials, and queue report path/SHA-256 matching each score output; refuses tampering, repinned mismatch, unsupported/duplicate flags and missing score manifest.
+- [ ] On student Windows, record three genuine paired runs with absolute paths and distinct outputs, independently pin the receipt manifest and run `py -3.12 scripts/verify_offline_blue_receipts.py --require-paired-inputs` with required arguments. Preserve original PCAP/Zeek and operator notes privately. Not independent trial or live latency proof.
+- [ ] G1–G8 still require real VMware Host-only evidence, independent labels, held-out Blue evaluation and analyst-confirmed SOC case. Red execution OFF.
+
 ## 2026-11-03: Receipt-verified offline Blue runtime summary acceptance (feature CI pending)
 
 - [ ] Confirm Ubuntu quality and Windows Python 3.12.9 CI SUCCESS on exact final feature head; no competing PR or merge conflict before merging.

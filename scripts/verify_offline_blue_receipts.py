@@ -17,11 +17,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-manifest-sha256", required=True)
     parser.add_argument("--include-runtime-summary", action="store_true",
                         help="Summarize verified receipt timings (offline descriptive only)")
+    parser.add_argument("--require-paired-inputs", action="store_true",
+                        help="Verify pinned common inputs and score-to-queue report binding")
     args = parser.parse_args(argv)
     try:
         result = verify_paired_receipts(
             args.manifest, args.expected_manifest_sha256, ROOT,
             include_runtime_summary=args.include_runtime_summary,
+            require_paired_inputs=args.require_paired_inputs,
         )
     except (ValueError, OSError, TypeError, OverflowError, RecursionError):
         print("Private Blue receipt verification refused; inspect local evidence.",

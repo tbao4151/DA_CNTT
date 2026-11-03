@@ -153,19 +153,118 @@ def _verify_stage(folder: Path, trial_id: str, stage: str,
             or _SHA.fullmatch(receipt["output_sha256"]) is None
             or _digest(_read_regular(output, MAX_OUTPUT_BYTES)) != receipt["output_sha256"]):
         raise ValueError("Published JSON hash mismatch")
-    return measured
+    return measured, command, receipt["output_sha256"]
+
+
+
+# Strict opt-in source/queue consistency, not process attestation.
+_PAIRED_FLAGS = {
+    "score": frozenset({
+        "--model", "--expected-model-sha256", "--log", "--expected-log-sha256",
+        "--manifest", "--expected-manifest-sha256", "--cidr", "--output",
+        "--offline-import-report", "--expected-offline-import-report-sha256",
+        "--offline-import-pcap", "--require-pcap-zeek-timestamp-corroboration",
+    }),
+    "queue": frozenset({
+        "--model", "--expected-model-sha256", "--log", "--expected-log-sha256",
+        "--manifest", "--expected-manifest-sha256", "--cidr", "--output",
+        "--report", "--expected-report-sha256",
+    }),
+}
+_INPUT_LIMITS = {"model": 2 * 1024 * 1024, "log": 15 * 1024 * 1024,
+                 "manifest": 256 * 1024}
+
+
+def _paired_command_inputs(command: list[str], stage: str, root: Path,
+                           digest_cache: dict[Path, str]) -> dict:
+    """Require pinned retained inputs and an unambiguous CLI argument contract."""
+    options: dict[str, str] = {}
+    cidrs: list[str] = []
+    args = command[2:-1]  # interpreter, fixed script, final timing flag
+    i = 0
+    while i < len(args):
+        flag = args[i]
+        if flag not in _PAIRED_FLAGS[stage]:
+            raise ValueError("Unsupported paired timing command option")
+        if flag == "--require-pcap-zeek-timestamp-corroboration":
+            if flag in options:
+                raise ValueError("Duplicate paired timing flag")
+            options[flag] = "true"
+            i += 1
+            continue
+        if i + 1 >= len(args) or not args[i + 1] or args[i + 1].startswith("--"):
+            raise ValueError("Missing paired timing option value")
+        if flag == "--cidr":
+            cidrs.append(args[i + 1])
+        elif flag in options:
+            raise ValueError("Duplicate paired timing option")
+        else:
+            options[flag] = args[i + 1]
+        i += 2
+    required = {"--model", "--expected-model-sha256", "--log",
+                "--expected-log-sha256", "--manifest",
+                "--expected-manifest-sha256", "--output"}
+    if stage == "queue":
+        required |= {"--report", "--expected-report-sha256"}
+    if not required.issubset(options) or not 1 <= len(cidrs) <= 4:
+        raise ValueError("Incomplete paired timing source pins")
+    if len(set(cidrs)) != len(cidrs):
+        raise ValueError("Duplicate paired timing CIDR")
+    common: list = []
+    resolved_paths: list[Path] = []
+    for role in ("model", "log", "manifest"):
+        candidate = Path(options["--" + role])
+        if not candidate.is_absolute() or candidate.is_symlink():
+            raise ValueError("Paired source path must be absolute and not a symlink")
+        resolved = candidate.resolve(strict=True)
+        if resolved.is_relative_to(root):
+            raise ValueError("Paired source input must be outside repository")
+        pin = _check_pin(options["--expected-" + role + "-sha256"])
+        if resolved not in digest_cache:
+            digest_cache[resolved] = _digest(_read_regular(resolved, _INPUT_LIMITS[role]))
+        if digest_cache[resolved] != pin:
+            raise ValueError("Paired source input bytes changed")
+        common.extend((str(resolved), pin))
+        resolved_paths.append(resolved)
+    if len(set(resolved_paths)) != 3:
+        raise ValueError("Paired source roles must be distinct")
+    common.append(tuple(sorted(cidrs)))
+    output = Path(options["--output"])
+    if not output.is_absolute():
+        raise ValueError("Paired output path must be absolute")
+    output = output.resolve(strict=True)
+    if stage == "score":
+        optional_flags = ("--offline-import-report",
+                          "--expected-offline-import-report-sha256",
+                          "--offline-import-pcap")
+        optional = tuple(options.get(k) for k in optional_flags)
+        if any(v is not None for v in optional) and not all(v is not None for v in optional):
+            raise ValueError("Incomplete optional PCAP import inputs")
+        if ("--require-pcap-zeek-timestamp-corroboration" in options
+                and not all(v is not None for v in optional)):
+            raise ValueError("Timestamp gate without PCAP import")
+        return {"common": tuple(common), "output": output,
+                "optional": optional + (
+                    options.get("--require-pcap-zeek-timestamp-corroboration"),)}
+    report = Path(options["--report"])
+    if not report.is_absolute() or report.is_symlink():
+        raise ValueError("Queue report path must be absolute and not a symlink")
+    return {"common": tuple(common), "output": output,
+            "report": report.resolve(strict=True),
+            "report_pin": _check_pin(options["--expected-report-sha256"])}
 
 
 def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
                            repo_root: Path, *,
-                           include_runtime_summary: bool = False) -> dict:
+                           include_runtime_summary: bool = False,
+                           require_paired_inputs: bool = False) -> dict:
     """Verify 3-50 paired receipts and their retained original output files.
 
     The SHA-256 of the manifest must be obtained independently. Results
     deliberately exclude paths, timestamps, private command arguments and IPs.
     """
-    if type(include_runtime_summary) is not bool:
-        raise ValueError("Invalid runtime summary option")
+    if type(include_runtime_summary) is not bool or type(require_paired_inputs) is not bool:
+        raise ValueError("Invalid receipt verification option")
     _check_pin(expected_sha256)
     if manifest_path.is_symlink():
         raise ValueError("Manifest symlink refused")
@@ -183,6 +282,9 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
             or not 3 <= len(manifest["trials"]) <= 50):
         raise ValueError("Require version-1 manifest with 3-50 paired trials")
     seen_ids: set[str] = set()
+    digest_cache: dict[Path, str] = {}
+    reference_inputs = None
+    reference_optional = None
     durations = {stage: {key: [] for key in ("total", "compute", "serialization", "publication")}
                  for stage in ("score", "queue")} if include_runtime_summary else None
     for trial in manifest["trials"]:
@@ -196,12 +298,32 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
                 or trial_id.casefold() in seen_ids):
             raise ValueError("Invalid or reused trial ID")
         seen_ids.add(trial_id.casefold())
+        stage_inputs = {}
         for stage in ("score", "queue"):
-            measured = _verify_stage(source.parent, trial_id, stage,
-                                     trial[f"{stage}_receipt"], trial[f"{stage}_sha256"], root)
+            measured, command, output_sha = _verify_stage(
+                source.parent, trial_id, stage,
+                trial[f"{stage}_receipt"], trial[f"{stage}_sha256"], root,
+            )
+            if require_paired_inputs:
+                stage_inputs[stage] = _paired_command_inputs(
+                    command, stage, root, digest_cache,
+                )
+                stage_inputs[stage]["output_sha"] = output_sha
             if durations is not None:
                 for field, value in measured.items():
                     durations[stage][field].append(value)
+        if require_paired_inputs:
+            score, queue = stage_inputs["score"], stage_inputs["queue"]
+            if (score["common"] != queue["common"]
+                    or queue["report"] != score["output"]
+                    or queue["report_pin"] != score["output_sha"]):
+                raise ValueError("Score/queue pinned source or report handoff differs")
+            if reference_inputs is None:
+                reference_inputs = score["common"]
+                reference_optional = score["optional"]
+            elif (score["common"] != reference_inputs
+                  or score["optional"] != reference_optional):
+                raise ValueError("Paired trials do not use the same pinned inputs")
     result = {
         "mode": "offline_blue_receipt_integrity_review_only",
         "paired_trials_verified": len(manifest["trials"]),
@@ -215,6 +337,13 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
         "packet_event_to_alert_latency_measured": False,
         "soc_cases_created": False,
     }
+    if require_paired_inputs:
+        result.update({
+            "retained_model_log_manifest_sha256_verified": True,
+            "score_to_queue_published_report_pin_verified": True,
+            "cross_trial_pinned_source_inputs_consistent": True,
+            "cross_trial_input_equivalence_verified": False,
+        })
     if durations is not None:
         result.update({
             "trials_count": len(manifest["trials"]),

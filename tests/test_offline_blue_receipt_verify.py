@@ -234,3 +234,110 @@ def test_opt_in_runtime_summary_cli_is_aggregate_only(tmp_path):
     assert report["trials_count"] == 3
     assert report["stage_statistics_ms"]["score"]["total"]["mean"] == 6.0
     assert str(tmp_path) not in proc.stdout
+
+
+def make_comparable_manifest(folder: Path):
+    manifest, trials = make_manifest(folder)
+    inputs = []
+    for name, data in (("model.json", b"synthetic model"),
+                       ("new.log", b"synthetic log"),
+                       ("labels-manifest.json", b"synthetic manifest")):
+        path = folder / name
+        path.write_bytes(data)
+        inputs.extend((str(path), sha(data)))
+    for trial in trials:
+        for stage in ("score", "queue"):
+            receipt_path = folder / trial[f"{stage}_receipt"]
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            args = receipt["command_argv_private"]
+            common = [
+                "--model", inputs[0], "--expected-model-sha256", inputs[1],
+                "--log", inputs[2], "--expected-log-sha256", inputs[3],
+                "--manifest", inputs[4], "--expected-manifest-sha256", inputs[5],
+                "--cidr", "192.168.56.0/24",
+            ]
+            if stage == "queue":
+                report = folder / f"trial-{trial['trial_id']}-score-output.json"
+                common += ["--report", str(report),
+                           "--expected-report-sha256", sha(report.read_bytes())]
+            args[2:2] = common
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            trial[f"{stage}_sha256"] = sha(receipt_path.read_bytes())
+    manifest.write_text(json.dumps({"version": 1, "trials": trials}), encoding="utf-8")
+    return manifest, trials
+
+
+def test_strict_paired_input_integrity_and_score_queue_binding(tmp_path):
+    manifest, _ = make_comparable_manifest(tmp_path)
+    before = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
+    pin = sha(manifest.read_bytes())
+    assert "cross_trial_pinned_source_inputs_consistent" not in verify_paired_receipts(
+        manifest, pin, ROOT
+    )
+    verified = verify_paired_receipts(
+        manifest, pin, ROOT, require_paired_inputs=True, include_runtime_summary=True
+    )
+    assert verified["retained_model_log_manifest_sha256_verified"] is True
+    assert verified["score_to_queue_published_report_pin_verified"] is True
+    assert verified["cross_trial_pinned_source_inputs_consistent"] is True
+    assert verified["cross_trial_input_equivalence_verified"] is False
+    assert verified["stage_statistics_ms"]["score"]["total"]["median"] == 6.0
+    assert str(tmp_path) not in json.dumps(verified)
+    assert before == {p.name: p.read_bytes() for p in tmp_path.iterdir()}
+
+
+@pytest.mark.parametrize("mutation", [
+    "tampered_model", "pair_model_pin", "cross_trial_log_pin",
+    "wrong_report_path", "wrong_report_pin", "duplicate_model_flag",
+    "missing_score_manifest", "unknown_arg",
+])
+def test_strict_paired_input_refuses_repinned_mismatch(tmp_path, mutation):
+    manifest, trials = make_comparable_manifest(tmp_path)
+    if mutation == "tampered_model":
+        (tmp_path / "model.json").write_bytes(b"changed")
+    else:
+        trial = trials[1] if mutation == "cross_trial_log_pin" else trials[0]
+        stages = (("score", "queue") if mutation == "cross_trial_log_pin" else
+                  ("score",) if mutation in ("missing_score_manifest", "unknown_arg") else
+                  ("queue",))
+        for stage in stages:
+            path = tmp_path / trial[f"{stage}_receipt"]
+            receipt = json.loads(path.read_text(encoding="utf-8"))
+            args = receipt["command_argv_private"]
+            if mutation == "pair_model_pin":
+                args[args.index("--expected-model-sha256") + 1] = "a" * 64
+            elif mutation == "cross_trial_log_pin":
+                args[args.index("--expected-log-sha256") + 1] = "b" * 64
+            elif mutation == "wrong_report_path":
+                args[args.index("--report") + 1] = str(tmp_path / "trial-000-queue-output.json")
+            elif mutation == "wrong_report_pin":
+                args[args.index("--expected-report-sha256") + 1] = "c" * 64
+            elif mutation == "duplicate_model_flag":
+                args[-1:-1] = ["--model", str(tmp_path / "model.json")]
+            elif mutation == "missing_score_manifest":
+                for flag in ("--manifest", "--expected-manifest-sha256"):
+                    idx = args.index(flag)
+                    del args[idx:idx + 2]
+            elif mutation == "unknown_arg":
+                args[-1:-1] = ["--arbitrary", "unexpected"]
+            path.write_text(json.dumps(receipt), encoding="utf-8")
+            trial[f"{stage}_sha256"] = sha(path.read_bytes())
+        manifest.write_text(json.dumps({"version": 1, "trials": trials}), encoding="utf-8")
+    with pytest.raises((ValueError, OSError)):
+        verify_paired_receipts(
+            manifest, sha(manifest.read_bytes()), ROOT, require_paired_inputs=True
+        )
+
+
+def test_strict_paired_input_cli_private_output(tmp_path):
+    manifest, _ = make_comparable_manifest(tmp_path)
+    proc = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "verify_offline_blue_receipts.py"),
+         "--manifest", str(manifest), "--expected-manifest-sha256",
+         sha(manifest.read_bytes()), "--require-paired-inputs"],
+        capture_output=True, text=True, check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert json.loads(proc.stdout)["score_to_queue_published_report_pin_verified"] is True
+    assert str(tmp_path) not in proc.stdout
+    assert "192.168.56." not in proc.stdout

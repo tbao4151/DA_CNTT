@@ -1,3 +1,9 @@
+## 2026-11-03: Optional pinned Blue input consistency and score-to-queue binding (feature CI pending)
+
+- Rechecked main `54345dcfc09aa230d8c6b0338110f924dfffc4f2`: PR #366 merged, exact feature-head Ubuntu #41558434431 and Windows #41558434511 SUCCESS, post-merge main #41561429557 SUCCESS; no open PR before branch creation.
+- Added opt-in read-only verification of retained model/log/manifest SHA-256, common CIDRs/paths across score/queue and all trials, and queue report pin against its score output. Unsupported/duplicate command flags and missing score manifest fail closed; default receipt and runtime-summary behavior preserved. Added synthetic regression and Windows instructions.
+- At authoring, exact new feature-head CI and student Windows/VMware execution are NOT VERIFIED. This is not process attestation, independent trial proof, PCAP provenance, live AI detection or operational SOC case evidence. G1–G8 remain PENDING_STUDENT_EVIDENCE; Red execution OFF; UNSW benchmark untouched.
+
 ## 2026-11-03: Optional receipt-verified Blue offline runtime statistics (feature CI pending)
 
 - Rechecked `main` at `76ab9b65df5e7c1596769d48358138c68cf0e58e`: PR #365 merged, its exact final-head Ubuntu #41551273015 and Windows #41551273035 workflows SUCCESS; no open PR at branch creation. Main post-merge CI not independently verified.
