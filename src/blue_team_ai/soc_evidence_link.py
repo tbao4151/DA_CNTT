@@ -137,7 +137,7 @@ def _utc_audit_time(value: object) -> datetime:
 
 
 def _verify_soc_audit_chain(
-    case_state: object, created_at: object, updated_at: object,
+    case_state: object, analyst_note: object, created_at: object, updated_at: object,
     events: list[tuple[object, object, object, object]],
 ) -> None:
     """Check recorded SOC transitions, not merely the first creation note.
@@ -163,6 +163,11 @@ def _verify_soc_audit_chain(
         previous_state, previous_time = new_state, clock
     if case_state != previous_state or updated != previous_time or updated < created:
         raise ValueError("SOC case state or update time differs from audit history")
+    # The SOC store writes cases.analyst_note and the latest audit note in the
+    # same transaction. A changed case note (or final event note) must not be
+    # accepted as an intact analyst history, even if state/times still match.
+    if analyst_note != events[-1][2]:
+        raise ValueError("SOC analyst note differs from latest audit event")
 
 
 def verify_new_log_soc_case_link(
@@ -224,7 +229,7 @@ def verify_new_log_soc_case_link(
             conn.execute("PRAGMA query_only=ON")
             case = conn.execute(
                 "SELECT flow_id, verdict, confidence, evidence_json, "
-                "state, created_at, updated_at "
+                "state, analyst_note, created_at, updated_at "
                 "FROM cases WHERE case_id=?", (case_id,),
             ).fetchone()
             events = conn.execute(
@@ -236,8 +241,9 @@ def verify_new_log_soc_case_link(
         raise ValueError("Unable to read existing SOC case evidence") from exc
     if case is None or not events:
         raise ValueError("SOC case or initial audit event not found")
-    stored_flow_id, verdict, confidence, evidence_json, state, created_at, updated_at = case
-    _verify_soc_audit_chain(state, created_at, updated_at, events)
+    (stored_flow_id, verdict, confidence, evidence_json,
+     state, analyst_note, created_at, updated_at) = case
+    _verify_soc_audit_chain(state, analyst_note, created_at, updated_at, events)
     if stored_flow_id != flow_id(event) or verdict != "Unclassified" or confidence is not None:
         raise ValueError("SOC case identity or unclassified verdict mismatch")
     try:
