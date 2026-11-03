@@ -35,6 +35,11 @@ def _networks(cidrs: Sequence[str]) -> tuple[ipaddress.IPv4Network, ...]:
             raise ValueError("Lab scope must be explicit RFC1918 IPv4 CIDRs of /16 or narrower")
         if network in networks:
             raise ValueError("Duplicate lab CIDR")
+        # Reject redundant nested allowlist entries. A broad parent CIDR
+        # otherwise silently expands an apparently narrow Host-only scope.
+        # Disjoint subnets remain valid for explicitly approved multi-VMnet labs.
+        if any(network.overlaps(existing) for existing in networks):
+            raise ValueError("Overlapping lab CIDRs are not allowed")
         networks.append(network)
     return tuple(networks)
 
