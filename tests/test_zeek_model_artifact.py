@@ -102,6 +102,30 @@ def test_tampered_artifact_rejected(mutation):
         validate_zeek_research_artifact(artifact)
 
 
+
+def test_huge_integer_json_model_parameters_fail_closed_at_validate_and_score():
+    # A forged data-only JSON model may contain integers beyond float range.
+    # All numeric model gates must raise ValueError, never OverflowError.
+    dataset = _dataset()
+    artifact = build_zeek_research_artifact(dataset, input_manifest_sha256=DIGEST)
+    mutations = (
+        lambda a: a.update(selected_threshold=10**400),
+        lambda a: a.update(intercept=-(10**400)),
+        lambda a: a["categorical_adjustments"]["proto"].update(tcp=10**400),
+        lambda a: a["numeric_parameters"]["src_port"].update(median=10**400),
+        lambda a: a["numeric_parameters"]["src_port"].update(weight=-(10**400)),
+    )
+    for mutate in mutations:
+        forged = copy.deepcopy(artifact)
+        mutate(forged)
+        # Exercise the same data-only JSON round-trip as an offline loader.
+        forged = json.loads(json.dumps(forged, allow_nan=False))
+        with pytest.raises(ValueError):
+            validate_zeek_research_artifact(forged)
+        with pytest.raises(ValueError):
+            score_zeek_research_rows(forged, dataset.features["test"])
+
+
 def test_score_refuses_label_ip_uid_and_invalid_numeric_values():
     dataset = _dataset()
     artifact = build_zeek_research_artifact(dataset, input_manifest_sha256=DIGEST)
