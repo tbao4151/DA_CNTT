@@ -322,3 +322,34 @@ duration by more than 1 ms (rounding allowance). These are consistency
 checks only. UTC wall-clock differences are not substituted for monotonic
 elapsed time; neither measurement is packet-to-alert detection latency.
 Operator-controlled timestamps and durations are not authenticated evidence.
+
+
+## Optional verified-receipt runtime statistics (offline only)
+
+The original `scripts/summarize_offline_blue_runtime.py` continues to accept its
+own independently pinned stdout manifest for backward compatibility. That
+summary checks stdout integrity but does **not** verify subprocess exit receipts.
+
+For a stronger, fail-closed descriptive measurement, retain the original
+3–50 paired receipts, their stdout/stderr and published JSON in the private
+folder described above. Independently compute the receipt-manifest SHA-256,
+then run the existing verifier with an **opt-in** summary flag:
+
+```powershell
+py -3.12 scripts/verify_offline_blue_receipts.py --manifest "E:\\PRIVATE\\receipt-manifest.json" --expected-manifest-sha256 "<64 lowercase hex characters>" --include-runtime-summary
+```
+
+This option verifies each pinned receipt's recorded zero exit status, original
+stdout/stderr, command contract, published JSON and clock consistency **before**
+producing min/median/mean/nearest-rank p95/max for score and queue
+compute/serialization/publication/total milliseconds. It uses the exact
+already-verified stdout from each receipt, rather than a second independent
+stdout manifest. Any failed pair rejects the entire report; no partial
+statistics are emitted. The default verifier JSON is unchanged without this
+flag, and the original stdout-only summary remains available.
+
+These are descriptive **offline processing** timings, not packet-to-alert
+latency, VMware evidence, verified trial independence, independently validated
+attack labels, or operational SOC alerts. A small-sample p95 is descriptive
+only. Operator-controlled SHA-256 pins and receipts are not cryptographic
+process attestation. All original evidence stays private and read-only.
