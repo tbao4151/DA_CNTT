@@ -14,6 +14,13 @@ The CLI checks byte integrity and declared RFC1918 scope, but it **cannot**
 prove physical isolation, model authorship, genuine ground truth or that the
 capture was not previously used as the held-out TEST set.
 
+Zeek v1 feature projection now applies the direct model gate's numeric limit
+of 1,000,000,000,000 to durations, byte counts and packet counts. A raw Zeek
+parser may retain larger nonnegative values, but extraction rejects them
+before training or scoring. This is a software consistency guard, not a
+traffic anomaly detector or a claim about attack ground truth. Synthetic test:
+`py -3.12 -m pytest -q tests/test_zeek_features.py`.
+
 The Zeek v1 model-feature boundary now enforces the same **required protocol**
 contract as the Zeek event extractor: `proto` must be a nonempty string of at
 most 32 characters. Optional `service` may remain missing (`null`) or empty;
