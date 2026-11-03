@@ -52,12 +52,12 @@ def validate_ci_queue_bundle(
         or bundle.get("declared_partition_and_flow_identity_nonreuse_checked") is not True
         or not isinstance(rows, list) or len(rows) != 1
         or not isinstance(rows[0], dict)
-        or rows[0].get("record_index") != 0
+        or type(rows[0].get("record_index")) is not int\n        or rows[0]["record_index"] != 0
         or rows[0].get("status") != "pending_manual_research_review"
         or rows[0].get("confirmed_attack") is not False
         or rows[0].get("soc_case_id") is not None
         or not isinstance(rows[0].get("research_alert_ref"), str)
-        or len(rows[0]["research_alert_ref"]) != 64
+        or len(rows[0]["research_alert_ref"]) != 64\n        or any(c not in "0123456789abcdef" for c in rows[0]["research_alert_ref"])
         or any(bundle.get(key) is not False for key in (
             "independent_partition_history_verified",
             "independent_ground_truth_verified", "vmware_isolation_verified",
