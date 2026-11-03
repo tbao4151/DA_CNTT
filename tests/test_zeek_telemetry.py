@@ -7,6 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from blue_team_ai.zeek import load_zeek_conn_log, parse_zeek_conn_log
+from blue_team_ai.features import extract_zeek_features
 
 
 FIELDS = ("ts", "uid", "id.orig_h", "id.orig_p", "id.resp_h", "id.resp_p",
@@ -343,3 +344,14 @@ def test_valid_ascii_decimal_and_exponent_lexemes_preserve_measurements():
     assert event["orig_bytes"] == 100
     assert event["orig_pkts"] == 2
     assert event["source_sha256"] == hashlib.sha256(log(values)).hexdigest()
+
+
+def test_large_valid_integer_token_is_screened_by_feature_gate_not_float_coercion():
+    # Zeek raw parser may retain large counts; the v1 model gate rejects >1e12.
+    # math.isfinite(int("9" * 310)) raises OverflowError on CPython.
+    values = list(VALUES)
+    values[9] = "9" * 310
+    event = parse_zeek_conn_log(log(values))[0]
+    assert event["orig_bytes"] == int(values[9])
+    with pytest.raises(ValueError, match="Invalid numeric Zeek orig_bytes"):
+        extract_zeek_features(event)
