@@ -1,3 +1,9 @@
+## 2026-11-03: Zeek ASCII numeric lexeme acceptance (feature CI pending)
+
+- [ ] Require exact final feature-head Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS; verify no competing PR and conflict-free merge before merging.
+- [ ] Synthetic regression must reject Python-only whitespace, underscore, plus-prefixed and Unicode numeric tokens in Zeek timestamp, duration, port and count fields, while preserving valid ASCII decimal/scientific notation, optional missingness, source SHA-256 and existing CLI behavior.
+- [ ] Student Windows: after merge run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py tests/test_zeek_features.py`; separately collect original authorized VMware Host-only PCAP/Zeek, verify isolation and independent labels/holdout. Strict token syntax is not capture authenticity, live attack detection or G1–G8 acceptance.
+
 ## 2026-11-03: Zeek extraction/model numeric limit parity acceptance (feature CI pending)
 
 - [ ] Require Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS on exact final feature head; verify clean mergeability and no competing PR before merge.

@@ -7,6 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from blue_team_ai.zeek import load_zeek_conn_log, parse_zeek_conn_log
+from blue_team_ai.features import extract_zeek_features
 
 
 FIELDS = ("ts", "uid", "id.orig_h", "id.orig_p", "id.resp_h", "id.resp_p",
@@ -310,3 +311,47 @@ def test_late_open_and_set_metadata_refused_before_or_after_rows(metadata, expec
     ):
         with pytest.raises(ValueError, match=expected):
             parse_zeek_conn_log(malformed)
+
+
+@pytest.mark.parametrize("index,invalid", [
+    (0, " 1630000000.25"),  # float() would accept leading whitespace.
+    (0, "1_630000000.25"),  # Python numeric parsing accepts underscores.
+    (8, "+1.25"),
+    (8, "1.25 "),
+    (8, "1_000.5"),
+    (9, "1_000"),
+    (9, "+100"),
+    (9, "١٠٠"),  # Unicode digits are not Zeek ASCII count syntax.
+    (11, "2.0"),  # Integer packet counts must not be float tokens.
+    (3, "0xC078"),
+])
+def test_noncanonical_numeric_lexemes_are_not_silently_normalized(index, invalid):
+    values = list(VALUES)
+    values[index] = invalid
+    with pytest.raises(ValueError, match="Invalid Zeek"):
+        parse_zeek_conn_log(log(values))
+
+
+def test_valid_ascii_decimal_and_exponent_lexemes_preserve_measurements():
+    values = list(VALUES)
+    values[0] = "1.63000000025e9"  # Scientific notation for the same timestamp.
+    values[8] = "1.25e+0"
+    values[9] = "000100"
+    values[11] = "0002"
+    event = parse_zeek_conn_log(log(values))[0]
+    assert event["event_time_utc"] == "2021-08-26T17:46:40.250000+00:00"
+    assert event["duration_s"] == 1.25
+    assert event["orig_bytes"] == 100
+    assert event["orig_pkts"] == 2
+    assert event["source_sha256"] == hashlib.sha256(log(values)).hexdigest()
+
+
+def test_large_valid_integer_token_is_screened_by_feature_gate_not_float_coercion():
+    # Zeek raw parser may retain large counts; the v1 model gate rejects >1e12.
+    # math.isfinite(int("9" * 310)) raises OverflowError on CPython.
+    values = list(VALUES)
+    values[9] = "9" * 310
+    event = parse_zeek_conn_log(log(values))[0]
+    assert event["orig_bytes"] == int(values[9])
+    with pytest.raises(ValueError, match="Invalid numeric Zeek orig_bytes"):
+        extract_zeek_features(event)

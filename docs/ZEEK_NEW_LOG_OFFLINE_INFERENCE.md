@@ -14,6 +14,15 @@ The CLI checks byte integrity and declared RFC1918 scope, but it **cannot**
 prove physical isolation, model authorship, genuine ground truth or that the
 capture was not previously used as the held-out TEST set.
 
+The offline Zeek ASCII parser now accepts numeric fields only in ASCII
+decimal syntax: unsigned integer ports/counts and finite nonnegative decimal
+or scientific-notation timestamps/durations. It rejects Python-only forms
+such as underscores, whitespace, leading plus signs and Unicode digits
+instead of silently normalizing them. Missing optional values still use
+Zeek `-`, and the original log bytes and SHA-256 remain unchanged. This
+is an input-integrity contract, not source authentication or a detection
+metric. Synthetic regression: `py -3.12 -m pytest -q tests/test_zeek_telemetry.py`.
+
 Zeek v1 feature projection now applies the direct model gate's numeric limit
 of 1,000,000,000,000 to durations, byte counts and packet counts. A raw Zeek
 parser may retain larger nonnegative values, but extraction rejects them

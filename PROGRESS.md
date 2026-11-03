@@ -1,3 +1,9 @@
+## 2026-11-03: Strict Zeek ASCII numeric token validation (feature CI pending)
+
+- Verified `main` at `89b98f0472054e227af7eb92233d1d3e39dd7357`: PR #378 merged; its exact-head Ubuntu #41642171999, Windows #41642172147 and Real Zeek #41642172034 all SUCCESS; main quality #41646174396 SUCCESS. No open PR before creating this feature branch.
+- The Zeek ASCII parser previously accepted Python-only numeric lexemes (underscores, whitespace and Unicode digits) that real Zeek does not emit. Reject these at the byte-parser boundary for timestamps, durations, ports and counters; preserve ASCII decimal/exponent formats, missing-value sentinel, raw source bytes, source SHA-256 and downstream model contracts. Add synthetic negative and valid-format regression tests.
+- Feature-head CI and Windows/VMware student execution are NOT YET VERIFIED. No original VMware capture, independent labels, operational alert, packet-to-case latency or model accuracy is claimed. G1–G8 remain PENDING_STUDENT_EVIDENCE; UNSW-NB15, trained models, SQLite and Red execution remain unchanged.
+
 ## 2026-11-03: Zeek extraction-to-model numeric limit parity (feature CI pending)
 
 - Verified main `c18820abed2f574af391f42964df971a1fd11d36`: PR #377 merged; its final-head Ubuntu #41633794296, Windows #41633794366 and Real Zeek #41633794376 CI all SUCCESS. No open PR before creating this feature branch.

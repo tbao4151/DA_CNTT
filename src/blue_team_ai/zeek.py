@@ -14,6 +14,11 @@ from pathlib import Path
 
 MAX_LOG_BYTES = 15 * 1024 * 1024
 MAX_RECORDS = 10_000
+# Zeek ASCII numeric tokens must use ASCII decimal syntax. Python int/float
+# also accept whitespace, underscores and Unicode digits that Zeek does not
+# emit; accepting those would silently normalize malformed source evidence.
+_ZEEK_INTEGER_TOKEN = re.compile(r"[0-9]+")
+_ZEEK_FLOAT_TOKEN = re.compile(r"(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
 REQUIRED = frozenset({
     "ts", "uid", "id.orig_h", "id.orig_p", "id.resp_h", "id.resp_p", "proto"
 })
@@ -22,11 +27,17 @@ REQUIRED = frozenset({
 def _number(value: str, name: str, *, integer: bool = False) -> float | int | None:
     if value == "-":
         return None
+    token_pattern = _ZEEK_INTEGER_TOKEN if integer else _ZEEK_FLOAT_TOKEN
+    if not isinstance(value, str) or token_pattern.fullmatch(value) is None:
+        raise ValueError(f"Invalid Zeek {name}")
     try:
         number = int(value) if integer else float(value)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"Invalid Zeek {name}") from exc
-    if not math.isfinite(number) or number < 0:
+    # Python int is arbitrary precision: math.isfinite(very_large_int)
+    # raises OverflowError during float coercion. Integer syntax already
+    # excludes signs; model projection applies its own 1e12 numeric ceiling.
+    if (number < 0) or (not integer and not math.isfinite(number)):
         raise ValueError(f"Invalid Zeek {name}")
     return number
 
