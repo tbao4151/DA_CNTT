@@ -38,10 +38,15 @@ def validate_zeek_model_features(row: Mapping[str, object]) -> None:
     """
     if not isinstance(row, Mapping) or set(row) != set(LAB_FEATURE_COLUMNS):
         raise ValueError("Unexpected Zeek feature columns")
-    for field in ("proto", "service"):
-        value = row[field]
-        if value is not None and (not isinstance(value, str) or len(value) > 256):
-            raise ValueError(f"Invalid categorical Zeek {field}")
+    # The parser/extractor require a present, nonempty protocol (<= 32 chars).
+    # Do not silently turn a forged None/blank/oversized protocol into an
+    # imputed category at the direct fit or JSON-model scoring boundary.
+    proto = row["proto"]
+    if not isinstance(proto, str) or not 0 < len(proto) <= 32:
+        raise ValueError("Invalid categorical Zeek proto")
+    service = row["service"]
+    if service is not None and (not isinstance(service, str) or len(service) > 256):
+        raise ValueError("Invalid categorical Zeek service")
     for field in ("src_port", "dst_port"):
         value = row[field]
         if type(value) is not int or not 0 <= value <= 65535:
