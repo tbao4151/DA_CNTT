@@ -169,7 +169,7 @@ def test_refuses_missing_or_unpinned_manifest(tmp_path):
     ("external_process_wall_duration_ms_not_detection_latency", -1.0),
     ("external_process_wall_duration_ms_not_detection_latency", True),
     ("external_process_wall_duration_ms_not_detection_latency", "NaN"),
-    ("external_process_wall_duration_ms_not_detection_latency", 5.0),
+    ("external_process_wall_duration_ms_not_detection_latency", 4.0),
     ("external_process_wall_duration_ms_not_detection_latency", 4_000_000.0),
 ])
 def test_refuses_invalid_recorder_clock_even_when_receipt_is_repinned(
