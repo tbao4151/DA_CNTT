@@ -235,3 +235,26 @@ truth, student VMware acceptance, attack-detection performance, production
 alerting, or a capture-to-SOC latency measurement. The old CLI remains the
 default and Dataset Mode is unchanged. The acceptance is a proposed test until
 the PR's exact-head real-Zeek workflow and quality CI complete successfully.
+
+
+## Synthetic real-Zeek SOC evidence-link integration (03 November 2026; CI pending)
+
+The existing network-disabled real-Zeek workflow now also invokes the production
+read-only `verify_new_log_soc_case_link` after its explicit, CI-only manual
+triage step. The test rechecks original Zeek bytes, the synthetic model,
+research prediction report, PCAP/import digests, stored flow snapshot and
+initial SQLite audit history. It asserts the original SQLite file remains
+byte-identical after verification. A separate disposable **copy** of that
+database has its current analyst note altered; the verifier must reject it
+without changing either database. The real-Zeek workflow is also triggered
+when the SOC evidence-link implementation or its regression tests change.
+
+The model used to guarantee a research candidate has deliberately neutralized
+coefficients and is **not** a trained detector. The workflow does not generate
+a research queue or an operational alert; the case is a synthetic,
+manually confirmed **Unclassified** case. The source PCAP is generated
+deterministically without sockets, and actual Zeek only processes it offline
+inside a network-disabled CI container. This is a software integration gate,
+not evidence of a VMware Host-only capture, independent labels, attack
+detection, live SOC operation or packet-to-case latency. A passing result must
+be checked on the exact feature commit before claiming CI acceptance.
