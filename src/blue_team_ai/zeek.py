@@ -156,8 +156,8 @@ def parse_zeek_conn_log(
             # pass row-count validation and silently alter the source schema.
             if not line.startswith("#fields\t"):
                 raise ValueError("Invalid Zeek fields header")
-            if fields is not None or seen_data:
-                raise ValueError("Duplicate Zeek fields header")
+            if fields is not None or seen_types or seen_data:
+                raise ValueError("Duplicate or late Zeek fields header")
             fields = line.split("\t")[1:]
             if (len(fields) != len(set(fields))
                     or any(not name or any(char.isspace() for char in name)
