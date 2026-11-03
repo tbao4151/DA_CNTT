@@ -3030,3 +3030,10 @@
 - Verified `main` at `ffe20ed2974396d3b2de76d12a6545e5528e10db`: PR #312 merged; its latest PR-head Ubuntu/Windows/Real Zeek Synthetic CI and main quality run #41223819591 succeeded. No open PR at branch creation. Read README, PROGRESS, ROADMAP, source tree, tuple parser, synthetic tests, first-session guidance and CI.
 - Added a fail-closed RFC 791 reserved IPv4 fragmentation-flag check before any PCAP TCP/UDP tuple is accepted. The valid Don't Fragment bit remains allowed. Added synthetic TCP/UDP regressions for tuple-only, timestamp and distinct-packet modes, including valid-DF controls. This closes a malformed-header evidence-acceptance gap; no change to existing CLI flags or successful JSON schema.
 - **At authoring:** PR-head CI and Windows/VMware laptop tests are not yet verified. These checks do not authenticate packet checksums, capture origin, lab isolation, Zeek processing, independent attack labels, AI detection or SOC latency. No traffic, Red execution, model/UNSW benchmark, SQLite, secrets or deployment changes. The original PCAP/Zeek must remain unchanged.
+
+
+## 2026-11-04 — Zeek nonzero decimal underflow guard (feature PR; CI pending)
+
+- On main 16b2e0da0fe6b0612a76e0c401a78198f4dd6c61, confirmed no open PR and reviewed README, progress, roadmap, Zeek parser, synthetic tests and available workflow lookup. Main post-merge CI was not verifiable from the connector (empty workflow-run response).
+- Added a fail-closed parser guard for valid-looking nonzero decimal tokens (e.g. 1e-400) silently rounded to binary64 zero, with synthetic timestamp/duration regressions and an exact-zero control. No source evidence, benchmark, model, SOC database, or network operation changed.
+- At authoring: feature-head CI, Windows 11 laptop, VMware isolation, genuine captures, independent labels, and operational AI detection are **not verified**. This only preserves numeric source semantics at ingestion.
