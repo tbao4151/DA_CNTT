@@ -1,3 +1,9 @@
+## 2026-11-03: Blue receipt clock consistency acceptance (feature CI pending)
+
+- [ ] Require exact final feature-head Ubuntu quality and Windows Python 3.12.9 CI SUCCESS, no competing PR and clean mergeability before merge.
+- [ ] Synthetic tests must accept valid recorder-format UTC/monotonic timing receipts and refuse malformed/non-UTC/backwards timestamps, nonfinite/negative/unbounded durations, and stage timing exceeding recorded subprocess wall time after independently repinning receipt hashes.
+- [ ] Student Windows: rerun py -3.12 -m pytest -q tests/test_offline_blue_receipt_verify.py and retain original private receipts. UTC clock fields and monotonic subprocess timing are not packet-to-alert latency or authenticated capture provenance; G1–G8 remain pending.
+
 ## 2026-11-03: Pinned paired Blue CLI receipt integrity acceptance (feature CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS on exact final feature head; verify clean mergeability and no competing PR before merge.
