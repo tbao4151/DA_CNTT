@@ -1,4 +1,4 @@
-## 2026-11-03: Read-only SOC analyst-note/latest-audit consistency (feature CI pending)
+## 2026-11-03: Read-only SOC analyst-note/latest-audit consistency ([PR #371](https://github.com/tbao4151/DA_CNTT/pull/371); feature CI pending)
 
 - Rechecked `main` at `5a210d806685f3aefb838866a8bbe19d0ae27449`: PR #370 merged, exact feature-head Ubuntu [#41582148700](https://github.com/tbao4151/DA_CNTT/actions/runs/41582148700) and Windows [#41582148640](https://github.com/tbao4151/DA_CNTT/actions/runs/41582148640) SUCCESS; post-merge main quality [#41585068760](https://github.com/tbao4151/DA_CNTT/actions/runs/41585068760) SUCCESS. No open PR before branch creation.
 - The existing read-only NEW-log SOC evidence-link verifier now checks that `cases.analyst_note` matches the latest `case_events.note`, closing a gap where a modified analyst conclusion could pass despite an otherwise consistent state/timestamp chain. Added synthetic tamper regression for both sides and the initial New case; legitimate `update_case` remains supported. No SQLite schema changes or writes, no UNSW benchmark/model/Red execution changes.
