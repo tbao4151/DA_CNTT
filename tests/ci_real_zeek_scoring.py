@@ -24,6 +24,7 @@ from siem_ai.case_report import export_case_report
 from siem_ai.core import list_cases
 from test_zeek_offline_baseline import _dataset
 from ci_real_zeek_production_timestamp import exercise_production_timestamp_gate
+from ci_real_zeek_queue_handoff import exercise_real_zeek_queue_handoff
 
 ROOT = Path(__file__).resolve().parents[1]
 CIDR = "192.168.56.0/24"
@@ -401,6 +402,13 @@ def run(root: Path) -> dict[str, object]:
     no_confirm = [arg for arg in manual if arg != "--confirm-reviewed"]
     _command(no_confirm, should_succeed=False)
 
+    # Second, separately pinned CI-only path: actual Zeek conn.log ->
+    # synthetic declared partition screen -> research queue -> manual SOC.
+    # It never changes the existing neutral-model manual case or live claims.
+    queue_handoff = exercise_real_zeek_queue_handoff(
+        root=root, log=log, pcap=pcap, import_report=import_report,
+    )
+
     summary = {
         "source_kind": "synthetic_benign_udp_fixture",
         "execution": "real_zeek_importer_then_production_pinned_scoring_and_review_ci",
@@ -427,6 +435,7 @@ def run(root: Path) -> dict[str, object]:
         "synthetic_manual_soc_evidence_link_readonly_verified": True,
         "synthetic_manual_soc_altered_note_refused": True,
         "tampered_pcap_soc_write_rejected": True,
+        **queue_handoff,
         "missing_analyst_confirmation_rejected": True,
         "pins_independently_preregistered": False,
         "vmware_capture_performed": False,
