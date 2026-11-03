@@ -20,6 +20,8 @@ on:
       - "tests/test_zeek_lab_cli.py"
       - "tests/test_zeek_real_smoke.py"
       - "tests/ci_real_zeek_scoring.py"
+      - "tests/ci_real_zeek_queue_handoff.py"
+      - "tests/test_ci_real_zeek_queue_handoff.py"
       - "src/blue_team_ai/soc_evidence_link.py"
       - "tests/test_zeek_soc_evidence_link.py"
       - "tests/ci_real_zeek_production_timestamp.py"
@@ -389,7 +391,7 @@ jobs:
           assert source.read_bytes() == original
           print("Real-Zeek synthetic quality CLI: accepted, fail-closed gates and no overwrite verified.")
           PY
-      - name: Exercise production scoring, review and explicit manual SOC triage (synthetic-only)
+      - name: Exercise real Zeek synthetic scoring, pinned queue and manual SOC triage
         run: PYTHONPATH=src:tests python tests/ci_real_zeek_scoring.py --root "$SMOKE_DIR"
       - name: Verify Red/Blue shared-source handoff on real Zeek CI output (synthetic-only)
         run: PYTHONPATH=src:tests python tests/ci_real_zeek_red_blue_handoff.py --root "$SMOKE_DIR"

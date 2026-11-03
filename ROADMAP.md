@@ -1,3 +1,9 @@
+## 2026-11-03: Real-Zeek pinned research queue -> manual SOC integration acceptance (feature CI pending)
+
+- [ ] Require exact final feature-head Ubuntu Python 3.12.9 quality, Windows offline and dedicated network-disabled real-Zeek workflow SUCCESS; verify no competing PR and clean mergeability before merge.
+- [ ] Confirm actual Zeek synthetic `conn.log` passes separate synthetic pinned TRAIN/VALIDATION/TEST screening, production score/review, research queue export, manual Unclassified SOC case, idempotent re-review and read-only pinned queue/PCAP/Zeek/SOC link. Reject wrong queue reference before SQLite creation and wrong bundle digest without SQLite modification.
+- [ ] On student Windows run `py -3.12 -m pytest -q tests/test_ci_real_zeek_queue_handoff.py tests/test_zeek_research_queue_soc_e2e.py`; separately collect authorized original VMware Host-only PCAP/Zeek evidence, independently adjudicate labels and evaluate held-out Blue model. Synthetic CI neutralized model, forced threshold and fake labels cannot count as operational detection, packet-to-case latency or G1–G8 acceptance. Red execution OFF; official UNSW-NB15 benchmark untouched.
+
 ## 2026-11-03: Real-Zeek synthetic SOC evidence-link integration acceptance (feature CI pending)
 
 - [ ] Require exact final-head Ubuntu Python 3.12.9 quality, Windows offline contract and dedicated network-disabled real-Zeek smoke workflow SUCCESS; confirm no competing PR or merge conflicts before merge.
