@@ -258,3 +258,38 @@ inside a network-disabled CI container. This is a software integration gate,
 not evidence of a VMware Host-only capture, independent labels, attack
 detection, live SOC operation or packet-to-case latency. A passing result must
 be checked on the exact feature commit before claiming CI acceptance.
+
+
+## Pinned research queue -> manual SOC link on actual Zeek synthetic bytes (03 November 2026)
+
+The dedicated network-disabled real-Zeek workflow now proposes an additional
+**CI-only** integration stage. It takes the original `conn.log` emitted by
+actual Zeek 9.0.1 from the deterministic benign PCAP, constructs a separate
+synthetic TRAIN/VALIDATION/TEST fixture manifest with pinned annotation hashes,
+and runs the **production** offline scoring, independent prediction review,
+research-candidate queue export, explicit manual Unclassified SOC triage and
+read-only SOC evidence-link CLI. It also requires PCAP/Zeek tuple and timestamp
+presence corroboration at the final read-only boundary.
+
+The fixture model is deliberately assigned a tiny threshold (`0.000001`) to
+force a research candidate. That threshold is **not** selected from validation
+and the fixture labels are not independent truth. The CI stage refuses a wrong
+queue reference before SQLite creation, reuses rather than duplicates the
+manually confirmed case, rejects a wrong queue digest at the read-only link,
+and checks that the existing SQLite bytes do not change. A synthetic CI case
+is **not** an operational alert or evidence of a detected attack.
+
+Developer regression without Zeek:
+
+```powershell
+py -3.12 -m pytest -q tests/test_ci_real_zeek_queue_handoff.py tests/test_zeek_research_queue_soc_e2e.py
+```
+
+The full actual-Zeek check requires the dedicated GitHub workflow or an
+operator-controlled Linux environment with Zeek. It does not run on Windows
+CI; Windows tests cover only the synthetic queue contract. The feature's
+integration claims remain **pending until exact-head real-Zeek, Ubuntu and
+Windows workflows succeed**. All private original VMware Host-only capture,
+independent labels, holdout evaluation, operational alerts and packet-to-case
+latency remain unverified; G1–G8 are PENDING_STUDENT_EVIDENCE. Do not use the
+CI-generated model, manifest, candidate or SQLite file in a research result.
