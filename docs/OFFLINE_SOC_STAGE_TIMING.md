@@ -310,3 +310,15 @@ receipt set. A successful verification is a local consistency check,
 not proof of original subprocess identity, independent trial inputs,
 VMware Host-only isolation, PCAP authenticity, Attack/Normal labels,
 packet-to-alert latency, operational alerts or SOC case creation.
+
+
+### Recorder clock consistency checks
+
+The pinned receipt verifier also requires the recorder's exact UTC timestamp
+format (YYYY-MM-DDTHH:MM:SS.mmm+00:00), nondecreasing start/finish times,
+and a finite, nonnegative bounded external perf_counter_ns subprocess wall
+duration. The CLI's measured in-process total must not exceed the external
+duration by more than 1 ms (rounding allowance). These are consistency
+checks only. UTC wall-clock differences are not substituted for monotonic
+elapsed time; neither measurement is packet-to-alert detection latency.
+Operator-controlled timestamps and durations are not authenticated evidence.

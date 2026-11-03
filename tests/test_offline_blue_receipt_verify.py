@@ -66,8 +66,8 @@ def make_manifest(folder: Path):
                 "command_argv_private": [
                     sys.executable, str(ROOT / "scripts" / script), "--output", str(out), flag
                 ],
-                "started_utc": "2026-11-03T00:00:00+00:00",
-                "finished_utc": "2026-11-03T00:00:01+00:00",
+                "started_utc": "2026-11-03T00:00:00.000+00:00",
+                "finished_utc": "2026-11-03T00:00:01.000+00:00",
                 "external_process_wall_duration_ms_not_detection_latency": 1000.0,
                 "exit_code": 0, "timed_out": False, "launch_failed": False,
                 "python_version": "3.12.9",
@@ -159,3 +159,28 @@ def test_refuses_missing_or_unpinned_manifest(tmp_path):
         verify_paired_receipts(manifest, "not-a-sha", ROOT)
     with pytest.raises((ValueError, OSError)):
         verify_paired_receipts(tmp_path / "missing.json", "0" * 64, ROOT)
+
+
+@pytest.mark.parametrize(("field", "invalid"), [
+    ("started_utc", "2026-11-03T00:00:00+00:00"),
+    ("started_utc", "2026-11-03T07:00:00.000+07:00"),
+    ("started_utc", "2026-11-03T00:00:60.000+00:00"),
+    ("finished_utc", "2026-11-02T23:59:59.000+00:00"),
+    ("external_process_wall_duration_ms_not_detection_latency", -1.0),
+    ("external_process_wall_duration_ms_not_detection_latency", True),
+    ("external_process_wall_duration_ms_not_detection_latency", "NaN"),
+    ("external_process_wall_duration_ms_not_detection_latency", 4.0),
+    ("external_process_wall_duration_ms_not_detection_latency", 4_000_000.0),
+])
+def test_refuses_invalid_recorder_clock_even_when_receipt_is_repinned(
+    tmp_path, field, invalid
+):
+    manifest, trials = make_manifest(tmp_path)
+    receipt_file = tmp_path / trials[0]["score_receipt"]
+    receipt = json.loads(receipt_file.read_text(encoding="utf-8"))
+    receipt[field] = invalid
+    receipt_file.write_text(json.dumps(receipt), encoding="utf-8")
+    trials[0]["score_sha256"] = sha(receipt_file.read_bytes())
+    manifest.write_text(json.dumps({"version": 1, "trials": trials}), encoding="utf-8")
+    with pytest.raises((ValueError, OSError)):
+        verify_paired_receipts(manifest, sha(manifest.read_bytes()), ROOT)
