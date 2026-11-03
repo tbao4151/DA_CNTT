@@ -7,6 +7,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 import re
 
@@ -20,6 +23,7 @@ MAX_RECEIPT_BYTES = 32 * 1024
 MAX_OUTPUT_BYTES = 64 * 1024 * 1024
 _TRIAL_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,39}\Z")
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
+_UTC_RECEIPT = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+00:00\Z")
 _SCRIPT = {"score": "score_zeek_new_log.py",
            "queue": "export_zeek_research_alerts.py"}
 _FLAG = {"score": "--measure-inference-publication-runtime",
@@ -61,6 +65,31 @@ def _private_file(folder: Path, name: str, limit: int) -> bytes:
     return _read_regular(path, limit)
 
 
+
+def _validate_recorded_clock(receipt: dict) -> Decimal:
+    """Check recorder UTC metadata without treating it as detection latency.
+
+    The external duration comes from perf_counter_ns; UTC timestamps come
+    from a separate wall clock and must not be equated to that duration.
+    """
+    instants = []
+    for key in ("started_utc", "finished_utc"):
+        value = receipt[key]
+        if not isinstance(value, str) or _UTC_RECEIPT.fullmatch(value) is None:
+            raise ValueError("Invalid UTC recorder timestamp")
+        try:
+            instants.append(datetime.fromisoformat(value))
+        except ValueError as exc:
+            raise ValueError("Invalid UTC recorder timestamp") from exc
+    if instants[1] < instants[0]:
+        raise ValueError("Recorder UTC timestamps out of order")
+    elapsed = receipt["external_process_wall_duration_ms_not_detection_latency"]
+    if (type(elapsed) not in (int, float)
+            or not 0 <= elapsed <= 3_660_000
+            or not math.isfinite(elapsed)):
+        raise ValueError("Invalid monotonic subprocess duration")
+    return Decimal(str(elapsed))
+
 def _verify_stage(folder: Path, trial_id: str, stage: str,
                   receipt_name: str, receipt_pin: str, root: Path) -> None:
     expected_name = f"trial-{trial_id}-{stage}.receipt.json"
@@ -82,6 +111,7 @@ def _verify_stage(folder: Path, trial_id: str, stage: str,
             or receipt["vmware_isolation_or_capture_authenticity_verified"] is not False
             or receipt["packet_to_alert_latency_measured"] is not False):
         raise ValueError("Unsuccessful or inconsistent offline subprocess receipt")
+    external_wall_ms = _validate_recorded_clock(receipt)
     for stream in ("stdout", "stderr"):
         expected_file = f"trial-{trial_id}-{stage}.{stream}.txt"
         if receipt[f"{stream}_file"] != expected_file:
@@ -97,7 +127,10 @@ def _verify_stage(folder: Path, trial_id: str, stage: str,
         if stream == "stderr" and content:
             raise ValueError("Successful subprocess must have empty stderr")
         if stream == "stdout":
-            parse_timing_stdout(content, stage)
+            measured = parse_timing_stdout(content, stage)
+            # Same monotonic clock family; allow 1 ms for recorder rounding.
+            if measured["total"] > external_wall_ms + Decimal("1.000"):
+                raise ValueError("Stage timing exceeds recorded subprocess wall time")
 
     command = receipt["command_argv_private"]
     if (not isinstance(command, list) or len(command) < 5
