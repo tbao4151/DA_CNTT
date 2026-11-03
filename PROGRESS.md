@@ -1,3 +1,9 @@
+## 2026-11-03: Validate Blue offline receipt clock consistency (feature PR; CI pending)
+
+- Rechecked main at 7e3bda29a57c222f949c27474c151aa8623b3a28: PR #364 (https://github.com/tbao4151/DA_CNTT/pull/364) merged; exact feature-head Ubuntu #41543054621 and Windows #41543054558 both SUCCESS. No open PR at feature start; post-merge main CI not independently verified.
+- Hardened the read-only pinned Blue CLI receipt verifier: require recorder-format UTC start/end in order, finite nonnegative bounded monotonic subprocess wall time, and stage runtime no more than external wall time plus 1 ms rounding allowance. Added synthetic repinned-receipt regression cases and Windows runbook clarification. Existing model, Dataset benchmark, SQLite, Red Team and original evidence unchanged.
+- At authoring, exact feature-head CI and student Windows/VMware execution remain unverified. Clock consistency is not timestamp authentication, capture provenance, operational detection or packet-to-alert latency. G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Read-only pinned paired Blue CLI receipt verifier (feature PR; CI pending)
 
 - Checked main at `c2e7387a822f4ff41c4b81e91eaf3c4770e24536`: PR #363 merged, exact-head Ubuntu [#41535140144](https://github.com/tbao4151/DA_CNTT/actions/runs/41535140144) and Windows [#41535140078](https://github.com/tbao4151/DA_CNTT/actions/runs/41535140078) SUCCESS; post-merge main quality [#41539287641](https://github.com/tbao4151/DA_CNTT/actions/runs/41539287641) SUCCESS; no open PR at feature start.
