@@ -110,3 +110,27 @@ def test_literal_missing_category_marker_rejected_by_zeek_projection(field):
 
 def test_missing_optional_service_still_projects_as_none():
     assert extract_zeek_features(sample_events()[0])["service"] is None
+
+
+@pytest.mark.parametrize("field", ["orig_bytes", "resp_pkts", "duration_s"])
+def test_projection_rejects_numeric_values_above_model_limit(field):
+    # The parser can represent these values, but fit/scoring rejects >1e12.
+    event = sample_events()[0]
+    event[field] = 1_000_000_000_001
+    with pytest.raises(ValueError, match="Invalid numeric Zeek"):
+        extract_zeek_features(event)
+    with pytest.raises(ValueError, match="Invalid numeric Zeek"):
+        extract_zeek_feature_rows([event])
+
+
+def test_projection_accepts_model_numeric_upper_bound_without_mutating_event():
+    event = sample_events()[0]
+    event["orig_bytes"] = 1_000_000_000_000
+    event["resp_pkts"] = 1_000_000_000_000
+    event["duration_s"] = 1_000_000_000_000
+    original = copy.deepcopy(event)
+    projected = extract_zeek_features(event)
+    assert projected["orig_bytes"] == 1_000_000_000_000
+    assert projected["resp_pkts"] == 1_000_000_000_000
+    assert projected["duration_s"] == 1_000_000_000_000
+    assert event == original
