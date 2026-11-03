@@ -42,7 +42,15 @@ def _digest(value: object) -> bool:
 
 
 def _finite(value: object) -> bool:
-    return type(value) in (int, float) and math.isfinite(value)
+    if type(value) not in (int, float):
+        return False
+    # JSON permits arbitrarily large integers. math.isfinite(10**400)
+    # raises OverflowError during implicit float conversion; reject it as
+    # invalid model data instead of leaking an unexpected exception.
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
 
 
 def _encoded(encoder: object, proto: str, service: str) -> np.ndarray:
