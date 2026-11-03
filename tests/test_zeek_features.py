@@ -128,9 +128,9 @@ def test_projection_rejects_huge_integer_duration_without_overflow():
     # Reject before math.isfinite would coerce this integer to float.
     event = sample_events()[0]
     event["duration_s"] = 10**400
-    with pytest.raises(ValueError, match="Invalid numeric Zeek duration_s"):
+    with pytest.raises(ValueError, match="Invalid Zeek duration_s"):
         extract_zeek_features(event)
-    with pytest.raises(ValueError, match="Invalid numeric Zeek duration_s"):
+    with pytest.raises(ValueError, match="Invalid Zeek duration_s"):
         extract_zeek_feature_rows([event])
 
 
