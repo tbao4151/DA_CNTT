@@ -120,7 +120,8 @@ def exercise_real_zeek_queue_handoff(
         raise ValueError("CI synthetic queue scorer misrepresented a candidate")
     _command([
         str(ROOT / "scripts" / "verify_zeek_new_log_report.py"),
-        *common, *import_flags, "--report", str(score_path),
+        *common[:8], "--cidr", CIDR, *import_flags,
+        "--report", str(score_path),
     ])
 
     queue_path = log.parent / "ci_pinned_research_queue.json"
