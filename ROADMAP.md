@@ -1,3 +1,9 @@
+## 2026-11-04: Zeek JSON research artifact oversized integer validation (feature CI pending)
+
+- [ ] Verify exact final feature-head Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS, no competing open PR and conflict-free merge before merging.
+- [ ] Synthetic regression: `10**400` and `-(10**400)` in research model numeric fields are refused with `ValueError` (not `OverflowError`) at validation and scoring; preserve JSON-only artifact format, feature schema, legitimate models, Dataset Mode and existing SOC cases.
+- [ ] Student Windows after merge: `py -3.12 -m pytest -q tests/test_zeek_model_artifact.py`; separately complete authorized VMware Host-only original capture, independent labeling and held-out evaluation. No CI check establishes G1–G8, physical isolation or live attack detection.
+
 ## 2026-11-03: Zeek v1 huge integer duration fail-closed acceptance (feature CI pending)
 
 - [ ] Confirm final feature-head Ubuntu Python 3.12.9, Windows offline and applicable Real Zeek CI SUCCESS, no competing PR and conflict-free merge.
