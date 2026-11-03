@@ -27,6 +27,9 @@ _COUNT_COLUMNS = ("orig_bytes", "resp_bytes", "orig_pkts", "resp_pkts")
 # constructed dataset or direct scorer call turn fractional packet counts or
 # ports into continuous model features. Keep the v1 feature order unchanged.
 _MODEL_NUMERIC_MAX = 1_000_000_000_000
+# The v1 train-only OneHotEncoder uses this category for None. A literal
+# protocol/service with the same spelling would silently alias missingness.
+ZEEK_MISSING_CATEGORY_TOKEN = "__MISSING__"
 
 
 def validate_zeek_model_features(row: Mapping[str, object]) -> None:
@@ -42,10 +45,12 @@ def validate_zeek_model_features(row: Mapping[str, object]) -> None:
     # Do not silently turn a forged None/blank/oversized protocol into an
     # imputed category at the direct fit or JSON-model scoring boundary.
     proto = row["proto"]
-    if not isinstance(proto, str) or not 0 < len(proto) <= 32:
+    if (not isinstance(proto, str) or not 0 < len(proto) <= 32
+            or proto == ZEEK_MISSING_CATEGORY_TOKEN):
         raise ValueError("Invalid categorical Zeek proto")
     service = row["service"]
-    if service is not None and (not isinstance(service, str) or len(service) > 256):
+    if service is not None and (not isinstance(service, str) or len(service) > 256
+                                or service == ZEEK_MISSING_CATEGORY_TOKEN):
         raise ValueError("Invalid categorical Zeek service")
     for field in ("src_port", "dst_port"):
         value = row[field]
@@ -104,10 +109,12 @@ def extract_zeek_features(event: Mapping[str, object]) -> dict[str, object]:
         raise ValueError("Invalid Zeek UTC event timestamp") from exc
 
     proto = event["proto"]
-    if not isinstance(proto, str) or not 0 < len(proto) <= 32:
+    if (not isinstance(proto, str) or not 0 < len(proto) <= 32
+            or proto == ZEEK_MISSING_CATEGORY_TOKEN):
         raise ValueError("Invalid Zeek protocol")
     service = event["service"]
-    if service is not None and (not isinstance(service, str) or len(service) > 256):
+    if service is not None and (not isinstance(service, str) or len(service) > 256
+                                or service == ZEEK_MISSING_CATEGORY_TOKEN):
         raise ValueError("Invalid Zeek service")
     for name in ("src_port", "dst_port"):
         value = event[name]

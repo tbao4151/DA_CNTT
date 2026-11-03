@@ -202,3 +202,17 @@ py -3.12 -m pytest -q tests/test_new_log_timestamp_scoring_gate.py
 ```
 
 The separate real-Zeek CI smoke is not a student laptop acceptance run.
+
+
+### Reserved categorical missing marker (Zeek feature schema v1)
+
+The offline Zeek research preprocessing represents missing optional categorical
+values with the internal token `__MISSING__`. A **literal** `proto` or `service`
+value equal to this token is now refused at feature projection and direct
+training/scoring boundaries, because it would otherwise be indistinguishable
+from missingness in both train-only one-hot encoding and the exported JSON
+scorer. A genuine missing `service=None` remains valid; no category is
+silently relabeled. This is a fail-closed data-integrity check, **not** a new
+feature schema, retrained model, improved detection metric or proof of capture
+provenance. If an authorized Zeek source genuinely contains this literal value,
+inspect and document the source rather than replacing it with a fabricated label.
