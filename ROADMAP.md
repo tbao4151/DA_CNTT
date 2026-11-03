@@ -1,3 +1,9 @@
+## 2026-11-03: Real-Zeek synthetic zero-candidate / no-SOC-write acceptance (feature CI pending)
+
+- [ ] Verify exact feature-head Ubuntu Python 3.12.9, Windows offline and dedicated network-disabled real-Zeek workflows SUCCESS; check no competing PR and clean mergeability before merge.
+- [ ] Real Zeek must decode the benign synthetic PCAP; a separate pinned neutralized CI model with forced threshold 0.51 must produce one flow, zero candidates and an empty verified research queue. An explicit manual SOC request with a fabricated queue reference must fail **before** SQLite creation; the existing 0.49 forced-candidate path, original evidence and existing SOC case must be unchanged. Contract regressions must reject fake candidates or operational claims.
+- [ ] Student Windows 11: after merge, run `py -3.12 -m pytest -q tests/test_ci_real_zeek_queue_handoff.py tests/test_zeek_research_queue_soc_e2e.py`. Independently complete VMware Host-only isolation, authorized capture, real Zeek processing, independent annotation and host/session-disjoint held-out evaluation. CI threshold flips are not detector specificity, independent ground truth, operational SOC alerts or live latency; G1–G8 remain pending.
+
 ## 2026-11-03: Real-Zeek pinned research queue -> manual SOC integration acceptance (feature CI pending)
 
 - [ ] Require exact final feature-head Ubuntu Python 3.12.9 quality, Windows offline and dedicated network-disabled real-Zeek workflow SUCCESS; verify no competing PR and clean mergeability before merge.
