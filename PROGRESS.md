@@ -1,7 +1,8 @@
-## 2026-11-03: Zeek protocol categorical parity at model boundaries (feature CI pending)
+## 2026-11-03: Zeek protocol categorical parity at model boundaries ([PR #376](https://github.com/tbao4151/DA_CNTT/pull/376); feature CI pending)
 
 - Verified `main` at `3f6328b1937492d4861d56c6c7466e5a153dc939`: PR #375 merged; exact-head Ubuntu [#41617833514](https://github.com/tbao4151/DA_CNTT/actions/runs/41617833514), Windows [#41617833473](https://github.com/tbao4151/DA_CNTT/actions/runs/41617833473), and post-merge main [#41621221606](https://github.com/tbao4151/DA_CNTT/actions/runs/41621221606) all SUCCESS. No open PR before this branch.
 - The Zeek v1 event extractor requires nonempty `proto` of length <=32, but the direct fit/JSON scorer validator previously accepted `None`, empty string and up to 256 characters. Align the model boundary with the extractor, preserving optional `service` and numeric missingness; add three synthetic fit/score negative regression cases. No schema-version, UNSW benchmark, trained model, SQLite, network, or Red Team execution change.
+- Windows offline Python 3.12.9 workflow now explicitly runs `tests/test_zeek_model_feature_types.py` and `tests/test_zeek_features.py` in a dedicated synthetic schema-parity step. Feature commit [861fa25b](https://github.com/tbao4151/DA_CNTT/commit/861fa25bb75dd1b90d26d632f585138733ad5d80); final-head CI remains unverified at authoring.
 - At authoring, exact feature-head Ubuntu/Windows CI and student Windows/VMware experiments are **NOT VERIFIED**. This is input contract hardening, not proof of genuine Zeek capture, attack truth, improved accuracy, isolation or live latency. G1–G8 remain PENDING_STUDENT_EVIDENCE.
 
 ## 2026-11-03: Reject session-index/chain self-evidence ([PR #375](https://github.com/tbao4151/DA_CNTT/pull/375); feature CI pending)

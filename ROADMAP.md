@@ -1,4 +1,4 @@
-## 2026-11-03: Zeek v1 required-protocol model-boundary parity (feature CI pending)
+## 2026-11-03: Zeek v1 required-protocol model-boundary parity ([PR #376](https://github.com/tbao4151/DA_CNTT/pull/376); feature CI pending)
 
 - [ ] Require exact final feature-head Ubuntu Python 3.12.9 quality and Windows offline CI SUCCESS, clean mergeability and no competing PR before merge.
 - [ ] Synthetic regression: reject `proto=null`, empty and >32 characters consistently at direct training/evaluation and JSON-model scoring boundaries; preserve valid Zeek protocol values, missing optional service, existing CLI/JSON and UNSW-NB15 behavior.
