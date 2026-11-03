@@ -208,6 +208,12 @@ def test_soc_link_audit_accepts_new_framing_claim_and_legacy_note(prepared):
             "SELECT MIN(event_id) FROM case_events WHERE case_id=?)",
             (legacy, case_id, case_id),
         )
+        # A historical case stores the same note in cases and its latest
+        # case_events row. Update both to model the old release faithfully.
+        conn.execute(
+            "UPDATE cases SET analyst_note=? WHERE case_id=?",
+            (legacy, case_id),
+        )
     assert check_link()["initial_audit_matches_recomputed_inference"] is True
     with sqlite3.connect(p["db"]) as conn:
         forged = note.replace(
@@ -217,6 +223,12 @@ def test_soc_link_audit_accepts_new_framing_claim_and_legacy_note(prepared):
             "UPDATE case_events SET note=? WHERE case_id=? AND event_id=("
             "SELECT MIN(event_id) FROM case_events WHERE case_id=?)",
             (forged, case_id, case_id),
+        )
+        # Keep the internal note pair consistent so this test exercises the
+        # separate PCAP provenance-claim validator, not the audit-link gate.
+        conn.execute(
+            "UPDATE cases SET analyst_note=? WHERE case_id=?",
+            (forged, case_id),
         )
     with pytest.raises(ValueError, match="Invalid PCAP provenance claim"):
         check_link()
