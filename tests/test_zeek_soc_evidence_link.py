@@ -34,6 +34,8 @@ def test_original_research_case_link_and_read_only_recheck(tmp_path, evidence):
     result = _verify(db, evidence, case_id=case_id)
     assert result["stored_flow_snapshot_matches_original"] is True
     assert result["initial_audit_matches_recomputed_inference"] is True
+    assert result["soc_audit_history_consistent"] is True
+    assert result["soc_audit_event_count"] == 1
     assert result["sqlite_read_only"] is True
     assert result["operational_alert_verified"] is False
     assert result["detection_latency_measured"] is False
@@ -42,7 +44,10 @@ def test_original_research_case_link_and_read_only_recheck(tmp_path, evidence):
     assert db.read_bytes() == before
     # Analyst investigation must not erase the immutable creation evidence.
     update_case(db, case_id, "Investigating", "Review pending independent labels")
-    assert _verify(db, evidence, case_id=case_id)["initial_audit_matches_recomputed_inference"]
+    updated = _verify(db, evidence, case_id=case_id)
+    assert updated["initial_audit_matches_recomputed_inference"]
+    assert updated["soc_audit_history_consistent"] is True
+    assert updated["soc_audit_event_count"] == 2
 
 
 @pytest.mark.parametrize("tamper", ["snapshot", "flow_id", "verdict", "initial_note"])
@@ -134,3 +139,62 @@ def test_legacy_soc_case_cannot_claim_queue_pin_retroactively(tmp_path, evidence
             expected_research_alert_ref="b" * 64,
         )
     assert db.read_bytes() == original
+
+
+@pytest.mark.parametrize("mutation", [
+    "case_state", "case_updated_at", "case_created_at", "old_state",
+    "event_new_state", "backdated_event", "non_utc_event", "second_creation",
+])
+def test_existing_soc_case_audit_chain_tampering_is_refused_read_only(
+    tmp_path, evidence, mutation
+):
+    db = tmp_path / "audit-chain.sqlite3"
+    case_id = create_new_log_candidate_case(db, **_args(evidence))
+    update_case(db, case_id, "Investigating", "Independent analyst review")
+    with sqlite3.connect(db) as conn:
+        last_id, last_time = conn.execute(
+            "SELECT event_id, created_at FROM case_events "
+            "WHERE case_id=? ORDER BY event_id DESC LIMIT 1", (case_id,),
+        ).fetchone()
+        if mutation == "case_state":
+            conn.execute("UPDATE cases SET state='Resolved' WHERE case_id=?", (case_id,))
+        elif mutation == "case_updated_at":
+            conn.execute(
+                "UPDATE cases SET updated_at='2000-01-01T00:00:00+00:00' "
+                "WHERE case_id=?", (case_id,),
+            )
+        elif mutation == "case_created_at":
+            conn.execute(
+                "UPDATE cases SET created_at='2000-01-01T00:00:00+00:00' "
+                "WHERE case_id=?", (case_id,),
+            )
+        elif mutation == "old_state":
+            conn.execute(
+                "UPDATE case_events SET old_state='Resolved' WHERE event_id=?",
+                (last_id,),
+            )
+        elif mutation == "event_new_state":
+            conn.execute(
+                "UPDATE case_events SET new_state='Escalated' WHERE event_id=?",
+                (last_id,),
+            )
+        elif mutation == "backdated_event":
+            conn.execute(
+                "UPDATE case_events SET created_at='2000-01-01T00:00:00+00:00' "
+                "WHERE event_id=?", (last_id,),
+            )
+        elif mutation == "non_utc_event":
+            conn.execute(
+                "UPDATE case_events SET created_at='2026-11-03T12:00:00+07:00' "
+                "WHERE event_id=?", (last_id,),
+            )
+        else:
+            conn.execute(
+                "INSERT INTO case_events(case_id,old_state,new_state,note,created_at) "
+                "VALUES (?,NULL,'New','Forged second creation',?)",
+                (case_id, last_time),
+            )
+    before = db.read_bytes()
+    with pytest.raises(ValueError, match="SOC audit|SOC case"):
+        _verify(db, evidence, case_id=case_id)
+    assert db.read_bytes() == before

@@ -6,6 +6,15 @@ analyst approval, an **Unclassified** SQLite SOC case. The helper
 existing case against original, SHA-256-pinned Zeek bytes and a separately
 pinned research model/report. It does **not** open cases or send traffic.
 
+The helper also checks the bounded chronological SQLite audit transition
+chain: the first creation event must match the case creation timestamp, every
+later `old_state` must match the previous `new_state`, timestamps must be UTC
+and nondecreasing, and the current case state/update timestamp must match the
+last event. It refuses inconsistent history without modifying the database.
+This is **not** a cryptographic audit ledger; a database administrator can
+rewrite both case and history consistently. Up to 1,000 events per case are
+supported by the read-only check.
+
 The helper recomputes the complete prediction report, compares the selected
 original Zeek flow with the stored case's feature snapshot and flow digest,
 and checks the **first** audit event's source/model/report/scope hashes, UID,
