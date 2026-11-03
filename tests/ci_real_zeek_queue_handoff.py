@@ -71,6 +71,37 @@ def validate_ci_queue_bundle(
     return rows[0]
 
 
+
+def validate_ci_empty_queue_bundle(
+    bundle: dict[str, object], *, log_sha: str, model_sha: str,
+    manifest_sha: str,
+) -> None:
+    """The CI-only zero-candidate path must never imply a SOC alert."""
+    if (
+        not isinstance(bundle, dict)
+        or bundle.get("mode") != "offline_zeek_research_alert_candidates_only"
+        or bundle.get("origin") != "offline_zeek_log"
+        or bundle.get("source_sha256") != log_sha
+        or bundle.get("model_sha256") != model_sha
+        or bundle.get("manifest_sha256") != manifest_sha
+        or type(bundle.get("flow_count")) is not int
+        or bundle["flow_count"] != 1
+        or type(bundle.get("research_alert_candidates_exported")) is not int
+        or bundle["research_alert_candidates_exported"] != 0
+        or type(bundle.get("research_candidate_count_total")) is not int
+        or bundle["research_candidate_count_total"] != 0
+        or bundle.get("research_alerts") != []
+        or bundle.get("declared_partition_and_flow_identity_nonreuse_checked") is not True
+        or any(bundle.get(key) is not False for key in (
+            "independent_partition_history_verified",
+            "independent_ground_truth_verified", "vmware_isolation_verified",
+            "capture_authenticity_verified", "operational_alerts_created",
+            "soc_cases_created", "live_capture",
+        ))
+    ):
+        raise ValueError("CI synthetic empty research queue contract violated")
+
+
 def exercise_real_zeek_queue_handoff(
     *, root: Path, log: Path, pcap: Path, import_report: Path,
 ) -> dict[str, object]:
@@ -135,6 +166,9 @@ def exercise_real_zeek_queue_handoff(
     selected = validate_ci_queue_bundle(
         queue, log_sha=log_sha, model_sha=model_sha, manifest_sha=manifest_sha,
     )
+    original_log_bytes = log.read_bytes()
+    original_pcap_bytes = pcap.read_bytes()
+    original_import_bytes = import_report.read_bytes()
     queue_sha = _sha(queue_path.read_bytes())
     db = root / "ci_pinned_queue_manual_soc.sqlite3"
     triage = [
@@ -206,6 +240,75 @@ def exercise_real_zeek_queue_handoff(
     _command(wrong_verify, succeed=False)
     if db.read_bytes() != original_db:
         raise ValueError("Failed queue verifier modified the original SOC database")
+
+    # Negative integration path: identical actual-Zeek bytes, declared
+    # partitions and neutral coefficients, but a CI-only threshold of 0.51.
+    # Probability 0.5 must yield ZERO candidates and no SOC write, even if
+    # an operator supplies every confirmation and a fabricated queue ref.
+    # This is a software control, NOT a specificity/false-positive metric.
+    empty_model = json.loads(model_path.read_text(encoding="utf-8"))
+    empty_model["selected_threshold"] = 0.51
+    empty_model_path = root / "ci_empty_queue_model_not_for_research.json"
+    with empty_model_path.open("x", encoding="utf-8") as stream:
+        json.dump(empty_model, stream, allow_nan=False)
+        stream.write("\n")
+    empty_model_sha = _sha(empty_model_path.read_bytes())
+    empty_common = common.copy()
+    empty_common[empty_common.index("--model") + 1] = str(empty_model_path)
+    empty_common[empty_common.index("--expected-model-sha256") + 1] = empty_model_sha
+    empty_score_path = log.parent / "ci_empty_queue_score.json"
+    _command([
+        str(ROOT / "scripts" / "score_zeek_new_log.py"),
+        *empty_common, *import_flags, "--output", str(empty_score_path),
+    ])
+    empty_score = json.loads(empty_score_path.read_text(encoding="utf-8"))
+    if (
+        empty_score.get("research_candidate_count") != 0
+        or empty_score.get("flow_count") != 1
+        or not isinstance(empty_score.get("predictions"), list)
+        or len(empty_score["predictions"]) != 1
+        or empty_score["predictions"][0].get("research_candidate") is not False
+        or empty_score.get("operational_attack_detection_verified") is not False
+        or empty_score.get("automated_alerts") is not False
+    ):
+        raise ValueError("Neutral CI-only no-candidate scoring contract failed")
+    _command([
+        str(ROOT / "scripts" / "verify_zeek_new_log_report.py"),
+        *empty_common[:8], "--cidr", CIDR, *import_flags,
+        "--report", str(empty_score_path),
+    ])
+    empty_queue_path = log.parent / "ci_empty_research_queue.json"
+    _command([
+        str(ROOT / "scripts" / "export_zeek_research_alerts.py"),
+        *empty_common, "--report", str(empty_score_path),
+        "--expected-report-sha256", _sha(empty_score_path.read_bytes()),
+        "--output", str(empty_queue_path),
+    ])
+    validate_ci_empty_queue_bundle(
+        json.loads(empty_queue_path.read_text(encoding="utf-8")),
+        log_sha=log_sha, model_sha=empty_model_sha, manifest_sha=manifest_sha,
+    )
+    empty_db = root / "ci_empty_queue_must_not_create_soc.sqlite3"
+    empty_triage = [
+        str(ROOT / "scripts" / "triage_zeek_new_log.py"),
+        *empty_common, *import_flags, "--report", str(empty_score_path),
+        "--record-index", "0", "--db", str(empty_db),
+        "--research-alert-bundle", str(empty_queue_path),
+        "--expected-research-alert-bundle-sha256", _sha(empty_queue_path.read_bytes()),
+        "--research-alert-ref", "0" * 64,
+        "--confirm-reviewed", "--confirm-authorized", "--confirm-new-capture",
+    ]
+    if empty_db.exists():
+        raise ValueError("No-candidate SOC database already exists")
+    _command(empty_triage, succeed=False)
+    if empty_db.exists() or db.read_bytes() != original_db:
+        raise ValueError("No-candidate research queue caused a SOC write")
+    if (
+        log.read_bytes() != original_log_bytes
+        or pcap.read_bytes() != original_pcap_bytes
+        or import_report.read_bytes() != original_import_bytes
+    ):
+        raise ValueError("No-candidate path modified original Zeek/PCAP evidence")
     return {
         "real_zeek_synthetic_pinned_queue_export_verified": True,
         "real_zeek_synthetic_queue_to_manual_unclassified_soc_verified": True,
@@ -213,6 +316,9 @@ def exercise_real_zeek_queue_handoff(
         "wrong_queue_selection_refused_before_soc_write": True,
         "wrong_queue_pin_refused_without_soc_mutation": True,
         "queue_model_threshold_forced_ci_only": True,
+        "real_zeek_synthetic_zero_candidate_queue_verified": True,
+        "zero_candidate_manual_soc_write_refused": True,
+        "zero_candidate_model_threshold_forced_ci_only": True,
         "queue_attack_ground_truth_verified": False,
         "queue_operational_alert_verified": False,
         "queue_live_capture": False,

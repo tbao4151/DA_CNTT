@@ -8,7 +8,9 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ci_real_zeek_queue_handoff import validate_ci_queue_bundle
+from ci_real_zeek_queue_handoff import (
+    validate_ci_queue_bundle, validate_ci_empty_queue_bundle,
+)
 
 
 def _bundle() -> dict[str, object]:
@@ -93,3 +95,41 @@ def test_ci_queue_refuses_missing_or_duplicate_candidate():
         bundle["research_alerts"] = rows
         with pytest.raises(ValueError, match="CI synthetic research queue"):
             _validate(bundle)
+
+
+def _empty_bundle() -> dict[str, object]:
+    bundle = _bundle()
+    bundle["research_alerts"] = []
+    bundle["research_alert_candidates_exported"] = 0
+    bundle["research_candidate_count_total"] = 0
+    return bundle
+
+
+def _validate_empty(bundle: dict[str, object]) -> None:
+    validate_ci_empty_queue_bundle(
+        bundle, log_sha="a" * 64, model_sha="b" * 64,
+        manifest_sha="c" * 64,
+    )
+
+
+def test_ci_empty_queue_accepts_no_candidates_and_no_operational_claims():
+    assert _validate_empty(_empty_bundle()) is None
+
+
+@pytest.mark.parametrize("field,value", [
+    ("research_alerts", [_bundle()["research_alerts"][0]]),
+    ("research_alert_candidates_exported", 1),
+    ("research_candidate_count_total", 1),
+    ("flow_count", True),
+    ("model_sha256", "0" * 64),
+    ("declared_partition_and_flow_identity_nonreuse_checked", False),
+    ("independent_ground_truth_verified", True),
+    ("operational_alerts_created", True),
+    ("soc_cases_created", True),
+    ("live_capture", True),
+])
+def test_ci_empty_queue_refuses_candidate_or_fabricated_claim(field, value):
+    bundle = _empty_bundle()
+    bundle[field] = value
+    with pytest.raises(ValueError, match="CI synthetic empty research queue"):
+        _validate_empty(bundle)
