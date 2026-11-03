@@ -206,7 +206,7 @@ def test_existing_soc_case_audit_chain_tampering_is_refused_read_only(
                 (case_id, last_time),
             )
     before = db.read_bytes()
-    with pytest.raises(ValueError, match="SOC audit|SOC case"):
+    with pytest.raises(ValueError, match="SOC audit|SOC case|SOC analyst note"):
         _verify(db, evidence, case_id=case_id)
     assert db.read_bytes() == before
 
