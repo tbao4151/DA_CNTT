@@ -341,3 +341,91 @@ def test_strict_paired_input_cli_private_output(tmp_path):
     assert json.loads(proc.stdout)["score_to_queue_published_report_pin_verified"] is True
     assert str(tmp_path) not in proc.stdout
     assert "192.168.56." not in proc.stdout
+
+
+# Reuse the existing synthetic-only offline import fixture; it does not run Zeek
+# or collect traffic and cannot authenticate the provenance of a PCAP.
+from test_offline_pcap_verify import imported
+
+
+def _with_optional_pcap_import(tmp_path, imported):
+    manifest, trials = make_comparable_manifest(tmp_path)
+    for trial in trials:
+        for stage in ("score", "queue"):
+            receipt_path = tmp_path / trial[f"{stage}_receipt"]
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            args = receipt["command_argv_private"]
+            args[args.index("--log") + 1] = str(imported["log"])
+            args[args.index("--expected-log-sha256") + 1] = sha(
+                imported["log"].read_bytes()
+            )
+            if stage == "score":
+                args[-1:-1] = [
+                    "--offline-import-report", str(imported["report"]),
+                    "--expected-offline-import-report-sha256", imported["pin"],
+                    "--offline-import-pcap", str(imported["pcap"]),
+                ]
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            trial[f"{stage}_sha256"] = sha(receipt_path.read_bytes())
+    manifest.write_text(json.dumps({"version": 1, "trials": trials}), encoding="utf-8")
+    return manifest, trials
+
+
+def test_strict_receipts_recheck_optional_pcap_import_bytes(tmp_path, imported):
+    manifest, _ = _with_optional_pcap_import(tmp_path, imported)
+    before = {str(p): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    verified = verify_paired_receipts(
+        manifest, sha(manifest.read_bytes()), ROOT, require_paired_inputs=True,
+    )
+    assert verified["paired_trials_verified"] == 3
+    assert verified["retained_optional_pcap_import_bytes_verified"] is True
+    assert verified["original_pcap_zeek_verified"] is False
+    assert verified["vmware_isolation_verified"] is False
+    assert str(tmp_path) not in json.dumps(verified)
+    assert before == {str(p): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("mutation", [
+    "changed_pcap", "changed_import_report", "wrong_import_pin",
+    "missing_pcap_flag", "different_pcap_path", "wrong_score_log",
+])
+def test_strict_receipts_refuse_optional_pcap_import_mismatch(
+    tmp_path, imported, mutation
+):
+    manifest, trials = _with_optional_pcap_import(tmp_path, imported)
+    if mutation == "changed_pcap":
+        imported["pcap"].write_bytes(imported["pcap"].read_bytes() + b"tamper")
+    elif mutation == "changed_import_report":
+        imported["report"].write_bytes(imported["report"].read_bytes() + b"tamper")
+    else:
+        receipt_path = tmp_path / trials[0]["score_receipt"]
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        args = receipt["command_argv_private"]
+        if mutation == "wrong_import_pin":
+            args[args.index("--expected-offline-import-report-sha256") + 1] = "0" * 64
+        elif mutation == "missing_pcap_flag":
+            idx = args.index("--offline-import-pcap")
+            del args[idx:idx + 2]
+        elif mutation == "different_pcap_path":
+            duplicate = tmp_path / "same-bytes-other-source.pcap"
+            duplicate.write_bytes(imported["pcap"].read_bytes())
+            args[args.index("--offline-import-pcap") + 1] = str(duplicate)
+        else:
+            args[args.index("--log") + 1] = str(tmp_path / "new.log")
+        receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+        trials[0]["score_sha256"] = sha(receipt_path.read_bytes())
+        manifest.write_text(json.dumps({"version": 1, "trials": trials}),
+                            encoding="utf-8")
+    with pytest.raises((ValueError, OSError)):
+        verify_paired_receipts(
+            manifest, sha(manifest.read_bytes()), ROOT, require_paired_inputs=True,
+        )
+
+
+def test_strict_receipts_without_optional_pcap_do_not_claim_pcap_verified(tmp_path):
+    manifest, _ = make_comparable_manifest(tmp_path)
+    verified = verify_paired_receipts(
+        manifest, sha(manifest.read_bytes()), ROOT, require_paired_inputs=True,
+    )
+    assert "retained_optional_pcap_import_bytes_verified" not in verified
+    assert verified["original_pcap_zeek_verified"] is False

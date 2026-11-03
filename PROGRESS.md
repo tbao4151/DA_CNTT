@@ -1,3 +1,9 @@
+## 2026-11-03: Strict paired receipts recheck optional PCAP import bytes (feature CI pending)
+
+- Rechecked main `2edfe22dc3eb2421fc1207563b17cf2e8b69b21f`: PR #367 merged; exact feature-head Ubuntu #41565486579 and Windows #41565486414 SUCCESS; main post-merge quality #41567474375 SUCCESS. No PR open before feature branch.
+- Identified a gap: `--require-paired-inputs` previously compared optional PCAP-import argument strings but did not rehash original PCAP/import-report bytes. Strict verification now invokes the existing read-only import verifier for optional score-side provenance inputs, validates original PCAP/Zeek/report consistency and CIDR scope, checks import-log digest against the score log pin, and rejects changed/repinned/missing optional evidence. Synthetic regression covers valid and tampered imports; legacy default unchanged.
+- Exact feature-head CI and student Windows/VMware execution remain unverified at authoring. This does NOT authenticate the capture source, permission, Host-only isolation, independent hashes, attack labels, packet-to-alert latency or operational alerts. G1–G8 remain PENDING_STUDENT_EVIDENCE; Dataset benchmark and Red execution unchanged.
+
 ## 2026-11-03: Optional pinned Blue input consistency and score-to-queue binding (feature CI pending)
 
 - Rechecked main `54345dcfc09aa230d8c6b0338110f924dfffc4f2`: PR #366 merged, exact feature-head Ubuntu #41558434431 and Windows #41558434511 SUCCESS, post-merge main #41561429557 SUCCESS; no open PR before branch creation.
