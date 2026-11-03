@@ -13,6 +13,7 @@ from decimal import Decimal
 from pathlib import Path
 import re
 
+from .offline_pcap_verify import verify_offline_pcap_import
 from .offline_runtime_summary import (
     MAX_STDOUT_BYTES, _check_pin, _read_regular, _unique_pairs,
     parse_timing_stdout, _stats,
@@ -243,9 +244,33 @@ def _paired_command_inputs(command: list[str], stage: str, root: Path,
         if ("--require-pcap-zeek-timestamp-corroboration" in options
                 and not all(v is not None for v in optional)):
             raise ValueError("Timestamp gate without PCAP import")
+        # The original scoring CLI can optionally consume a pinned offline
+        # PCAP import. Strict receipt verification must recheck those retained
+        # bytes, not merely compare operator-controlled argument strings.
+        verified_import = None
+        if all(v is not None for v in optional):
+            verified_import = verify_offline_pcap_import(
+                Path(optional[0]),
+                expected_report_sha256=optional[1],
+                pcap_path=Path(optional[2]),
+                log_path=Path(options["--log"]),
+                lab_cidrs=cidrs,
+            )
+            if verified_import["zeek_conn_sha256"] != _check_pin(
+                options["--expected-log-sha256"]
+            ):
+                raise ValueError("Offline import log differs from paired score input")
+        optional_identity = (
+            (str(Path(optional[0]).resolve(strict=True)),
+             verified_import["report_sha256"],
+             str(Path(optional[2]).resolve(strict=True)),
+             verified_import["pcap_sha256"])
+            if verified_import is not None else (None, None, None, None)
+        )
         return {"common": tuple(common), "output": output,
-                "optional": optional + (
-                    options.get("--require-pcap-zeek-timestamp-corroboration"),)}
+                "optional": optional_identity + (
+                    options.get("--require-pcap-zeek-timestamp-corroboration"),),
+                "pcap_import_checked": verified_import is not None}
     report = Path(options["--report"])
     if not report.is_absolute() or report.is_symlink():
         raise ValueError("Queue report path must be absolute and not a symlink")
@@ -285,6 +310,7 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
     digest_cache: dict[Path, str] = {}
     reference_inputs = None
     reference_optional = None
+    optional_pcap_import_checked = False
     durations = {stage: {key: [] for key in ("total", "compute", "serialization", "publication")}
                  for stage in ("score", "queue")} if include_runtime_summary else None
     for trial in manifest["trials"]:
@@ -321,6 +347,7 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
             if reference_inputs is None:
                 reference_inputs = score["common"]
                 reference_optional = score["optional"]
+                optional_pcap_import_checked = score["pcap_import_checked"]
             elif (score["common"] != reference_inputs
                   or score["optional"] != reference_optional):
                 raise ValueError("Paired trials do not use the same pinned inputs")
@@ -344,6 +371,8 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
             "cross_trial_pinned_source_inputs_consistent": True,
             "cross_trial_input_equivalence_verified": False,
         })
+        if optional_pcap_import_checked:
+            result["retained_optional_pcap_import_bytes_verified"] = True
     if durations is not None:
         result.update({
             "trials_count": len(manifest["trials"]),
