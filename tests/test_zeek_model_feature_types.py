@@ -49,6 +49,24 @@ def test_forged_feature_types_refused_by_both_training_and_scoring(field, value)
         validate_zeek_model_features(tampered.features["test"][0])
 
 
+@pytest.mark.parametrize("invalid_proto", [None, "", "x" * 33])
+def test_protocol_presence_and_length_match_zeek_extraction_at_fit_and_score(invalid_proto):
+    # Direct API callers can forge feature rows without using the Zeek parser.
+    # Reject those rows at both boundaries instead of treating them as categories.
+    dataset = _dataset()
+    artifact = build_zeek_research_artifact(
+        dataset, input_manifest_sha256="a" * 64,
+    )
+    tampered = copy.deepcopy(dataset)
+    tampered.features["test"][0]["proto"] = invalid_proto
+    with pytest.raises(ValueError, match="Invalid categorical Zeek proto"):
+        evaluate_offline_zeek_baseline(tampered)
+    with pytest.raises(ValueError, match="Invalid categorical Zeek proto"):
+        score_zeek_research_rows(artifact, tampered.features["test"])
+    with pytest.raises(ValueError, match="Invalid categorical Zeek proto"):
+        validate_zeek_model_features(tampered.features["test"][0])
+
+
 def test_training_partition_forged_count_refused_before_model_export():
     dataset = _dataset()
     dataset.features["train"][0]["orig_pkts"] = 2.5

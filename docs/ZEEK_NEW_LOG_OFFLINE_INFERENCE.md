@@ -14,6 +14,15 @@ The CLI checks byte integrity and declared RFC1918 scope, but it **cannot**
 prove physical isolation, model authorship, genuine ground truth or that the
 capture was not previously used as the held-out TEST set.
 
+The Zeek v1 model-feature boundary now enforces the same **required protocol**
+contract as the Zeek event extractor: `proto` must be a nonempty string of at
+most 32 characters. Optional `service` may remain missing (`null`) or empty;
+missing optional numeric measurements remain missing rather than being set to
+zero. Direct callers supplying forged feature rows cannot silently impute a
+missing protocol during training or scoring. This is schema consistency, not
+an attack-detection improvement or validation of operator-provided captures.
+Regression: `py -3.12 -m pytest -q tests/test_zeek_model_feature_types.py`.
+
 On Windows, verify the new log digest independently (record the exact digest
 and capture session in the private experiment notebook):
 

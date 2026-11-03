@@ -1,3 +1,9 @@
+## 2026-11-03: Zeek v1 required-protocol model-boundary parity (feature CI pending)
+
+- [ ] Require exact final feature-head Ubuntu Python 3.12.9 quality and Windows offline CI SUCCESS, clean mergeability and no competing PR before merge.
+- [ ] Synthetic regression: reject `proto=null`, empty and >32 characters consistently at direct training/evaluation and JSON-model scoring boundaries; preserve valid Zeek protocol values, missing optional service, existing CLI/JSON and UNSW-NB15 behavior.
+- [ ] Student Windows: after merge run `py -3.12 -m pytest -q tests/test_zeek_model_feature_types.py tests/test_zeek_features.py`; independently complete G1–G8 with authorized VMware Host-only capture, Zeek, independent labels and held-out evaluation. Passing schema checks is not evidence of real attack detection.
+
 ## 2026-11-03: Private VMware session-index evidence-role separation (feature CI pending)
 
 - [ ] Confirm exact feature-head Ubuntu Python 3.12.9 and Windows offline CI SUCCESS, clean mergeability and no competing PR before merge.
