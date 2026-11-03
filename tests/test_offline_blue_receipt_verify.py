@@ -106,6 +106,37 @@ def test_successful_paired_receipts_are_read_only_and_privacy_safe(tmp_path):
     assert before == {p.name: p.read_bytes() for p in tmp_path.iterdir()}
 
 
+@pytest.mark.parametrize(("target_trial", "target_stage", "source_trial", "source_stage"), [
+    (1, "score", 0, "score"),  # same stage, different trials
+    (0, "queue", 0, "score"),  # score and queue share one output
+    (2, "queue", 1, "queue"),  # later queue trial reuses an earlier queue
+])
+def test_refuses_reused_published_json_output_path(
+    tmp_path, target_trial, target_stage, source_trial, source_stage
+):
+    manifest, trials = make_manifest(tmp_path)
+    source_output = tmp_path / (
+        f"trial-{source_trial:03d}-{source_stage}-output.json"
+    )
+    target_entry = trials[target_trial]
+    receipt_path = tmp_path / target_entry[f"{target_stage}_receipt"]
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    argv = receipt["command_argv_private"]
+    argv[argv.index("--output") + 1] = str(source_output)
+    # Repin the forged receipt and manifest: hash consistency alone must
+    # not permit two distinct trial/stage IDs to share retained JSON.
+    receipt["output_sha256"] = sha(source_output.read_bytes())
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    target_entry[f"{target_stage}_sha256"] = sha(receipt_path.read_bytes())
+    manifest.write_text(
+        json.dumps({"version": 1, "trials": trials}), encoding="utf-8"
+    )
+    before = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
+    with pytest.raises(ValueError, match="reuse a published JSON output path"):
+        verify_paired_receipts(manifest, sha(manifest.read_bytes()), ROOT)
+    assert before == {p.name: p.read_bytes() for p in tmp_path.iterdir()}
+
+
 @pytest.mark.parametrize("mutation", [
     "bad_manifest_pin", "tampered_stdout", "tampered_output", "tampered_receipt",
     "failed_exit", "nonempty_stderr", "wrong_script", "wrong_stage",

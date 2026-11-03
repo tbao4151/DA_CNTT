@@ -1,3 +1,9 @@
+## 2026-11-03: Refuse reused published JSON paths across Blue receipt stages (feature CI pending)
+
+- Checked `main` at `1ddde1d4b6e59c4cc6a2eca53eb12b922a318daf`: PR #368 merged; exact-head Ubuntu [#41571162296](https://github.com/tbao4151/DA_CNTT/actions/runs/41571162296), Windows [#41571162246](https://github.com/tbao4151/DA_CNTT/actions/runs/41571162246), and post-merge main [#41573405457](https://github.com/tbao4151/DA_CNTT/actions/runs/41573405457) SUCCESS; no open PR before feature branch.
+- Found that receipt hashes and distinct trial IDs alone did not reject reuse of one retained published JSON path across score/queue stages or trials. The read-only verifier now rejects resolved output path reuse even if receipts and manifest are repinned. Three synthetic negative cases cover score-score, score-queue and queue-queue aliasing. Successful output JSON contract, model, Dataset benchmark, SOC storage and Red execution unchanged.
+- At authoring, new feature-head Ubuntu/Windows CI and student Windows/VMware execution are **not verified**. Distinct output files do not prove independent runs, process authenticity, Host-only isolation, attack labels, detection latency or a real SOC case. G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Strict paired receipts recheck optional PCAP import bytes (feature CI pending)
 
 - Rechecked main `2edfe22dc3eb2421fc1207563b17cf2e8b69b21f`: PR #367 merged; exact feature-head Ubuntu #41565486579 and Windows #41565486414 SUCCESS; main post-merge quality #41567474375 SUCCESS. No PR open before feature branch.
