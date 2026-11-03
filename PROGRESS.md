@@ -1,3 +1,9 @@
+## 2026-11-03: Zeek extraction-to-model numeric limit parity (feature CI pending)
+
+- Verified main `c18820abed2f574af391f42964df971a1fd11d36`: PR #377 merged; its final-head Ubuntu #41633794296, Windows #41633794366 and Real Zeek #41633794376 CI all SUCCESS. No open PR before creating this feature branch.
+- The event extractor previously accepted positive durations/byte/packet counts >1e12 that direct training and JSON scoring refused. Apply the existing model-feature validator at projection, preserving v1 feature order, missing optional values, valid 1e12 boundary and original event immutability. Add synthetic negative and boundary tests; document the guard.
+- Exact final feature-head CI is PENDING at authoring. No Windows/VMware student run, independently labeled attack, live alert, model accuracy or latency evidence; G1–G8 remain PENDING_STUDENT_EVIDENCE. No UNSW benchmark, model, SQLite or Red execution change.
+
 ## 2026-11-03: Reject literal Zeek missing-category collision (feature CI pending)
 
 - Verified `main` at `6a1abb705ca4afbc83b1705e1c8ceb9b4eae12d9`: [PR #376](https://github.com/tbao4151/DA_CNTT/pull/376) merged; exact final-head Ubuntu [#41625161625](https://github.com/tbao4151/DA_CNTT/actions/runs/41625161625), Windows [#41625161707](https://github.com/tbao4151/DA_CNTT/actions/runs/41625161707), Real Zeek [#41625161602](https://github.com/tbao4151/DA_CNTT/actions/runs/41625161602), and post-merge main [#41628725693](https://github.com/tbao4151/DA_CNTT/actions/runs/41628725693) all SUCCESS. No open PR before this feature branch.

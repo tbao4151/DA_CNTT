@@ -1,3 +1,9 @@
+## 2026-11-03: Zeek extraction/model numeric limit parity acceptance (feature CI pending)
+
+- [ ] Require Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS on exact final feature head; verify clean mergeability and no competing PR before merge.
+- [ ] Synthetic regression must reject extracted Zeek durations, byte and packet counts above 1e12, while accepting exactly 1e12, preserving missing optionals, schema and source immutability. Keep direct training/scoring parity.
+- [ ] Student Windows: after merge run `py -3.12 -m pytest -q tests/test_zeek_features.py tests/test_zeek_model_feature_types.py`; separately collect authorized VMware Host-only original PCAP/Zeek evidence and independently labeled held-out evaluation. This contract guard does not establish detection, capture authenticity or isolation.
+
 ## 2026-11-03: Zeek categorical missing-token collision acceptance (feature CI pending)
 
 - [ ] Require Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS on the exact final feature head, no competing PR and clean mergeability before merge.
