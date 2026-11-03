@@ -1,3 +1,9 @@
+## 2026-11-04: G1–G3 evidence handoff acceptance (documentation-only; feature CI pending)
+
+- [ ] Review `docs/G1_G3_PRIVATE_EVIDENCE_HANDOFF.md` against existing VMware/Zeek runbooks; keep filled evidence and hashes outside Git.
+- [ ] Student/reviewer independently establish G1 authorization and isolation before capture, G2 original bounded benign PCAP with SHA-256, G3 original Zeek derivation and scope/custody review. No synthetic CI may mark these gates PASS.
+- [ ] Confirm feature CI and merge state before merging; this change adds no runtime capability and does not satisfy G4–G8.
+
 ## 2026-11-04: Zeek header ordering regression (feature CI pending)
 
 - [ ] Confirm exact-head Ubuntu, Windows and applicable Real Zeek CI SUCCESS and conflict-free merge before merging.

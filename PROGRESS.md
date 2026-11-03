@@ -1,3 +1,8 @@
+## 2026-11-04: G1–G3 private evidence handoff (documentation-only; feature CI pending)
+
+- Rechecked `main` at `6ac6fd773eb7c76b3c4103b6889026d9657d1b56`; GitHub PR search returned no open PR at branch creation. Added `docs/G1_G3_PRIVATE_EVIDENCE_HANDOFF.md` as an operator-facing G1–G3 acceptance and provenance checklist linked to existing runbooks.
+- No capture, network activity, local Windows run, AI inference, benchmark, SOC DB, Red Team execution or G1–G8 completion is claimed. All student evidence remains pending. Feature CI not yet verified.
+
 ## 2026-11-04: Reject late Zeek fields declaration after types (feature CI pending)
 
 - Rechecked main at b39bc54c6227084ba50efa910ab07b48d62943d3 after PR #382 merge; post-merge main quality #41691495668 SUCCESS; no open PR at feature start.
