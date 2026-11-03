@@ -1,3 +1,9 @@
+## 2026-11-03: Reject forged huge integer Zeek durations before float coercion (feature CI pending)
+
+- Verified `main` at `7b4be367b6d773640b638393ed564d5c6765a835`: PR #380 merged, exact-head Ubuntu #41661783461, Windows #41661783438, Real Zeek #41661783799 and post-merge main #41666008130 all SUCCESS; no competing open PR at feature start.
+- `math.isfinite(10**400)` raises `OverflowError` due to implicit integer-to-float conversion. Directly constructed Zeek v1 duration fields could trigger that exception at both extraction and model fit/scoring boundaries rather than the documented fail-closed `ValueError`. Compare duration to the existing 1e12 ceiling before finite checking, preserving schema, optional missingness, and the exact 1e12 boundary. Add synthetic regression at projection and training/scoring boundaries; Windows offline workflow already runs both targeted test files.
+- Feature-head CI is **PENDING** at authoring. No student Windows/VMware execution, real isolation, original capture, independently labeled attack, live alert, latency or model accuracy is claimed. G1–G8 remain PENDING_STUDENT_EVIDENCE. No UNSW benchmark, trained model, SQLite, private evidence or Red execution changed.
+
 ## 2026-11-03: Reject overlapping Zeek Host-only CIDR declarations (feature CI pending)
 
 - Verified `main` at `2e2f3969596f2d0988ddb45999d9eab5d8c47c39`: PR #379 merged; exact feature-head Ubuntu #41656062948, Windows #41656062983 and Real Zeek #41656062924 SUCCESS, post-merge main #41658551030 SUCCESS. No open PR before creating `feature/reject-overlapping-zeek-lab-cidrs-20261103`.
