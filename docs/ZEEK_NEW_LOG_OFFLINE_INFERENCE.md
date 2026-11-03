@@ -48,6 +48,13 @@ missing protocol during training or scoring. This is schema consistency, not
 an attack-detection improvement or validation of operator-provided captures.
 Regression: `py -3.12 -m pytest -q tests/test_zeek_model_feature_types.py`.
 
+The data-only Zeek research JSON model validator also rejects forged
+out-of-range Python/JSON integers (for example `10**400`) in thresholds,
+intercepts, categorical adjustments and numeric parameters with a controlled
+`ValueError` instead of `OverflowError`. This is offline model-input hardening,
+not a new model, better detection accuracy or evidence of real lab capture.
+Synthetic regression: `py -3.12 -m pytest -q tests/test_zeek_model_artifact.py`.
+
 On Windows, verify the new log digest independently (record the exact digest
 and capture session in the private experiment notebook):
 
