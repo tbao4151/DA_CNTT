@@ -9,16 +9,18 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+from datetime import datetime, timedelta
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from siem_ai.core import NON_FEATURE_FIELDS, flow_id
+from siem_ai.core import CASE_STATES, NON_FEATURE_FIELDS, flow_id
 
 from .new_log_inference import score_new_zeek_log
 from .new_log_review import review_pinned_new_log_report
 from .zeek import parse_zeek_conn_log
 
 MAX_VISIBLE_FLOWS = 500
+MAX_AUDIT_EVENTS = 1000
 
 
 def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -120,6 +122,49 @@ def _verify_creation_note(
             and queue_digest == expected_research_bundle_sha256)
 
 
+
+def _utc_audit_time(value: object) -> datetime:
+    """Only accept the UTC ISO timestamps written by the local SOC store."""
+    if not isinstance(value, str) or not value.endswith("+00:00"):
+        raise ValueError("SOC audit timestamp must be UTC")
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError("Malformed SOC audit timestamp") from exc
+    if parsed.utcoffset() != timedelta(0):
+        raise ValueError("SOC audit timestamp must be UTC")
+    return parsed
+
+
+def _verify_soc_audit_chain(
+    case_state: object, created_at: object, updated_at: object,
+    events: list[tuple[object, object, object, object]],
+) -> None:
+    """Check recorded SOC transitions, not merely the first creation note.
+
+    This is a local consistency check, not an authenticated audit ledger.
+    """
+    if not events or len(events) > MAX_AUDIT_EVENTS or case_state not in CASE_STATES:
+        raise ValueError("Invalid SOC audit history or case state")
+    created = _utc_audit_time(created_at)
+    updated = _utc_audit_time(updated_at)
+    previous_state = None
+    previous_time = None
+    for index, (old_state, new_state, note, timestamp) in enumerate(events):
+        clock = _utc_audit_time(timestamp)
+        if (new_state not in CASE_STATES
+                or not isinstance(note, str) or not note.strip()
+                or (index == 0 and (old_state is not None or new_state != "New"))
+                or (index > 0 and old_state != previous_state)
+                or (previous_time is not None and clock < previous_time)):
+            raise ValueError("Broken SOC audit transition chain")
+        if index == 0 and clock != created:
+            raise ValueError("SOC case creation time differs from initial audit")
+        previous_state, previous_time = new_state, clock
+    if case_state != previous_state or updated != previous_time or updated < created:
+        raise ValueError("SOC case state or update time differs from audit history")
+
+
 def verify_new_log_soc_case_link(
     db_path: str | Path, *,
     source_data: bytes,
@@ -178,18 +223,21 @@ def verify_new_log_soc_case_link(
         with sqlite3.connect(uri, uri=True) as conn:
             conn.execute("PRAGMA query_only=ON")
             case = conn.execute(
-                "SELECT flow_id, verdict, confidence, evidence_json "
+                "SELECT flow_id, verdict, confidence, evidence_json, "
+                "state, created_at, updated_at "
                 "FROM cases WHERE case_id=?", (case_id,),
             ).fetchone()
-            initial = conn.execute(
-                "SELECT old_state, new_state, note FROM case_events "
-                "WHERE case_id=? ORDER BY event_id LIMIT 1", (case_id,),
-            ).fetchone()
+            events = conn.execute(
+                "SELECT old_state, new_state, note, created_at "
+                "FROM case_events WHERE case_id=? ORDER BY event_id LIMIT ?",
+                (case_id, MAX_AUDIT_EVENTS + 1),
+            ).fetchall()
     except sqlite3.Error as exc:
         raise ValueError("Unable to read existing SOC case evidence") from exc
-    if case is None or initial is None:
+    if case is None or not events:
         raise ValueError("SOC case or initial audit event not found")
-    stored_flow_id, verdict, confidence, evidence_json = case
+    stored_flow_id, verdict, confidence, evidence_json, state, created_at, updated_at = case
+    _verify_soc_audit_chain(state, created_at, updated_at, events)
     if stored_flow_id != flow_id(event) or verdict != "Unclassified" or confidence is not None:
         raise ValueError("SOC case identity or unclassified verdict mismatch")
     try:
@@ -206,7 +254,7 @@ def verify_new_log_soc_case_link(
     if stored_evidence != expected_evidence:
         raise ValueError("SOC evidence snapshot differs from original Zeek flow")
 
-    old_state, new_state, initial_note = initial
+    old_state, new_state, initial_note, _ = events[0]
     if old_state is not None or new_state != "New":
         raise ValueError("Initial SOC audit state does not match case creation")
     note_prefix = (
@@ -239,6 +287,8 @@ def verify_new_log_soc_case_link(
         "report_sha256": review["report_sha256"],
         "stored_flow_snapshot_matches_original": True,
         "initial_audit_matches_recomputed_inference": True,
+        "soc_audit_history_consistent": True,
+        "soc_audit_event_count": len(events),
         "pinned_research_queue_creation_audit_verified": queue_creation_audit_verified,
         "sqlite_read_only": True,
         "independent_labels_verified": False,

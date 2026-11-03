@@ -1,3 +1,9 @@
+## 2026-11-03: Read-only SOC case audit transition-chain consistency (feature CI pending)
+
+- Rechecked main `8b7d40b73fc0c1cb189201499b2d791aedc1586d`: PR #369 merged; exact-head Ubuntu #41577016627 and Windows #41577016666 SUCCESS; post-merge main #41579633467 SUCCESS. No PR open at branch creation.
+- Strengthened the existing read-only NEW-log SOC evidence-link check to validate the full bounded SQLite transition chain, creation/update UTC timestamps and final case state rather than only the initial audit note. Added synthetic tests for legitimate analyst updates and eight kinds of tampering; no SOC writes, traffic, model retraining or Dataset benchmark changes.
+- Feature-head Ubuntu/Windows CI **not yet verified at authoring**. Student Windows/VMware evidence, independent labels, real PCAP/Zeek provenance, attack truth and event-to-case latency remain unverified; G1–G8 PENDING_STUDENT_EVIDENCE. SQLite remains locally mutable, not a signed forensic ledger.
+
 ## 2026-11-03: Refuse reused published JSON paths across Blue receipt stages (feature CI pending)
 
 - Checked `main` at `1ddde1d4b6e59c4cc6a2eca53eb12b922a318daf`: PR #368 merged; exact-head Ubuntu [#41571162296](https://github.com/tbao4151/DA_CNTT/actions/runs/41571162296), Windows [#41571162246](https://github.com/tbao4151/DA_CNTT/actions/runs/41571162246), and post-merge main [#41573405457](https://github.com/tbao4151/DA_CNTT/actions/runs/41573405457) SUCCESS; no open PR before feature branch.

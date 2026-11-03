@@ -1,3 +1,9 @@
+## 2026-11-03: SOC audit transition-chain verification acceptance (feature CI pending)
+
+- [ ] Require exact final-head Ubuntu quality and Windows Python 3.12.9 offline CI SUCCESS, clean mergeability and no competing PR before merge.
+- [ ] Synthetic read-only regression accepts an unchanged Unclassified case and legitimate analyst state updates; refuses mismatched case state, changed created/updated timestamps, broken old_state/new_state transitions, backwards/non-UTC event timestamps and injected second creation event. Preserve original pinned NEW-log inference/queue checks and legacy CLI.
+- [ ] On student Windows, run `py -3.12 -m pytest -q tests/test_zeek_soc_evidence_link.py tests/test_zeek_research_queue_soc_e2e.py` and verify an operator-created private SOC case. This checks local SQLite consistency only, not signed provenance, original capture, Host-only isolation, independent labels or live event-to-case latency. G1–G8 remain pending.
+
 ## 2026-11-03: Distinct retained Blue output-path acceptance (feature CI pending)
 
 - [ ] Confirm exact final-head Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS, no competing PR and clean mergeability before merge.
