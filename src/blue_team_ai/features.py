@@ -134,7 +134,12 @@ def extract_zeek_features(event: Mapping[str, object]) -> dict[str, object]:
             isinstance(value, bool) or not isinstance(value, int) or value < 0
         ):
             raise ValueError(f"Invalid Zeek {name}")
-    return {name: event[name] for name in LAB_FEATURE_COLUMNS}
+    row = {name: event[name] for name in LAB_FEATURE_COLUMNS}
+    # Apply the same numeric upper bounds at extraction and model boundaries.
+    # Parsing may preserve large nonnegative Zeek values; projection must not
+    # accept measurements that the training/scoring gate later rejects.
+    validate_zeek_model_features(row)
+    return row
 
 
 def extract_zeek_feature_rows(
