@@ -123,6 +123,17 @@ def test_projection_rejects_numeric_values_above_model_limit(field):
         extract_zeek_feature_rows([event])
 
 
+def test_projection_rejects_huge_integer_duration_without_overflow():
+    # A forged event may bypass the Zeek parser's float duration contract.
+    # Reject before math.isfinite would coerce this integer to float.
+    event = sample_events()[0]
+    event["duration_s"] = 10**400
+    with pytest.raises(ValueError, match="Invalid numeric Zeek duration_s"):
+        extract_zeek_features(event)
+    with pytest.raises(ValueError, match="Invalid numeric Zeek duration_s"):
+        extract_zeek_feature_rows([event])
+
+
 def test_projection_accepts_model_numeric_upper_bound_without_mutating_event():
     event = sample_events()[0]
     event["orig_bytes"] = 1_000_000_000_000
