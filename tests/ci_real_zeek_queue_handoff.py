@@ -78,10 +78,16 @@ def exercise_real_zeek_queue_handoff(
     manifest, model_path, _unused_fixture_log, _unused_output = _setup(
         root / "ci_queue_declared_synthetic_partitions"
     )
-    # Threshold is deliberately forced for the benign fixture. This is NOT a
-    # validation-selected operating point or evidence of a detected attack.
+    # Neutralize every coefficient to guarantee 0.5 on the benign fixture.
+    # The threshold is CI-only, NOT a validation-selected operating point.
     model = json.loads(model_path.read_text(encoding="utf-8"))
-    model["selected_threshold"] = 0.000001
+    model["intercept"] = 0.0
+    model["selected_threshold"] = 0.49
+    for entries in model["categorical_adjustments"].values():
+        for key in entries:
+            entries[key] = 0.0
+    for params in model["numeric_parameters"].values():
+        params["weight"] = 0.0
     model_path.write_text(json.dumps(model, allow_nan=False), encoding="utf-8")
 
     model_sha = _sha(model_path.read_bytes())
