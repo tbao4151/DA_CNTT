@@ -10,6 +10,7 @@ import argparse
 import copy
 import hashlib
 import json
+import sqlite3
 import struct
 import subprocess
 import sys
@@ -17,6 +18,7 @@ from pathlib import Path
 
 from blue_team_ai.model_artifact import build_zeek_research_artifact, validate_zeek_research_artifact
 from blue_team_ai.pcap_zeek_tuple import corroborate_pcap_zeek_tuples
+from blue_team_ai.soc_evidence_link import verify_new_log_soc_case_link
 from blue_team_ai.zeek_smoke import verify_fixture_feature_projection
 from siem_ai.case_report import export_case_report
 from siem_ai.core import list_cases
@@ -332,6 +334,58 @@ def run(root: Path) -> dict[str, object]:
     if len(list_cases(db)) != 1:
         raise ValueError("Repeated manual review must reuse the same case")
 
+    # Close the synthetic PCAP -> actual Zeek -> pinned scoring -> manual SOC
+    # integration loop with the production READ-ONLY case-link verifier.
+    # This is a software-only check, not independent capture provenance.
+    link_inputs = {
+        "source_data": log.read_bytes(),
+        "model": neutral,
+        "report_data": manual_prediction.read_bytes(),
+        "expected_log_sha256": log_sha,
+        "model_sha256": manual_model_sha,
+        "lab_cidrs": [CIDR],
+        "record_index": 0,
+        "case_id": case_id,
+        "expected_import_report_sha256": import_sha,
+        "expected_pcap_sha256": _sha(pcap.read_bytes()),
+    }
+    before_link = db.read_bytes()
+    link = verify_new_log_soc_case_link(db, **link_inputs)
+    if (
+        link.get("stored_flow_snapshot_matches_original") is not True
+        or link.get("initial_audit_matches_recomputed_inference") is not True
+        or link.get("soc_audit_history_consistent") is not True
+        or link.get("sqlite_read_only") is not True
+        or link.get("operational_alert_verified") is not False
+        or link.get("detection_latency_measured") is not False
+        or link.get("pinned_research_queue_creation_audit_verified") is not False
+        or link.get("soc_audit_event_count") != 1
+    ):
+        raise ValueError("Synthetic real-Zeek SOC evidence-link contract failed")
+    if db.read_bytes() != before_link:
+        raise ValueError("Read-only SOC link verification changed the original database")
+
+    # Mutate a disposable COPY, never the case that passed the verifier.
+    # The audit trail stays unchanged: a forged current analyst conclusion
+    # must be refused even when all source/model/report hashes still match.
+    altered_db = root / "ci_altered_soc_note_expected_rejection.sqlite3"
+    with altered_db.open("xb") as stream:
+        stream.write(before_link)
+    with sqlite3.connect(altered_db) as conn:
+        conn.execute(
+            "UPDATE cases SET analyst_note=analyst_note || ' CI altered' WHERE case_id=?",
+            (case_id,),
+        )
+    altered_before = altered_db.read_bytes()
+    try:
+        verify_new_log_soc_case_link(altered_db, **link_inputs)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("Forged synthetic SOC analyst note passed read-only verification")
+    if altered_db.read_bytes() != altered_before or db.read_bytes() != before_link:
+        raise ValueError("Negative SOC link verification changed retained evidence")
+
     # A modified PCAP must fail before creating a case in a fresh database.
     # Keep original PCAP, log, predictions and importer report untouched.
     tampered_pcap = root / "ci_modified_pcap_expected_rejection.pcap"
@@ -370,6 +424,8 @@ def run(root: Path) -> dict[str, object]:
         "synthetic_manual_soc_case_created": True,
         "synthetic_manual_case_unclassified_verified": True,
         "synthetic_manual_case_idempotency_verified": True,
+        "synthetic_manual_soc_evidence_link_readonly_verified": True,
+        "synthetic_manual_soc_altered_note_refused": True,
         "tampered_pcap_soc_write_rejected": True,
         "missing_analyst_confirmation_rejected": True,
         "pins_independently_preregistered": False,

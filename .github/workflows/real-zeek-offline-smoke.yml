@@ -20,6 +20,8 @@ on:
       - "tests/test_zeek_lab_cli.py"
       - "tests/test_zeek_real_smoke.py"
       - "tests/ci_real_zeek_scoring.py"
+      - "src/blue_team_ai/soc_evidence_link.py"
+      - "tests/test_zeek_soc_evidence_link.py"
       - "tests/ci_real_zeek_production_timestamp.py"
       - "tests/test_ci_real_zeek_production_timestamp.py"
       - "tests/test_ci_real_zeek_scoring.py"
