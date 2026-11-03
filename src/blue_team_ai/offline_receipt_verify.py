@@ -15,7 +15,7 @@ import re
 
 from .offline_runtime_summary import (
     MAX_STDOUT_BYTES, _check_pin, _read_regular, _unique_pairs,
-    parse_timing_stdout,
+    parse_timing_stdout, _stats,
 )
 
 MAX_MANIFEST_BYTES = 64 * 1024
@@ -91,7 +91,7 @@ def _validate_recorded_clock(receipt: dict) -> Decimal:
     return Decimal(str(elapsed))
 
 def _verify_stage(folder: Path, trial_id: str, stage: str,
-                  receipt_name: str, receipt_pin: str, root: Path) -> None:
+                  receipt_name: str, receipt_pin: str, root: Path) -> dict[str, Decimal]:
     expected_name = f"trial-{trial_id}-{stage}.receipt.json"
     if receipt_name != expected_name:
         raise ValueError("Receipt filename does not match stage and trial")
@@ -153,15 +153,19 @@ def _verify_stage(folder: Path, trial_id: str, stage: str,
             or _SHA.fullmatch(receipt["output_sha256"]) is None
             or _digest(_read_regular(output, MAX_OUTPUT_BYTES)) != receipt["output_sha256"]):
         raise ValueError("Published JSON hash mismatch")
+    return measured
 
 
 def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
-                           repo_root: Path) -> dict:
+                           repo_root: Path, *,
+                           include_runtime_summary: bool = False) -> dict:
     """Verify 3-50 paired receipts and their retained original output files.
 
     The SHA-256 of the manifest must be obtained independently. Results
     deliberately exclude paths, timestamps, private command arguments and IPs.
     """
+    if type(include_runtime_summary) is not bool:
+        raise ValueError("Invalid runtime summary option")
     _check_pin(expected_sha256)
     if manifest_path.is_symlink():
         raise ValueError("Manifest symlink refused")
@@ -179,6 +183,8 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
             or not 3 <= len(manifest["trials"]) <= 50):
         raise ValueError("Require version-1 manifest with 3-50 paired trials")
     seen_ids: set[str] = set()
+    durations = {stage: {key: [] for key in ("total", "compute", "serialization", "publication")}
+                 for stage in ("score", "queue")} if include_runtime_summary else None
     for trial in manifest["trials"]:
         if (not isinstance(trial, dict)
                 or set(trial) != {"trial_id", "score_receipt", "score_sha256",
@@ -191,9 +197,12 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
             raise ValueError("Invalid or reused trial ID")
         seen_ids.add(trial_id.casefold())
         for stage in ("score", "queue"):
-            _verify_stage(source.parent, trial_id, stage,
-                          trial[f"{stage}_receipt"], trial[f"{stage}_sha256"], root)
-    return {
+            measured = _verify_stage(source.parent, trial_id, stage,
+                                     trial[f"{stage}_receipt"], trial[f"{stage}_sha256"], root)
+            if durations is not None:
+                for field, value in measured.items():
+                    durations[stage][field].append(value)
+    result = {
         "mode": "offline_blue_receipt_integrity_review_only",
         "paired_trials_verified": len(manifest["trials"]),
         "recorded_exit_codes_zero_and_stream_hashes_verified": True,
@@ -206,3 +215,17 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
         "packet_event_to_alert_latency_measured": False,
         "soc_cases_created": False,
     }
+    if durations is not None:
+        result.update({
+            "trials_count": len(manifest["trials"]),
+            "duration_unit": "milliseconds",
+            "p95_definition": "nearest_rank",
+            "stage_statistics_ms": {
+                stage: {field: _stats(values) for field, values in fields.items()}
+                for stage, fields in durations.items()
+            },
+            "runtime_summary_source": "verified_paired_subprocess_receipts",
+            "end_to_end_pipeline_wall_clock_measured": False,
+            "operational_alerts_created": False,
+        })
+    return result

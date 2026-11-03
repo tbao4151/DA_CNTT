@@ -1,3 +1,9 @@
+## 2026-11-03: Optional receipt-verified Blue offline runtime statistics (feature CI pending)
+
+- Rechecked `main` at `76ab9b65df5e7c1596769d48358138c68cf0e58e`: PR #365 merged, its exact final-head Ubuntu #41551273015 and Windows #41551273035 workflows SUCCESS; no open PR at branch creation. Main post-merge CI not independently verified.
+- Extended the existing read-only paired receipt verifier with an opt-in descriptive runtime summary computed from **the same already-verified** score/queue stdout. Kept the existing receipt-verification default JSON and separate legacy stdout-only summary unchanged. Added synthetic regression for valid aggregates, repinned nonzero-exit refusal, and CLI privacy; documented Windows use.
+- Feature-head CI and full repository pytest pending at authoring. No student Windows/VMware experiment, authentic PCAP/Zeek capture, independent labels, operational alerts or SOC evidence produced. Operator-controlled receipts and hashes are not process attestation; G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Validate Blue offline receipt clock consistency (feature PR; CI pending)
 
 - Rechecked main at 7e3bda29a57c222f949c27474c151aa8623b3a28: PR #364 (https://github.com/tbao4151/DA_CNTT/pull/364) merged; exact feature-head Ubuntu #41543054621 and Windows #41543054558 both SUCCESS. No open PR at feature start; post-merge main CI not independently verified.

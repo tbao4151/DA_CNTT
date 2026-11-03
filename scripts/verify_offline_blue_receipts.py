@@ -15,10 +15,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--expected-manifest-sha256", required=True)
+    parser.add_argument("--include-runtime-summary", action="store_true",
+                        help="Summarize verified receipt timings (offline descriptive only)")
     args = parser.parse_args(argv)
     try:
         result = verify_paired_receipts(
-            args.manifest, args.expected_manifest_sha256, ROOT
+            args.manifest, args.expected_manifest_sha256, ROOT,
+            include_runtime_summary=args.include_runtime_summary,
         )
     except (ValueError, OSError, TypeError, OverflowError, RecursionError):
         print("Private Blue receipt verification refused; inspect local evidence.",
