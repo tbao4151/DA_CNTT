@@ -1,3 +1,10 @@
+## 2026-11-03: Receipt-verified offline Blue runtime summary acceptance (feature CI pending)
+
+- [ ] Confirm Ubuntu quality and Windows Python 3.12.9 CI SUCCESS on exact final feature head; no competing PR or merge conflict before merging.
+- [ ] Verify opt-in summary uses the same independently pinned receipt stdout after complete paired receipt validation, refuses repinned nonzero exits without partial statistics, exposes only aggregate durations, and leaves default verifier and legacy summary contracts unchanged.
+- [ ] On student Windows, run `py -3.12 -m pytest -q tests/test_offline_blue_receipt_verify.py`, then collect at least three actual paired private runs and independently pin the receipt manifest. Compare descriptive runtime statistics with the separately logged original PCAP/Zeek provenance; do not call these packet-to-alert latency.
+- [ ] G1–G8 original VMware Host-only isolation/capture, independent labels, held-out model and analyst-confirmed SOC evidence still require student execution; Red Team execution remains OFF.
+
 ## 2026-11-03: Blue receipt clock consistency acceptance (feature CI pending)
 
 - [ ] Require exact final feature-head Ubuntu quality and Windows Python 3.12.9 CI SUCCESS, no competing PR and clean mergeability before merge.
