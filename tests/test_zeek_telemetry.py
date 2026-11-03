@@ -368,3 +368,22 @@ def test_fields_header_cannot_follow_types_declaration():
     forged = valid.replace(types_header, types_header + fields_header, 1)
     with pytest.raises(ValueError, match="Duplicate or late Zeek fields header"):
         parse_zeek_conn_log(forged)
+
+
+@pytest.mark.parametrize("index,token", [
+    (0, "1e-400"),
+    (0, "0.00000000000000000000000000000000000000000000000001e-400"),
+    (8, "1e-400"),
+    (8, ".1e-400"),
+])
+def test_nonzero_zeek_decimal_underflow_rejected(index, token):
+    values = list(VALUES)
+    values[index] = token
+    with pytest.raises(ValueError, match="numeric underflow"):
+        parse_zeek_conn_log(log(values))
+
+
+def test_exact_zero_zeek_decimals_remain_valid():
+    values = list(VALUES)
+    values[8] = "0e-400"
+    assert parse_zeek_conn_log(log(values))[0]["duration_s"] == 0.0
