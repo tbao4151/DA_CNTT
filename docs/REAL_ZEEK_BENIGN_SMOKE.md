@@ -271,8 +271,8 @@ research-candidate queue export, explicit manual Unclassified SOC triage and
 read-only SOC evidence-link CLI. It also requires PCAP/Zeek tuple and timestamp
 presence corroboration at the final read-only boundary.
 
-The fixture model is deliberately assigned a tiny threshold (`0.000001`) to
-force a research candidate. That threshold is **not** selected from validation
+The fixture model's coefficients are deliberately zeroed, producing a fixed
+0.5 score, with a CI-only 0.49 threshold to force a research candidate. That threshold is **not** selected from validation
 and the fixture labels are not independent truth. The CI stage refuses a wrong
 queue reference before SQLite creation, reuses rather than duplicates the
 manually confirmed case, rejects a wrong queue digest at the read-only link,
