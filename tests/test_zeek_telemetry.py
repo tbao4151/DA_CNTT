@@ -361,8 +361,8 @@ def test_fields_header_cannot_follow_types_declaration():
     # Once Zeek has declared types, a later fields declaration must not
     # redefine the schema, even if no flow row has been parsed yet.
     original = log(VALUES)
-    fields_header = ("#fields\\t" + "\\t".join(FIELDS) + "\\n").encode()
-    types_header = ("#types\\t" + "\\t".join(("time", "string", "addr", "port", "addr", "port", "enum", "string", "interval", "count", "count", "count", "count")) + "\\n").encode()
+    fields_header = ("#fields\t" + "\t".join(FIELDS) + "\n").encode()
+    types_header = ("#types\t" + "\t".join(("time", "string", "addr", "port", "addr", "port", "enum", "string", "interval", "count", "count", "count", "count")) + "\n").encode()
     valid = original.replace(fields_header, fields_header + types_header, 1)
     assert len(parse_zeek_conn_log(valid)) == 1
     forged = valid.replace(types_header, types_header + fields_header, 1)
