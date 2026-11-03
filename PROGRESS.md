@@ -1,3 +1,9 @@
+## 2026-11-03: Reject literal Zeek missing-category collision (feature CI pending)
+
+- Verified `main` at `6a1abb705ca4afbc83b1705e1c8ceb9b4eae12d9`: [PR #376](https://github.com/tbao4151/DA_CNTT/pull/376) merged; exact final-head Ubuntu [#41625161625](https://github.com/tbao4151/DA_CNTT/actions/runs/41625161625), Windows [#41625161707](https://github.com/tbao4151/DA_CNTT/actions/runs/41625161707), Real Zeek [#41625161602](https://github.com/tbao4151/DA_CNTT/actions/runs/41625161602), and post-merge main [#41628725693](https://github.com/tbao4151/DA_CNTT/actions/runs/41628725693) all SUCCESS. No open PR before this feature branch.
+- The Zeek-only v1 categorical pipeline uses `__MISSING__` for missing optional values. A literal source category of the same spelling could silently collide with missingness. Centralize the marker and reject that literal at extraction, direct fit and JSON scoring, while preserving actual `service=None`, schema v1, existing trusted model and official UNSW-NB15 benchmark. Add synthetic negative regression cases for both categorical fields.
+- Exact feature-head CI is **NOT VERIFIED** at authoring; no student Windows/VMware experiment, independently authenticated labels or live detection claim. G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Zeek protocol categorical parity at model boundaries ([PR #376](https://github.com/tbao4151/DA_CNTT/pull/376); feature CI pending)
 
 - Verified `main` at `3f6328b1937492d4861d56c6c7466e5a153dc939`: PR #375 merged; exact-head Ubuntu [#41617833514](https://github.com/tbao4151/DA_CNTT/actions/runs/41617833514), Windows [#41617833473](https://github.com/tbao4151/DA_CNTT/actions/runs/41617833473), and post-merge main [#41621221606](https://github.com/tbao4151/DA_CNTT/actions/runs/41621221606) all SUCCESS. No open PR before this branch.

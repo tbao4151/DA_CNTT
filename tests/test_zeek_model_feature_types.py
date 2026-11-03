@@ -93,3 +93,21 @@ def test_valid_zeek_integer_counts_missing_optionals_and_fractional_duration():
     scored = score_zeek_research_rows(artifact, [row])
     assert len(scored) == 1
     assert 0 <= scored[0]["attack_probability"] <= 1
+
+
+@pytest.mark.parametrize("field", ["proto", "service"])
+def test_literal_missing_category_marker_refused_at_fit_and_score(field):
+    # None is an optional missing measurement, but the literal marker must
+    # not silently become that same one-hot category in training or scoring.
+    dataset = _dataset()
+    artifact = build_zeek_research_artifact(
+        dataset, input_manifest_sha256="a" * 64,
+    )
+    tampered = copy.deepcopy(dataset)
+    tampered.features["test"][0][field] = "__MISSING__"
+    with pytest.raises(ValueError, match="Invalid categorical Zeek"):
+        evaluate_offline_zeek_baseline(tampered)
+    with pytest.raises(ValueError, match="Invalid categorical Zeek"):
+        score_zeek_research_rows(artifact, tampered.features["test"])
+    with pytest.raises(ValueError, match="Invalid categorical Zeek"):
+        validate_zeek_model_features(tampered.features["test"][0])

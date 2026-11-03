@@ -14,7 +14,10 @@ from collections.abc import Mapping, Sequence
 import numpy as np
 import pandas as pd
 
-from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION, validate_zeek_model_features
+from .features import (
+    LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION, ZEEK_MISSING_CATEGORY_TOKEN,
+    validate_zeek_model_features,
+)
 from .labeled_dataset import LabeledLabDataset
 from .offline_baseline import (
     CATEGORICAL, NUMERIC, THRESHOLDS, _frame, _scores,
@@ -218,7 +221,7 @@ def score_zeek_research_rows(
             value = row[field]
             if value is not None and (not isinstance(value, str) or len(value) > 256):
                 raise ValueError("Invalid categorical Zeek input")
-            normalized = "__MISSING__" if value is None else value
+            normalized = ZEEK_MISSING_CATEGORY_TOKEN if value is None else value
             logit += artifact["categorical_adjustments"][field].get(normalized, 0.0)
         for field in NUMERIC:
             value = row[field]

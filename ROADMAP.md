@@ -1,3 +1,9 @@
+## 2026-11-03: Zeek categorical missing-token collision acceptance (feature CI pending)
+
+- [ ] Require Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS on the exact final feature head, no competing PR and clean mergeability before merge.
+- [ ] Synthetic regression must reject literal `__MISSING__` for both `proto` and `service` at event projection and direct model fit/score boundaries; keep actual `service=None` supported and preserve v1 feature order, existing JSON model format, UNSW-NB15 and SOC state.
+- [ ] Student Windows: after merge run `py -3.12 -m pytest -q tests/test_zeek_model_feature_types.py tests/test_zeek_features.py tests/test_zeek_model_artifact.py`; separately complete authorized VMware Host-only G1–G8 capture, independent labels and held-out evaluation. This guard is not evidence of attack detection or source authenticity.
+
 ## 2026-11-03: Zeek v1 required-protocol model-boundary parity ([PR #376](https://github.com/tbao4151/DA_CNTT/pull/376); feature CI pending)
 
 - [ ] Require exact final feature-head Ubuntu Python 3.12.9 quality and Windows offline CI SUCCESS, clean mergeability and no competing PR before merge.

@@ -98,3 +98,15 @@ def test_single_row_matches_batch_and_is_detached():
     assert projected == extract_zeek_feature_rows(events)[0]
     projected["orig_bytes"] = 999
     assert events[0]["orig_bytes"] == 100
+
+
+@pytest.mark.parametrize("field", ["proto", "service"])
+def test_literal_missing_category_marker_rejected_by_zeek_projection(field):
+    event = sample_events()[0]
+    event[field] = "__MISSING__"
+    with pytest.raises(ValueError, match="Invalid Zeek"):
+        extract_zeek_features(event)
+
+
+def test_missing_optional_service_still_projects_as_none():
+    assert extract_zeek_features(sample_events()[0])["service"] is None

@@ -18,7 +18,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from .features import LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION, validate_zeek_model_features
+from .features import (
+    LAB_FEATURE_COLUMNS, LAB_FEATURE_SCHEMA_VERSION, ZEEK_MISSING_CATEGORY_TOKEN,
+    validate_zeek_model_features,
+)
 from .labeled_dataset import LabeledLabDataset, SPLITS
 from .host_variability import summarize_host_variability
 from .probability_diagnostics import summarize_probability_quality
@@ -109,7 +112,7 @@ def _frame(rows: list[dict[str, object]]) -> pd.DataFrame:
     # Fixed feature order; no UID/IP/timestamp/label/provenance enters the model.
     frame = pd.DataFrame([{key: row[key] for key in LAB_FEATURE_COLUMNS} for row in rows])
     for field in CATEGORICAL:
-        frame[field] = frame[field].map(lambda value: "__MISSING__" if value is None else value)
+        frame[field] = frame[field].map(lambda value: ZEEK_MISSING_CATEGORY_TOKEN if value is None else value)
     for field in NUMERIC:
         frame[field] = pd.to_numeric(frame[field], errors="raise")
     return frame.loc[:, list(LAB_FEATURE_COLUMNS)]
