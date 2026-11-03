@@ -23,6 +23,15 @@ Zeek `-`, and the original log bytes and SHA-256 remain unchanged. This
 is an input-integrity contract, not source authentication or a detection
 metric. Synthetic regression: `py -3.12 -m pytest -q tests/test_zeek_telemetry.py`.
 
+For manually constructed Zeek feature/event dictionaries, a duration supplied as
+an extremely large Python integer (for example `10**400`) is now rejected with
+`ValueError` before `math.isfinite` can overflow during implicit float
+conversion. Both projection and direct training/scoring validation apply this
+fail-closed bound. Real Zeek duration tokens are parsed as finite floats;
+this guard protects direct API callers and synthetic/forged inputs only.
+Regression: `py -3.12 -m pytest -q tests/test_zeek_features.py tests/test_zeek_model_feature_types.py`.
+No benchmark, model schema or scientific detection metric is changed.
+
 Zeek v1 feature projection now applies the direct model gate's numeric limit
 of 1,000,000,000,000 to durations, byte counts and packet counts. A raw Zeek
 parser may retain larger nonnegative values, but extraction rejects them

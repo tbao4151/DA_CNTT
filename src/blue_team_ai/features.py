@@ -65,8 +65,10 @@ def validate_zeek_model_features(row: Mapping[str, object]) -> None:
     duration = row["duration_s"]
     if duration is not None and (
         type(duration) not in (int, float)
-        or not math.isfinite(duration)
+        # Compare against the finite model ceiling before float coercion:
+        # math.isfinite(10**400) raises OverflowError for a forged integer.
         or not 0 <= duration <= _MODEL_NUMERIC_MAX
+        or not math.isfinite(duration)
     ):
         raise ValueError("Invalid numeric Zeek duration_s")
 
@@ -121,13 +123,16 @@ def extract_zeek_features(event: Mapping[str, object]) -> dict[str, object]:
         if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 65535:
             raise ValueError(f"Invalid Zeek {name}")
     duration = event["duration_s"]
-    if duration is not None and (
-        isinstance(duration, bool)
-        or not isinstance(duration, (int, float))
-        or not math.isfinite(duration)
-        or duration < 0
-    ):
-        raise ValueError("Invalid Zeek duration_s")
+    if duration is not None:
+        if (isinstance(duration, bool) or not isinstance(duration, (int, float))
+                or duration < 0):
+            raise ValueError("Invalid Zeek duration_s")
+        # Preserve the established model-limit error contract. Test the
+        # integer ceiling before math.isfinite (which overflows on 10**400).
+        if duration > _MODEL_NUMERIC_MAX:
+            raise ValueError("Invalid numeric Zeek duration_s")
+        if not math.isfinite(duration):
+            raise ValueError("Invalid Zeek duration_s")
     for name in _COUNT_COLUMNS:
         value = event[name]
         if value is not None and (

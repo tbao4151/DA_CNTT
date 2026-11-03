@@ -1,3 +1,10 @@
+## 2026-11-03: Zeek v1 huge integer duration fail-closed acceptance (feature CI pending)
+
+- [ ] Confirm final feature-head Ubuntu Python 3.12.9, Windows offline and applicable Real Zeek CI SUCCESS, no competing PR and conflict-free merge.
+- [ ] Synthetic regression: forged `duration_s=10**400` fails with `ValueError` (not `OverflowError`) in projection, direct training and JSON scoring. Retain valid finite values including 1e12, missing optional duration, unchanged Zeek v1 schema and historical UNSW benchmark.
+- [ ] Student Windows after merge: `py -3.12 -m pytest -q tests/test_zeek_features.py tests/test_zeek_model_feature_types.py`; separately complete authorized VMware Host-only evidence session. CI cannot certify physical isolation, attack truth or live detection; G1–G8 remain pending.
+- [ ] CI regression repair: preserve the existing `Invalid numeric Zeek duration_s` message for values above 1e12 while rejecting negative huge integers as `ValueError`; rerun the exact final-head Ubuntu/Windows/Real Zeek workflows after the regression fix. The first feature-head Ubuntu/Windows runs failed and are not PASS.
+
 ## 2026-11-03: Disjoint Zeek Host-only CIDR allowlist acceptance (feature CI pending)
 
 - [ ] Confirm exact final feature-head Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS, clean mergeability and no competing PR before merge.
