@@ -2206,3 +2206,10 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Confirm final-head Ubuntu Python 3.12.9 quality CI and Windows offline synthetic tests pass, check clean PR mergeability, then merge the signed timestamp-offset diagnostic feature. Record PR and exact run URLs in PROGRESS; do not claim CI success before verification.
 - [ ] Student runs the synthetic regression on Windows 11 Python 3.12.9, then validates an authorized genuine VMware Host-only PCAP and Zeek conn.log with independently pinned SHA-256 and verified network isolation evidence. Record Zeek version and clock setup privately; do not upload original captures.
 - [ ] Interpret signed mean alongside absolute offset max/mean; cancellation does not prove synchronized clocks. Independently label host/session-disjoint real Zeek captures and measure event-to-alert-to-SOC latency separately. Keep active Red Team traffic disabled and preserve the official UNSW-NB15 benchmark.
+
+
+## 2026-11-04 — Zeek nonzero decimal underflow acceptance
+
+- [ ] Verify final feature-head Ubuntu, Windows Python 3.12.9 and Real Zeek CI; merge only after success and no conflicts.
+- [ ] Run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py` on the student laptop; retain original authorized Host-only capture bytes and SHA-256 independently.
+- [ ] Independently verify lab isolation, provenance, labels, held-out performance and event-to-SOC latency. This parser regression does not establish detection efficacy.
