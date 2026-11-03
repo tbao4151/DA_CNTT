@@ -2,6 +2,17 @@
 
 This is an **operator-executed acceptance runbook**, not evidence that the student has performed an experiment. It joins existing offline tools into one first-session sequence; it adds no packet capture, attack generation, AI model, or automatic SOC alert. **Stop before any network traffic** unless the group owns the VMs, has written authorization, and has manually inspected isolation. Do not expose Streamlit or share private evidence publicly.
 
+## Session-index role separation (offline verifier)
+
+When creating the optional private session index, keep `session-record.json`,
+`chain.json` and the four manual review files **distinct**. A manual
+`PASS` must point to its own independently pinned approval, adapter, route
+or capture-origin evidence, **never** the index JSON or chain report (including
+a hard-link alias). The read-only verifier now rejects those substitutions.
+A successful index check only means the supplied files are internally
+consistent and ready for **human** review; it does not attest authorization,
+VMware isolation, authentic capture, attack labels or AI detection.
+
 ## 0. Scope and STOP conditions (record privately before starting)
 
 Record session ID, operator, approval/scope, exact VMnet/CIDR, all VM NICs and routes, local time/timezone, Zeek/Python versions, intended benign activity, and where original bytes will be archived. Use three distinct roles when available: Windows 11 host, one Windows guest, and one Linux guest with Zeek. **Every participating guest must have only the approved Host-only NIC**, with no bridged/NAT/secondary adapters, forwarding, default route to an external gateway, or unintended IPv6 egress. Verify this manually in VMware Virtual Network Editor and inside each guest; the software cannot attest physical isolation.

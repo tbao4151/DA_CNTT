@@ -88,7 +88,10 @@ def _relative_path(base: Path, value: str) -> Path:
 
 
 def verify_record(record_path: Path, record_pin: str, chain_path: Path, chain_pin: str) -> dict[str, object]:
-    record_raw = _read(record_path, 128 * 1024)
+    # The index and chain report are metadata, never manual evidence.
+    # Track opened file identities from the start to reject hard-link aliases.
+    used_file_ids: set[tuple[int, int]] = set()
+    record_raw = _read(record_path, 128 * 1024, used_file_ids=used_file_ids)
     _pin(record_raw, record_pin)
     base = record_path.resolve(strict=True).parent
     record = _json(record_raw)
@@ -100,7 +103,8 @@ def verify_record(record_path: Path, record_pin: str, chain_path: Path, chain_pi
     if not isinstance(checks, dict) or set(checks) != set(CHECKS):
         raise ValueError("Incomplete manual evidence checklist")
 
-    chain_raw = _read(chain_path, 64 * 1024, parent=base)
+    chain_raw = _read(chain_path, 64 * 1024, parent=base,
+                      used_file_ids=used_file_ids)
     _pin(chain_raw, chain_pin)
     chain = _json(chain_raw)
     required_true = (
@@ -126,8 +130,9 @@ def verify_record(record_path: Path, record_pin: str, chain_path: Path, chain_pi
     statuses: dict[str, str] = {}
     # One operator-supplied file cannot stand in for multiple distinct review roles.
     # This checks path identity, not the truth or independence of the contents.
-    used_evidence_paths: set[Path] = set()
-    used_file_ids: set[tuple[int, int]] = set()
+    used_evidence_paths: set[Path] = {
+        record_path.resolve(strict=True), chain_path.resolve(strict=True),
+    }
     for key in CHECKS:
         entry = checks[key]
         if not isinstance(entry, dict) or entry.get("status") not in ("PASS", "FAIL", "NOT_MEASURED"):

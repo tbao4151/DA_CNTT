@@ -108,6 +108,50 @@ def test_hardlinked_evidence_paths_are_refused_when_file_identity_available(tmp_
     assert "refused" in result.stderr
     assert str(private) not in result.stderr
 
+
+
+def test_chain_report_cannot_substitute_for_manual_authorization(tmp_path):
+    private, record, chain = _setup(tmp_path)
+    # Re-pinning the real chain JSON as a manual approval used to pass.
+    record["checks"]["authorization"] = {
+        "status": "PASS", "path": "chain.json",
+        "sha256": _sha(json.dumps(chain).encode()),
+    }
+    result = _run(private, record, chain)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert str(private) not in result.stderr
+
+
+def test_chain_hardlink_cannot_substitute_for_manual_evidence(tmp_path):
+    private, record, chain = _setup(tmp_path)
+
+    def mutate(args, root):
+        chain_path = root / "chain.json"
+        alias = root / "chain-alias.txt"
+        try:
+            os.link(chain_path, alias)
+        except (OSError, NotImplementedError):
+            pytest.skip("Hard links are unavailable on this runner")
+        original_stat, alias_stat = chain_path.stat(), alias.stat()
+        if not original_stat.st_ino or not alias_stat.st_ino:
+            pytest.skip("Filesystem does not expose usable file identity")
+        updated = json.loads((root / "record.json").read_text())
+        updated["checks"]["authorization"] = {
+            "status": "PASS", "path": alias.name,
+            "sha256": _sha(chain_path.read_bytes()),
+        }
+        raw = json.dumps(updated).encode()
+        (root / "record.json").write_bytes(raw)
+        args[args.index("--expected-record-sha256") + 1] = _sha(raw)
+
+    result = _run(private, record, chain, mutate=mutate)
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "refused" in result.stderr
+    assert str(private) not in result.stderr
+
 def test_distinct_evidence_paths_with_identical_bytes_remain_accepted(tmp_path):
     private, record, chain = _setup(tmp_path)
     # Content equality alone does not prove file-path reuse; enforce identity only.
