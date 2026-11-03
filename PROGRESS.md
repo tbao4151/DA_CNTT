@@ -1,4 +1,4 @@
-## 2026-11-03: Reject forged huge integer Zeek durations before float coercion (feature CI pending)
+## 2026-11-03: Reject forged huge integer Zeek durations before float coercion ([PR #381](https://github.com/tbao4151/DA_CNTT/pull/381); feature CI pending)
 
 - Verified `main` at `7b4be367b6d773640b638393ed564d5c6765a835`: PR #380 merged, exact-head Ubuntu #41661783461, Windows #41661783438, Real Zeek #41661783799 and post-merge main #41666008130 all SUCCESS; no competing open PR at feature start.
 - `math.isfinite(10**400)` raises `OverflowError` due to implicit integer-to-float conversion. Directly constructed Zeek v1 duration fields could trigger that exception at both extraction and model fit/scoring boundaries rather than the documented fail-closed `ValueError`. Compare duration to the existing 1e12 ceiling before finite checking, preserving schema, optional missingness, and the exact 1e12 boundary. Add synthetic regression at projection and training/scoring boundaries; Windows offline workflow already runs both targeted test files.
