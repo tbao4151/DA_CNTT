@@ -1,3 +1,9 @@
+## 2026-11-04: Reject oversized integer JSON Zeek research model parameters (feature CI pending)
+
+- Rechecked `main` after PR #381 merge (`3d1cba519163c93f89935dca4792c7bd8ad3d775`); its final-head Ubuntu #41677258736, Windows #41677258292 and Real Zeek #41677258272 completed SUCCESS. GitHub PR search returned no competing open PR before feature creation.
+- A data-only research artifact can contain a forged JSON integer such as `10**400`. The model validator's `_finite` previously called `math.isfinite` directly, which raises `OverflowError` instead of the documented `ValueError` at artifact-validation and scoring boundaries. Handle that conversion failure as invalid numeric model data; add synthetic regression across threshold, intercept, categorical and numeric parameter fields with JSON round-trip. Existing model schema, training, offline-only behavior, UNSW benchmark, SQLite and Red Team are unchanged.
+- Feature-head CI is **PENDING** at authoring; no student Windows/VMware run, independent labels, real attack detection, accuracy, latency or original capture is claimed. G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Reject forged huge integer Zeek durations before float coercion ([PR #381](https://github.com/tbao4151/DA_CNTT/pull/381); feature CI pending)
 
 - Verified `main` at `7b4be367b6d773640b638393ed564d5c6765a835`: PR #380 merged, exact-head Ubuntu #41661783461, Windows #41661783438, Real Zeek #41661783799 and post-merge main #41666008130 all SUCCESS; no competing open PR at feature start.
