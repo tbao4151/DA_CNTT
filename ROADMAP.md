@@ -1,3 +1,9 @@
+## 2026-11-03: Distinct retained Blue output-path acceptance (feature CI pending)
+
+- [ ] Confirm exact final-head Ubuntu quality and Windows offline Python 3.12.9 CI SUCCESS, no competing PR and clean mergeability before merge.
+- [ ] Synthetic regression accepts distinct score/queue output files and rejects reused resolved JSON output paths within a trial or across trials, including after receipt and manifest repinning; verifier remains read-only and default output schema unchanged.
+- [ ] On student Windows, retain a unique private output JSON per scoring and research-queue invocation; rerun `py -3.12 -m pytest -q tests/test_offline_blue_receipt_verify.py` and verify actual independently pinned receipt manifests. No synthetic CI constitutes G1–G8 VMware acceptance or independent execution proof.
+
 ## 2026-11-03: Optional PCAP import byte re-verification acceptance (feature CI pending)
 
 - [ ] Require Ubuntu quality and Windows offline Python 3.12.9 SUCCESS on exact final feature head, clean mergeability and no competing PR before merge.

@@ -389,3 +389,18 @@ independent command execution, original capture, VMware isolation, valid
 ground truth, live alerts or packet-to-case latency. The existing default
 verifier and legacy stdout-only summary are unchanged. Synthetic test:
 `py -3.12 -m pytest -q tests/test_offline_blue_receipt_verify.py`.
+
+
+## Distinct retained JSON output paths in paired Blue receipts (03/11/2026)
+
+The read-only `scripts/verify_offline_blue_receipts.py` verifier now rejects
+any score/queue stage whose resolved published JSON output path has already
+been used by another stage or trial in the same 3–50-pair manifest. This
+check is always active, including when `--require-paired-inputs` is off;
+existing successful CLI output fields and timing summaries are unchanged.
+Preserve a different retained JSON output file for **every** score and queue
+invocation. Repinning the receipts and manifest does not permit a repeated
+output path. The check does not prove independent subprocess execution,
+original PCAP provenance, real VMware isolation, or packet-to-alert latency.
+Run `py -3.12 -m pytest -q tests/test_offline_blue_receipt_verify.py` on
+Windows after merge and retain the original private evidence outside Git.

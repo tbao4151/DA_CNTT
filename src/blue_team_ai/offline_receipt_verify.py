@@ -92,7 +92,8 @@ def _validate_recorded_clock(receipt: dict) -> Decimal:
     return Decimal(str(elapsed))
 
 def _verify_stage(folder: Path, trial_id: str, stage: str,
-                  receipt_name: str, receipt_pin: str, root: Path) -> dict[str, Decimal]:
+                  receipt_name: str, receipt_pin: str, root: Path,
+                  used_outputs: set[Path]) -> dict[str, Decimal]:
     expected_name = f"trial-{trial_id}-{stage}.receipt.json"
     if receipt_name != expected_name:
         raise ValueError("Receipt filename does not match stage and trial")
@@ -154,6 +155,13 @@ def _verify_stage(folder: Path, trial_id: str, stage: str,
             or _SHA.fullmatch(receipt["output_sha256"]) is None
             or _digest(_read_regular(output, MAX_OUTPUT_BYTES)) != receipt["output_sha256"]):
         raise ValueError("Published JSON hash mismatch")
+    # Every score/queue stage must retain its own published JSON file.
+    # A repeated path could otherwise make distinct trial IDs point to the
+    # same retained result even when all operator-controlled hashes agree.
+    resolved_output = output.resolve(strict=True)
+    if resolved_output in used_outputs:
+        raise ValueError("Paired receipts reuse a published JSON output path")
+    used_outputs.add(resolved_output)
     return measured, command, receipt["output_sha256"]
 
 
@@ -307,6 +315,7 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
             or not 3 <= len(manifest["trials"]) <= 50):
         raise ValueError("Require version-1 manifest with 3-50 paired trials")
     seen_ids: set[str] = set()
+    used_outputs: set[Path] = set()
     digest_cache: dict[Path, str] = {}
     reference_inputs = None
     reference_optional = None
@@ -329,6 +338,7 @@ def verify_paired_receipts(manifest_path: Path, expected_sha256: str,
             measured, command, output_sha = _verify_stage(
                 source.parent, trial_id, stage,
                 trial[f"{stage}_receipt"], trial[f"{stage}_sha256"], root,
+                used_outputs,
             )
             if require_paired_inputs:
                 stage_inputs[stage] = _paired_command_inputs(
