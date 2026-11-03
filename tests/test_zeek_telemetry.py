@@ -355,3 +355,16 @@ def test_large_valid_integer_token_is_screened_by_feature_gate_not_float_coercio
     assert event["orig_bytes"] == int(values[9])
     with pytest.raises(ValueError, match="Invalid numeric Zeek orig_bytes"):
         extract_zeek_features(event)
+
+
+def test_fields_header_cannot_follow_types_declaration():
+    # Once Zeek has declared types, a later fields declaration must not
+    # redefine the schema, even if no flow row has been parsed yet.
+    original = log(VALUES)
+    fields_header = ("#fields\\t" + "\\t".join(FIELDS) + "\\n").encode()
+    types_header = ("#types\\t" + "\\t".join(("time", "string", "addr", "port", "addr", "port", "enum", "string", "interval", "count", "count", "count", "count")) + "\\n").encode()
+    valid = original.replace(fields_header, fields_header + types_header, 1)
+    assert len(parse_zeek_conn_log(valid)) == 1
+    forged = valid.replace(types_header, types_header + fields_header, 1)
+    with pytest.raises(ValueError, match="Duplicate or late Zeek fields header"):
+        parse_zeek_conn_log(forged)
