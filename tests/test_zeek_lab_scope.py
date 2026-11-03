@@ -59,6 +59,27 @@ def test_invalid_or_overbroad_scope_refused(scope):
         inspect_zeek_lab_scope(_log(), scope)
 
 
+@pytest.mark.parametrize("cidrs", [
+    ["192.168.56.0/24", "192.168.56.128/25"],
+    ["192.168.56.128/25", "192.168.56.0/24"],
+    ["192.168.0.0/16", "192.168.56.0/24"],
+    ["192.168.56.0/24", "192.168.0.0/16"],
+])
+def test_overlapping_lab_cidrs_refused_in_either_order(cidrs):
+    with pytest.raises(ValueError, match="Overlapping lab CIDRs"):
+        inspect_zeek_lab_scope(_log(), cidrs)
+
+
+def test_disjoint_lab_cidrs_remain_supported():
+    result = inspect_zeek_lab_scope(
+        _log(destination="192.168.56.200"),
+        ["192.168.56.0/25", "192.168.56.128/25"],
+    )
+    assert result["flow_count"] == 1
+    assert result["all_endpoints_within_declared_scope"] is True
+    assert result["host_only_isolation_verified"] is False
+
+
 def test_invalid_log_refused():
     with pytest.raises((ValueError, UnicodeError)):
         inspect_zeek_lab_scope(b"invalid", ["192.168.56.0/24"])
@@ -99,3 +120,18 @@ def test_cli_out_of_scope_does_not_write_report(tmp_path):
                           capture_output=True, text=True, check=False)
     assert proc.returncode == 1
     assert not output.exists()
+
+def test_cli_overlapping_scope_refuses_before_writing_report(tmp_path):
+    source = tmp_path / "conn.log"
+    source.write_bytes(_log())
+    report = tmp_path / "overlap-scope.json"
+    command = [
+        sys.executable, str(ROOT / "scripts" / "check_zeek_lab_scope.py"),
+        "--log", str(source),
+        "--cidr", "192.168.56.0/24",
+        "--cidr", "192.168.56.128/25",
+        "--output", str(report),
+    ]
+    blocked = subprocess.run(command, capture_output=True, text=True, check=False)
+    assert blocked.returncode == 1
+    assert not report.exists()

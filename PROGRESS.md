@@ -1,3 +1,9 @@
+## 2026-11-03: Reject overlapping Zeek Host-only CIDR declarations (feature CI pending)
+
+- Verified `main` at `2e2f3969596f2d0988ddb45999d9eab5d8c47c39`: PR #379 merged; exact feature-head Ubuntu #41656062948, Windows #41656062983 and Real Zeek #41656062924 SUCCESS, post-merge main #41658551030 SUCCESS. No open PR before creating `feature/reject-overlapping-zeek-lab-cidrs-20261103`.
+- Existing `lab_scope._networks()` rejected exact duplicate CIDRs but accepted overlapping parent/child CIDRs, potentially widening a declared Host-only allowlist. Reject all overlap in either input order while retaining explicitly disjoint RFC1918 subnets. Add synthetic library/CLI regression and Windows offline coverage; update the operator runbook.
+- Exact new feature-head CI is **PENDING** at authoring; no Windows/VMware student run, verified isolation, independently labeled attack, operational alert, model accuracy or latency is claimed. No UNSW-NB15 benchmark, trained model, SQLite, private capture or Red Team execution changed. G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Strict Zeek ASCII numeric token validation (feature CI pending)
 
 - Verified `main` at `89b98f0472054e227af7eb92233d1d3e39dd7357`: PR #378 merged; its exact-head Ubuntu #41642171999, Windows #41642172147 and Real Zeek #41642172034 all SUCCESS; main quality #41646174396 SUCCESS. No open PR before creating this feature branch.

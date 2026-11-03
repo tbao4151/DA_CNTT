@@ -1,3 +1,9 @@
+## 2026-11-03: Disjoint Zeek Host-only CIDR allowlist acceptance (feature CI pending)
+
+- [ ] Confirm exact final feature-head Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS, clean mergeability and no competing PR before merge.
+- [ ] Synthetic regression: overlapping/nested RFC1918 CIDR declarations fail in either order before any CLI report is written; disjoint approved subnets continue to pass. Preserve existing default no-network behavior and aggregate-only output.
+- [ ] Student Windows: after merge run `py -3.12 -m pytest -q tests/test_zeek_lab_scope.py`; separately verify actual VMware Host-only adapters, routes and authorization and capture private original PCAP/Zeek. A non-overlapping declared allowlist is not proof of physical isolation, independent labels or attack detection; G1–G8 remain pending.
+
 ## 2026-11-03: Zeek ASCII numeric lexeme acceptance (feature CI pending)
 
 - [ ] Require exact final feature-head Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS; verify no competing PR and conflict-free merge before merging.
