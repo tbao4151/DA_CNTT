@@ -1,3 +1,9 @@
+## 2026-11-04: Reject late Zeek fields declaration after types (feature CI pending)
+
+- Rechecked main at b39bc54c6227084ba50efa910ab07b48d62943d3 after PR #382 merge; post-merge main quality #41691495668 SUCCESS; no open PR at feature start.
+- Fix offline Zeek ASCII parser to reject a second #fields declaration after #types but before the first record. Preserve legitimate canonical ordering and minimal fixtures; add synthetic regression. No capture, benchmark, trained model, SOC DB, Red Team or VMware environment changed.
+- Feature CI not yet verified; do not merge without exact-head checks and conflict-free PR. Student VMware G1-G8 remain unverified.
+
 ## 2026-11-04: Reject oversized integer JSON Zeek research model parameters (feature CI pending)
 
 - Rechecked `main` after PR #381 merge (`3d1cba519163c93f89935dca4792c7bd8ad3d775`); its final-head Ubuntu #41677258736, Windows #41677258292 and Real Zeek #41677258272 completed SUCCESS. GitHub PR search returned no competing open PR before feature creation.
