@@ -1,5 +1,12 @@
 # DA005 — Real Zeek binary smoke on a BENIGN synthetic offline PCAP
 
+## Zero-candidate refusal control (CI-only; feature pending acceptance)
+
+The real-Zeek synthetic benign `conn.log` is also passed through a **separate** pinned neutral-coefficient model with a forced threshold of 0.51. Its deterministic probability of 0.5 must produce **zero** research candidates and an empty exported queue. The production manual triage CLI is deliberately invoked with every explicit confirmation and a fabricated selection reference; it must refuse without creating a new SQLite database. The original PCAP, Zeek log, import report and the existing positive-path synthetic SOC case are checked for byte-for-byte preservation. Synthetic contract regressions reject forged candidates and operational claims.
+
+This control complements, but does not replace, the existing forced-0.49 candidate-to-manual-case test. Neither threshold was selected from independent validation data; **zero synthetic candidates do not measure false-positive rate or prove a trained detector**. The workflow does not establish VMware isolation, authentic attack labels, real-time alerts, analyst waiting time or end-to-end detection latency.
+
+
 ## Purpose and scientific boundary
 
 This is an **operator-triggered local acceptance check**, not a VMware experiment.
