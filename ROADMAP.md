@@ -1,3 +1,9 @@
+## 2026-11-03: Private VMware session-index evidence-role separation (feature CI pending)
+
+- [ ] Confirm exact feature-head Ubuntu Python 3.12.9 and Windows offline CI SUCCESS, clean mergeability and no competing PR before merge.
+- [ ] Synthetic regression must accept distinct, independently pinned manual review files and reject using `chain.json` as a manual PASS, including a hard-link alias; index and chain must remain metadata, never evidence for their own human review.
+- [ ] On student Windows 11, run `py -3.12 -m pytest -q tests/test_vmware_session_record.py` and perform the separately authorized Host-only evidence session with distinct original approval, VMware adapter, route and capture-origin files. A PASS does not establish isolation, capture authenticity, independent labels, live detection or G1–G8 acceptance.
+
 ## 2026-11-03: Real-Zeek synthetic zero-candidate / no-SOC-write acceptance (feature CI pending)
 
 - [ ] Verify exact feature-head Ubuntu Python 3.12.9, Windows offline and dedicated network-disabled real-Zeek workflows SUCCESS; check no competing PR and clean mergeability before merge.

@@ -1,3 +1,9 @@
+## 2026-11-03: Reject session-index/chain self-evidence (PR pending; CI unverified)
+
+- Rechecked `main` at `01989b34d0bffc126ac9aa808ad2b150fe3c133f`: PR #374 merged; final-head Ubuntu [#41608752127](https://github.com/tbao4151/DA_CNTT/actions/runs/41608752127), Windows [#41608752161](https://github.com/tbao4151/DA_CNTT/actions/runs/41608752161), actual-Zeek synthetic [#41608752121](https://github.com/tbao4151/DA_CNTT/actions/runs/41608752121) and post-merge main [#41613234056](https://github.com/tbao4151/DA_CNTT/actions/runs/41613234056) reported SUCCESS. No open PR before this branch.
+- The private VMware session-index verifier now reserves the session record and offline chain report as metadata-only roles. A manually marked PASS cannot point to the chain JSON itself or a hard-link alias, even when independently re-pinned. Two synthetic regression cases check fail-closed behavior. Existing genuine distinct manual files remain supported; no network access or database/model/benchmark changes.
+- At authoring, feature-head CI is **NOT VERIFIED** and no student Windows/VMware experiment was performed. This is file-role consistency, not independent proof of authorization, physical isolation, PCAP provenance, attack truth or model accuracy. G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: Real-Zeek zero-candidate research queue must not create SOC (feature CI pending)
 
 - Verified `main` at `3bdc2e973378a21f7c0c2912b5c239da965bcbae`: PR #373 merged; its final-head Ubuntu [#41602293713](https://github.com/tbao4151/DA_CNTT/actions/runs/41602293713), Windows [#41602293709](https://github.com/tbao4151/DA_CNTT/actions/runs/41602293709), dedicated actual-Zeek [#41602293930](https://github.com/tbao4151/DA_CNTT/actions/runs/41602293930) and post-merge main [#41605460328](https://github.com/tbao4151/DA_CNTT/actions/runs/41605460328) all SUCCESS. No open PR at feature start.
