@@ -1,3 +1,9 @@
+## 2026-11-03: Real-Zeek synthetic SOC evidence-link integration acceptance (feature CI pending)
+
+- [ ] Require exact final-head Ubuntu Python 3.12.9 quality, Windows offline contract and dedicated network-disabled real-Zeek smoke workflow SUCCESS; confirm no competing PR or merge conflicts before merge.
+- [ ] Confirm actual Zeek output from deterministic benign synthetic PCAP reaches pinned scoring, CI-only manual Unclassified SOC case and production read-only evidence-link verification; original SQLite bytes must remain unchanged. Altering the analyst note in a separate database copy must be refused without writing to either file.
+- [ ] On student Windows 11 run `py -3.12 -m pytest -q tests/test_zeek_soc_evidence_link.py tests/test_zeek_research_queue_soc_e2e.py`, then separately execute the authorized first VMware Host-only evidence session, independent labeling/held-out evaluation and analyst-confirmed case. CI neutralized candidate selection is not trained attack detection, live alerting or event-to-case latency; G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-03: SOC analyst-note/audit consistency acceptance ([PR #371](https://github.com/tbao4151/DA_CNTT/pull/371); feature CI pending)
 
 - [ ] Require exact final-head Ubuntu quality and Windows Python 3.12.9 offline CI SUCCESS, clean mergeability and no competing PR before merge.
