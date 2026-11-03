@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -184,3 +185,52 @@ def test_refuses_invalid_recorder_clock_even_when_receipt_is_repinned(
     manifest.write_text(json.dumps({"version": 1, "trials": trials}), encoding="utf-8")
     with pytest.raises((ValueError, OSError)):
         verify_paired_receipts(manifest, sha(manifest.read_bytes()), ROOT)
+
+
+def test_opt_in_runtime_summary_uses_only_verified_receipts(tmp_path):
+    manifest, _ = make_manifest(tmp_path)
+    before = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
+    pin = sha(manifest.read_bytes())
+    default = verify_paired_receipts(manifest, pin, ROOT)
+    assert "stage_statistics_ms" not in default
+    result = verify_paired_receipts(
+        manifest, pin, ROOT, include_runtime_summary=True
+    )
+    assert result["paired_trials_verified"] == result["trials_count"] == 3
+    assert result["runtime_summary_source"] == "verified_paired_subprocess_receipts"
+    assert result["stage_statistics_ms"]["score"]["total"]["median"] == 6.0
+    assert result["stage_statistics_ms"]["queue"]["publication"]["mean"] == 2.0
+    assert result["packet_event_to_alert_latency_measured"] is False
+    assert result["end_to_end_pipeline_wall_clock_measured"] is False
+    assert result["operational_alerts_created"] is False
+    assert str(tmp_path) not in json.dumps(result)
+    assert before == {p.name: p.read_bytes() for p in tmp_path.iterdir()}
+
+
+def test_opt_in_runtime_summary_rejects_repinned_nonzero_exit(tmp_path):
+    manifest, trials = make_manifest(tmp_path)
+    receipt_file = tmp_path / trials[0]["score_receipt"]
+    receipt = json.loads(receipt_file.read_text(encoding="utf-8"))
+    receipt["exit_code"] = 1
+    receipt_file.write_text(json.dumps(receipt), encoding="utf-8")
+    trials[0]["score_sha256"] = sha(receipt_file.read_bytes())
+    manifest.write_text(json.dumps({"version": 1, "trials": trials}), encoding="utf-8")
+    with pytest.raises(ValueError):
+        verify_paired_receipts(
+            manifest, sha(manifest.read_bytes()), ROOT, include_runtime_summary=True
+        )
+
+
+def test_opt_in_runtime_summary_cli_is_aggregate_only(tmp_path):
+    manifest, _ = make_manifest(tmp_path)
+    proc = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "verify_offline_blue_receipts.py"),
+         "--manifest", str(manifest), "--expected-manifest-sha256",
+         sha(manifest.read_bytes()), "--include-runtime-summary"],
+        capture_output=True, text=True, check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    report = json.loads(proc.stdout)
+    assert report["trials_count"] == 3
+    assert report["stage_statistics_ms"]["score"]["total"]["mean"] == 6.0
+    assert str(tmp_path) not in proc.stdout
