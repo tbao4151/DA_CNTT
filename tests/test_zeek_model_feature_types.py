@@ -34,6 +34,7 @@ from test_zeek_offline_baseline import _dataset
     ("duration_s", float("nan")),
     ("duration_s", 1e13),
     ("duration_s", 10**400),  # Must raise ValueError, not OverflowError.
+    ("duration_s", -(10**400)),  # Same fail-closed contract for negative ints.
 ])
 def test_forged_feature_types_refused_by_both_training_and_scoring(field, value):
     dataset = _dataset()
