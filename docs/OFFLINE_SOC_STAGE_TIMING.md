@@ -366,7 +366,15 @@ all 3–50 trials, and binds each queue's report path/hash to the corresponding
 score receipt's SHA-256-verified published JSON. Score runs must include a
 pinned manifest in strict mode. Unknown or duplicate flags are refused.
 Optional score-side PCAP arguments must be complete and consistent between
-trials; this gate does not independently attest PCAP provenance.
+trials. When provided, strict mode also re-runs the existing read-only offline
+PCAP import verifier against the retained original PCAP, `conn.log` and
+`offline_import_report.json`, independently pinned by the recorded import
+report SHA-256; it checks the declared CIDRs and that the import log digest
+matches the paired scoring log pin. The resulting aggregate JSON adds
+`retained_optional_pcap_import_bytes_verified=true` **only** if this optional
+verification was performed for all trials. It does not certify VMware
+isolation, original packet capture authenticity, packet-to-flow identity,
+operator permissions or independent provenance of the supplied SHA-256 pin.
 
 ```powershell
 py -3.12 scripts/verify_offline_blue_receipts.py `
