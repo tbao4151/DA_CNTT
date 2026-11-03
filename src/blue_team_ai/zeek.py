@@ -34,7 +34,13 @@ def _number(value: str, name: str, *, integer: bool = False) -> float | int | No
         number = int(value) if integer else float(value)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"Invalid Zeek {name}") from exc
-    # A nonzero decimal token may underflow to 0.0 in binary64 (for example\n    # 1e-400). Refuse silent loss of nonzero duration/timestamp evidence.\n    if not integer and number == 0.0:\n        mantissa = re.split(r"[eE]", value, maxsplit=1)[0]\n        if any(char in "123456789" for char in mantissa):\n            raise ValueError(f"Invalid Zeek {name}: numeric underflow")\n    # Python int is arbitrary precision: math.isfinite(very_large_int)
+    # A nonzero decimal token may underflow to 0.0 in binary64 (for example
+    # 1e-400). Refuse silent loss of nonzero duration/timestamp evidence.
+    if not integer and number == 0.0:
+        mantissa = re.split(r"[eE]", value, maxsplit=1)[0]
+        if any(char in "123456789" for char in mantissa):
+            raise ValueError(f"Invalid Zeek {name}: numeric underflow")
+    # Python int is arbitrary precision: math.isfinite(very_large_int)
     # raises OverflowError during float coercion. Integer syntax already
     # excludes signs; model projection applies its own 1e12 numeric ceiling.
     if (number < 0) or (not integer and not math.isfinite(number)):
