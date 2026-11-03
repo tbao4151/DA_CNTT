@@ -1,3 +1,10 @@
+## 2026-11-03: Optional PCAP import byte re-verification acceptance (feature CI pending)
+
+- [ ] Require Ubuntu quality and Windows offline Python 3.12.9 SUCCESS on exact final feature head, clean mergeability and no competing PR before merge.
+- [ ] Synthetic tests must accept a valid pinned optional offline import and refuse changed original PCAP, changed report, wrong report pin, missing PCAP argument, inconsistent per-trial PCAP path and mismatched Zeek log; preserve default receipt verifier and aggregate-only privacy.
+- [ ] On student Windows, preserve the real original PCAP, `conn.log`, `offline_import_report.json`, independently recorded hashes and full receipt manifest outside Git; run `py -3.12 -m pytest -q tests/test_offline_blue_receipt_verify.py` then opt-in `--require-paired-inputs` on actual paired receipts.
+- [ ] G1–G8 require independently inspected VMware Host-only isolation, genuine capture, labels/holdout and analyst-confirmed SOC case; rehashing local files is not source authentication or packet-to-alert latency.
+
 ## 2026-11-03: Strict paired Blue input integrity acceptance (feature CI pending)
 
 - [ ] Exact final-head Ubuntu and Windows Python 3.12.9 CI SUCCESS; clean mergeability and no competing PR before merge.
