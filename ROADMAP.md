@@ -1,3 +1,9 @@
+## 2026-11-04: Zeek header ordering regression (feature CI pending)
+
+- [ ] Confirm exact-head Ubuntu, Windows and applicable Real Zeek CI SUCCESS and conflict-free merge before merging.
+- [ ] Synthetic parser regression: #fields after #types fails closed even before data rows, while canonical #fields then #types and legacy missing #types remain supported.
+- [ ] Student Windows: run py -3.12 -m pytest -q tests/test_zeek_telemetry.py after merge. VMware isolation, original PCAP and independently labeled evaluation remain pending; CI does not establish G1-G8.
+
 ## 2026-11-04: Zeek JSON research artifact oversized integer validation (feature CI pending)
 
 - [ ] Verify exact final feature-head Ubuntu Python 3.12.9 quality, Windows offline and applicable Real Zeek CI SUCCESS, no competing open PR and conflict-free merge before merging.
