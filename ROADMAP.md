@@ -1,3 +1,9 @@
+## 2026-11-04: Zeek terminal close physical-line integrity (feature CI pending)
+
+- [ ] Verify final feature-head CI and clean mergeability before merge.
+- [ ] Reject blank physical lines appended after `#close` while accepting a single standard final newline and existing valid logs; verify regression on Windows Python 3.12.9.
+- [ ] Do not infer original capture authenticity, VMware isolation, independent labels, AI accuracy or live detection from synthetic parser tests. G1–G8 remain pending student evidence.
+
 ## 2026-11-04: G1–G3 evidence handoff acceptance (documentation-only; feature CI pending)
 
 - [ ] Review `docs/G1_G3_PRIVATE_EVIDENCE_HANDOFF.md` against existing VMware/Zeek runbooks; keep filled evidence and hashes outside Git.

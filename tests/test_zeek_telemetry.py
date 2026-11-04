@@ -387,3 +387,15 @@ def test_exact_zero_zeek_decimals_remain_valid():
     values = list(VALUES)
     values[8] = "0e-400"
     assert parse_zeek_conn_log(log(values))[0]["duration_s"] == 0.0
+
+
+def test_zeek_close_rejects_blank_lines_after_terminal_marker():
+    # A second physical line after #close is not part of the same Zeek log,
+    # even when blank; do not silently ignore appended trailing material.
+    original = log(VALUES)
+    closed = original + b"#close\t2026-10-29-17-00-00\n"
+    assert len(parse_zeek_conn_log(closed)) == 1
+    with pytest.raises(ValueError, match="Zeek content after close marker"):
+        parse_zeek_conn_log(closed + b"\n")
+    with pytest.raises(ValueError, match="Zeek content after close marker"):
+        parse_zeek_conn_log(closed + b"\n#fields\tts\n")
