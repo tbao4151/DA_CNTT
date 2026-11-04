@@ -196,7 +196,7 @@ def test_preview_evidence_mutation_fails_closed_at_soc_write(tmp_path, tamper):
     if tamper == "source":
         args["source_data"] += b"\n"
     elif tamper == "report":
-        args["report_data"] += b" "
+        changed = json.loads(args["report_data"])\n        changed["source_sha256"] = "f" * 64\n        args["report_data"] = json.dumps(changed).encode("utf-8")
     else:
         args["model_sha256"] = "f" * 64
 
