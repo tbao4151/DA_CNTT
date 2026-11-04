@@ -399,3 +399,13 @@ def test_zeek_close_rejects_blank_lines_after_terminal_marker():
         parse_zeek_conn_log(closed + b"\n")
     with pytest.raises(ValueError, match="Zeek content after close marker"):
         parse_zeek_conn_log(closed + b"\n#fields\tts\n")
+
+
+def test_zeek_blank_physical_lines_inside_record_section_are_rejected():
+    original = log(VALUES)
+    # Blank lines cannot stand in for a Zeek connection record.
+    for malformed in (original + b"\n", original.replace(b"\n1630000000.25", b"\n\n1630000000.25", 1)):
+        with pytest.raises(ValueError, match="Blank physical line in Zeek records"):
+            parse_zeek_conn_log(malformed)
+    # Preserve the existing minimal fixture and its provenance digest.
+    assert parse_zeek_conn_log(original)[0]["source_sha256"] == hashlib.sha256(original).hexdigest()
