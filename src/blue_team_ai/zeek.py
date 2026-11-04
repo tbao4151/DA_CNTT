@@ -187,6 +187,17 @@ def parse_zeek_conn_log(
                     or any(not type_name or any(char.isspace() for char in type_name)
                            for type_name in declared_types)):
                 raise ValueError("Duplicate, late or mismatched Zeek types header")
+            # Validate the stable Zeek types for mandatory conn.log fields.
+            # Optional fields retain their existing compatibility policy.
+            expected = {
+                "ts": "time", "uid": "string",
+                "id.orig_h": "addr", "id.resp_h": "addr",
+                "id.orig_p": "port", "id.resp_p": "port",
+                "proto": "enum",
+            }
+            for field_name, type_name in zip(fields, declared_types):
+                if field_name in expected and type_name != expected[field_name]:
+                    raise ValueError("Invalid Zeek required field type")
             seen_types = True
             continue
         if line.startswith("#") or not line:
