@@ -126,6 +126,6 @@ def test_changed_source_bytes_invalidate_existing_annotations(tmp_path):
     spec = json.loads(labels.read_text())
     spec["labels_by_uid"] = {"C-normal": 0, "C-scenario": 1}
     labels.write_text(json.dumps(spec))
-    log.write_bytes(log.read_bytes() + b"#added-comment\n")
+    log.write_bytes(log.read_bytes().replace(b"#fields\t", b"#unset_field\t-\n#fields\t", 1))
     with pytest.raises(ValueError, match="does not match"):
         verify_annotations(log, labels)

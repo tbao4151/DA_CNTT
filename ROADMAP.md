@@ -1,3 +1,20 @@
+## 2026-11-04: PR #389 remaining regression acceptance
+
+- [ ] Confirm Ubuntu quality, Windows offline and Real Zeek CI SUCCESS on the exact latest PR head, and clean mergeability before merge.
+- [ ] Confirm annotation checksum mismatch and reserved TEST flow identity reuse are exercised using valid Zeek metadata, not unknown comment markers; preserve strict rejection of unknown controls.
+- [ ] Student Windows/VMware G1–G8 still require original authorized evidence; synthetic CI cannot certify live detection or model accuracy.
+
+## 2026-11-04: PR #389 CI regression recovery
+
+- [ ] Verify all formerly failing annotation, partition, runtime and UI fixture tests now pass on exact feature head; repair remaining fixtures without relaxing unknown-marker rejection.
+- [ ] Require Ubuntu/Windows/Real Zeek CI SUCCESS and conflict-free PR before merge. No student VMware evidence or scientific detection claims.
+
+## 2026-11-04: Unknown Zeek control-marker integrity (feature CI pending)
+
+- [ ] Verify Ubuntu, Windows Python 3.12.9 and Real Zeek exact-head CI, and clean mergeability before merge.
+- [ ] Synthetic tests reject unknown `#` control lines before and after schema declaration; known canonical headers and existing real Zeek fixture must continue to parse.
+- [ ] Student Windows: run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py`; independently obtain original authorized VMware evidence and labels. G1–G8 remain pending.
+
 ## 2026-11-04: Required Zeek field types CI follow-up
 
 - [ ] Confirm updated feature-head Ubuntu, Windows and Real Zeek CI SUCCESS; PR #388 must remain open until clean mergeability and required checks are verified.

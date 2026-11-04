@@ -120,7 +120,7 @@ def test_invalid_bounds_or_pins_refuse_before_metrics(tmp_path, change):
 def test_reencoded_reserved_test_flow_refused(tmp_path):
     manifest, _, _, model, _, args = _fixture(tmp_path)
     original = (manifest.parent / "host-2.log").read_bytes()
-    reused = original.replace(b"#fields\t", b"# harmless comment\n#fields\t", 1)
+    reused = original.replace(b"#fields\t", b"#unset_field\t-\n#fields\t", 1)
     args["expected_log_sha256"] = hashlib.sha256(reused).hexdigest()
     with pytest.raises(ValueError, match="flow identity overlap"):
         benchmark_offline_new_log_scoring(reused, model, **args)

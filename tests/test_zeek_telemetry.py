@@ -435,3 +435,19 @@ def test_zeek_required_types_valid_and_minimal_legacy_still_accepted():
     header = original.splitlines(keepends=True)[1]
     assert len(parse_zeek_conn_log(original)) == 1
     assert len(parse_zeek_conn_log(original.replace(header, header + declaration, 1))) == 1
+
+
+@pytest.mark.parametrize("marker", [
+    "#path\tother", "#types_extra\tstring", "#custom\tvalue",
+    "#close_extra\t2026-11-04-12-00-00",
+])
+def test_unknown_zeek_control_markers_in_record_section_rejected(marker):
+    data = log(VALUES) + (marker + "\n").encode("utf-8")
+    with pytest.raises(ValueError, match="(Unknown Zeek control marker|Invalid|Duplicate)"):
+        parse_zeek_conn_log(data)
+
+
+def test_unknown_zeek_control_marker_before_fields_rejected():
+    data = b"#separator \\x09\n#custom\tvalue\n" + log(VALUES).split(b"\n", 1)[1]
+    with pytest.raises(ValueError, match="Unknown Zeek control marker"):
+        parse_zeek_conn_log(data)
