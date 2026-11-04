@@ -166,3 +166,41 @@ def test_offline_new_log_review_requires_manual_confirmation_before_soc_case(tmp
     assert create_new_log_candidate_case(db, **triage) == case_id
     assert len(list_cases(db)) == 1
     assert len(case_history(db, case_id)) == 1
+
+
+
+@pytest.mark.parametrize("tamper", ["source", "report", "model_pin"])
+def test_preview_evidence_mutation_fails_closed_at_soc_write(tmp_path, tamper):
+    """A successful preview is not authorization to write from changed evidence."""
+    from blue_team_ai.new_log_triage import create_new_log_candidate_case
+
+    values, _ = _prepared(tmp_path)
+    preview = prepare_new_log_review(**values)
+    assert preview["candidate_rows"]
+    model = json.loads(values["model_path"].read_text(encoding="utf-8"))
+    args = dict(
+        source_data=values["source_data"],
+        model=model,
+        report_data=values["report_data"],
+        expected_log_sha256=values["expected_log_sha256"],
+        model_sha256=values["expected_model_sha256"],
+        lab_cidrs=values["lab_cidrs"],
+        declared_dataset=values["declared_dataset"],
+        declared_manifest_sha256=values["declared_manifest_sha256"],
+        declared_captures=values["declared_captures"],
+        record_index=preview["candidate_rows"][0]["Zeek row"] - 1,
+        analyst_confirmed=True,
+        operator_confirmed_authorized=True,
+        operator_confirmed_new_capture=True,
+    )
+    if tamper == "source":
+        args["source_data"] += b"\n"
+    elif tamper == "report":
+        args["report_data"] += b" "
+    else:
+        args["model_sha256"] = "f" * 64
+
+    db = tmp_path / "tampered-evidence.sqlite3"
+    with pytest.raises(ValueError):
+        create_new_log_candidate_case(db, **args)
+    assert not db.exists(), "A failed provenance check must not create a SOC DB"
