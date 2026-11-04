@@ -1,3 +1,9 @@
+## 2026-11-04: PR #389 remaining regression acceptance
+
+- [ ] Confirm Ubuntu quality, Windows offline and Real Zeek CI SUCCESS on the exact latest PR head, and clean mergeability before merge.
+- [ ] Confirm annotation checksum mismatch and reserved TEST flow identity reuse are exercised using valid Zeek metadata, not unknown comment markers; preserve strict rejection of unknown controls.
+- [ ] Student Windows/VMware G1–G8 still require original authorized evidence; synthetic CI cannot certify live detection or model accuracy.
+
 ## 2026-11-04: PR #389 CI regression recovery
 
 - [ ] Verify all formerly failing annotation, partition, runtime and UI fixture tests now pass on exact feature head; repair remaining fixtures without relaxing unknown-marker rejection.
