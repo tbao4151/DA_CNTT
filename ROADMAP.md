@@ -1,3 +1,14 @@
+## 2026-11-04: Required Zeek field types CI follow-up
+
+- [ ] Confirm updated feature-head Ubuntu, Windows and Real Zeek CI SUCCESS; PR #388 must remain open until clean mergeability and required checks are verified.
+- [ ] Verify strict-reprocessing fixture now declares time/addr/port/enum for required fields; do not relax parser validation or claim G1–G8 evidence.
+
+## 2026-11-04: Mandatory Zeek field-type integrity (feature CI pending)
+
+- [ ] Confirm exact feature-head Ubuntu, Windows Python 3.12.9 and Real Zeek CI SUCCESS plus clean mergeability before merge.
+- [ ] Synthetic regression: reject mismatched `#types` for ts, uid, both endpoint addresses/ports and proto; preserve valid canonical Zeek headers and minimal legacy logs without types.
+- [ ] Student Windows after merge: `py -3.12 -m pytest -q tests/test_zeek_telemetry.py`. Real VMware G1–G8 evidence and independently labeled holdout evaluation remain pending.
+
 ## 2026-11-04: Zeek terminal close physical-line integrity (feature CI pending)
 
 - [ ] Verify final feature-head CI and clean mergeability before merge.

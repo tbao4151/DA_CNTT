@@ -409,3 +409,29 @@ def test_zeek_blank_physical_lines_inside_record_section_are_rejected():
             parse_zeek_conn_log(malformed)
     # Preserve the existing minimal fixture and its provenance digest.
     assert parse_zeek_conn_log(original)[0]["source_sha256"] == hashlib.sha256(original).hexdigest()
+
+
+@pytest.mark.parametrize("field_name,forged_type", [
+    ("ts", "string"), ("uid", "count"), ("id.orig_h", "string"),
+    ("id.resp_h", "string"), ("id.orig_p", "count"),
+    ("id.resp_p", "count"), ("proto", "string"),
+])
+def test_zeek_required_field_type_mismatch_rejected(field_name, forged_type):
+    types = ["time", "string", "addr", "port", "addr", "port", "enum",
+             "string", "interval", "count", "count", "count", "count"]
+    types[FIELDS.index(field_name)] = forged_type
+    original = log(VALUES)
+    declaration = ("#types\t" + "\t".join(types) + "\n").encode()
+    header = original.splitlines(keepends=True)[1]
+    with pytest.raises(ValueError, match="required field type"):
+        parse_zeek_conn_log(original.replace(header, header + declaration, 1))
+
+
+def test_zeek_required_types_valid_and_minimal_legacy_still_accepted():
+    original = log(VALUES)
+    types = ("time", "string", "addr", "port", "addr", "port", "enum",
+             "string", "interval", "count", "count", "count", "count")
+    declaration = ("#types\t" + "\t".join(types) + "\n").encode()
+    header = original.splitlines(keepends=True)[1]
+    assert len(parse_zeek_conn_log(original)) == 1
+    assert len(parse_zeek_conn_log(original.replace(header, header + declaration, 1))) == 1
