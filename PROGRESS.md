@@ -3046,3 +3046,8 @@
 - On main 16b2e0da0fe6b0612a76e0c401a78198f4dd6c61, confirmed no open PR and reviewed README, progress, roadmap, Zeek parser, synthetic tests and available workflow lookup. Main post-merge CI was not verifiable from the connector (empty workflow-run response).
 - Added a fail-closed parser guard for valid-looking nonzero decimal tokens (e.g. 1e-400) silently rounded to binary64 zero, with synthetic timestamp/duration regressions and an exact-zero control. No source evidence, benchmark, model, SOC database, or network operation changed.
 - At authoring: feature-head CI, Windows 11 laptop, VMware isolation, genuine captures, independent labels, and operational AI detection are **not verified**. This only preserves numeric source semantics at ingestion.
+
+## 2026-11-04 — Reject blank Zeek record-section lines (feature PR; CI pending)
+
+- Based on main `1e973b3f864e83cf27f392f20f5dee92f6d1b11e` with no open PR, inspected README, PROGRESS, ROADMAP, parser, regressions and available Actions lookup (main push runs not exposed by connector). Added a fail-closed check against empty physical lines after the `#fields` schema, including between rows and at EOF; minimal valid fixtures remain supported. This is a parser-integrity change, not live capture, AI detection or model improvement.
+- At authoring, PR-head CI and student Windows/VMware verification are pending. No network operations, benchmark/model changes, Red execution, SQLite writes or public deployment.
