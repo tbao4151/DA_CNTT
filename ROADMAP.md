@@ -1,3 +1,8 @@
+## 2026-11-04: PR #389 CI regression recovery
+
+- [ ] Verify all formerly failing annotation, partition, runtime and UI fixture tests now pass on exact feature head; repair remaining fixtures without relaxing unknown-marker rejection.
+- [ ] Require Ubuntu/Windows/Real Zeek CI SUCCESS and conflict-free PR before merge. No student VMware evidence or scientific detection claims.
+
 ## 2026-11-04: Unknown Zeek control-marker integrity (feature CI pending)
 
 - [ ] Verify Ubuntu, Windows Python 3.12.9 and Real Zeek exact-head CI, and clean mergeability before merge.
