@@ -1,3 +1,9 @@
+## 2026-11-04: SOC write-boundary evidence immutability acceptance
+
+- [ ] Verify Ubuntu and Windows Python 3.12.9 CI on the exact feature head and clean mergeability before merge.
+- [ ] Synthetic regression must refuse changed original Zeek bytes, semantically changed Blue report or substituted model pin after preview; rejected attempts must not create SQLite.
+- [ ] Student Windows: run `py -3.12 -m pytest -q tests/test_zeek_new_log_ui_partition.py`. CI does not certify G1–G8, VMware isolation, real attack detection or independently labeled evaluation.
+
 ## 2026-11-04: Offline NEW-log review-to-SOC integration acceptance
 
 - [ ] Require exact feature-head CI and clean mergeability for the new synthetic integration regression; verify Windows Python 3.12.9 and Ubuntu quality checks before merge.
