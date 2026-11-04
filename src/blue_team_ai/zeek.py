@@ -94,12 +94,12 @@ def parse_zeek_conn_log(
     events: list[dict] = []
     seen_uids: set[str] = set()
     for line in lines[1:]:
-        if not line:
-            continue
         # Zeek writes #close when the ASCII log ends. Never merge appended
         # records or a second log segment into one source/UID namespace.
         if closed:
             raise ValueError("Zeek content after close marker")
+        if not line:
+            continue
         if line.startswith("#close"):
             if (not line.startswith("#close\t") or not line[len("#close\t"):]
                     or fields is None or not seen_data):
