@@ -99,6 +99,10 @@ def parse_zeek_conn_log(
         if closed:
             raise ValueError("Zeek content after close marker")
         if not line:
+            # An empty physical line after schema declaration cannot be a
+            # valid tab-separated connection record. Do not discard evidence.
+            if fields is not None:
+                raise ValueError("Blank physical line in Zeek records")
             continue
         if line.startswith("#close"):
             if (not line.startswith("#close\t") or not line[len("#close\t"):]
