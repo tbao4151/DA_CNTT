@@ -1,3 +1,7 @@
+## 2026-11-04: Reject blank physical lines after Zeek close (feature CI pending)
+
+- Rechecked `main` at `bdaa81402ba21ca43ca4fb1665fc2e64814d44d6` and no open PR. The offline Zeek parser previously skipped blank physical lines before checking the terminal `#close` state. Reject any additional physical line after `#close`, including blank lines, while preserving normal single trailing newline and legacy blank lines before close. Added synthetic regression. No capture, network, UNSW benchmark, model, SOC DB, Red execution or Windows laptop experiment. Feature CI not verified; G1–G8 remain pending student evidence.
+
 ## 2026-11-04: G1–G3 private evidence handoff (documentation-only; feature CI pending)
 
 - Rechecked `main` at `6ac6fd773eb7c76b3c4103b6889026d9657d1b56`; GitHub PR search returned no open PR at branch creation. Added `docs/G1_G3_PRIVATE_EVIDENCE_HANDOFF.md` as an operator-facing G1–G3 acceptance and provenance checklist linked to existing runbooks.
