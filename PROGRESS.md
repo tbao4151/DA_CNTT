@@ -1,3 +1,7 @@
+## 2026-11-04: Required Zeek field types — CI regression follow-up
+
+- PR #388 initial head `34702e0` failed Ubuntu quality #41765723345 and Windows offline #41765723392: 2 existing strict-reprocessing tests used invalid all-string `#types` fixtures. Real Zeek #41765723362 passed. Updated only `tests/test_zeek_reprocessing_compare.py` to generate canonical mandatory types, preserving the new parser validation. New exact-head CI pending; no laptop or VMware run claimed.
+
 ## 2026-11-04: Mandatory Zeek conn.log type declarations (feature CI pending)
 
 - Checked main at `4b6d6db804428de06d3b8e0eeec99d9e5c075f4a`, no open PR; #387 already merged. Validate declared `#types` for seven mandatory Zeek conn.log fields, refusing forged type claims before parsing any rows. Preserve optional-field handling and legacy minimal logs without `#types`. Added synthetic parameterized regression tests. Feature CI pending; no local VMware capture, model training, SOC database write, UNSW benchmark or Red execution. G1–G8 remain pending student evidence.
