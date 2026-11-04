@@ -134,7 +134,9 @@ def _extra_log(*, uid="A", conn_state="SF", history="ShADad", order=None,
     header += "#fields\t" + "\t".join(fields) + "\n"
     if typed:
         header += "#types\t" + "\t".join(
-            "time" if name == "ts" else "string" for name in fields
+            {"ts": "time", "id.orig_h": "addr", "id.resp_h": "addr",
+             "id.orig_p": "port", "id.resp_p": "port", "proto": "enum"}.get(name, "string")
+            for name in fields
         ) + "\n"
     return (header + "\t".join(row) + "\n").encode()
 
