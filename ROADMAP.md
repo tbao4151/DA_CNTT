@@ -1,3 +1,9 @@
+## 2026-11-04: Offline NEW-log review-to-SOC integration acceptance
+
+- [ ] Require exact feature-head CI and clean mergeability for the new synthetic integration regression; verify Windows Python 3.12.9 and Ubuntu quality checks before merge.
+- [ ] Confirm pinned NEW-log review creates no SQLite case, missing analyst confirmation fails without writing, and explicit confirmation creates/reuses only an Unclassified case with pinned evidence and a single creation audit event.
+- [ ] Student Windows: run `py -3.12 -m pytest -q tests/test_zeek_new_log_ui_partition.py tests/test_zeek_new_log_triage.py`. CI does not certify VMware isolation, original capture, independent labels or real attack detection; G1–G8 remain pending.
+
 ## 2026-11-04: CI-to-lab evidence handoff acceptance
 
 - [ ] Confirm exact feature-head CI and conflict-free merge for the documentation-only boundary update; no feature CI or student G1–G8 PASS is inferred from PR #389 checks.
