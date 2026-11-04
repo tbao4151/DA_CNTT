@@ -1,3 +1,9 @@
+## 2026-11-04: CI-to-lab evidence handoff acceptance
+
+- [ ] Confirm exact feature-head CI and conflict-free merge for the documentation-only boundary update; no feature CI or student G1–G8 PASS is inferred from PR #389 checks.
+- [ ] Student Windows: record Python version, repository SHA and targeted Zeek regression exit codes privately; complete authorization/isolation G1 before original bounded benign PCAP/Zeek G2–G3.
+- [ ] Next code slice: inspect existing NEW-log research candidate and explicit SOC-case tests, then add one non-duplicative offline end-to-end regression without claiming live detection.
+
 ## 2026-11-04: PR #389 remaining regression acceptance
 
 - [ ] Confirm Ubuntu quality, Windows offline and Real Zeek CI SUCCESS on the exact latest PR head, and clean mergeability before merge.

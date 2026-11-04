@@ -1,3 +1,8 @@
+## 2026-11-04: Verified CI versus VMware evidence boundary (documentation PR; CI pending)
+
+- Checked main at `f6804e8189e6f27d03f4e8003eb745ccfd46404b`, no open PR at start; PR #389 feature head `8c84cd3b` has three completed SUCCESS pull-request CI workflows (Ubuntu quality, Windows offline, Real Zeek synthetic). Post-merge main CI not verified by this query.
+- Added `docs/CI_TO_LAB_EVIDENCE_BOUNDARY_20261104.md` with an explicit reproducible operator handoff and next offline integration-test gate. Documentation only: no model, parser, dataset, case, attack, student laptop or VMware experiment changed. G1–G8 remain PENDING_STUDENT_EVIDENCE. New PR exact-head CI pending.
+
 ## 2026-11-04: PR #389 Ubuntu regression follow-up (final-head CI pending)
 
 - Exact-head `9be0f9e9` Real Zeek #41793892284 and Windows #41793892197 SUCCESS; Ubuntu #41793892292 FAILED (1949 passed, 2 failed, 2 skipped). Failures: `test_changed_source_bytes_invalidate_existing_annotations` and `test_reserved_test_reencoded_flow_rejected_before_display` used unknown Zeek comment markers rejected by the new strict parser.
