@@ -1,3 +1,8 @@
+## 2026-11-04: Required Zeek field types CI follow-up
+
+- [ ] Confirm updated feature-head Ubuntu, Windows and Real Zeek CI SUCCESS; PR #388 must remain open until clean mergeability and required checks are verified.
+- [ ] Verify strict-reprocessing fixture now declares time/addr/port/enum for required fields; do not relax parser validation or claim G1–G8 evidence.
+
 ## 2026-11-04: Mandatory Zeek field-type integrity (feature CI pending)
 
 - [ ] Confirm exact feature-head Ubuntu, Windows Python 3.12.9 and Real Zeek CI SUCCESS plus clean mergeability before merge.
