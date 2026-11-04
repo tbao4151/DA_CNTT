@@ -1,3 +1,8 @@
+## 2026-11-04: PR #389 Ubuntu regression follow-up (final-head CI pending)
+
+- Exact-head `9be0f9e9` Real Zeek #41793892284 and Windows #41793892197 SUCCESS; Ubuntu #41793892292 FAILED (1949 passed, 2 failed, 2 skipped). Failures: `test_changed_source_bytes_invalidate_existing_annotations` and `test_reserved_test_reencoded_flow_rejected_before_display` used unknown Zeek comment markers rejected by the new strict parser.
+- Updated only those two synthetic fixtures to insert valid `#unset_field\t-` before `#fields`, preserving changed source bytes and stable flow identity; no parser relaxation, no real capture, no student Windows/VMware experiment. Recheck exact final-head CI before merge; G1–G8 remain pending.
+
 ## 2026-11-04: PR #389 regression fixture repair (CI pending)
 
 - Initial PR head `e5ff2c7` failed Ubuntu and Windows CI because legacy synthetic fixtures inserted unrecognized `# harmless ...` markers. Replaced these in three affected test modules with recognized `#unset_field\t-` metadata before `#fields`, preserving changed raw digest and unchanged flow identity; parser strictness unchanged. This is a partial fixture repair; exact-head CI must pass before merge. No local Windows/VMware run, capture or G1–G8 acceptance claimed.
