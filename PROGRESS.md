@@ -1,3 +1,7 @@
+## 2026-11-04: PR #389 regression fixture repair (CI pending)
+
+- Initial PR head `e5ff2c7` failed Ubuntu and Windows CI because legacy synthetic fixtures inserted unrecognized `# harmless ...` markers. Replaced these in three affected test modules with recognized `#unset_field\t-` metadata before `#fields`, preserving changed raw digest and unchanged flow identity; parser strictness unchanged. This is a partial fixture repair; exact-head CI must pass before merge. No local Windows/VMware run, capture or G1–G8 acceptance claimed.
+
 ## 2026-11-04: Reject unknown Zeek control markers (feature CI pending)
 
 - Main `42bebdc88068aa235efe366b9f39ac3bf6908a6c`, no open PR at branch start. Previously unrecognized `#` lines were silently discarded even inside record sections. Fail closed on unknown control markers; preserve known Zeek metadata, record parsing, source hash and offline behavior. Added synthetic regression. Exact feature-head CI not yet verified; no student VMware experiment or G1–G8 acceptance claimed.
