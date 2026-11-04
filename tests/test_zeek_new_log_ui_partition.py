@@ -113,3 +113,56 @@ def test_streamlit_page_requires_manifest_fields_without_fabricated_success():
     assert any("Manifest SHA-256" in field.label for field in app.text_input)
     assert any("manifest TRAIN/VALIDATION/TEST" in field.label for field in app.text_input)
     assert not app.success
+
+
+def test_offline_new_log_review_requires_manual_confirmation_before_soc_case(tmp_path):
+    """Synthetic NEW-log -> pinned review -> explicit SOC write; never live."""
+    from blue_team_ai.new_log_triage import create_new_log_candidate_case
+    from siem_ai.core import case_evidence, case_history, list_cases
+
+    values, _ = _prepared(tmp_path)
+    review = prepare_new_log_review(**values)
+    assert review["candidate_rows"]
+    assert review["review"]["soc_cases_created"] is False
+
+    # The displayed row is 1-based, while the verified triage contract is 0-based.
+    selected = review["candidate_rows"][0]
+    index = selected["Zeek row"] - 1
+    db = tmp_path / "private-cyber-lab.sqlite3"
+    model = json.loads(values["model_path"].read_text(encoding="utf-8"))
+    triage = dict(
+        source_data=values["source_data"],
+        model=model,
+        report_data=values["report_data"],
+        expected_log_sha256=values["expected_log_sha256"],
+        model_sha256=values["expected_model_sha256"],
+        lab_cidrs=values["lab_cidrs"],
+        declared_dataset=values["declared_dataset"],
+        declared_manifest_sha256=values["declared_manifest_sha256"],
+        declared_captures=values["declared_captures"],
+        record_index=index,
+        analyst_confirmed=False,
+        operator_confirmed_authorized=True,
+        operator_confirmed_new_capture=True,
+    )
+    assert not db.exists()  # Preview must be read-only.
+    with pytest.raises(ValueError, match="Explicit analyst"):
+        create_new_log_candidate_case(db, **triage)
+    assert not db.exists()  # A candidate is not an automatic alert or case.
+
+    triage["analyst_confirmed"] = True
+    case_id = create_new_log_candidate_case(db, **triage)
+    cases = list_cases(db)
+    assert len(cases) == 1
+    assert cases.iloc[0]["case_id"] == case_id
+    assert cases.iloc[0]["verdict"] == "Unclassified"
+    assert cases.iloc[0]["state"] == "New"
+    assert "NOT a verified attack" in cases.iloc[0]["analyst_note"]
+    assert values["expected_log_sha256"] in cases.iloc[0]["analyst_note"]
+    assert values["expected_model_sha256"] in cases.iloc[0]["analyst_note"]
+    assert values["declared_manifest_sha256"] in cases.iloc[0]["analyst_note"]
+    assert case_evidence(db, case_id)["uid"] == selected["UID"]
+    assert len(case_history(db, case_id)) == 1
+    assert create_new_log_candidate_case(db, **triage) == case_id
+    assert len(list_cases(db)) == 1
+    assert len(case_history(db, case_id)) == 1

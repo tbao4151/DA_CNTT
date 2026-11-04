@@ -1,3 +1,7 @@
+## 2026-11-04: Pinned offline NEW-log review-to-SOC regression (feature CI pending)
+
+- Main reviewed at `f0e4d0805e3c6c296ecd2c895841b665e2f9ab6e`, no competing open PR. Added a synthetic-only integration regression in `tests/test_zeek_new_log_ui_partition.py`: pinned model/manifest/source review is read-only, explicit analyst confirmation is mandatory, and only then an Unclassified SOC case is created with source/model/manifest references and idempotent audit. This is test coverage of existing functions, not a new detector or a VMware experiment. Exact feature-head CI pending; G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-04: Verified CI versus VMware evidence boundary (documentation PR; CI pending)
 
 - Checked main at `f6804e8189e6f27d03f4e8003eb745ccfd46404b`, no open PR at start; PR #389 feature head `8c84cd3b` has three completed SUCCESS pull-request CI workflows (Ubuntu quality, Windows offline, Real Zeek synthetic). Post-merge main CI not verified by this query.
