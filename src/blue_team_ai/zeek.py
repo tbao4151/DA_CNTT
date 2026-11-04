@@ -200,8 +200,11 @@ def parse_zeek_conn_log(
                     raise ValueError("Invalid Zeek required field type")
             seen_types = True
             continue
-        if line.startswith("#") or not line:
-            continue
+        if line.startswith("#"):
+            # Unknown control lines after the schema could hide a forged
+            # segment boundary or metadata change. Refuse them rather than
+            # silently omitting source evidence.
+            raise ValueError("Unknown Zeek control marker")
         if fields is None:
             raise ValueError("Zeek record before fields header")
         seen_data = True
