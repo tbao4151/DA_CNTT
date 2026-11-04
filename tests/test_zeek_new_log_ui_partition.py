@@ -96,7 +96,7 @@ def test_reserved_test_exact_bytes_rejected_before_display(tmp_path):
 def test_reserved_test_reencoded_flow_rejected_before_display(tmp_path):
     values, manifest = _prepared(tmp_path)
     original = (manifest.parent / "host-2.log").read_bytes()
-    raw = original.replace(b"#fields\t", b"# harmless encoding comment\n#fields\t", 1)
+    raw = original.replace(b"#fields\t", b"#unset_field\t-\n#fields\t", 1)
     assert raw != original
     values, _ = _prepared(tmp_path, source_data=raw)
     with pytest.raises(ValueError, match="flow identity overlap"):
