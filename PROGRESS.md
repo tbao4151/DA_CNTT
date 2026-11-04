@@ -1,3 +1,7 @@
+## 2026-11-04: Reject unknown Zeek control markers (feature CI pending)
+
+- Main `42bebdc88068aa235efe366b9f39ac3bf6908a6c`, no open PR at branch start. Previously unrecognized `#` lines were silently discarded even inside record sections. Fail closed on unknown control markers; preserve known Zeek metadata, record parsing, source hash and offline behavior. Added synthetic regression. Exact feature-head CI not yet verified; no student VMware experiment or G1–G8 acceptance claimed.
+
 ## 2026-11-04: Required Zeek field types — CI regression follow-up
 
 - PR #388 initial head `34702e0` failed Ubuntu quality #41765723345 and Windows offline #41765723392: 2 existing strict-reprocessing tests used invalid all-string `#types` fixtures. Real Zeek #41765723362 passed. Updated only `tests/test_zeek_reprocessing_compare.py` to generate canonical mandatory types, preserving the new parser validation. New exact-head CI pending; no laptop or VMware run claimed.
