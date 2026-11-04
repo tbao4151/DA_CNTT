@@ -2225,3 +2225,8 @@ Giữ scope khả thi: UNSW-NB15 train/test thiếu IP và timestamp gốc; ch�
 - [ ] Verify final feature-head Ubuntu, Windows Python 3.12.9 and Real Zeek CI; merge only after success and no conflicts.
 - [ ] Run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py` on the student laptop; retain original authorized Host-only capture bytes and SHA-256 independently.
 - [ ] Independently verify lab isolation, provenance, labels, held-out performance and event-to-SOC latency. This parser regression does not establish detection efficacy.
+
+## 2026-11-04 — Blank Zeek record-section integrity
+
+- [ ] Verify final-head Ubuntu, Windows Python 3.12.9 and Real Zeek CI and merge only with no conflicts. Run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py` locally.
+- [ ] Preserve original authorized Host-only PCAP/Zeek and independent SHA-256 evidence; reject malformed logs rather than editing them to pass. Parser integrity is not proof of isolation, genuine labels, model quality or SOC latency.
