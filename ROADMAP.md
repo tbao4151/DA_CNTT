@@ -1,3 +1,9 @@
+## 2026-11-04: Unknown Zeek control-marker integrity (feature CI pending)
+
+- [ ] Verify Ubuntu, Windows Python 3.12.9 and Real Zeek exact-head CI, and clean mergeability before merge.
+- [ ] Synthetic tests reject unknown `#` control lines before and after schema declaration; known canonical headers and existing real Zeek fixture must continue to parse.
+- [ ] Student Windows: run `py -3.12 -m pytest -q tests/test_zeek_telemetry.py`; independently obtain original authorized VMware evidence and labels. G1–G8 remain pending.
+
 ## 2026-11-04: Required Zeek field types CI follow-up
 
 - [ ] Confirm updated feature-head Ubuntu, Windows and Real Zeek CI SUCCESS; PR #388 must remain open until clean mergeability and required checks are verified.
