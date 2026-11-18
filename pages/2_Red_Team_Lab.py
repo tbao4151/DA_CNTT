@@ -1,6 +1,7 @@
 """Non-executing Red Team scenario-planning UI; no live attack capability."""
 from __future__ import annotations
 
+import html
 import json
 import sys
 from datetime import datetime, timezone
@@ -10,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 from red_team_ai.scenario_policy import SCENARIOS, choose_scenario, summarize_feedback
@@ -18,23 +20,59 @@ from red_team_ai.planning_audit import (
     export_planning_audit, extract_manual_feedback,
 )
 from red_team_ai.synthetic_benchmark import compare_synthetic_policies
+from siem_ai.ui_components import (
+    render_empty_state,
+    render_footer,
+    render_mode_banner,
+    render_provenance_strip,
+    render_sidebar_brand,
+    style_chart,
+)
 
 st.set_page_config(page_title="DA005 | Red Team Lab", page_icon=None, layout="wide")
 st.markdown(
     "<style>" + (ROOT / "src/siem_ai/ui.css").read_text(encoding="utf-8") + "</style>",
     unsafe_allow_html=True,
 )
-st.sidebar.markdown("### SENTINEL LAB / RED TEAM")
-st.sidebar.caption("Offline scenario planner · research preview")
-st.sidebar.error("EXECUTION OFF · Không gửi lưu lượng mạng")
-st.sidebar.caption("Chuyển sang Cyber Lab để xem log Zeek hoặc Dataset Mode để đánh giá UNSW.")
+
+render_sidebar_brand(
+    workspace_title="Red Team · Simulation",
+    workspace_mode="Execution OFF",
+    mode_variant="red",
+)
+st.sidebar.markdown("### Trạng thái mô phỏng")
+st.sidebar.markdown(
+    '<div class="soc-sidebar-flag soc-sidebar-flag--red">'
+    '<strong>EXECUTION OFF</strong><br>'
+    'Chỉ lập kế hoạch kịch bản trong danh mục cố định; không phát lưu lượng mạng.'
+    '</div>',
+    unsafe_allow_html=True,
+)
+st.sidebar.caption("Chuyển sang Dataset Mode (app) hoặc Cyber Lab để xem log Blue Team.")
 
 st.title("Red Team Lab · Scenario Planner")
-st.caption("DA005 / TDTU · UCB1 versus seeded random · offline-only")
-st.warning(
-    "Trang này CHỈ chọn nhãn kịch bản trong danh mục cố định. Không phát traffic, "
-    "không điều khiển VMware, không khai thác mục tiêu và không kết nối Blue Team. "
-    "Phản hồi do người dùng nhập chưa được xác minh bằng log hoặc bằng chứng SOC."
+st.markdown(
+    '<section class="soc-hero soc-hero--red">'
+    '<div class="soc-hero__eyebrow">TDTU / DA005 · Attack Simulation Planner · Non-Executing Sandbox</div>'
+    '<h2>Trình lập kế hoạch &amp; đánh giá chính sách kịch bản (UCB1 vs Random)</h2>'
+    '<div class="soc-hero__description">Thử nghiệm chiến lược chọn kịch bản kiểm thử trên danh mục cố định bằng thuật toán UCB1 và Seeded Random. '
+    'Hoàn toàn ngoại tuyến; không kết nối VMware, không phát gói tin tấn công, không tự động đánh giá Blue Team.</div>'
+    '<div class="soc-hero__meta">'
+    '<span class="soc-pill soc-pill--red">EXECUTION OFF · Không gửi lưu lượng mạng</span>'
+    '<span class="soc-pill">Danh mục cố định (Không payload/exploit)</span>'
+    '<span class="soc-pill">Tách biệt hoàn toàn khỏi Detection SOC</span>'
+    '</div></section>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    render_mode_banner(
+        "SIMULATION PLANNER · EXECUTION OFF",
+        "Môi trường lập kế hoạch kịch bản kiểm thử — Không phải dữ liệu hay tấn công thật",
+        "Trang này CHỈ chọn nhãn kịch bản trong danh mục cố định và chạy thí nghiệm Bernoulli tổng hợp. "
+        "Phản hồi do người dùng nhập chưa được xác minh bằng log hay bằng chứng SOC.",
+        variant="red",
+    ),
+    unsafe_allow_html=True,
 )
 
 if "red_team_audit_events" not in st.session_state:
@@ -46,12 +84,23 @@ feedback = extract_manual_feedback(st.session_state["red_team_audit_events"])
 st.session_state["red_team_feedback"] = feedback
 pending_id = audit["pending_proposal_id"]
 summary = summarize_feedback(feedback)
+
 col1, col2, col3 = st.columns(3)
 col1.metric("Kịch bản offline", len(SCENARIOS))
 col2.metric("Phản hồi thủ công", summary["total"])
 col3.metric("Kết nối mạng", "TẮT")
 
-st.markdown("### Danh mục kiểm thử được định nghĩa sẵn")
+st.markdown(
+    render_provenance_strip([
+        ("Chế độ thực thi", "EXECUTION OFF (Chỉ lập kế hoạch)"),
+        ("Truy cập mạng / VMware", "DISABLED (False)"),
+        ("Số đề xuất trong phiên", f"{audit['proposals']} / {MAX_PROPOSALS}"),
+        ("Đề xuất chờ phản hồi", f"Proposal #{pending_id}" if pending_id is not None else "Không có"),
+    ]),
+    unsafe_allow_html=True,
+)
+
+st.markdown("### 1. Danh mục kiểm thử được định nghĩa sẵn")
 st.dataframe(
     pd.DataFrame([{
         "ID": s.scenario_id, "Kịch bản": s.title,
@@ -62,12 +111,16 @@ st.dataframe(
 )
 st.caption("Danh mục chỉ chứa mô tả; không chứa IP, lệnh, payload hoặc tệp thực thi.")
 
-st.markdown("### Tác nhân lựa chọn kịch bản")
-strategy = st.radio(
+st.markdown("### 2. Tác nhân lựa chọn kịch bản")
+p_col1, p_col2 = st.columns([1.4, 1])
+strategy = p_col1.radio(
     "Chiến lược lựa chọn", ["ucb1", "random"], horizontal=True,
     format_func=lambda v: "UCB1 (exploration/exploitation)" if v == "ucb1" else "Random baseline",
 )
-seed = st.number_input("Seed của random baseline", min_value=0, max_value=1_000_000, value=42, disabled=strategy != "random")
+seed = p_col2.number_input(
+    "Seed của random baseline", min_value=0, max_value=1_000_000, value=42,
+    disabled=strategy != "random",
+)
 if st.button(
     "Đề xuất kịch bản (không thực thi)", type="primary",
     disabled=pending_id is not None or audit["proposals"] >= MAX_PROPOSALS,
@@ -90,7 +143,24 @@ if pending_id is not None:
 if plan is not None:
     st.success(f"Đề xuất: {plan['title']} ({plan['scenario_id']})")
     st.caption(plan["rationale"])
-    st.json(plan)
+    st.markdown(
+        '<div class="soc-card">'
+        '<div class="soc-card__header">'
+        f'<div><div class="soc-card__title">Kế hoạch đang chờ phản hồi: {html.escape(str(plan.get("title", "")))}</div>'
+        f'<div class="soc-card__sub">Scenario ID: <span class="soc-mono">{html.escape(str(plan.get("scenario_id", "")))}</span> · '
+        f'Chiến lược: <span class="soc-mono">{html.escape(str(plan.get("strategy", "")).upper())}</span></div></div>'
+        '<span class="soc-badge soc-badge--red">[EXECUTION OFF]</span>'
+        '</div>'
+        '<div class="soc-kv-grid">'
+        f'<div class="soc-kv-item"><div class="soc-kv-label">Danh mục</div><div class="soc-kv-value">{html.escape(str(plan.get("category", "")))}</div></div>'
+        f'<div class="soc-kv-item"><div class="soc-kv-label">Execution Enabled</div><div class="soc-kv-value">{html.escape(str(plan.get("execution_enabled", False)))}</div></div>'
+        f'<div class="soc-kv-item"><div class="soc-kv-label">Network Access</div><div class="soc-kv-value">{html.escape(str(plan.get("network_access", False)))}</div></div>'
+        f'<div class="soc-kv-item"><div class="soc-kv-label">Feedback Origin</div><div class="soc-kv-value">{html.escape(str(plan.get("feedback_origin", "")))}</div></div>'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
+    with st.expander("Xem chi tiết JSON kế hoạch gốc", expanded=False):
+        st.json(plan)
     st.download_button(
         "Xuất kế hoạch JSON (không có lệnh thực thi)",
         data=json.dumps(plan, ensure_ascii=False, indent=2),
@@ -98,11 +168,12 @@ if plan is not None:
     )
 
 st.divider()
-st.markdown("### Phản hồi giả lập do người vận hành nhập")
+st.markdown("### 3. Phản hồi giả lập do người vận hành nhập")
 st.caption(
     "Chỉ dùng để minh họa cách UCB1 cập nhật lựa chọn. Không nhập kết quả giả làm đo lường thực nghiệm. "
     "Không tự động đánh giá Blue Team; không lưu xuống đĩa."
 )
+# Note: keep this selectbox as the first st.selectbox on the page (test contract).
 with st.form("manual_red_team_feedback", clear_on_submit=True):
     chosen_id = st.selectbox(
         "Kịch bản đã được đề xuất (chỉ phản hồi cho đề xuất đang chờ)",
@@ -127,7 +198,7 @@ if summary["total"]:
     st.dataframe(pd.DataFrame(summary["scenarios"]), hide_index=True, use_container_width=True)
     st.caption("Unflagged fraction là phản hồi tự nhập, không phải attack success rate hoặc AI recall.")
 
-st.markdown("### Timeline đề xuất và phản hồi ngoại tuyến")
+st.markdown("### 4. Timeline đề xuất và phản hồi ngoại tuyến")
 st.caption(
     "Chỉ lưu trong phiên Streamlit: proposal ID, chính sách, seed, UTC và phản hồi tự nhập. "
     "Không có thời điểm phát traffic, AI alert hay xác nhận Blue Team. "
@@ -141,19 +212,27 @@ if audit["events"]:
         file_name="red_team_offline_planning_audit.json", mime="application/json",
     )
 else:
-    st.info("Chưa có đề xuất hoặc phản hồi nào trong phiên lập kế hoạch.")
+    st.markdown(
+        render_empty_state(
+            "Chưa có đề xuất hoặc phản hồi nào trong phiên lập kế hoạch",
+            "Nhấn 'Đề xuất kịch bản (không thực thi)' ở mục 2 để khởi tạo đề xuất đầu tiên trong timeline phiên làm việc.",
+        ),
+        unsafe_allow_html=True,
+    )
 
-if st.button("Dừng phiên lập kế hoạch và xóa phản hồi", type="secondary"):
-    st.session_state["red_team_audit_events"] = []
-    st.session_state["red_team_feedback"] = []
-    st.session_state.pop("red_team_last_plan", None)
-    st.session_state.pop("red_team_synthetic_comparison", None)
-    st.rerun()
-
-st.info("Không có tiến trình tấn công để dừng. Tính năng kill switch cho traffic thật chưa được triển khai.")
+act_col1, act_col2 = st.columns([1.2, 2])
+with act_col1:
+    if st.button("Dừng phiên lập kế hoạch và xóa phản hồi", type="secondary"):
+        st.session_state["red_team_audit_events"] = []
+        st.session_state["red_team_feedback"] = []
+        st.session_state.pop("red_team_last_plan", None)
+        st.session_state.pop("red_team_synthetic_comparison", None)
+        st.rerun()
+with act_col2:
+    st.info("Không có tiến trình tấn công để dừng. Tính năng kill switch cho traffic thật chưa được triển khai.")
 
 st.divider()
-st.markdown("### So sánh UCB1 và Random trên dữ liệu TỔNG HỢP")
+st.markdown("### 5. So sánh UCB1 và Random trên dữ liệu TỔNG HỢP (Bernoulli Simulation)")
 st.warning(
     "Đây là thí nghiệm mô phỏng Bernoulli có xác suất được đặt trước, KHÔNG có "
     "Blue Team AI thật, log VMware hay hoạt động tấn công. Kết quả KHÔNG phải "
@@ -173,7 +252,7 @@ simulation = st.session_state.get("red_team_synthetic_comparison")
 if simulation:
     comparison_rows = [
         {
-            "Chiến lược": strategy.upper(),
+            "Chiến lược": pol.upper(),
             "Tỷ lệ unflagged mô phỏng (trung bình)": round(
                 details["mean_synthetic_unflagged_fraction"], 4
             ),
@@ -182,11 +261,35 @@ if simulation:
             ),
             "Tổng lượt chọn": sum(details["selection_counts"].values()),
         }
-        for strategy, details in simulation["policies"].items()
+        for pol, details in simulation["policies"].items()
     ]
-    st.dataframe(pd.DataFrame(comparison_rows), hide_index=True, use_container_width=True)
+    comp_df = pd.DataFrame(comparison_rows)
+    st.dataframe(comp_df, hide_index=True, use_container_width=True)
+
+    c_left, c_right = st.columns(2)
+    with c_left:
+        fig_unflagged = px.bar(
+            comp_df,
+            x="Chiến lược",
+            y="Tỷ lệ unflagged mô phỏng (trung bình)",
+            color="Chiến lược",
+            color_discrete_sequence=["#b91c1c", "#64748b"],
+            labels={"Tỷ lệ unflagged mô phỏng (trung bình)": "Tỷ lệ unflagged (mô phỏng)"},
+        )
+        st.plotly_chart(style_chart(fig_unflagged, height=270), use_container_width=True)
+    with c_right:
+        fig_regret = px.bar(
+            comp_df,
+            x="Chiến lược",
+            y="Expected pseudo-regret (trung bình)",
+            color="Chiến lược",
+            color_discrete_sequence=["#0f766e", "#64748b"],
+            labels={"Expected pseudo-regret (trung bình)": "Expected pseudo-regret (thấp hơn = tốt hơn)"},
+        )
+        st.plotly_chart(style_chart(fig_regret, height=270), use_container_width=True)
+
     st.caption(
-        "Hai thuật toán dùng cùng các kết quả Bernoulli tiềm năng cho mỗi kịch bản/lượt. "
+        "Dữ liệu mô phỏng Bernoulli tổng hợp: hai thuật toán dùng cùng các kết quả tiềm năng cho mỗi kịch bản/lượt. "
         "Pseudo-regret dựa trên xác suất giả định, không phải độ trễ phát hiện hay số lần tấn công thật."
     )
     st.download_button(
@@ -195,3 +298,5 @@ if simulation:
         file_name="red_team_synthetic_policy_comparison.json",
         mime="application/json",
     )
+
+st.markdown(render_footer(), unsafe_allow_html=True)

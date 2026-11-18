@@ -40,8 +40,11 @@ Phía trên màn hình có nhắc **chế độ mô phỏng**, không có IP và
 
 **Bằng chứng nên lưu:** ảnh màn hình thật ở cả 5 tab, dòng `LOCAL VERIFICATION PASSED`, tệp `artifacts/local_verification.json` lưu **cục bộ**, bản JSON hồ sơ điều tra. Không giả lập chứng cứ local từ GitHub CI.
 
-## 5. Nguyên tắc giao diện
+## 5. Nguyên tắc giao diện & Phân hệ trong Sentinel Lab
 
-Thiết kế mới áp dụng hướng dẫn [UI UX Pro Max](https://github.com/tbao4151/ui-ux-skill): ưu tiên tương phản chữ, phân cấp rõ, điều khiển truy cập được bằng bàn phím, dữ liệu và trạng thái có nhãn, màu sắc nhất quán và bố cục phân tích gọn. Chủ đạo: nền sáng, thẻ trắng, sidebar xanh navy, xanh dương cho thao tác, xanh ngọc cho dữ liệu thứ hai. Tránh “neon cybersecurity” vì dễ giảm khả năng đọc liên tục.
+Thiết kế mới áp dụng hướng dẫn [UI UX Pro Max](https://github.com/tbao4151/ui-ux-skill) và hệ thống tokens tập trung trong `src/siem_ai/ui.css` + `src/siem_ai/ui_components.py`: ưu tiên tương phản chữ chuẩn WCAG AA, font monospace/tabular cho IP, port, `flow_ref`, `uid` và SHA-256, phân cấp rõ, điều khiển truy cập được bằng bàn phím, dữ liệu và trạng thái có nhãn, màu sắc nhất quán và bố cục phân tích gọn.
+
+- **Bản đồ 4 phân hệ trên Sidebar:** phân tách trực quan **Dataset Mode (`app.py`)** (xanh navy/cobalt, dữ liệu lịch sử UNSW-NB15), **Blue Team Lab (`Cyber_Lab`, `New_Log_Review`)** (xanh teal, đọc `conn.log` Zeek ngoại tuyến & xác minh SHA-256), và **Red Team Lab (`Red_Team_Lab`)** (đỏ cảnh báo `EXECUTION OFF`, lập kế hoạch kịch bản UCB1 vs. Random không phát lưu lượng).
+- **Hỗ trợ điều tra SOC trực quan:** phân tầng mức ưu tiên theo xác suất mô hình (`[CRIT] >= 0.90`, `[HIGH] 0.80–0.89`, `[MED] 0.65–0.79`, `[LOW] 0.50–0.64`), ma trận nhầm lẫn 2x2 kèm diễn giải FP/FN trên tab **AI & đánh giá**, thẻ tóm tắt Flow Evidence trước khi tạo case, và bố cục Master-Detail 2 cột ở tab **SOC case management**.
 
 Giao diện không thay đổi thuật toán AI, ngưỡng 0,8 mặc định của Alert Queue, định dạng dữ liệu, schema SQLite hoặc API tạo/xuất case.
