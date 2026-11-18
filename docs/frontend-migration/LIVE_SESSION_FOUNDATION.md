@@ -33,3 +33,7 @@ This branch adds a bounded synthetic event-stream foundation, NOT deployed attac
 5. Produce Step-by-Step and One-Click workflows from actual observations; PDF reports follow verified measurements.
 
 No real attack, live Zeek test, successful CI run, browser screenshot, or model metric is claimed here.
+
+## Stop cancellation regression follow-up (2026-11-18)
+
+The backend now checks terminal session state after each synthetic replay delay before emitting the next stage. Repeated Stop requests must be idempotent; no Zeek/Blue/SOC stage may appear after the operator stop event. This is a synthetic-only concurrency regression, not a VMware or AI inference validation. CI and Windows execution on this follow-up branch remain pending until separately verified.
