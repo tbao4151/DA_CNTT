@@ -65,7 +65,7 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
 function assertSyntheticSession(value: LiveSession): LiveSession {
   if (
     value.mode !== "synthetic_replay" ||
-    value.provenance.source !== "synthetic_replay" ||
+    value.provenance.source !== "hardcoded_synthetic_zeek_fixture" ||
     value.provenance.network_execution !== false ||
     value.provenance.vmware_connected !== false ||
     value.provenance.ai_detection_executed !== false ||
