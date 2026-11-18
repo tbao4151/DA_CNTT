@@ -103,6 +103,7 @@ export default function AutomatedLabPage() {
     if (!session?.session_id || session.status !== "running") return;
     const sessionId = session.session_id;
     let active = true;
+    let provenanceRejected = false;
     const source = new EventSource(
       API_BASE_URL + "/live-sessions/" + encodeURIComponent(sessionId) + "/events"
     );
@@ -115,7 +116,9 @@ export default function AutomatedLabPage() {
         event = JSON.parse((message as MessageEvent).data) as LiveEvent;
         if (event.source !== "synthetic_replay") throw new Error("Sai nguồn dữ liệu");
       } catch {
+        provenanceRejected = true;
         source.close();
+        setSession(null);
         setStreamStatus("SSE chứa dữ liệu không hợp lệ · Đã ngắt stream");
         setError("Sự kiện không có provenance SYNTHETIC REPLAY hợp lệ. Không hiển thị.");
         return;
@@ -146,7 +149,7 @@ export default function AutomatedLabPage() {
 
     // Fallback also resolves terminal state if a final SSE event was lost.
     const timer = window.setInterval(() => {
-      if (active) void refresh(sessionId).catch((err) => {
+      if (active && !provenanceRejected) void refresh(sessionId).catch((err) => {
         if (!active) return;
         setSession(null);
         setStreamStatus("Đã dừng đồng bộ do phản hồi không hợp lệ");
