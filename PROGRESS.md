@@ -1,3 +1,7 @@
+## 2026-11-18: Next.js synthetic session provenance guard (feature CI pending)
+
+- Based on PR #393 synthetic SSE foundation branch. Frontend now rejects snapshots with non-synthetic mode/source, network/VMware/AI flags, nonzero verified alerts or mismatched event source; SSE progress events with wrong provenance are not rendered. This is UI fail-closed labeling only; no local browser run, Windows test, VMware capture, AI inference, or benchmark claimed. Exact feature-head CI pending.
+
 ## 2026-11-04: NEW-log SOC write-boundary tamper regression (feature CI pending)
 
 - On main after PR #391, no competing open PR was returned. Added synthetic parameterized regression verifying that mutating Zeek source bytes, changing research report semantics, or substituting the model SHA after a successful read-only preview fails closed at the explicit SOC write boundary without creating SQLite. Existing runtime, model, UNSW benchmark, Red Team and private evidence remain untouched. Exact feature-head CI and Windows/VMware student evidence are NOT verified; G1–G8 remain PENDING_STUDENT_EVIDENCE.

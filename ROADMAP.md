@@ -1,3 +1,8 @@
+## 2026-11-18: Frontend live-session provenance guard acceptance
+
+- [ ] Validate Next.js typecheck/build and browser start/stream/stop/report on the feature head, including a deliberately mismatched snapshot/SSE source; reject without presenting as live telemetry.
+- [ ] Verify PR #393 SSE foundation exact-head CI and API contract before merging dependent frontend PR; keep synthetic replay clearly separate from original VMware evidence.
+
 ## 2026-11-04: SOC write-boundary evidence immutability acceptance
 
 - [ ] Verify Ubuntu and Windows Python 3.12.9 CI on the exact feature head and clean mergeability before merge.
