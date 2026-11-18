@@ -1,3 +1,7 @@
+## 2026-11-04: NEW-log SOC write-boundary tamper regression (feature CI pending)
+
+- On main after PR #391, no competing open PR was returned. Added synthetic parameterized regression verifying that mutating Zeek source bytes, changing research report semantics, or substituting the model SHA after a successful read-only preview fails closed at the explicit SOC write boundary without creating SQLite. Existing runtime, model, UNSW benchmark, Red Team and private evidence remain untouched. Exact feature-head CI and Windows/VMware student evidence are NOT verified; G1–G8 remain PENDING_STUDENT_EVIDENCE.
+
 ## 2026-11-04: Pinned offline NEW-log review-to-SOC regression (feature CI pending)
 
 - Main reviewed at `f0e4d0805e3c6c296ecd2c895841b665e2f9ab6e`, no competing open PR. Added a synthetic-only integration regression in `tests/test_zeek_new_log_ui_partition.py`: pinned model/manifest/source review is read-only, explicit analyst confirmation is mandatory, and only then an Unclassified SOC case is created with source/model/manifest references and idempotent audit. This is test coverage of existing functions, not a new detector or a VMware experiment. Exact feature-head CI pending; G1–G8 remain PENDING_STUDENT_EVIDENCE.
