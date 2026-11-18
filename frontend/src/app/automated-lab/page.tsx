@@ -146,7 +146,12 @@ export default function AutomatedLabPage() {
 
     // Fallback also resolves terminal state if a final SSE event was lost.
     const timer = window.setInterval(() => {
-      if (active) void refresh(sessionId).catch(() => {});
+      if (active) void refresh(sessionId).catch((err) => {
+        if (!active) return;
+        setSession(null);
+        setStreamStatus("Đã dừng đồng bộ do phản hồi không hợp lệ");
+        setError(err instanceof Error ? err.message : "Không xác minh được dữ liệu phiên. Đã ẩn session.");
+      });
     }, 1800);
 
     return () => {
