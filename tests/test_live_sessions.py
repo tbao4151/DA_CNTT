@@ -89,3 +89,27 @@ def test_completed_replay_has_true_provenance_and_all_stages():
         assert client.get(f"/api/v1/live-sessions/{sid}/report").json()[
             "verified_detection_metrics"
         ] is None
+
+
+def test_stop_prevents_late_replay_stages_and_is_idempotent():
+    """A cancelled replay cannot append synthetic Zeek/Blue/SOC stages after stop."""
+    with TestClient(create_app()) as client:
+        started = client.post(
+            "/api/v1/live-sessions",
+            json={"mode": "synthetic_replay", "rounds": 4},
+        )
+        assert started.status_code == 201
+        sid = started.json()["session_id"]
+        stopped = client.post(f"/api/v1/live-sessions/{sid}/stop")
+        assert stopped.status_code == 200
+        first = stopped.json()
+        assert first["status"] == "stopped"
+        assert client.post(f"/api/v1/live-sessions/{sid}/stop").json() == first
+        time.sleep(0.9)
+        final = client.get(f"/api/v1/live-sessions/{sid}").json()
+        assert final == first
+        assert final["events"][-1]["stage"] == "system"
+        assert final["events"][-1]["message"] == "Người vận hành đã dừng phiên replay."
+        report = client.get(f"/api/v1/live-sessions/{sid}/report").json()
+        assert report["verified_ai_alerts"] == 0
+        assert report["real_network_flows"] == 0
