@@ -62,6 +62,23 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+function assertSyntheticSession(value: LiveSession): LiveSession {
+  if (
+    value.mode !== "synthetic_replay" ||
+    value.provenance.source !== "hardcoded_synthetic_zeek_fixture" ||
+    value.provenance.network_execution !== false ||
+    value.provenance.vmware_connected !== false ||
+    value.provenance.ai_detection_executed !== false ||
+    value.provenance.verified_attack_events !== 0 ||
+    value.provenance.verified_ai_alerts !== 0 ||
+    !Array.isArray(value.events) ||
+    value.events.some((event) => event.source !== "synthetic_replay")
+  ) {
+    throw new Error("Phản hồi session không khớp hợp đồng SYNTHETIC REPLAY. Từ chối hiển thị để tránh nhầm với dữ liệu live.");
+  }
+  return value;
+}
+
 function formatTime(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleTimeString("vi-VN");
@@ -79,13 +96,14 @@ export default function AutomatedLabPage() {
     const next = await apiRequest<LiveSession>(
       "/live-sessions/" + encodeURIComponent(sessionId)
     );
-    setSession(next);
+    setSession(assertSyntheticSession(next));
   }, []);
 
   useEffect(() => {
     if (!session?.session_id || session.status !== "running") return;
     const sessionId = session.session_id;
     let active = true;
+    let provenanceRejected = false;
     const source = new EventSource(
       API_BASE_URL + "/live-sessions/" + encodeURIComponent(sessionId) + "/events"
     );
@@ -93,7 +111,18 @@ export default function AutomatedLabPage() {
 
     source.addEventListener("progress", (message) => {
       if (!active) return;
-      const event = JSON.parse((message as MessageEvent).data) as LiveEvent;
+      let event: LiveEvent;
+      try {
+        event = JSON.parse((message as MessageEvent).data) as LiveEvent;
+        if (event.source !== "synthetic_replay") throw new Error("Sai nguồn dữ liệu");
+      } catch {
+        provenanceRejected = true;
+        source.close();
+        setSession(null);
+        setStreamStatus("SSE chứa dữ liệu không hợp lệ · Đã ngắt stream");
+        setError("Sự kiện không có provenance SYNTHETIC REPLAY hợp lệ. Không hiển thị.");
+        return;
+      }
       setSession((prev) => {
         if (!prev || prev.session_id !== sessionId) return prev;
         if (prev.events.some((item) => item.seq === event.seq)) return prev;
@@ -108,7 +137,10 @@ export default function AutomatedLabPage() {
 
     source.addEventListener("complete", () => {
       source.close();
-      if (active) void refresh(sessionId).catch(() => {});
+      if (active) {
+        setStreamStatus("Phiên kết thúc · SSE đã đóng");
+        void refresh(sessionId).catch((err) => setError(err instanceof Error ? err.message : "Không đồng bộ được phiên"));
+      }
     });
     source.onerror = () => {
       source.close();
@@ -117,7 +149,12 @@ export default function AutomatedLabPage() {
 
     // Fallback also resolves terminal state if a final SSE event was lost.
     const timer = window.setInterval(() => {
-      if (active) void refresh(sessionId).catch(() => {});
+      if (active && !provenanceRejected) void refresh(sessionId).catch((err) => {
+        if (!active) return;
+        setSession(null);
+        setStreamStatus("Đã dừng đồng bộ do phản hồi không hợp lệ");
+        setError(err instanceof Error ? err.message : "Không xác minh được dữ liệu phiên. Đã ẩn session.");
+      });
     }, 1800);
 
     return () => {
@@ -131,13 +168,14 @@ export default function AutomatedLabPage() {
     setBusy(true);
     setError(null);
     setSession(null);
+    setStreamStatus("Chưa kết nối");
     try {
       const started = await apiRequest<LiveSession>("/live-sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "synthetic_replay", strategy, rounds }),
       });
-      setSession(started);
+      setSession(assertSyntheticSession(started));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể tạo phiên.");
     } finally {
@@ -154,7 +192,7 @@ export default function AutomatedLabPage() {
         "/live-sessions/" + encodeURIComponent(session.session_id) + "/stop",
         { method: "POST" }
       );
-      setSession(stopped);
+      setSession(assertSyntheticSession(stopped));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể dừng phiên.");
     } finally {
