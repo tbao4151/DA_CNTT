@@ -1338,6 +1338,10 @@ def create_app() -> FastAPI:
                 detail="Không thể đọc chi tiết hồ sơ SOC riêng tư.",
             ) from exc
 
+    # Bounded offline-only replay sessions; no VMware access or model inference.
+    from .live_sessions import create_live_router
+    app.include_router(create_live_router(_SYNTHETIC_ZEEK_SAMPLE))
+
     return app
 
 

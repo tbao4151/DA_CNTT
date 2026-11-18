@@ -57,6 +57,13 @@ const NAV_ITEMS: NavItem[] = [
     group: "red",
     icon: FlaskConical,
   },
+  {
+    href: "/automated-lab",
+    label: "Dual-AI Live Monitor",
+    subtitle: "SYNTHETIC REPLAY · SSE",
+    group: "red",
+    icon: Activity,
+  },
 ];
 
 export function AppShell({
