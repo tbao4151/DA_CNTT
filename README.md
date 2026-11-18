@@ -266,3 +266,37 @@ A Windows **guest-side** read-only NIC/IPv4/IPv6/default-route/DNS snapshot coll
 
 
 Cyber Lab có thêm công cụ **đối chiếu cấu hình host/guest ngoại tuyến**: `scripts/check_paired_network_preflight.py` (hướng dẫn tại [WINDOWS_PAIRED_NETWORK_PREFLIGHT.md](docs/WINDOWS_PAIRED_NETWORK_PREFLIGHT.md)). Công cụ chỉ đối chiếu hai snapshot SHA-256 đã khai báo, không xác nhận cô lập VMware, không phát lưu lượng và không tạo cảnh báo tấn công.
+
+
+## Giao diện SOC Next.js + FastAPI (`/api/v1`)
+
+Ngoài giao diện Streamlit gốc, nhánh này cung cấp kiến trúc frontend hiện đại **Next.js (App Router, TypeScript, Tailwind CSS) + FastAPI (`/api/v1`)** bọc trực tiếp các module nghiệp vụ Python trong `src/siem_ai/`, `src/blue_team_ai/`, `src/red_team_ai/` và `scripts/triage_zeek_new_log.py`.
+
+### Khởi chạy nhanh trên Windows (PowerShell)
+
+1. Cài dependencies Python (nếu chưa cài FastAPI/Uvicorn):
+   ```powershell
+   E:\DA_CNTT\.venv\Scripts\python.exe -m pip install -r requirements-app.txt
+   ```
+2. Mở terminal 1 để chạy **FastAPI backend** (`http://127.0.0.1:8000`):
+   ```powershell
+   .\start_backend.ps1
+   ```
+3. Mở terminal 2 để chạy **Next.js frontend** (`http://127.0.0.1:3000`):
+   ```powershell
+   .\start_frontend.ps1
+   ```
+4. Truy cập trình duyệt tại `http://127.0.0.1:3000` (các route: `/`, `/cyber-lab`, `/red-team-lab`, `/new-log-review`).
+
+Tài liệu kiến trúc, đối chiếu tính năng, kịch bản demo và kết quả kiểm thử trình duyệt nằm trong:
+- [docs/frontend-migration/ARCHITECTURE.md](docs/frontend-migration/ARCHITECTURE.md)
+- [docs/frontend-migration/FEATURE_PARITY_MATRIX.md](docs/frontend-migration/FEATURE_PARITY_MATRIX.md)
+- [docs/frontend-migration/VISUAL_QA.md](docs/frontend-migration/VISUAL_QA.md)
+- [docs/frontend-migration/DEMO_SCRIPT.md](docs/frontend-migration/DEMO_SCRIPT.md)
+
+### Fallback / Rollback về Streamlit
+
+Giao diện Streamlit (`app.py` và `pages/*.py`) vẫn được giữ nguyên toàn vẹn. Khi cần quay lại Streamlit dự phòng:
+```powershell
+streamlit run app.py
+```
