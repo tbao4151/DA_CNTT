@@ -10,3 +10,8 @@ runtime/
 artifacts/
 .streamlit/secrets.toml
 .DS_Store
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.playwright-artifacts/
+*.tsbuildinfo
