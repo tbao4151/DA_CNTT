@@ -90,6 +90,37 @@ def test_report_rows_matched_to_exact_original_uid_and_scope(tmp_path):
     assert result["independent_research_digest_supplied"] is True
 
 
+def test_operator_owned_zeek_snapshot_receipt_is_audited_offline(tmp_path):
+    _, receipt, data, _, _ = _fixture(tmp_path)
+    data["remote_path"] = (
+        "/home/da005/da005-private-logs/conn-20261119T181442.log"
+    )
+    receipt.write_text(json.dumps(data), encoding="utf-8")
+    expected = hashlib.sha256(receipt.read_bytes()).hexdigest()
+    result = verify_bundle(receipt, expected_receipt_sha256=expected)
+    assert result["receipt_source_consistency_checked"] is True
+    assert result["flow_count"] == 2
+    assert result["physical_vmware_isolation_verified"] is False
+    assert result["packet_to_flow_causality_verified"] is False
+
+
+@pytest.mark.parametrize("bad_path", [
+    "/home/other/da005-private-logs/conn-20261119T181442.log/../conn.log",
+    "/home/da005/da005-private-logs/conn-20261119T181442.log;id",
+    "/home/da005/da005-private-logs/conn-20261119T181442.log\n",
+    "/home/da005/da005-private-logs/conn-20261119T181442.txt",
+    "/home/da005/../root/da005-private-logs/conn-20261119T181442.log",
+    "/home/da005/da005-private-logs/../../../etc/shadow",
+    "/etc/passwd",
+])
+def test_operator_owned_receipt_path_must_be_strictly_scoped(tmp_path, bad_path):
+    _, receipt, data, _, _ = _fixture(tmp_path)
+    data["remote_path"] = bad_path
+    receipt.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(ValueError):
+        verify_bundle(receipt)
+
+
 @pytest.mark.parametrize("field,value", [
     ("flow_count", 100), ("bytes", 1), ("log_sha256", "f" * 64),
     ("scope_screen_passed", False), ("capture_authenticity_verified", True),

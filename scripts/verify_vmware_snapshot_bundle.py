@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.lab_scope import inspect_zeek_lab_scope
 from blue_team_ai.zeek import MAX_LOG_BYTES, parse_zeek_conn_log
-from fetch_zeek_hostonly import REMOTE_PATHS, validate_guest
+from fetch_zeek_hostonly import REMOTE_PATHS, validate_guest, validate_remote_path
 
 MAX_JSON_BYTES = 16 * 1024 * 1024
 _RECEIPT = re.compile(r"zeek_conn_[0-9]{8}T[0-9]{6}Z_[0-9a-f]{12}\.receipt\.json\Z")
@@ -87,6 +87,27 @@ def _assert_false_fields(report: dict, fields: tuple[str, ...]) -> None:
         raise ValueError("Evidence attempts to claim unverified operational state")
 
 
+def _allowed_receipt_remote_path(value: object) -> bool:
+    """Accept the same bounded remote paths as the SCP collector.
+
+    Legacy receipts did not include a separate authenticated SSH account;
+    deriving the pathname owner only validates *path shape*. This does not
+    independently attest who created the remote file.
+    """
+    if not isinstance(value, str):
+        return False
+    if value in REMOTE_PATHS:
+        return True
+    segments = value.split("/")
+    if len(segments) != 5 or segments[:2] != ["", "home"]:
+        return False
+    username = segments[2]
+    try:
+        return validate_remote_path(value, username) == value
+    except ValueError:
+        return False
+
+
 def _compare_predictions(report: dict, events: list[dict]) -> None:
     rows = report.get("predictions")
     if not isinstance(rows, list) or len(rows) != len(events):
@@ -136,7 +157,7 @@ def verify_bundle(
     if (type(receipt.get("version")) is not int or receipt["version"] != 1
             or receipt.get("capture_kind") != "read_only_vmware_scp_snapshot_unverified"
             or receipt.get("local_log_filename") != log_name
-            or receipt.get("remote_path") not in REMOTE_PATHS
+            or not _allowed_receipt_remote_path(receipt.get("remote_path"))
             or not _digest(receipt.get("log_sha256"))
             or receipt.get("scope_screen_passed") is not True):
         raise ValueError("Invalid bounded SCP receipt contract")
