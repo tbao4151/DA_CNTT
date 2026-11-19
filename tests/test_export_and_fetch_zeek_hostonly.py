@@ -157,6 +157,14 @@ def test_mismatched_guest_and_scp_hash_fails_without_success(monkeypatch, tmp_pa
         )
 
 
+def test_guest_helper_root_lock_is_not_in_world_writable_lock_dir():
+    helper = (ROOT / "scripts" / "guest" / "da005-export-zeek-snapshot.sh").read_text(encoding="utf-8")
+    assert "LOCK=/run/da005-zeek-export.lock" in helper
+    assert "LOCK=/run/lock/" not in helper
+    assert "exec 9>" in helper
+    assert "flock -n 9" in helper
+
+
 def test_guest_helper_has_valid_bash_syntax_when_bash_available():
     bash = shutil.which("bash")
     if bash is None:
