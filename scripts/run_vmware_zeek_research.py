@@ -34,6 +34,7 @@ def run_bridge(
     model_path: Path,
     expected_model_sha256: str,
     remote_path: str = REMOTE_PATHS[0],
+    identity_file: Path | None = None,
     timeout: int = 45,
     manifest_path: Path | None = None,
     expected_manifest_sha256: str | None = None,
@@ -76,6 +77,7 @@ def run_bridge(
         known_hosts=known_hosts,
         output_dir=output_dir,
         remote_path=remote_path,
+        identity_file=identity_file,
         timeout=timeout,
     )
     log_name = receipt.get("local_log_filename")
@@ -158,7 +160,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-model-sha256", required=True)
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--expected-manifest-sha256")
-    parser.add_argument("--remote-path", choices=REMOTE_PATHS, default=REMOTE_PATHS[0])
+    parser.add_argument("--remote-path", default=REMOTE_PATHS[0])
+    parser.add_argument("--identity-file", type=Path,
+                        help="Private SSH key; never included in a research report")
     parser.add_argument("--timeout", type=int, default=45)
     args = parser.parse_args(argv)
     try:
@@ -166,7 +170,8 @@ def main(argv: list[str] | None = None) -> int:
             host=args.host, cidr=args.cidr, username=args.user,
             known_hosts=args.known_hosts, output_dir=args.output_dir,
             model_path=args.model, expected_model_sha256=args.expected_model_sha256,
-            remote_path=args.remote_path, timeout=args.timeout,
+            remote_path=args.remote_path, identity_file=args.identity_file,
+            timeout=args.timeout,
             manifest_path=args.manifest,
             expected_manifest_sha256=args.expected_manifest_sha256,
         )
