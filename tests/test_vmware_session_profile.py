@@ -504,3 +504,138 @@ def test_v1_profile_has_no_policy_receipt_for_backwards_compatibility(tmp_path):
     ) == 0
     assert audit.audit(progress, digest(progress))["terminal_status"] == "dry_run"
     assert not progress.with_name("old-profile.red-plan.json").exists()
+
+
+def test_validate_only_readonly_without_blue_creates_nothing(monkeypatch, tmp_path, capsys):
+    path, config = fixture_profile(tmp_path)
+    private = Path(config["output_dir"])
+    before = sorted(p.name for p in private.iterdir())
+    monkeypatch.setattr(launcher.writer, "run_to_file",
+                        lambda **kw: pytest.fail("Validate-only must not write JSONL"))
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe",
+                        lambda **kw: pytest.fail("Validate-only must not send traffic"))
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **kw: pytest.fail("Validate-only must not use SSH"))
+    assert launcher.main([
+        "--config-file", str(path), "--expected-config-sha256", digest(path),
+        "--validate-only",
+    ]) == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["kind"] == "da005_private_profile_readiness_v1"
+    assert output["profile_sha256_verified"] is True
+    assert output["blue_model_pinned_and_schema_verified"] is False
+    assert output["network_activity_performed"] is False
+    assert output["operational_ai_detection_verified"] is False
+    assert sorted(p.name for p in private.iterdir()) == before
+    assert str(path) not in json.dumps(output)
+    assert config["target_ip"] not in json.dumps(output)
+
+
+@pytest.mark.parametrize("execute", [False, True])
+def test_require_blue_refuses_without_model_before_creating_receipts(tmp_path, execute):
+    path, config = _profile_v2(tmp_path)
+    folder = Path(config["output_dir"])
+    output = folder / "strict-blue.jsonl"
+    with pytest.raises(ValueError, match="Blue research model is required"):
+        launcher.run_profile(
+            config_file=path, expected_sha256=digest(path), jsonl_file=output,
+            execute=execute, operator_confirmed_hostonly=execute,
+            require_blue_research=True,
+        )
+    assert not output.exists()
+    assert not output.with_name("strict-blue.red-plan.json").exists()
+    assert not (folder / "DA005_ACTIVE_SESSION.lock").exists()
+
+
+def test_validate_only_required_blue_checks_pinned_model_without_packets(monkeypatch, tmp_path, capsys):
+    path, config = _profile_v2(tmp_path)
+    folder = Path(config["output_dir"])
+    model = tmp_path / "private-data-only.json"
+    model.write_text('{"placeholder":"offline test"}\n', encoding="utf-8")
+    config["model_path"] = str(model)
+    config["expected_model_sha256"] = digest(model)
+    path.write_text(json.dumps(config, sort_keys=True) + "\n", encoding="utf-8")
+    loaded = []
+
+    def verify_model(model_file, *, expected_sha256):
+        loaded.append(model_file)
+        assert model_file == model
+        assert expected_sha256 == digest(model)
+        assert not list(folder.iterdir())
+
+    monkeypatch.setattr(stepwise.blue, "load_pinned_zeek_research_model", verify_model)
+    monkeypatch.setattr(launcher.writer, "run_to_file",
+                        lambda **kw: pytest.fail("Validate-only must not write JSONL"))
+    assert launcher.main([
+        "--config-file", str(path), "--expected-config-sha256", digest(path),
+        "--validate-only", "--require-blue-research",
+    ]) == 0
+    readiness = json.loads(capsys.readouterr().out)
+    assert readiness["profile_version"] == 2
+    assert readiness["red_policy_approved_offline"] is True
+    assert readiness["blue_model_pinned_and_schema_verified"] is True
+    assert readiness["blue_model_required"] is True
+    assert readiness["vmware_isolation_verified"] is False
+    assert loaded == [model]
+    assert not list(folder.iterdir())
+
+
+def test_required_blue_invalid_pinned_model_refused_before_jsonl(monkeypatch, tmp_path):
+    path, config = fixture_profile(tmp_path)
+    folder = Path(config["output_dir"])
+    model = tmp_path / "private-model.json"
+    model.write_text('{"not_a_real_model":true}\n', encoding="utf-8")
+    config["model_path"] = str(model)
+    config["expected_model_sha256"] = digest(model)
+    path.write_text(json.dumps(config) + "\n", encoding="utf-8")
+    monkeypatch.setattr(launcher.writer, "run_to_file",
+                        lambda **kw: pytest.fail("Model must be verified first"))
+    output = folder / "must-not-create.jsonl"
+    with pytest.raises(ValueError):
+        launcher.run_profile(
+            config_file=path, expected_sha256=digest(path), jsonl_file=output,
+            require_blue_research=True,
+        )
+    assert not output.exists()
+    assert not list(folder.iterdir())
+
+
+@pytest.mark.parametrize("extra", [
+    ["--execute"],
+    ["--operator-confirmed-hostonly"],
+    ["--jsonl-file", "unused.jsonl"],
+])
+def test_validate_only_refuses_execution_or_output_flags(tmp_path, capsys, extra):
+    path, config = fixture_profile(tmp_path)
+    assert launcher.main([
+        "--config-file", str(path), "--expected-config-sha256", digest(path),
+        "--validate-only", *extra,
+    ]) == 1
+    result = capsys.readouterr()
+    assert "refused" in result.err and result.out == ""
+    assert not list(Path(config["output_dir"]).iterdir())
+
+
+def test_required_blue_dryrun_still_has_no_network_and_no_false_detection(monkeypatch, tmp_path):
+    path, config = fixture_profile(tmp_path)
+    model = tmp_path / "test-only-data-model.json"
+    model.write_text('{"test_only":true}\n', encoding="utf-8")
+    config["model_path"] = str(model)
+    config["expected_model_sha256"] = digest(model)
+    path.write_text(json.dumps(config) + "\n", encoding="utf-8")
+    monkeypatch.setattr(stepwise.blue, "load_pinned_zeek_research_model",
+                        lambda *args, **kwargs: {"test_only": True})
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe",
+                        lambda **kw: pytest.fail("No sockets in strict dry-run"))
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **kw: pytest.fail("No SCP in strict dry-run"))
+    output = Path(config["output_dir"]) / "strict-dryrun.jsonl"
+    assert launcher.run_profile(
+        config_file=path, expected_sha256=digest(path), jsonl_file=output,
+        require_blue_research=True,
+    ) == 0
+    rows = [json.loads(row) for row in output.read_text(encoding="utf-8").splitlines()]
+    assert rows[-1]["status"] == "dry_run"
+    assert rows[-1]["result"]["network_attempts"] == 0
+    assert rows[-1]["result"]["blue_research_scoring_performed"] is False
+    assert audit.audit(output, digest(output))["terminal_status"] == "dry_run"
