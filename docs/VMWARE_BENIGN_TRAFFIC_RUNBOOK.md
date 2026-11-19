@@ -64,3 +64,11 @@ If there is a trusted private **Zeek v1 JSON model**, add both options:
 The model is validated **before any network probe**, and the subsequent Zeek research scoring is never reported as a confirmed attack or operational SOC alert. The first end-to-end acceptance remains an operator-assisted research process. The full autonomous two-AI One-Click workflow still requires verified session correlation, a secure Red Team controller, a model suitable for the lab and SOC evidence linkage.
 
 CI now runs `tests/test_hostonly_benign_traffic.py` and `tests/test_vmware_stepwise.py` on Windows, both using network-free mocks. Real evidence must still come from the user's VM, not CI.
+
+## Evidence linkage: candidate UIDs only
+
+The stepwise CLI additionally creates `zeek_conn_*.candidate-links.json` beside the fetched conn.log. It re-opens the SHA-256-pinned raw Zeek file, parses its timestamps and selects at most one distinct Zeek UID per probe using Windows source IP, Ubuntu destination IP, fixed protocol/port and a 10-second absolute timestamp window. The file explicitly reports matching and unmatched attempts.
+
+**This is only a candidate match**. Zeek/Windows time synchronization, packet-to-flow causality and whether any traffic was attack-like are NOT independently verified. If no records match, inspect the Zeek capture interface, guest clock, conn.log flushing and routing rather than changing timestamps or inventing events. For final academic evaluation, capture original PCAP and independently label the test cases.
+
+Both Windows/Ubuntu CI now run synthetic-only checks; no CI run replaces real VMware validation.
