@@ -131,25 +131,58 @@ function terminalFrom(value: unknown): TerminalStatus {
         item.operational_ai_detection_verified !== false || item.soc_alerts_created !== false) {
       throw new Error("Dòng từ chối có nguồn gốc không hợp lệ.");
     }
-  } else {
-    const result = object(item.result);
-    if (status === "dry_run") {
-      if (result.mode !== "DRY_RUN_EXECUTION_OFF" ||
-          result.ssh_fetch_performed !== false ||
-          result.blue_research_scoring_performed !== false ||
-          result.automated_soc_alerts !== false) {
-        throw new Error("Dry-run không được tuyên bố kết nối VMware hoặc SOC.");
-      }
-    } else if (
-      result.mode !== "STEPWISE_VMWARE_BENIGN_CAPTURE" ||
-      result.attack_executed !== false ||
-      result.operational_detection_verified !== false ||
-      result.automated_soc_alerts !== false ||
-      result.full_one_click_dual_ai !== false ||
-      result.vmware_isolation_verified !== false
-    ) {
-      throw new Error("Dòng hoàn tất chứa tuyên bố live AI/VMware không hợp lệ.");
+    return status;
+  }
+
+  // Matches the exact redacted CLI terminal payload. Never consume original
+  // network scope, private filenames or the internal raw run_sequence report.
+  if (item.attack_executed !== undefined ||
+      item.operational_ai_detection_verified !== undefined ||
+      item.soc_alerts_created !== undefined) {
+    throw new Error("Dòng kết thúc chứa trường ngoài hợp đồng.");
+  }
+  const result = object(item.result);
+  keysMatch(result, [
+    "mode", "network_attempts", "captured_log_flow_count",
+    "research_candidate_count", "ssh_fetch_performed",
+    "blue_research_scoring_performed", "vmware_isolation_verified",
+    "attack_executed", "operational_ai_detection_verified",
+    "soc_alerts_created",
+  ]);
+  const safeCount = (value: unknown): value is number =>
+    typeof value === "number" && Number.isSafeInteger(value) &&
+    value >= 0 && value <= 10000;
+  if (
+    !safeCount(result.network_attempts) ||
+    !(result.captured_log_flow_count === null || safeCount(result.captured_log_flow_count)) ||
+    !(result.research_candidate_count === null || safeCount(result.research_candidate_count)) ||
+    result.vmware_isolation_verified !== false ||
+    result.attack_executed !== false ||
+    result.operational_ai_detection_verified !== false ||
+    result.soc_alerts_created !== false ||
+    typeof result.ssh_fetch_performed !== "boolean" ||
+    typeof result.blue_research_scoring_performed !== "boolean"
+  ) {
+    throw new Error("Dòng tổng kết JSONL chứa dữ liệu hoặc tuyên bố không hợp lệ.");
+  }
+  if (status === "dry_run") {
+    if (result.mode !== "DRY_RUN_EXECUTION_OFF" ||
+        result.network_attempts !== 0 ||
+        result.captured_log_flow_count !== null ||
+        result.research_candidate_count !== null ||
+        result.ssh_fetch_performed !== false ||
+        result.blue_research_scoring_performed !== false) {
+      throw new Error("Dry-run không được tuyên bố kết nối VMware, AI hoặc SOC.");
     }
+  } else if (
+    result.mode !== "STEPWISE_VMWARE_BENIGN_CAPTURE" ||
+    result.ssh_fetch_performed !== true ||
+    !safeCount(result.captured_log_flow_count) ||
+    (result.blue_research_scoring_performed
+      ? !safeCount(result.research_candidate_count)
+      : result.research_candidate_count !== null)
+  ) {
+    throw new Error("Dòng hoàn tất không khớp bằng chứng thu thập/chấm điểm.");
   }
   return status;
 }
