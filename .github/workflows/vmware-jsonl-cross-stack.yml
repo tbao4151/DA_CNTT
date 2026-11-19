@@ -1,0 +1,67 @@
+name: DA005 Python JSONL to Chromium cross-stack acceptance
+# No real VMware, SSH, probes, PCAP, or AI inference. Network calls patched in the mock case.
+on:
+  push:
+    paths:
+      - 'tests/emit_vmware_jsonl_browser_cases.py'
+      - 'frontend/scripts/vmware-python-browser-e2e.mjs'
+      - '.github/workflows/vmware-jsonl-cross-stack.yml'
+      - 'scripts/run_vmware_progress_file.py'
+      - 'scripts/run_vmware_stepwise.py'
+      - 'frontend/src/lib/vmwareProgress.ts'
+      - 'frontend/src/app/vmware-progress/**'
+  pull_request:
+    paths:
+      - 'tests/emit_vmware_jsonl_browser_cases.py'
+      - 'frontend/scripts/vmware-python-browser-e2e.mjs'
+      - '.github/workflows/vmware-jsonl-cross-stack.yml'
+      - 'scripts/run_vmware_progress_file.py'
+      - 'scripts/run_vmware_stepwise.py'
+      - 'frontend/src/lib/vmwareProgress.ts'
+      - 'frontend/src/app/vmware-progress/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-stack-dry-run-and-mocked-steps:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.9'
+          cache: pip
+          cache-dependency-path: requirements-app.txt
+      - name: Install offline Python dependencies
+        run: python -m pip install -r requirements-app.txt
+      - name: Execute real CLI dry-run and fully patched network-free mock scenarios
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/da005-python-crossstack"
+          python tests/emit_vmware_jsonl_browser_cases.py --output-dir "$RUNNER_TEMP/da005-python-crossstack"
+          test "$(wc -l < "$RUNNER_TEMP/da005-python-crossstack/python_dryrun.jsonl")" -eq 2
+          test "$(wc -l < "$RUNNER_TEMP/da005-python-crossstack/python_mock_completed.jsonl")" -eq 10
+          test "$(wc -l < "$RUNNER_TEMP/da005-python-crossstack/python_no_consent.jsonl")" -eq 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+      - name: Real Chromium reads Python-generated private JSONL without upload
+        working-directory: frontend
+        shell: bash
+        run: |
+          npm run start > "$RUNNER_TEMP/da005-crossstack-next.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          export DA005_BROWSER_E2E_CASES="$RUNNER_TEMP/da005-python-crossstack"
+          node scripts/vmware-python-browser-e2e.mjs
