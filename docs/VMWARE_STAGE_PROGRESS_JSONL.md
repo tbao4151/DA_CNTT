@@ -25,7 +25,7 @@ All progress events explicitly carry:
 - operational_ai_detection_verified: false
 - soc_alerts_created: false
 
-If the operator-assisted run fails, the CLI prints a generic terminal refusal event and returns a nonzero exit code. Do not upload raw stdout, private network addresses, model paths, original captures, or receipts to public Git.
+The JSONL terminal summary exposes only bounded aggregate counts and explicit false verification flags; unlike the legacy non-JSONL CLI output, it must not expose private IPs, capture paths, receipts or model paths. Keep the legacy report local as it can contain sensitive scope information.\n\nIf the operator-assisted run fails, the CLI prints a generic terminal refusal event and returns a nonzero exit code. Do not upload raw stdout, private network addresses, model paths, original captures, or receipts to public Git.
 
 ## Test without sockets
 
