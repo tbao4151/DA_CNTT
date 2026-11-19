@@ -88,7 +88,7 @@ function rejectAmbiguousJsonKeys(source: string): void {
         i += 1;
       }
       let next = i + 1;
-      while (next < source.length && /\\s/.test(source[next])) next += 1;
+      while (next < source.length && /\s/.test(source[next])) next += 1;
       if (source[next] !== ":") continue;
       const scope = scopes[scopes.length - 1];
       if (!scope || scope.kind !== "object") {
@@ -275,10 +275,10 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
     let decoded: unknown;
     try {
       decoded = JSON.parse(line) as unknown;
-      rejectAmbiguousJsonKeys(line);
     } catch {
       throw new Error("Tệp JSONL có dòng không phải JSON hoàn chỉnh.");
     }
+    rejectAmbiguousJsonKeys(line);
     const record = object(decoded);
     if (terminal !== null) throw new Error("Tệp có sự kiện sau dòng kết thúc.");
     if (record.kind === "da005_vmware_stepwise_terminal_v1") {
