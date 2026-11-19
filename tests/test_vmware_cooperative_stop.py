@@ -15,6 +15,7 @@ import run_hostonly_benign_traffic as stimulus
 import run_vmware_stepwise as stepwise
 import run_vmware_progress_file as writer
 import verify_vmware_progress_jsonl as verifier
+from shared.zeek_stimulus_match import screen_candidate_zeek_matches
 from test_vmware_stepwise import args, fake_receipt, fake_raw
 
 
@@ -248,6 +249,13 @@ def test_private_writer_stepwise_stop_after_one_probe_preserves_receipt_and_refu
     assert data["network_attempts"] == 1
     assert data["planned_attempts"] == 3
     assert len(data["events"]) == 1
+    # A partial STOP receipt must NEVER be promoted to the existing
+    # successful-run Zeek UID correlation contract.
+    raw = fake_raw()
+    with pytest.raises(ValueError, match="Not an executed"):
+        screen_candidate_zeek_matches(
+            data, raw, expected_log_sha256=hashlib.sha256(raw).hexdigest()
+        )
 
 
 def test_keyboard_interrupt_emits_refused_terminal_without_traceback(monkeypatch, tmp_path, capsys):
