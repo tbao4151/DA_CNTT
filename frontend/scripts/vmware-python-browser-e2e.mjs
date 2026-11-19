@@ -88,6 +88,40 @@ try {
   assert.match(text, /không xác nhận nó đã được thực thi/);
   assert.equal(unsafeRequests.length, 0, "Python Red plan cannot be uploaded to API");
 
+  // One picker can load both genuine Python artifacts without an extra
+  // manual receipt selection. Invalid pairs must clear both panels atomically.
+  const pairInput = page.getByLabel("Mở cặp JSONL và biên nhận Red");
+  const validPair = [
+    { name: "python_ucb1.jsonl", mimeType: "application/x-ndjson", buffer: ucb1Progress },
+    { name: "python_ucb1.red-plan.json", mimeType: "application/json", buffer: ucb1Receipt },
+  ];
+  await pairInput.setInputFiles(validPair);
+  await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).waitFor();
+  await log.getByText(/1 sự kiện/).waitFor();
+  assert.equal(unsafeRequests.length, 0, "Paired local import must make zero API writes");
+
+  await pairInput.setInputFiles([
+    validPair[0],
+    { name: "other-session.red-plan.json", mimeType: "application/json", buffer: ucb1Receipt },
+  ]);
+  await page.getByRole("alert").filter({ hasText: "không khớp tên phiên" }).waitFor();
+  assert.equal(await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).count(), 0);
+  await log.getByText(/0 sự kiện/).waitFor();
+
+  const invalidPairedPlan = JSON.parse(ucb1Receipt.toString("utf8"));
+  invalidPairedPlan.attack_executed = true;
+  await pairInput.setInputFiles([
+    validPair[0],
+    { name: "python_ucb1.red-plan.json", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(invalidPairedPlan)) },
+  ]);
+  await page.getByRole("alert").filter({ hasText: "sai provenance" }).waitFor();
+  await log.getByText(/0 sự kiện/).waitFor();
+  assert.equal(await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).count(), 0);
+
+  await pairInput.setInputFiles(validPair);
+  await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).waitFor();
+
   const forgedPlan = JSON.parse(ucb1Receipt.toString("utf8"));
   forgedPlan.attack_executed = true;
   await redInput.setInputFiles({
