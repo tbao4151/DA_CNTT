@@ -12,6 +12,7 @@ import os
 import sys
 import time
 from datetime import datetime, timezone
+from collections.abc import Callable
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,8 +39,46 @@ def run_sequence(
     settle_s: int = 2,
     model_path: Path | None = None,
     expected_model_sha256: str | None = None,
+    progress_sink: Callable[[dict[str, object]], None] | None = None,
 ) -> dict[str, object]:
-    """Prepare all credentials and pinned model *before* sending a packet."""
+    """Prepare all credentials and pinned model *before* sending a packet.
+
+    Optional progress events are emitted only after reaching each real
+    operator-assisted stage; they never assert VM isolation, AI attack
+    execution, verified detection, or live SOC alerts.
+    """
+    if progress_sink is not None and not callable(progress_sink):
+        raise ValueError("Progress sink must be callable")
+    progress_seq = 0
+
+    def emit(stage: str, status: str, **counts: int) -> None:
+        nonlocal progress_seq
+        if progress_sink is None:
+            return
+        if stage not in ("preflight", "red", "zeek", "blue", "audit", "soc"):
+            raise ValueError("Unknown VMware progress stage")
+        if status not in ("dry_run", "running", "completed", "skipped"):
+            raise ValueError("Unknown VMware progress status")
+        if any(type(value) is not int or value < 0 for value in counts.values()):
+            raise ValueError("Invalid bounded VMware progress count")
+        progress_seq += 1
+        event: dict[str, object] = {
+            "kind": "da005_vmware_stepwise_progress_v1",
+            "seq": progress_seq,
+            "observed_at_utc": datetime.now(timezone.utc).isoformat(),
+            "stage": stage,
+            "status": status,
+            "mode": "operator_assisted_benign_hostonly_experiment",
+            "stage_evidence": "program_execution_only_not_independently_verified",
+            "vmware_isolation_verified": False,
+            "attack_executed": False,
+            "ai_attack_planning_executed": False,
+            "operational_ai_detection_verified": False,
+            "soc_alerts_created": False,
+        }
+        if counts:
+            event["counts"] = counts
+        progress_sink(event)
     scope = stimulus.validate_scope(
         source_ip=source_ip, target_ip=target_ip, cidr=cidr
     )
@@ -53,6 +92,7 @@ def run_sequence(
         scenario_id=scenario_id, count=attempts, execute=False,
     )
     if not execute:
+        emit("preflight", "dry_run")
         return {
             "mode": "DRY_RUN_EXECUTION_OFF",
             "scope": scope,
@@ -76,11 +116,15 @@ def run_sequence(
             resolved_model, expected_sha256=expected_model_sha256
         )
 
+    emit("preflight", "completed")
+    emit("red", "running")
     traffic_result = stimulus.run(
         source_ip=source_ip, target_ip=target_ip, cidr=cidr,
         scenario_id=scenario_id, count=attempts, execute=True,
         operator_confirmed_hostonly=True, output_dir=output_dir,
     )
+    emit("red", "completed", attempted_probes=traffic_result["network_attempts"])
+    emit("zeek", "running")
     # Zeek may append a completed conn.log record asynchronously.
     # This does not prove that the record corresponds to our probes.
     if settle_s:
@@ -94,6 +138,8 @@ def run_sequence(
         log_name = zeek_receipt["local_log_filename"]
         log_sha = zeek_receipt["log_sha256"]
         flow_count = zeek_receipt["flow_count"]
+        emit("zeek", "completed", snapshot_flow_count=flow_count)
+        emit("blue", "skipped")
     else:
         blue_result = blue.run_bridge(
             host=target_ip, cidr=cidr, username=username,
@@ -103,6 +149,11 @@ def run_sequence(
         log_name = blue_result["log_file"]
         log_sha = blue_result["log_sha256"]
         flow_count = blue_result["flow_count"]
+        # The bridge performs both SCP and research scoring internally. We
+        # report each completion only AFTER it returns, not before.
+        emit("zeek", "completed", snapshot_flow_count=flow_count)
+        emit("blue", "completed", research_candidate_count=blue_result["research_candidate_count"])
+    emit("audit", "running")
     # Verify the locally fetched bytes AGAIN at the session-correlation boundary.
     # Filename and digest originate from the bounded SCP receipt/bridge.
     log_path = output_dir.resolve(strict=True) / str(log_name)
@@ -119,6 +170,10 @@ def run_sequence(
         stream.write("\n")
         stream.flush()
         os.fsync(stream.fileno())
+    emit("audit", "completed",
+         candidate_matches=correlation["candidate_match_count"],
+         unmatched_attempts=correlation["unmatched_probe_count"])
+    emit("soc", "skipped")
     return {
         "mode": "STEPWISE_VMWARE_BENIGN_CAPTURE",
         "scope": scope,
@@ -158,6 +213,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-model-sha256")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--operator-confirmed-hostonly", action="store_true")
+    parser.add_argument("--progress-jsonl", action="store_true",
+                        help="Stream provenance-limited JSONL stage events to stdout, not verified live AI alerts")
     options = parser.parse_args(argv)
     try:
         report = run_sequence(
@@ -174,15 +231,35 @@ def main(argv: list[str] | None = None) -> int:
             expected_model_sha256=options.expected_model_sha256,
             execute=options.execute,
             operator_confirmed_hostonly=options.operator_confirmed_hostonly,
+            progress_sink=(
+                (lambda event: print(json.dumps(event, ensure_ascii=False,
+                                                allow_nan=False), flush=True))
+                if options.progress_jsonl else None
+            ),
         )
     except (ValueError, OSError, RuntimeError, TypeError):
+        if options.progress_jsonl:
+            print(json.dumps({
+                "kind": "da005_vmware_stepwise_terminal_v1",
+                "status": "refused",
+                "attack_executed": False,
+                "operational_ai_detection_verified": False,
+                "soc_alerts_created": False,
+            }, ensure_ascii=False), flush=True)
         print(
             "VMware stepwise experiment refused. Check local authorized Host-only "
             "scope, evidence, Zeek path, SSH host key and Zeek model.",
             file=sys.stderr,
         )
         return 1
-    print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False))
+    if options.progress_jsonl:
+        print(json.dumps({
+            "kind": "da005_vmware_stepwise_terminal_v1",
+            "status": "completed" if report["mode"] != "DRY_RUN_EXECUTION_OFF" else "dry_run",
+            "result": report,
+        }, ensure_ascii=False, allow_nan=False), flush=True)
+    else:
+        print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False))
     return 0
 
 
