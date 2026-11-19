@@ -1,4 +1,8 @@
 name: DA005 SHA-pinned VMware JSONL audit (offline)
+# Cancel obsolete checks on feature branches/PRs; preserve main and manual audits.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' && github.ref != 'refs/heads/main' }}
 # Tests only private local JSONL built with Python dry-run/mocked SSH.
 # Never connects to VMware or generates network traffic.
 on:
