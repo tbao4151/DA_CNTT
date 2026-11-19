@@ -258,6 +258,50 @@ def test_private_writer_stepwise_stop_after_one_probe_preserves_receipt_and_refu
         )
 
 
+def test_ctrlc_between_known_probes_archives_partial_without_zeek(monkeypatch, tmp_path):
+    opts = args(tmp_path)
+    jsonl = tmp_path / "ctrlc-interrupted.jsonl"
+    packets = []
+
+    def fake_probe(**kwargs):
+        packets.append(kwargs)
+        return {
+            "scenario_id": "connection_shift", "protocol": "tcp", "port": 22,
+            "attempted_at_utc": "2026-11-19T09:00:00+00:00",
+            "socket_operation_success": False,
+            "network_capture_verified": False,
+            "ai_detection_performed": False,
+        }
+
+    def interrupt(_duration):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe", fake_probe)
+    monkeypatch.setattr(stepwise.stimulus.time, "sleep", interrupt)
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **_kwargs: pytest.fail("Ctrl+C must preclude Zeek SCP"))
+    args_cli = [
+        "--source-ip", opts["source_ip"], "--target-ip", opts["target_ip"],
+        "--cidr", opts["cidr"], "--scenario", opts["scenario_id"],
+        "--user", opts["username"], "--known-hosts", str(opts["known_hosts"]),
+        "--output-dir", str(opts["output_dir"]), "--attempts", "3",
+        "--execute", "--operator-confirmed-hostonly",
+    ]
+    assert writer.run_to_file(jsonl_file=jsonl, cli_args=args_cli) == 1
+    assert len(packets) == 1
+    records = [json.loads(line) for line in jsonl.read_text(encoding="utf-8").splitlines()]
+    assert records[-1]["status"] == "refused"
+    assert verifier.audit(jsonl, hashlib.sha256(jsonl.read_bytes()).hexdigest())["terminal_status"] == "refused"
+    receipts = list(tmp_path.glob("da005_benign_*.json"))
+    assert len(receipts) == 1
+    report = json.loads(receipts[0].read_text(encoding="utf-8"))
+    assert report["mode"] == "BENIGN_LAB_ABORTED"
+    assert report["completion_status"] == "keyboard_interrupt_between_probes"
+    assert report["network_attempts"] == 1
+    assert report["probe_sequence_completed"] is False
+    assert report["ai_detection_performed"] is False
+
+
 def test_keyboard_interrupt_emits_refused_terminal_without_traceback(monkeypatch, tmp_path, capsys):
     opts = args(tmp_path)
     def fake_traffic(**kw):
