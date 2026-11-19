@@ -74,7 +74,12 @@ function isSyntheticEvent(value: unknown): value is LiveEvent {
     typeof event.stage === "string" && VALID_STAGES.includes(event.stage as Stage) &&
     typeof event.message === "string" &&
     typeof event.details === "object" && event.details !== null &&
-    !Array.isArray(event.details)
+    !Array.isArray(event.details) &&
+    (event.stage !== "zeek" ||
+      (Number.isSafeInteger(event.details.sample_flow_count) &&
+        Number(event.details.sample_flow_count) >= 0)) &&
+    (event.details.round === undefined ||
+      (Number.isSafeInteger(event.details.round) && Number(event.details.round) >= 1))
   );
 }
 
@@ -95,10 +100,14 @@ function assertSyntheticSession(value: LiveSession): LiveSession {
     value.provenance.verified_attack_events !== 0 ||
     value.provenance.verified_ai_alerts !== 0 ||
     !Array.isArray(value.events) ||
-    value.events.some((event) => !isSyntheticEvent(event)) ||
-    !Number.isSafeInteger(value.event_count) || value.event_count < 0 ||
+    value.events.some((event, index) => !isSyntheticEvent(event) || event.seq !== index + 1) ||
+    !Number.isSafeInteger(value.event_count) || value.event_count !== value.events.length ||
     !Number.isSafeInteger(value.rounds) || value.rounds < 1 ||
-    !Number.isSafeInteger(value.current_round) || value.current_round < 0
+    !Number.isSafeInteger(value.current_round) || value.current_round < 0 ||
+    value.current_round > value.rounds ||
+    (value.status === "running" && value.finished_at !== null) ||
+    (value.status !== "running" &&
+      (typeof value.finished_at !== "string" || Number.isNaN(Date.parse(value.finished_at))))
   ) {
     throw new Error("Phản hồi session không khớp hợp đồng SYNTHETIC REPLAY. Từ chối hiển thị để tránh nhầm với dữ liệu live.");
   }
@@ -175,7 +184,10 @@ export default function AutomatedLabPage() {
       }
       setSession((prev) => {
         if (!prev || prev.session_id !== sessionId) return prev;
-        if (prev.events.some((item) => item.seq === event.seq)) return prev;
+        if (prev.status !== "running" || prev.events.some((item) => item.seq === event.seq)) return prev;
+        // SSE can be duplicated or arrive after a newer polling snapshot.
+        // On gaps, leave the state unchanged; polling restores the authoritative snapshot.
+        if (event.seq !== prev.events.length + 1) return prev;
         return {
           ...prev,
           event_count: prev.event_count + 1,
