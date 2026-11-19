@@ -98,6 +98,40 @@ try {
   await page.getByRole("alert").filter({ hasText: "Từ chối sự kiện tuyên bố" }).waitFor();
   assert.match(await log.innerText(), /0 sự kiện/);
 
+  // Validate actual real-time UI polling without granting any filesystem
+  // path to the CI browser: fake FileSystemAccess only; Python bytes are real.
+  // The UI must clear stale "completed" status when a later update is invalid.
+  await page.evaluate((startingText) => {
+    let contents = startingText;
+    let version = 1;
+    window.__da005UpdateMockJsonl = (nextText) => {
+      contents = nextText;
+      version += 1;
+    };
+    Object.defineProperty(window, "showOpenFilePicker", {
+      configurable: true,
+      value: async () => [{
+        getFile: async () => new File([contents], "mock-follow.jsonl", {
+          type: "application/x-ndjson", lastModified: version,
+        }),
+      }],
+    });
+  }, dry.toString("utf8"));
+  await page.getByRole("button", { name: "Theo dõi tệp đang ghi" }).click();
+  await page.getByRole("button", { name: "Đang theo dõi tệp" }).waitFor();
+  await page.getByText("Dry-run", { exact: true }).first().waitFor({ timeout: 9000 });
+  await page.evaluate((data) => window.__da005UpdateMockJsonl(data), completed.toString("utf8"));
+  await page.getByText("Phần mềm kết thúc", { exact: true }).first().waitFor({ timeout: 9000 });
+  await log.getByText(/9 sự kiện/).waitFor({ timeout: 9000 });
+  const corruptFollow = completed.toString("utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
+  corruptFollow[1].vmware_isolation_verified = true;
+  await page.evaluate((data) => window.__da005UpdateMockJsonl(data),
+    corruptFollow.map((entry) => JSON.stringify(entry)).join("\n") + "\n");
+  await page.getByRole("alert").filter({ hasText: "Đã xóa toàn bộ tiến độ cũ" }).waitFor({ timeout: 9000 });
+  await log.getByText(/0 sự kiện/).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Theo dõi tệp đang ghi" }).count(), 1);
+  assert.equal(unsafeRequests.length, 0);
+
   const refused = load("python_no_consent.jsonl");
   await open("python_no_consent.jsonl", refused);
   await page.getByText("Đã từ chối / gặp lỗi", { exact: true }).first().waitFor();
