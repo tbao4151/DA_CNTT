@@ -97,6 +97,8 @@ def _event(obj: dict, seq: int, stage: str, status: str, count_fields: tuple | N
         timestamp.endswith("Z") or timestamp.endswith("+00:00")
     ):
         raise ValueError("UTC timestamp required")
+    if re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,6})?(?:Z|\+00:00)", timestamp) is None:
+        raise ValueError("Non-canonical UTC event timestamp")
     try:
         moment = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
     except ValueError as exc:
@@ -227,6 +229,15 @@ def audit(path: Path, expected_sha256: str) -> dict:
         for pos, event in enumerate(events):
             stage, status, fields = STEPS[pos]
             _event(event, pos + 1, stage, status, fields)
+    # A valid sequence number cannot salvage a trace with a clock moving
+    # backwards. This is a consistency screen, not independent clock sync.
+    # Equal timestamps are allowed for rapid consecutive Python events.
+    timestamps = [
+        datetime.fromisoformat(event["observed_at_utc"].replace("Z", "+00:00"))
+        for event in events
+    ]
+    if any(later < earlier for earlier, later in zip(timestamps, timestamps[1:])):
+        raise ValueError("UTC event timestamps move backwards")
     status = _terminal(terminal, events)
     if status == "dry_run" and len(events) != 1:
         raise ValueError("Invalid dry-run evidence")
