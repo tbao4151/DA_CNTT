@@ -19,9 +19,11 @@ import sys
 from pathlib import Path
 
 import run_hostonly_benign_traffic as stimulus
+import check_paired_network_preflight as host_preflight
 import run_vmware_progress_file as writer
 import run_vmware_stepwise as stepwise
 from red_team_ai.scenario_policy import choose_scenario
+from blue_team_ai.host_only_preflight import assess_host_only_snapshot
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_CONFIG_BYTES = 16 * 1024
@@ -226,9 +228,40 @@ def _write_red_plan_receipt(
 
 
 
+def _validate_pinned_host_binding(
+    profile: dict[str, object], *, host_snapshot: Path | None,
+    expected_host_sha256: str | None, host_adapter: str | None,
+) -> bool:
+    """Check a pinned Windows Host-only adapter snapshot against the profile.
+
+    A v2 source-IPv4 match is only configuration consistency; it does not
+    prove the snapshot is current, VMware mode, guest isolation, or consent.
+    """
+    supplied = (host_snapshot is not None, expected_host_sha256 is not None,
+                host_adapter is not None)
+    if not any(supplied):
+        return False
+    if not all(supplied) or not isinstance(host_snapshot, Path) or not host_adapter:
+        raise ValueError("Pinned host snapshot requires path, SHA-256 and adapter name")
+    snapshot = host_preflight._load_private_pinned_snapshot(
+        host_snapshot, expected_host_sha256,
+    )
+    result = assess_host_only_snapshot(
+        snapshot, expected_adapter=host_adapter, expected_cidr=profile["cidr"],
+    )
+    if result["host_ipv6_screened"] is not True:
+        raise ValueError("A v2 IPv6-screened Windows host adapter snapshot is required")
+    if snapshot["adapter_ipv4"][0]["address"] != profile["source_ip"]:
+        raise ValueError("Profile source IPv4 differs from pinned VMware host adapter")
+    return True
+
+
 def validate_operator_profile(
     *, config_file: Path, expected_sha256: str,
     require_blue_research: bool = False,
+    host_snapshot: Path | None = None,
+    expected_host_sha256: str | None = None,
+    host_adapter: str | None = None,
 ) -> dict[str, object]:
     """Read-only, network-free profile and optional Zeek-model readiness check.
 
@@ -236,6 +269,10 @@ def validate_operator_profile(
     This result must not be used as proof of VMware Host-only isolation.
     """
     profile = load_config(config_file, expected_sha256)
+    host_ready = _validate_pinned_host_binding(
+        profile, host_snapshot=host_snapshot,
+        expected_host_sha256=expected_host_sha256, host_adapter=host_adapter,
+    )
     model_ready = profile["model_path"] is not None
     if require_blue_research and not model_ready:
         raise ValueError("A pinned private Blue research model is required")
@@ -253,6 +290,7 @@ def validate_operator_profile(
         "red_policy_approved_offline": profile["version"] == 2,
         "blue_model_pinned_and_schema_verified": model_ready,
         "blue_model_required": require_blue_research,
+        "host_snapshot_pinned_and_profile_bound": host_ready,
         "network_activity_performed": False,
         "vmware_isolation_verified": False,
         "operational_ai_detection_verified": False,
@@ -268,14 +306,23 @@ def run_profile(
     execute: bool = False,
     operator_confirmed_hostonly: bool = False,
     require_blue_research: bool = False,
+    host_snapshot: Path | None = None,
+    expected_host_sha256: str | None = None,
+    host_adapter: str | None = None,
 ) -> int:
     """One operator command; delegates all networking to existing safe runner."""
     profile = load_config(config_file, expected_sha256)
-    if require_blue_research:
-        # Fail before creating a Red plan receipt, lock or progress JSONL.
+    if require_blue_research or any((
+        host_snapshot is not None, expected_host_sha256 is not None,
+        host_adapter is not None,
+    )):
+        # Fail before a Red plan, lock, JSONL or any network access.
         validate_operator_profile(
             config_file=config_file, expected_sha256=expected_sha256,
-            require_blue_research=True,
+            require_blue_research=require_blue_research,
+            host_snapshot=host_snapshot,
+            expected_host_sha256=expected_host_sha256,
+            host_adapter=host_adapter,
         )
     if execute:
         if operator_confirmed_hostonly is not True:
@@ -342,6 +389,12 @@ def main(argv: list[str] | None = None) -> int:
                         help="Offline private profile/model validation; creates no evidence or lock")
     parser.add_argument("--require-blue-research", action="store_true",
                         help="Refuse without a privately pinned and schema-verified Zeek research model")
+    parser.add_argument("--host-snapshot", type=Path,
+                        help="Optional pinned read-only v2 Windows VMware adapter snapshot")
+    parser.add_argument("--expected-host-sha256",
+                        help="Independent lowercase SHA-256 of the host adapter snapshot")
+    parser.add_argument("--host-adapter",
+                        help="Exact Windows VMware Host-only adapter name")
     args = parser.parse_args(argv)
     try:
         if args.validate_only:
@@ -351,6 +404,9 @@ def main(argv: list[str] | None = None) -> int:
                 config_file=args.config_file,
                 expected_sha256=args.expected_config_sha256,
                 require_blue_research=args.require_blue_research,
+                host_snapshot=args.host_snapshot,
+                expected_host_sha256=args.expected_host_sha256,
+                host_adapter=args.host_adapter,
             )
             print(json.dumps(readiness, indent=2, ensure_ascii=False, allow_nan=False))
             return 0
@@ -363,6 +419,9 @@ def main(argv: list[str] | None = None) -> int:
             execute=args.execute,
             operator_confirmed_hostonly=args.operator_confirmed_hostonly,
             require_blue_research=args.require_blue_research,
+            host_snapshot=args.host_snapshot,
+            expected_host_sha256=args.expected_host_sha256,
+            host_adapter=args.host_adapter,
         )
     except (ValueError, OSError, TypeError, UnicodeError, RecursionError):
         print("DA005 operator session refused. Check private profile pins, consent and fresh paths.",
