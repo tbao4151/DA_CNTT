@@ -132,6 +132,43 @@ def test_refuses_bool_counters_and_out_of_order_seq(tmp_path):
         verifier.audit(changed, pin(changed))
 
 
+def test_rejects_backward_and_noncanonical_utc_even_with_matching_hash(tmp_path):
+    source = generate(tmp_path)["mock_completed"]
+    backward = copied_mutation(
+        tmp_path, source,
+        lambda rows: rows[3].update({"observed_at_utc": "2001-01-01T00:00:00+00:00"}),
+    )
+    with pytest.raises(ValueError, match="backwards"):
+        verifier.audit(backward, pin(backward))
+    backward.unlink()
+    malformed = copied_mutation(
+        tmp_path, source,
+        lambda rows: rows[1].update({"observed_at_utc": "2026-11-19 05:00:00+00:00"}),
+    )
+    with pytest.raises(ValueError, match="Non-canonical"):
+        verifier.audit(malformed, pin(malformed))
+    malformed.unlink()
+    exotic = copied_mutation(
+        tmp_path, source,
+        lambda rows: rows[1].update({"observed_at_utc": "2026-11-19T05:00:00.1234567+00:00"}),
+    )
+    with pytest.raises(ValueError, match="Non-canonical"):
+        verifier.audit(exotic, pin(exotic))
+
+
+def test_allows_equal_utc_stage_timestamps_for_fast_cli_events(tmp_path):
+    source = generate(tmp_path)["mock_completed"]
+    # Same exact timestamp is possible for consecutive Python stage emissions.
+    source_text = source.read_text(encoding="utf-8")
+    records = [json.loads(line) for line in source_text.splitlines()]
+    stamp = records[0]["observed_at_utc"]
+    equal = copied_mutation(
+        tmp_path, source,
+        lambda rows: [row.update({"observed_at_utc": stamp}) for row in rows[:-1]],
+    )
+    assert verifier.audit(equal, pin(equal))["terminal_status"] == "completed"
+
+
 def test_protected_jsonl_never_inside_repository_or_symlink(tmp_path):
     path = generate(tmp_path)["dry_run"]
     link = tmp_path / "indirect.jsonl"
