@@ -28,6 +28,10 @@ Hệ thống kiểm tra marker trước gói tin đầu tiên, trước từng l
 
 Nếu thấy STOP, chương trình thoát với mã lỗi. Terminal JSONL là trạng thái refused, với cờ xác minh AI/SOC/tấn công vẫn false. Sự kiện trước đó (nếu có) được giữ lại, nhưng không có terminal completed. Giao diện hiển thị trạng thái từ chối hoặc lỗi.
 
+Nếu marker được phát hiện **sau ít nhất một lượt kết nối đã trả về**, Red Team tạo thêm một biên nhận RIÊNG TƯ với tên da005_benign_*.json và các trường mode = BENIGN_LAB_ABORTED, probe_sequence_completed = false, completion_status = operator_stopped_before_next_probe. Biên nhận lưu số lượt đã thử, từng sự kiện được trả về và số lượt dự kiến; đây không phải bằng chứng Zeek đã ghi được lưu lượng hoặc mô hình đã phát hiện tấn công. Terminal JSONL vẫn là refused, không in địa chỉ mạng hay đường dẫn riêng tư. Nếu STOP có sẵn trước lượt đầu, không có biên nhận lưu lượng vì chưa thử kết nối.
+
+Nếu hệ điều hành chấm dứt tiến trình hoặc người vận hành ngắt trong một thao tác socket đang chặn trước khi trả về, có thể không có biên nhận đầy đủ. Trường hợp này phải ghi rõ là thiếu bằng chứng; không suy đoán số gói tin chỉ từ JSONL. Không đưa tệp biên nhận chứa địa chỉ mạng lên GitHub.
+
 GIỚI HẠN: Đây là dừng HỢP TÁC tại ranh giới các bước, KHÔNG phải kill switch thời gian thực. Không bảo đảm ngắt socket hoặc SCP đang thực hiện. Trong trường hợp khẩn cấp, dừng phiên bằng terminal hoặc cô lập VM theo đúng quy trình.
 
 Có thể nhấn Ctrl+C trên terminal CLI; chương trình cố gắng phát refused khi nhận KeyboardInterrupt. Nếu process bị kill tức thời, dòng terminal có thể không xuất hiện; JSONL lúc đó là DỞ DANG. Không bao giờ sửa bằng chứng để tạo kết quả completed giả.
