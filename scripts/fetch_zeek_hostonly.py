@@ -96,6 +96,7 @@ def fetch(
     os.close(descriptor)
     temporary = Path(tmp_name)
     published = False
+    completed = False
     try:
         # No shell. -F none disables inherited SSH config/proxies; the
         # pinned known_hosts file must be prepared out of band by the student.
@@ -140,13 +141,13 @@ def fetch(
         with receipt_path.open("x", encoding="utf-8") as stream:
             json.dump(receipt, stream, ensure_ascii=False, indent=2, allow_nan=False)
             stream.write("\n")
+        completed = True
         return receipt
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
         raise RuntimeError("Strict SSH/SCP download refused; check Host-only VM SSH, host key, path and permissions") from exc
-    except BaseException:
-        raise
     finally:
-        if not receipt_path.exists():
+        if not completed:
+            receipt_path.unlink(missing_ok=True)
             if published:
                 target.unlink(missing_ok=True)
         temporary.unlink(missing_ok=True)
