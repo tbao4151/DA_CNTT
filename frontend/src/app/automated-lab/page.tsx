@@ -79,7 +79,14 @@ function isSyntheticEvent(value: unknown): value is LiveEvent {
 }
 
 function assertSyntheticSession(value: LiveSession): LiveSession {
+  // JSON is untrusted at runtime even when apiRequest has a TypeScript type.
+  // Validate the envelope before accessing nested provenance fields.
   if (
+    typeof value !== "object" || value === null ||
+    typeof value.session_id !== "string" || !value.session_id ||
+    !["running", "completed", "stopped", "failed"].includes(value.status) ||
+    typeof value.provenance !== "object" || value.provenance === null ||
+    Array.isArray(value.provenance) ||
     value.mode !== "synthetic_replay" ||
     value.provenance.source !== "hardcoded_synthetic_zeek_fixture" ||
     value.provenance.network_execution !== false ||
@@ -88,7 +95,10 @@ function assertSyntheticSession(value: LiveSession): LiveSession {
     value.provenance.verified_attack_events !== 0 ||
     value.provenance.verified_ai_alerts !== 0 ||
     !Array.isArray(value.events) ||
-    value.events.some((event) => !isSyntheticEvent(event))
+    value.events.some((event) => !isSyntheticEvent(event)) ||
+    !Number.isSafeInteger(value.event_count) || value.event_count < 0 ||
+    !Number.isSafeInteger(value.rounds) || value.rounds < 1 ||
+    !Number.isSafeInteger(value.current_round) || value.current_round < 0
   ) {
     throw new Error("Phản hồi session không khớp hợp đồng SYNTHETIC REPLAY. Từ chối hiển thị để tránh nhầm với dữ liệu live.");
   }
