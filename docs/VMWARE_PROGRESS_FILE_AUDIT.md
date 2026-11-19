@@ -2,6 +2,8 @@
 
 Công cụ scripts/verify_vmware_progress_jsonl.py chỉ đọc một tệp JSONL riêng tư và kiểm tra SHA-256 do người vận hành lưu độc lập trước đó. Công cụ từ chối tệp thiếu dòng kết thúc, sự kiện sai thứ tự, số lượt thử / flow / Blue không khớp giữa các giai đoạn và bản tổng kết, dữ liệu không hợp lệ, trường chứa đường dẫn cá nhân hoặc cờ tuyên bố đã xác minh VMware/AI/SOC.
 
+Sau khi kiểm tra số thứ tự, công cụ còn yêu cầu dấu thời gian UTC dạng ISO-8601 chuẩn và không được đi ngược giữa các sự kiện. So sánh bảo toàn độ chính xác microsecond của Python, cho phép các dấu thời gian bằng nhau khi sự kiện xảy ra sát nhau. Đây chỉ là kiểm tra tính nhất quán của tệp, KHÔNG thay thế việc hiệu chuẩn hoặc xác minh đồng bộ đồng hồ Windows–Ubuntu.
+
 Đây KHÔNG phải công cụ chứng thực nguồn gốc máy ảo. Một tệp JSONL giả mạo hoàn toàn vẫn có thể qua kiểm tra nếu người tạo đồng thời cung cấp đúng SHA-256 của chính tệp giả. PASS chỉ xác nhận tính nhất quán nội bộ của tệp đã được pin, không chứng minh PCAP được thu trên Host-only, không có bằng chứng ground truth và không phải chỉ số đánh giá mô hình.
 
 ## Quy trình trên Windows 11
