@@ -191,6 +191,57 @@ function LocalProgressView() {
     setError("");
   };
 
+  // One file-picker action imports both private artifacts atomically.
+  // Selection alone never executes VMware, writes local files or uploads data.
+  const importSessionPair = async (files: File[]) => {
+    if (files.length === 0) return;
+    op.current += 1;
+    const generation = op.current;
+    handle.current = null;
+    setWatching(false);
+    setStopPrompt(null);
+    setStopStatus("");
+    seen.current = "";
+    setSnapshot(null);
+    setRedPlan(null);
+    setRedPlanFilename("");
+    setRedPlanError("");
+    setFilename("");
+    setUpdated("");
+    setError("");
+    try {
+      if (files.length !== 2) {
+        throw new Error("Chọn đúng hai tệp: một .jsonl và biên nhận .red-plan.json cùng tên phiên.");
+      }
+      const progressFiles = files.filter((file) => file.name.endsWith(".jsonl"));
+      if (progressFiles.length !== 1) {
+        throw new Error("Cặp tệp phải có đúng một nhật ký .jsonl.");
+      }
+      const progress = progressFiles[0];
+      const expectedReceipt = expectedRedPlanFilename(progress.name);
+      const receipt = files.find((file) => file.name === expectedReceipt);
+      if (!receipt) {
+        throw new Error("Biên nhận Red không khớp tên phiên JSONL.");
+      }
+      if (progress.size > MAX_VMWARE_PROGRESS_BYTES || receipt.size > MAX_VMWARE_RED_PLAN_BYTES) {
+        throw new Error("Cặp tệp vượt giới hạn 1 MiB JSONL hoặc 4 KiB biên nhận Red.");
+      }
+      const [timelineText, receiptText] = await Promise.all([progress.text(), receipt.text()]);
+      const parsedTimeline = parseVMwareProgressJsonl(timelineText);
+      const parsedReceipt = parseVmwareRedPlan(receiptText);
+      if (generation !== op.current) return;
+      setSnapshot(parsedTimeline);
+      setRedPlan(parsedReceipt);
+      setFilename(progress.name);
+      setRedPlanFilename(receipt.name);
+      setUpdated(new Date().toLocaleTimeString("vi-VN"));
+      seen.current = progress.name + ":" + progress.size + ":" + progress.lastModified;
+    } catch (reason) {
+      if (generation !== op.current) return;
+      setError(reason instanceof Error ? reason.message : "Không thể nhập cặp tệp VMware.");
+    }
+  };
+
   const importRedPlan = async (file?: File) => {
     if (!file) return;
     const generation = op.current;
@@ -336,7 +387,7 @@ function LocalProgressView() {
         <section className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
           <h2 className="text-sm font-semibold text-slate-100">Nguồn sự kiện JSONL</h2>
           <p className="mt-2 text-xs text-slate-400">
-            Với Chromium trên localhost, chọn “Theo dõi tệp” để cập nhật khi PowerShell ghi thêm sự kiện. Nếu không hỗ trợ, chọn tệp thủ công sau khi chạy.
+            Với Chromium trên localhost, chọn “Theo dõi tệp” để cập nhật khi PowerShell ghi thêm sự kiện. Hoặc dùng “Mở cặp JSONL + Red” để nhập đồng thời hai tệp của cùng một phiên; lựa chọn này chỉ đọc một lần, không tự theo dõi.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <label className="cursor-pointer rounded-lg border border-slate-600 px-3 py-2 text-xs font-semibold text-slate-100 hover:bg-slate-800">
@@ -349,6 +400,21 @@ function LocalProgressView() {
                 onChange={(event) => {
                   const file = event.currentTarget.files?.[0];
                   void importFile(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+            <label className="cursor-pointer rounded-lg border border-slate-600 px-3 py-2 text-xs font-semibold text-slate-100 hover:bg-slate-800">
+              Mở cặp JSONL + Red
+              <input
+                aria-label="Mở cặp JSONL và biên nhận Red"
+                type="file"
+                accept=".jsonl,.json"
+                multiple
+                className="sr-only"
+                onChange={(event) => {
+                  const files = Array.from(event.currentTarget.files ?? []);
+                  void importSessionPair(files);
                   event.currentTarget.value = "";
                 }}
               />
