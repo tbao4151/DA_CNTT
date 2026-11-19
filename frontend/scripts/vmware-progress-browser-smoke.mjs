@@ -57,11 +57,15 @@ const terminal = {
   status: "completed",
   result: {
     mode: "STEPWISE_VMWARE_BENIGN_CAPTURE",
+    network_attempts: 2,
+    captured_log_flow_count: 2,
+    research_candidate_count: null,
+    ssh_fetch_performed: true,
+    blue_research_scoring_performed: false,
     vmware_isolation_verified: false,
     attack_executed: false,
-    operational_detection_verified: false,
-    automated_soc_alerts: false,
-    full_one_click_dual_ai: false,
+    operational_ai_detection_verified: false,
+    soc_alerts_created: false,
   },
 };
 
@@ -92,6 +96,35 @@ try {
   assert.match(await page.locator("body").innerText(), /UID trùng khớp ứng viên/);
   assert.match(await page.locator("body").innerText(), /Chưa xác minh|chưa xác minh|CHƯA XÁC MINH/);
   assert.equal(uploads, 0, "JSONL must not be posted to any API");
+
+  // This is the exact redacted dry-run summary from the Python CLI.
+  const dryRun = {
+    kind: "da005_vmware_stepwise_terminal_v1",
+    status: "dry_run",
+    result: {
+      mode: "DRY_RUN_EXECUTION_OFF", network_attempts: 0,
+      captured_log_flow_count: null, research_candidate_count: null,
+      ssh_fetch_performed: false, blue_research_scoring_performed: false,
+      vmware_isolation_verified: false, attack_executed: false,
+      operational_ai_detection_verified: false, soc_alerts_created: false,
+    },
+  };
+  await page.getByLabel("Mở tệp JSONL VMware").setInputFiles({
+    name: "dry-run.jsonl", mimeType: "application/x-ndjson",
+    buffer: Buffer.from([event(1, "preflight", "dry_run"), dryRun].map((x) => JSON.stringify(x)).join("\n") + "\n"),
+  });
+  await page.getByText("Dry-run", { exact: true }).first().waitFor();
+  assert.match(await progress.innerText(), /1 sự kiện/);
+
+  // A terminal containing the original unredacted private path is not accepted.
+  await page.getByLabel("Mở tệp JSONL VMware").setInputFiles({
+    name: "unredacted.jsonl", mimeType: "application/x-ndjson",
+    buffer: Buffer.from([...entries, { ...terminal, result: {
+      ...terminal.result, log_filename: "private-evidence.log",
+    }}].map((x) => JSON.stringify(x)).join("\n") + "\n"),
+  });
+  await page.getByRole("alert").filter({ hasText: "thuộc tính không được phép" }).waitFor();
+  assert.match(await progress.innerText(), /0 sự kiện/);
 
   const forged = entries.map((x) => ({ ...x }));
   forged[0] = { ...forged[0], vmware_isolation_verified: true };
