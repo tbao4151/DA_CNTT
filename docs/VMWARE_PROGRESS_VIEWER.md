@@ -27,6 +27,8 @@ Start the Next.js frontend on the local machine and open /vmware-progress.
 
 The viewer never opens raw PCAP, conn.log or private model files. Every event must have the exact JSONL kind/mode, a monotonic sequence, allowed stage/status, a bounded aggregate count and explicit false flags for isolation, AI attack execution, verified detection and SOC alert creation. A forged, out-of-order or malformed complete record invalidates the whole session. A final incomplete line is ignored until completed. Input is capped at 1 MiB.
 
+The viewer also rejects invalid UTC calendar timestamps, noncanonical timezone forms, and chronological backtracking **at microsecond precision** rather than the browser's default millisecond resolution. Equal timestamps are allowed. A valid timestamp sequence cannot establish cross-machine clock synchronization; compare independently preserved Windows and Ubuntu clock sources during the physical experiment.
+
 This screen verifies JSON structure, NOT VM Host-only isolation, Zeek capture provenance, packet-to-flow causality, model accuracy, verified attacks, precision/recall/F1, SOC live alerts, or complete autonomous dual-AI One-Click. Maintain the original evidence privately and separately use scripts/verify_vmware_snapshot_bundle.py to cross-check the Zeek capture receipts and model research reports.
 
 ## CI
