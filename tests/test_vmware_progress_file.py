@@ -46,7 +46,7 @@ def test_relative_and_repo_paths_are_rejected_before_cli(monkeypatch, tmp_path):
     monkeypatch.setattr(writer.stepwise, "main", lambda _a: pytest.fail("No CLI"))
     with pytest.raises(ValueError, match="absolute"):
         writer.run_to_file(jsonl_file=Path("relative.jsonl"), cli_args=[])
-    with pytest.raises(ValueError, match="private"):
+    with pytest.raises(ValueError, match="outside Git"):
         writer.run_to_file(jsonl_file=ROOT / "secret.jsonl", cli_args=[])
     with pytest.raises(ValueError, match="extension"):
         writer.run_to_file(jsonl_file=tmp_path / "log.txt", cli_args=[])
