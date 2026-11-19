@@ -9,12 +9,25 @@ import {
   type VMwareProgressSnapshot,
 } from "@/lib/vmwareProgress";
 
-type LocalFileHandle = { getFile(): Promise<File> };
+type LocalFileHandle = {
+  getFile(): Promise<File>;
+  isSameEntry?(other: LocalFileHandle): Promise<boolean>;
+};
+type LocalStopFileHandle = LocalFileHandle & {
+  createWritable(): Promise<{ write(value: string): Promise<void>; close(): Promise<void> }>;
+};
+type LocalDirectoryHandle = {
+  name: string;
+  getFileHandle(name: string, options?: { create?: boolean }): Promise<LocalStopFileHandle>;
+};
 type BrowserWithFilePicker = Window & {
   showOpenFilePicker?: (options?: {
     multiple?: boolean;
     types?: Array<{ description: string; accept: Record<string, string[]> }>;
   }) => Promise<LocalFileHandle[]>;
+  showDirectoryPicker?: (options?: {
+    mode?: "read" | "readwrite";
+  }) => Promise<LocalDirectoryHandle>;
 };
 const STAGES = ["preflight", "red", "zeek", "blue", "audit", "soc"] as const;
 const STATUS_LABELS = {
@@ -37,6 +50,12 @@ function LocalProgressView() {
   const [filename, setFilename] = useState("");
   const [updated, setUpdated] = useState("");
   const [watching, setWatching] = useState(false);
+  const [stopPrompt, setStopPrompt] = useState<{
+    directory: LocalDirectoryHandle;
+    target: LocalFileHandle;
+    generation: number;
+  } | null>(null);
+  const [stopStatus, setStopStatus] = useState("");
   const handle = useRef<LocalFileHandle | null>(null);
   const seen = useRef("");
   const op = useRef(0);
@@ -75,6 +94,8 @@ function LocalProgressView() {
           seen.current = "";
           setError("Tệp đang theo dõi không còn hợp lệ hoặc không thể đọc. Đã xóa toàn bộ tiến độ cũ và ngừng theo dõi.");
           setWatching(false);
+          setStopPrompt(null);
+          setStopStatus("");
           op.current += 1;
           handle.current = null;
         }
@@ -93,6 +114,8 @@ function LocalProgressView() {
     op.current += 1;
     handle.current = null;
     setWatching(false);
+    setStopPrompt(null);
+    setStopStatus("");
     seen.current = "";
     setSnapshot(null);
     setError("");
@@ -121,6 +144,8 @@ function LocalProgressView() {
       setSnapshot(null);
       setError("");
       handle.current = files[0];
+      setStopPrompt(null);
+      setStopStatus("");
       setWatching(true);
     } catch (reason) {
       // A user cancelling the browser picker is not an error.
@@ -135,10 +160,84 @@ function LocalProgressView() {
     handle.current = null;
     seen.current = "";
     setWatching(false);
+    setStopPrompt(null);
+    setStopStatus("");
     setSnapshot(null);
     setFilename("");
     setUpdated("");
     setError("");
+  };
+
+  // Explicit, two-step browser permission flow: NEVER writes a STOP marker
+  // without a real user click. The selected directory must contain the exact
+  // currently watched file handle; no arbitrary browser directory writes.
+  const requestStop = async () => {
+    if (!watching || !handle.current || snapshot?.terminal) {
+      setError("Chỉ yêu cầu STOP khi đang theo dõi một phiên chưa kết thúc.");
+      return;
+    }
+    const host = window as BrowserWithFilePicker;
+    const picker = host.showDirectoryPicker;
+    if (!picker) {
+      setError("STOP từ giao diện cần Chrome/Edge trên localhost và quyền ghi thư mục riêng tư. Có thể tạo marker bằng PowerShell.");
+      return;
+    }
+    const target = handle.current;
+    const generation = op.current;
+    try {
+      const directory = await picker.call(host, { mode: "readwrite" });
+      if (generation !== op.current || target !== handle.current || !watching) return;
+      const file = await target.getFile();
+      const matching = await directory.getFileHandle(file.name, { create: false });
+      if (typeof matching.isSameEntry !== "function" ||
+          !(await matching.isSameEntry(target))) {
+        throw new Error("Thư mục STOP không chứa chính tệp JSONL đang theo dõi.");
+      }
+      if (generation !== op.current || target !== handle.current) return;
+      setStopPrompt({ directory, target, generation });
+      setStopStatus("");
+      setError("");
+    } catch (reason) {
+      if (reason instanceof Error && reason.name === "AbortError") return;
+      setStopPrompt(null);
+      setError(reason instanceof Error && reason.message.includes("không chứa")
+        ? reason.message
+        : "Không xác nhận được quyền hoặc thư mục STOP. Chưa ghi tệp.");
+    }
+  };
+
+  const confirmStop = async () => {
+    const pending = stopPrompt;
+    if (!pending || !watching || snapshot?.terminal ||
+        pending.generation !== op.current || pending.target !== handle.current) {
+      setStopPrompt(null);
+      setError("Phiên hoặc tệp đang theo dõi đã thay đổi. Yêu cầu STOP bị hủy.");
+      return;
+    }
+    try {
+      // An existing marker already represents a STOP request. Do not modify it.
+      let exists = false;
+      try {
+        await pending.directory.getFileHandle("DA005_STOP.flag", { create: false });
+        exists = true;
+      } catch (reason) {
+        if (!(reason instanceof Error) || reason.name !== "NotFoundError") throw reason;
+      }
+      if (!exists) {
+        const marker = await pending.directory.getFileHandle("DA005_STOP.flag", { create: true });
+        const writer = await marker.createWritable();
+        await writer.write("");
+        await writer.close();
+      }
+      setStopPrompt(null);
+      setStopStatus(exists
+        ? "Marker STOP đã có sẵn. Python sẽ xử lý tại điểm kiểm tra tiếp theo nếu phiên đang chạy."
+        : "Đã tạo DA005_STOP.flag. Đây là yêu cầu dừng hợp tác, chưa xác nhận Python đã dừng.");
+      setError("");
+    } catch {
+      setStopPrompt(null);
+      setError("Không ghi được marker STOP. Phiên có thể vẫn đang chạy; kiểm tra trực tiếp trên Windows.");
+    }
   };
 
   const latest = useMemo(() => {
@@ -159,7 +258,9 @@ function LocalProgressView() {
           <h2 className="text-sm font-semibold text-amber-200">Chỉ xem tiến độ cục bộ · Không phải bằng chứng phát hiện tấn công</h2>
           <p className="mt-2 text-xs leading-6 text-slate-300">
             Màn hình này đọc tệp JSONL do chương trình VMware Stepwise tạo trên laptop. Không tự chạy Red Team,
-            không kết nối máy ảo và không đưa nội dung tệp lên API. Trạng thái hoàn thành chỉ xác nhận chương trình
+            không kết nối máy ảo và không đưa nội dung tệp lên API. Chỉ khi người vận hành chọn đúng thư mục
+            và xác nhận STOP, trình duyệt mới ghi marker trống DA005_STOP.flag tại đó.
+            Trạng thái hoàn thành chỉ xác nhận chương trình
             đã hoàn thành bước xử lý, chưa chứng minh cô lập mạng Host-only, tính xác thực PCAP, AI phát hiện tấn công hoặc SOC live.
           </p>
           <p className="mt-2 text-xs text-slate-400">
@@ -190,11 +291,34 @@ function LocalProgressView() {
               className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
               {watching ? "Đang theo dõi tệp" : "Theo dõi tệp đang ghi"}
             </button>
+            <button type="button" onClick={() => void requestStop()}
+              disabled={!watching || Boolean(snapshot?.terminal) || Boolean(stopStatus)}
+              className="rounded-lg border border-red-700 px-3 py-2 text-xs font-semibold text-red-200 hover:bg-red-950 disabled:opacity-40">
+              Yêu cầu STOP qua tệp
+            </button>
             <button type="button" onClick={reset}
               className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800">
               Đóng phiên
             </button>
           </div>
+          {stopPrompt && (
+            <div role="group" aria-label="Xác nhận yêu cầu STOP" className="mt-3 space-y-2 rounded-lg border border-red-700/70 p-3 text-xs text-slate-200">
+              <p>Thư mục đã đối chiếu với tệp đang theo dõi: {stopPrompt.directory.name}.
+                Xác nhận tạo DA005_STOP.flag? Python chỉ kiểm tra ở ranh giới giữa các thao tác;
+                một socket hoặc SCP đang chờ sẽ không bị ngắt tức thời.</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => void confirmStop()}
+                  className="rounded-md bg-red-800 px-3 py-2 font-semibold text-white hover:bg-red-700">
+                  Xác nhận gửi STOP
+                </button>
+                <button type="button" onClick={() => setStopPrompt(null)}
+                  className="rounded-md border border-slate-600 px-3 py-2">
+                  Hủy yêu cầu STOP
+                </button>
+              </div>
+            </div>
+          )}
+          {stopStatus && <p role="status" className="mt-3 text-xs text-amber-200">{stopStatus}</p>}
           {error && <p role="alert" className="mt-3 rounded-lg border border-red-700 bg-red-950/40 p-3 text-xs text-red-200">{error}</p>}
           <div className="mt-3 grid gap-2 text-xs text-slate-400 sm:grid-cols-3">
             <p>Tệp: <span className="break-all text-slate-200">{filename || "Chưa chọn"}</span></p>

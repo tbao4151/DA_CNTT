@@ -1,0 +1,45 @@
+name: DA005 VMware local STOP Chromium QA
+# Browser File System Access API is mocked; never executes SSH, packets or real file writes.
+on:
+  push:
+    paths:
+      - 'frontend/src/app/vmware-progress/**'
+      - 'frontend/scripts/vmware-stop-browser-smoke.mjs'
+      - '.github/workflows/vmware-stop-browser.yml'
+  pull_request:
+    paths:
+      - 'frontend/src/app/vmware-progress/**'
+      - 'frontend/scripts/vmware-stop-browser-smoke.mjs'
+      - '.github/workflows/vmware-stop-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stop-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Chromium smoke of explicit operator STOP marker
+        shell: bash
+        run: |
+          npm run start > "$RUNNER_TEMP/da005-stop-browser.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node scripts/vmware-stop-browser-smoke.mjs
