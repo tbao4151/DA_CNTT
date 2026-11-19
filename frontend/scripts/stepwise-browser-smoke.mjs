@@ -121,7 +121,16 @@ try {
   await group.getByRole("button", { name: /Zeek · Synthetic Replay/ }).click();
   assert.match(await panel.textContent(), /Chưa có sự kiện cho giai đoạn này/);
   await page.getByRole("button", { name: "Bắt đầu replay tự động" }).click();
-  await panel.getByText("Zeek synthetic fixture flows", { exact: true }).waitFor({ state: "visible" });
+  try {
+    await panel.getByText("Zeek synthetic fixture flows", { exact: true }).waitFor({ state: "visible", timeout: 12000 });
+  } catch (error) {
+    console.error("DIAGNOSTIC createCalls=", createCalls);
+    console.error("DIAGNOSTIC alerts=", await page.locator('[role="alert"]').allTextContents());
+    console.error("DIAGNOSTIC selected panel=", (await panel.innerText()).slice(0, 1800));
+    console.error("DIAGNOSTIC body=", (await page.locator("body").innerText()).slice(0, 1800));
+    console.error("DIAGNOSTIC page errors=", errors);
+    throw error;
+  }
   assert.equal(createCalls, 1);
   const cases = [
     [/Red Team · Planner/, "Red fixture decision"],
