@@ -34,6 +34,8 @@ def _fixture(tmp_path):
     receipt_obj = {
         "version": 1, "capture_kind": "read_only_vmware_scp_snapshot_unverified",
         "local_log_filename": source.name, "log_sha256": hashlib.sha256(raw).hexdigest(),
+        "remote_host": "192.168.77.20",
+        "remote_path": "/opt/zeek/logs/current/conn.log",
         "declared_cidr": "192.168.77.0/24", "scope_screen_passed": True,
         "bytes": len(raw), "flow_count": 2,
         "first_event_utc": scope["first_event_utc"], "last_event_utc": scope["last_event_utc"],
@@ -91,6 +93,8 @@ def test_report_rows_matched_to_exact_original_uid_and_scope(tmp_path):
     ("flow_count", 100), ("bytes", 1), ("log_sha256", "f" * 64),
     ("scope_screen_passed", False), ("capture_authenticity_verified", True),
     ("declared_cidr", "192.168.78.0/24"),
+    ("remote_host", "8.8.8.8"),
+    ("remote_path", "/etc/passwd"),
 ])
 def test_tampered_receipt_fails_closed(tmp_path, field, value):
     _, receipt, data, _, _ = _fixture(tmp_path)
