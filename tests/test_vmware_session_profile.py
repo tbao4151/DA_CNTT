@@ -768,3 +768,86 @@ def test_valid_host_bound_dryrun_still_sends_zero_packets(monkeypatch, tmp_path)
     ) == 0
     assert audit.audit(output, digest(output))["terminal_status"] == "dry_run"
     assert not (output.parent / "DA005_ACTIVE_SESSION.lock").exists()
+
+
+def _private_snapshot_v3_profile(tmp_path):
+    path, config = fixture_profile(tmp_path)
+    identity = tmp_path / "id_ed25519_da005"
+    identity.write_text("SYNTHETIC PRIVATE IDENTITY FOR MOCKS ONLY", encoding="utf-8")
+    config["version"] = 3
+    config["ssh_identity_file"] = str(identity)
+    config["remote_zeek_path"] = (
+        "/home/ubuntu/da005-private-logs/conn-20261119T161546.log"
+    )
+    path.write_text(json.dumps(config) + "\n", encoding="utf-8")
+    return path, config, identity
+
+
+def test_v3_pinned_snapshot_profile_readiness_is_offline(monkeypatch, tmp_path, capsys):
+    path, config, identity = _private_snapshot_v3_profile(tmp_path)
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe",
+                        lambda **_kw: pytest.fail("No packets for v3 readiness"))
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **_kw: pytest.fail("No SSH for v3 readiness"))
+    assert launcher.main([
+        "--config-file", str(path),
+        "--expected-config-sha256", digest(path),
+        "--validate-only",
+    ]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert data["operator_owned_ssh_snapshot_configured"] is True
+    assert data["fresh_post_probe_zeek_snapshot_verified"] is False
+    assert data["network_activity_performed"] is False
+    assert not list(Path(config["output_dir"]).iterdir())
+
+
+def test_v3_pinned_profile_forwards_exact_ssh_identity_and_snapshot(monkeypatch, tmp_path):
+    path, config, identity = _private_snapshot_v3_profile(tmp_path)
+    calls = []
+
+    def fake_writer(**kw):
+        calls.append(kw)
+        return 0
+
+    monkeypatch.setattr(launcher.writer, "run_to_file", fake_writer)
+    report = Path(config["output_dir"]) / "v3-operator.jsonl"
+    assert launcher.run_profile(
+        config_file=path, expected_sha256=digest(path), jsonl_file=report,
+    ) == 0
+    assert len(calls) == 1
+    opts = calls[0]["cli_args"]
+    assert opts[opts.index("--identity-file") + 1] == str(identity)
+    assert opts[opts.index("--remote-path") + 1] == config["remote_zeek_path"]
+    assert "--execute" not in opts
+    assert not list(Path(config["output_dir"]).iterdir())
+
+
+@pytest.mark.parametrize("problem", [
+    "other_owner", "shadow", "missing_key", "key_in_repository",
+    "unknown_key", "unknown_remote",
+])
+def test_v3_bad_ssh_inputs_refused_before_any_network(monkeypatch, tmp_path, problem):
+    path, config, identity = _private_snapshot_v3_profile(tmp_path)
+    if problem == "other_owner":
+        config["remote_zeek_path"] = (
+            "/home/other/da005-private-logs/conn-20261119T161546.log"
+        )
+    elif problem == "shadow":
+        config["remote_zeek_path"] = "/etc/shadow"
+    elif problem == "missing_key":
+        identity.unlink()
+    elif problem == "key_in_repository":
+        config["ssh_identity_file"] = str(ROOT / "README.md")
+    elif problem == "unknown_key":
+        config["ssh_identity_file"] = None
+    elif problem == "unknown_remote":
+        config["remote_zeek_path"] = None
+    path.write_text(json.dumps(config) + "\n", encoding="utf-8")
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe",
+                        lambda **_kw: pytest.fail("No network on bad profile"))
+    monkeypatch.setattr(launcher.writer, "run_to_file",
+                        lambda **_kw: pytest.fail("No output on bad profile"))
+    with pytest.raises((ValueError, OSError, TypeError)):
+        launcher.validate_operator_profile(
+            config_file=path, expected_sha256=digest(path),
+        )

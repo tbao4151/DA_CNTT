@@ -125,3 +125,79 @@ Run scripts/verify_vmware_progress_jsonl.py with its --expected-sha256 value. Pr
 - A corrupt, unknown-key, duplicate-key, oversized, symlinked, unpinned, nonprivate or out-of-scope JSON profile is refused. An already used progress file is never overwritten.
 - The launcher cannot independently verify physical VMware network mode, source adapter/route, true packet provenance, correct labels, an operational AI detector or SOC alerts. It does not turn synthetic replay into a real cyberattack demonstration.
 - All CI tests run network-free; their completed simulated runs are fixtures, never physical VMware capture evidence.
+
+
+## Optional v3 profile: explicit Windows SSH key and operator-owned Zeek copy
+
+Windows 11 operators may have a verified ED25519 key that is not one of the
+OpenSSH default names, and the Zeek `conn.log` may be inaccessible to the
+unprivileged guest account because `/opt/zeek/logs` belongs to the Zeek user.
+Do **not** disable SSH host-key checks, chmod 777 or expose Zeek's entire
+log directory to work around this. The v3 profile extends the **v1**
+operator profile with exactly two new required keys:
+
+- `"version": 3`
+- `"ssh_identity_file": "C:/Users/USER/.ssh/id_ed25519_da005"`
+- `"remote_zeek_path": "/home/da005/da005-private-logs/conn-20261119T161546.log"`
+
+The paths here are examples that must be replaced with the operator's real,
+existing files; no private key content belongs in the JSON. The original
+profile v1/v2 schemas remain unchanged. Write a **new** profile JSON outside
+Git and independently record its SHA-256; never rewrite the original pinned
+profile or snapshot. The private identity must exist outside Git and be
+nonempty and at most 64 KiB. The remote path is restricted to original Zeek
+`conn.log` install paths or a basename matching exactly
+`/home/<SSH-username>/da005-private-logs/conn-YYYYMMDDTHHMMSS.log`.
+Unknown directories, another user's home, traversal, shell metacharacters
+and arbitrary remote filenames are refused *before any probe*.
+
+Create an approved snapshot on the **Ubuntu console or operator SSH
+session**, where the operator has already verified Zeek is running and the
+original file's scope. Example:
+
+```bash
+D=/home/da005/da005-private-logs
+sudo install -d -m 0700 -o da005 -g da005 "$D"
+SNAP="$D/conn-$(date -u +%Y%m%dT%H%M%S).log"
+sudo install -m 0600 -o da005 -g da005 /opt/zeek/logs/current/conn.log "$SNAP"
+sha256sum "$SNAP"
+```
+
+Write the **exact** resulting snapshot path into the new v3 profile. This
+operation is operator-assisted and is not performed by the Windows
+automation. The snapshot will not automatically grow when new traffic is
+generated afterward. A v3 run therefore **cannot claim** that a snapshot
+pre-dating the benign probes contains those new probes, even if the program
+successfully downloads it. Inspect the private candidate link output for
+unmatched attempts, original UIDs, actual timestamps and hashes. Future
+live fresh-capture acceptance requires an independently reviewed privileged
+guest-side export mechanism or scoped Zeek directory access and fresh,
+per-session provenance; none is implied by this enhancement.
+
+The transport uses `scp -F none -i ... -o IdentitiesOnly=yes`, strict pinned
+`known_hosts`, BatchMode, and disabled password/keyboard-interactive
+authentication. The operator's private key is never copied to the guest
+or uploaded to GitHub. The private receipt contains the remote file path
+and exact downloaded hash; it does not verify guest snapshot authenticity.
+
+For an *offline-only* pinned v3 readiness check, use the existing launcher:
+
+```powershell
+$profile = 'E:\DA005_Private\captures\operator-profile-v3.json'
+$profileSha = (Get-FileHash $profile -Algorithm SHA256).Hash.ToLowerInvariant()
+py -3.12 scripts/run_vmware_session_profile.py --config-file $profile --expected-config-sha256 $profileSha --validate-only
+```
+
+On a laptop with a project virtual environment, replace `py -3.12` with
+`& .\.venv\Scripts\python.exe`. For host adapter checks, also pass
+`--host-snapshot`, `--expected-host-sha256` and `--host-adapter` as
+documented in Step 2b. Use the distinct new v3 profile hash, not the old v1
+hash. `operator_owned_ssh_snapshot_configured=true` is a configuration check
+only; `fresh_post_probe_zeek_snapshot_verified=false`, `network_activity_performed=false`
+and `vmware_isolation_verified=false` remain explicit.
+
+**Important:** A pinned Zeek research model is **still** needed to enable the
+Blue research inference stage; without a real independently labeled
+TRAIN/VALIDATION/TEST Zeek experiment and an exported trusted model, Blue
+is SKIPPED. The pinned v3 profile does not train a model, create attack
+traffic, or provide live AI detection.

@@ -33,6 +33,8 @@ def run_sequence(
     username: str,
     known_hosts: Path,
     output_dir: Path,
+    identity_file: Path | None = None,
+    remote_path: str = collector.REMOTE_PATHS[0],
     execute: bool = False,
     operator_confirmed_hostonly: bool = False,
     attempts: int = 2,
@@ -119,6 +121,11 @@ def run_sequence(
     # local model are not prepared. The scp subprocess enforces host-key pinning.
     stimulus._private_dir(output_dir)
     collector._private_path(known_hosts, must_be_file=True)
+    collector.validate_remote_path(remote_path, username)
+    if identity_file is not None:
+        identity = collector._private_path(identity_file, must_be_file=True)
+        if not 0 < identity.stat().st_size <= collector.MAX_SSH_IDENTITY_BYTES:
+            raise ValueError("SSH identity must be a bounded private file")
     if model_path is not None:
         resolved_model = model_path.resolve(strict=True)
         if model_path.is_symlink() or resolved_model.is_relative_to(ROOT):
@@ -154,6 +161,7 @@ def run_sequence(
         zeek_receipt = collector.fetch(
             host=target_ip, cidr=cidr,
             username=username, known_hosts=known_hosts, output_dir=output_dir,
+            identity_file=identity_file, remote_path=remote_path,
         )
         blue_result = None
         log_name = zeek_receipt["local_log_filename"]
@@ -165,6 +173,7 @@ def run_sequence(
         blue_result = blue.run_bridge(
             host=target_ip, cidr=cidr, username=username,
             known_hosts=known_hosts, output_dir=output_dir,
+            identity_file=identity_file, remote_path=remote_path,
             model_path=model_path, expected_model_sha256=expected_model_sha256,
         )
         log_name = blue_result["log_file"]
@@ -252,6 +261,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--scenario", required=True, choices=tuple(stimulus.SCENARIOS))
     parser.add_argument("--user", required=True)
     parser.add_argument("--known-hosts", type=Path, required=True)
+    parser.add_argument("--identity-file", type=Path,
+                        help="Operator-owned SSH key outside Git")
+    parser.add_argument("--remote-path", default=collector.REMOTE_PATHS[0],
+                        help="Original Zeek path or tightly allowlisted snapshot")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--attempts", type=int, default=2)
     parser.add_argument("--settle-s", type=int, default=2)
@@ -272,6 +285,8 @@ def main(argv: list[str] | None = None) -> int:
             scenario_id=options.scenario,
             username=options.user,
             known_hosts=options.known_hosts,
+            identity_file=options.identity_file,
+            remote_path=options.remote_path,
             output_dir=options.output_dir,
             attempts=options.attempts,
             settle_s=options.settle_s,
