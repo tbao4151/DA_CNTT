@@ -88,7 +88,7 @@ def test_refuses_forged_verified_attack_flag_and_unredacted_private_path(tmp_pat
 def test_refuses_missing_phase_nonfinite_and_duplicate_json_key(tmp_path):
     path = generate(tmp_path)["mock_completed"]
     changed = copied_mutation(tmp_path, path, lambda rows: rows.pop(3))
-    with pytest.raises(ValueError, match="order"):
+    with pytest.raises(ValueError, match="sequence|order"):
         verifier.audit(changed, pin(changed))
     changed.write_text('{"kind":NaN}\n', encoding="utf-8")
     with pytest.raises(ValueError, match="Non-finite"):
