@@ -59,6 +59,14 @@ function requireFalseFlags(record: Record<string, unknown>): void {
     throw new Error("Từ chối sự kiện tuyên bố hoạt động VMware/AI/SOC chưa xác minh.");
   }
 }
+// Preserve microsecond ordering instead of Date.parse's millisecond rounding.
+// The caller has already validated strict UTC ISO-8601, including its calendar.
+function utcChronologyKey(timestamp: string): string {
+  const base = timestamp.replace(/(?:Z|\+00:00)$/, "");
+  const [whole, fraction = ""] = base.split(".");
+  return whole + "." + fraction.padEnd(6, "0");
+}
+
 function eventFrom(value: unknown, expectedSeq: number): VMwareStageEvent {
   const item = object(value);
   keysMatch(item, [
@@ -74,6 +82,7 @@ function eventFrom(value: unknown, expectedSeq: number): VMwareStageEvent {
     typeof item.observed_at_utc !== "string" ||
     !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|\+00:00)$/.test(item.observed_at_utc) ||
     Number.isNaN(Date.parse(item.observed_at_utc)) ||
+    new Date(Date.parse(item.observed_at_utc)).toISOString().slice(0, 19) !== item.observed_at_utc.slice(0, 19) ||
     typeof item.stage !== "string" ||
     !STAGES.includes(item.stage as Stage) ||
     typeof item.status !== "string" ||
@@ -235,8 +244,8 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
     }
     const event = eventFrom(record, events.length + 1);
     if (events.length > 0) {
-      const previousTime = Date.parse(events[events.length - 1].observed_at_utc);
-      if (Date.parse(event.observed_at_utc) < previousTime) {
+      const previousTime = utcChronologyKey(events[events.length - 1].observed_at_utc);
+      if (utcChronologyKey(event.observed_at_utc) < previousTime) {
         throw new Error("Thời gian UTC của sự kiện đi ngược, từ chối phiên JSONL.");
       }
     }
