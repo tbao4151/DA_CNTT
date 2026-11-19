@@ -103,6 +103,14 @@ try {
   assert.match(await progress.innerText(), /0 sự kiện/);
   assert.equal(uploads, 0);
 
+  // A fabricated SOC-only terminal must not impersonate a completed sequence.
+  await page.getByLabel("Mở tệp JSONL VMware").setInputFiles({
+    name: "incomplete-success.jsonl", mimeType: "application/x-ndjson",
+    buffer: Buffer.from([event(1, "soc", "skipped"), terminal].map((x) => JSON.stringify(x)).join("\n") + "\n"),
+  });
+  await page.getByRole("alert").filter({ hasText: "Thiếu, đảo hoặc giả mạo giai đoạn JSONL" }).waitFor();
+  assert.match(await progress.innerText(), /0 sự kiện/);
+
   const partial = JSON.stringify(event(1, "preflight", "completed")) + "\n" + '{"kind":"unfinished';
   await page.getByLabel("Mở tệp JSONL VMware").setInputFiles({
     name: "partial.jsonl", mimeType: "application/x-ndjson",
