@@ -45,18 +45,35 @@ Do not edit the profile after recording its SHA-256; any modification requires r
 After recording the independently calculated SHA-256, a safe local-only gate verifies the profile structure and, if configured, the private Blue Zeek v1 model's hash and schema. It creates **no JSONL**, Red plan receipt or session lock; it makes **no network requests**, predictions or SOC records.
 
 ```powershell
-py -3.12 scripts/run_vmware_session_profile.py --config-file 'E:\\DA005_Private\\captures\\operator-profile.json' --expected-config-sha256 $profileSha --validate-only
+py -3.12 scripts/run_vmware_session_profile.py --config-file 'E:\DA005_Private\captures\operator-profile.json' --expected-config-sha256 $profileSha --validate-only
 ```
 
 For a two-module research demo, **require** a privately stored, already available and independently SHA-256-pinned compatible Blue Zeek v1 model:
 
 ```powershell
-py -3.12 scripts/run_vmware_session_profile.py --config-file 'E:\\DA005_Private\\captures\\operator-profile.json' --expected-config-sha256 $profileSha --validate-only --require-blue-research
+py -3.12 scripts/run_vmware_session_profile.py --config-file 'E:\DA005_Private\captures\operator-profile.json' --expected-config-sha256 $profileSha --validate-only --require-blue-research
 ```
 
 If `model_path` or `expected_model_sha256` is null, the second command **refuses** the profile. If a supplied Blue model is missing, tampered, unreadable or has an incompatible Zeek feature schema, it also refuses. The JSON output uses `blue_model_pinned_and_schema_verified` to distinguish model readiness from a model-free profile; it always records `network_activity_performed=false`, `vmware_isolation_verified=false` and `operational_ai_detection_verified=false`. Do **not** interpret readiness as real detection or physical isolation.
 
 For an authorized actual session after independent VMware Host-only preflight, append `--require-blue-research` to the Step 4 launcher command as well. This prevents silently running Blue=SKIPPED when a model is required and refuses invalid Blue models **before** creating the progress JSONL or Red receipt and before attempting a packet. This flag does not auto-create or train a model and does not turn benign probes into cyberattacks. The ordinary optional-Blue dry-run remains backward-compatible.
+
+## Step 2b — Bind the exact Windows VMnet adapter to the profile (offline)
+
+The profile source address must match the actual VMware Host-only adapter used on Windows. After confirming the selected VMnet in VMware Virtual Network Editor **manually**, save a fresh v2 read-only adapter snapshot, without network traffic. Use the **actual adapter name**, for example VMnet2 rather than the historical VMnet1 examples elsewhere in the docs. Re-check the VMnet and guest interfaces after any switch between NAT and Host-only.
+
+~~~powershell
+$adapter = 'VMware Network Adapter VMnet2'  # Replace with the confirmed adapter
+$hostPath = 'E:\DA005_Private\captures\host-vmnet2-001.json'
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\collect_windows_hostonly_snapshot.ps1 -AdapterName $adapter -OutputPath $hostPath
+$hostSha = (Get-FileHash $hostPath -Algorithm SHA256).Hash.ToLowerInvariant()
+$profileSha = (Get-FileHash 'E:\DA005_Private\captures\operator-profile.json' -Algorithm SHA256).Hash.ToLowerInvariant()
+py -3.12 scripts/run_vmware_session_profile.py --config-file 'E:\DA005_Private\captures\operator-profile.json' --expected-config-sha256 $profileSha --validate-only --host-snapshot $hostPath --expected-host-sha256 $hostSha --host-adapter $adapter
+~~~
+
+The output includes \`host_snapshot_pinned_and_profile_bound=true\` only if the **independently hashed** v2 snapshot has the exact adapter name, active and unique host IPv4, matching CIDR/prefix and source IP from the operator profile, no adapter default routes or DNS, and no unsafe IPv6. A mismatch fails before writing private progress files. For a research two-module run also include \`--require-blue-research\`.
+
+After **separate** manual authorization and inspection of all VMware/guest NICs, routes, IPv6, firewall/forwarding, SSH host key, Zeek capture and model, repeat the same \`--host-snapshot\`, \`--expected-host-sha256\`, \`--host-adapter\` arguments on the eventual Step 4 invocation **with** \`--execute --operator-confirmed-hostonly\`. The check is offline metadata consistency, not proof that the snapshot is current, that VMware truly isolates the VM or that the network experiment is authorized.
 
 ## Step 3 — Dry-run the entire local CLI path (network OFF)
 
