@@ -1,6 +1,7 @@
 """Cooperative STOP guard acceptance (all network and SSH calls mocked)."""
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -12,6 +13,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "tests"))
 import run_hostonly_benign_traffic as stimulus
 import run_vmware_stepwise as stepwise
+import run_vmware_progress_file as writer
+import verify_vmware_progress_jsonl as verifier
 from test_vmware_stepwise import args, fake_receipt, fake_raw
 
 
@@ -187,6 +190,64 @@ def test_cli_preexisting_stop_emits_terminal_refusal_not_completion(monkeypatch,
     assert len(lines) == 1 and lines[0]["status"] == "refused"
     assert lines[0]["attack_executed"] is False
     assert lines[0]["soc_alerts_created"] is False
+
+
+
+
+def test_private_writer_stepwise_stop_after_one_probe_preserves_receipt_and_refuses(monkeypatch, tmp_path):
+    """Real Python CLI/writer/auditor, all physical network calls patched."""
+    opts = args(tmp_path)
+    marker = tmp_path / "DA005_STOP.flag"
+    saved = tmp_path / "partial-stop.jsonl"
+    calls = []
+
+    def mock_probe(**kwargs):
+        calls.append(kwargs)
+        marker.write_bytes(b"")
+        return {
+            "scenario_id": kwargs["scenario_id"],
+            "protocol": "tcp", "port": 22,
+            "attempted_at_utc": "2026-11-19T09:00:00+00:00",
+            "socket_operation_success": False,
+            "network_capture_verified": False,
+            "ai_detection_performed": False,
+        }
+
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe", mock_probe)
+    monkeypatch.setattr(stepwise.stimulus.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **_kwargs: pytest.fail("STOP must block SCP"))
+    options = [
+        "--source-ip", opts["source_ip"], "--target-ip", opts["target_ip"],
+        "--cidr", opts["cidr"], "--scenario", opts["scenario_id"],
+        "--user", opts["username"], "--known-hosts", str(opts["known_hosts"]),
+        "--output-dir", str(opts["output_dir"]),
+        "--attempts", "3", "--stop-file", str(marker),
+        "--execute", "--operator-confirmed-hostonly",
+    ]
+    assert writer.run_to_file(jsonl_file=saved, cli_args=options) == 1
+    assert len(calls) == 1
+    records = [json.loads(line) for line in saved.read_text(encoding="utf-8").splitlines()]
+    assert [(r["stage"], r["status"]) for r in records[:-1]] == [
+        ("preflight", "completed"), ("red", "running"),
+    ]
+    assert records[-1]["kind"] == "da005_vmware_stepwise_terminal_v1"
+    assert records[-1]["status"] == "refused"
+    assert all(r.get("status") != "completed" for r in records[1:])
+    sha256 = hashlib.sha256(saved.read_bytes()).hexdigest()
+    audit = verifier.audit(saved, sha256)
+    assert audit["terminal_status"] == "refused"
+    assert audit["stage_events"] == 2
+    assert audit["vmware_isolation_verified"] is False
+    assert "192.168." not in saved.read_text(encoding="utf-8")
+    private_receipts = list(tmp_path.glob("da005_benign_*.json"))
+    assert len(private_receipts) == 1
+    data = json.loads(private_receipts[0].read_text(encoding="utf-8"))
+    assert data["mode"] == "BENIGN_LAB_ABORTED"
+    assert data["probe_sequence_completed"] is False
+    assert data["network_attempts"] == 1
+    assert data["planned_attempts"] == 3
+    assert len(data["events"]) == 1
 
 
 def test_keyboard_interrupt_emits_refused_terminal_without_traceback(monkeypatch, tmp_path, capsys):
