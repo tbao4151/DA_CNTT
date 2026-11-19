@@ -51,6 +51,8 @@ def run_bridge(
     resolved_model = model_path.resolve(strict=True)
     if not resolved_model.is_file() or resolved_model.is_relative_to(ROOT):
         raise ValueError("Private model must be a file outside repository")
+    if output_dir.is_symlink():
+        raise ValueError("Output directory symlinks are not accepted")
     output_dir = output_dir.resolve(strict=True)
     if not output_dir.is_dir() or output_dir.is_relative_to(ROOT):
         raise ValueError("Output directory must exist outside repository")
