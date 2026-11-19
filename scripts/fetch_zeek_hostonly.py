@@ -30,6 +30,7 @@ REMOTE_PATHS = (
     "/usr/local/zeek/logs/current/conn.log",
 )
 MAX_KNOWN_HOSTS = 1024 * 1024
+RFC1918 = tuple(ipaddress.ip_network(cidr) for cidr in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"))
 
 
 def validate_guest(host: str, cidr: str) -> tuple[str, str]:
@@ -43,7 +44,7 @@ def validate_guest(host: str, cidr: str) -> tuple[str, str]:
         not isinstance(ip, ipaddress.IPv4Address)
         or not isinstance(network, ipaddress.IPv4Network)
         or network.prefixlen < 24
-        or not network.is_private
+        or not any(network.subnet_of(block) for block in RFC1918)
         or ip not in network
         or ip in (network.network_address, network.broadcast_address)
     ):
@@ -94,6 +95,7 @@ def fetch(
     descriptor, tmp_name = tempfile.mkstemp(prefix=".da005-fetch-", dir=output_dir)
     os.close(descriptor)
     temporary = Path(tmp_name)
+    published = False
     try:
         # No shell. -F none disables inherited SSH config/proxies; the
         # pinned known_hosts file must be prepared out of band by the student.
@@ -115,6 +117,7 @@ def fetch(
         # isolation, authenticity or any model accuracy.
         scope = inspect_zeek_lab_scope(raw, [network])
         os.link(temporary, target)  # atomic, refuses competing target
+        published = True
         receipt = {
             "version": 1,
             "capture_kind": "read_only_vmware_scp_snapshot_unverified",
@@ -140,8 +143,14 @@ def fetch(
         return receipt
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
         raise RuntimeError("Strict SSH/SCP download refused; check Host-only VM SSH, host key, path and permissions") from exc
+    except BaseException:
+        raise
     finally:
+        if not receipt_path.exists():
+            if published:
+                target.unlink(missing_ok=True)
         temporary.unlink(missing_ok=True)
+
 
 
 def main(argv: list[str] | None = None) -> int:
