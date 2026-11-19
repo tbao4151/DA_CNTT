@@ -93,6 +93,10 @@ function assertSyntheticSession(value: LiveSession): LiveSession {
     typeof value.provenance !== "object" || value.provenance === null ||
     Array.isArray(value.provenance) ||
     value.mode !== "synthetic_replay" ||
+    !["ucb1", "random"].includes(value.strategy) ||
+    typeof value.started_at !== "string" || Number.isNaN(Date.parse(value.started_at)) ||
+    !Number.isSafeInteger(value.provenance.fixture_flows_per_round) ||
+    value.provenance.fixture_flows_per_round < 0 ||
     value.provenance.source !== "hardcoded_synthetic_zeek_fixture" ||
     value.provenance.network_execution !== false ||
     value.provenance.vmware_connected !== false ||
