@@ -49,8 +49,10 @@ def screen_candidate_zeek_matches(
         traffic_receipt.get("mode") != "BENIGN_LAB_EXECUTION"
     ):
         raise ValueError("Not an executed benign lab stimulus receipt")
-    if not isinstance(zeek_raw, bytes) or len(expected_log_sha256) != 64 or (
-        any(c not in "0123456789abcdef" for c in expected_log_sha256)
+    if (not isinstance(zeek_raw, bytes)
+        or not isinstance(expected_log_sha256, str)
+        or len(expected_log_sha256) != 64
+        or any(c not in "0123456789abcdef" for c in expected_log_sha256)
     ):
         raise ValueError("Expected bounded raw Zeek bytes and lowercase SHA-256")
     if hashlib.sha256(zeek_raw).hexdigest() != expected_log_sha256:
@@ -73,7 +75,10 @@ def screen_candidate_zeek_matches(
         not isinstance(network, ipaddress.IPv4Network)
         or not isinstance(src_ip, ipaddress.IPv4Address)
         or not isinstance(dst_ip, ipaddress.IPv4Address)
+        or network.prefixlen < 24 or not network.is_private
         or src_ip == dst_ip or src_ip not in network or dst_ip not in network
+        or src_ip in (network.network_address, network.broadcast_address)
+        or dst_ip in (network.network_address, network.broadcast_address)
     ):
         raise ValueError("Invalid scoped probe endpoints")
     planned = traffic_receipt.get("planned_attempts")
