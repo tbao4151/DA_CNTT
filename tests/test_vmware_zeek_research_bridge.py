@@ -221,3 +221,26 @@ def test_actual_research_scorer_on_mocked_transport(monkeypatch, tmp_path):
     assert report["labels_used"] is False
     assert report["automated_alerts"] is False
     assert report["operational_attack_detection_verified"] is False
+
+
+def test_bridge_passes_explicit_operator_owned_snapshot_and_key(monkeypatch, tmp_path):
+    evidence, model, known = setup_paths(tmp_path)
+    identity = evidence / "id_ed25519_da005"
+    identity.write_text("SYNTHETIC-ONLY KEY", encoding="utf-8")
+    snapshot = "/home/ubuntu/da005-private-logs/conn-20261119T161546.log"
+    observed = []
+
+    monkeypatch.setattr(bridge, "load_pinned_zeek_research_model",
+                        lambda *_a, **_kw: {})
+    def mock_fetch(**kwargs):
+        observed.append(kwargs)
+        raise RuntimeError("Synthetic stop at SSH boundary")
+
+    monkeypatch.setattr(bridge, "fetch", mock_fetch)
+    with pytest.raises(RuntimeError, match="Synthetic stop"):
+        bridge.run_bridge(
+            **kwargs(evidence, model, known),
+            identity_file=identity, remote_path=snapshot,
+        )
+    assert observed[0]["identity_file"] == identity
+    assert observed[0]["remote_path"] == snapshot
