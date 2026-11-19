@@ -167,8 +167,22 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
   if (nonempty.length > MAX_LINES) throw new Error("Quá nhiều dòng tiến độ trong một phiên.");
   let terminal: TerminalStatus | null = null;
   const events: VMwareStageEvent[] = [];
-  let previousStage = -1;
-  let previousStatus = "";
+  // A valid completed CLI trace has exactly these nine stage records.
+  // Before completion, only a prefix is accepted (e.g. interrupted SCP).
+  const expected: ReadonlyArray<readonly [Stage, Status | "skipped_or_completed"]> = [
+    ["preflight", "completed"],
+    ["red", "running"], ["red", "completed"],
+    ["zeek", "running"], ["zeek", "completed"],
+    ["blue", "skipped_or_completed"],
+    ["audit", "running"], ["audit", "completed"], ["soc", "skipped"],
+  ];
+  const expectedCounts: Partial<Record<string, readonly string[]>> = {
+    "red:completed": ["attempted_probes"],
+    "zeek:completed": ["snapshot_flow_count"],
+    "blue:completed": ["research_candidate_count"],
+    "audit:completed": ["candidate_matches", "unmatched_attempts"],
+  };
+  let dryRunSeen = false;
   for (const line of nonempty) {
     let decoded: unknown;
     try {
@@ -183,16 +197,26 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
       continue;
     }
     const event = eventFrom(record, events.length + 1);
-    const stageIndex = STAGES.indexOf(event.stage);
-    if (stageIndex < previousStage ||
-        (stageIndex === previousStage && (previousStatus !== "running" || event.status !== "completed"))) {
-      throw new Error("Các giai đoạn JSONL bị đảo hoặc trùng trạng thái.");
+    if (events.length === 0 && event.stage === "preflight" && event.status === "dry_run") {
+      dryRunSeen = true;
+    } else {
+      if (dryRunSeen || events.length >= expected.length) {
+        throw new Error("Dry-run hoặc phiên kết thúc không được tiếp tục thực thi.");
+      }
+      const [stage, status] = expected[events.length];
+      if (event.stage !== stage ||
+          (status === "skipped_or_completed"
+            ? !["skipped", "completed"].includes(event.status)
+            : event.status !== status)) {
+        throw new Error("Thiếu, đảo hoặc giả mạo giai đoạn JSONL.");
+      }
+      const required = expectedCounts[event.stage + ":" + event.status] ?? [];
+      const present = Object.keys(event.counts).sort();
+      if (present.length !== required.length ||
+          !present.every((key, index) => key === [...required].sort()[index])) {
+        throw new Error("Bộ đếm không khớp giai đoạn chương trình.");
+      }
     }
-    if (previousStage === 0 && previousStatus === "dry_run") {
-      throw new Error("Dry-run không được có giai đoạn thực thi.");
-    }
-    previousStage = stageIndex;
-    previousStatus = event.status;
     events.push(event);
   }
   if (terminal === "dry_run" &&
@@ -200,7 +224,8 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
     throw new Error("Dữ liệu dry-run không khớp quy trình.");
   }
   if (terminal === "completed" &&
-      (events.length === 0 || events[events.length - 1].stage !== "soc" ||
+      (events.length !== expected.length || dryRunSeen ||
+       events[events.length - 1].stage !== "soc" ||
        events[events.length - 1].status !== "skipped")) {
     throw new Error("Phiên kết thúc trước khi có bằng chứng các bước.");
   }
