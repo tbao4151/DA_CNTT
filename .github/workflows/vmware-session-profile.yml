@@ -1,8 +1,8 @@
 name: DA005 VMware pinned one-command operator profile (offline)
 # Tests only dry-run and fully mocked bounded sessions. Zero real VMware, SSH or packets.
 concurrency:
-  group: \${{ github.workflow }}-\${{ github.event_name }}-\${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: \${{ github.event_name != 'workflow_dispatch' && github.ref != 'refs/heads/main' }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' && github.ref != 'refs/heads/main' }}
 on:
   push:
     paths:
@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2022]
-    runs-on: \${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
