@@ -139,3 +139,74 @@ def test_failed_receipt_write_rolls_back_published_log(monkeypatch, tmp_path):
                   username="ubuntu", known_hosts=known, output_dir=out)
     assert not list(out.glob("zeek_conn_*"))
     assert not list(out.glob(".da005-fetch-*"))
+
+
+def test_operator_owned_private_snapshot_with_explicit_ssh_key(monkeypatch, tmp_path):
+    known = tmp_path / "known_hosts"
+    known.write_text("192.168.77.20 ssh-ed25519 TEST_ONLY_KEY\\n", encoding="utf-8")
+    private_key = tmp_path / "id_ed25519_da005"
+    private_key.write_text("TEST-ONLY-NOT-A-REAL-PRIVATE-KEY\\n", encoding="utf-8")
+    output = tmp_path / "captures"
+    output.mkdir()
+    seen = []
+    snapshot_path = "/home/da005/da005-private-logs/conn-20261119T161546.log"
+
+    def fake_scp(argv, **kwargs):
+        seen.extend(argv)
+        Path(argv[-1]).write_bytes(sample_log())
+
+    monkeypatch.setattr(mod.subprocess, "run", fake_scp)
+    receipt = mod.fetch(
+        host="192.168.77.20", cidr="192.168.77.0/24",
+        username="da005", known_hosts=known, output_dir=output,
+        remote_path=snapshot_path, identity_file=private_key,
+    )
+    assert receipt["remote_path"] == snapshot_path
+    assert receipt["flow_count"] == 1
+    assert receipt["attack_detection_performed"] is False
+    assert seen[seen.index("-i") + 1] == str(private_key)
+    assert "IdentitiesOnly=yes" in seen
+    assert "PasswordAuthentication=no" in seen
+    assert "KbdInteractiveAuthentication=no" in seen
+    assert seen[-2] == f"da005@192.168.77.20:{snapshot_path}"
+
+
+@pytest.mark.parametrize("remote_path", [
+    "/home/other/da005-private-logs/conn-20261119T161546.log",
+    "/home/da005/da005-private-logs/conn-20261119T161546.log;touch /tmp/x",
+    "/home/da005/da005-private-logs/../conn-20261119T161546.log",
+    "/home/da005/da005-private-logs/conn-20261119T161546.log/../secret",
+    "/home/da005/da005-private-logs/conn-20261119T161546.log ",
+    "/home/da005/da005-private-logs/conn-20261119T161546.txt",
+    "/home/da005/da005-private-logs/conn-20261119T161546.log\\n",
+    "/home/da005/da005-private-logs/conn-20261119-161546.log",
+    "/etc/shadow",
+])
+def test_private_snapshot_remote_path_must_match_exact_owner_and_name(remote_path):
+    with pytest.raises(ValueError, match="not allowlisted"):
+        mod.validate_remote_path(remote_path, "da005")
+
+
+def test_identity_must_be_existing_private_file_before_scp(monkeypatch, tmp_path):
+    known = tmp_path / "known_hosts"
+    known.write_text("test-key", encoding="utf-8")
+    output = tmp_path / "out"
+    output.mkdir()
+    monkeypatch.setattr(mod.subprocess, "run",
+                        lambda *_a, **_kw: pytest.fail("No SCP for invalid key"))
+    with pytest.raises(OSError):
+        mod.fetch(
+            host="192.168.77.20", cidr="192.168.77.0/24",
+            username="da005", known_hosts=known, output_dir=output,
+            identity_file=tmp_path / "missing-key",
+        )
+    assert not list(output.iterdir())
+
+
+def test_snapshot_user_name_is_not_interchangeable():
+    assert mod.validate_remote_path(
+        "/home/da005/da005-private-logs/conn-20261119T161546.log", "da005",
+    ).endswith(".log")
+    assert mod.validate_remote_path(
+        "/opt/zeek/logs/current/conn.log", "da005",
+    ) == "/opt/zeek/logs/current/conn.log"
