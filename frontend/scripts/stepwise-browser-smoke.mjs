@@ -84,6 +84,7 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   let createCalls = 0;
+  let sendForgedProvenance = false;
   await page.route("**/api/v1/live-sessions**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -102,7 +103,8 @@ try {
       assert.equal(requestBody.mode, "synthetic_replay");
       assert.equal(requestBody.rounds, 2);
       createCalls += 1;
-      await route.fulfill({ status: 200, headers, body: JSON.stringify(base) });
+      const payload = sendForgedProvenance ? { ...base, provenance: { ...base.provenance, vmware_connected: true } } : base;
+      await route.fulfill({ status: 200, headers, body: JSON.stringify(payload) });
       return;
     }
     if (path.endsWith("/report") && request.method() === "GET") {
@@ -121,16 +123,7 @@ try {
   await group.getByRole("button", { name: /Zeek · Synthetic Replay/ }).click();
   assert.match(await panel.textContent(), /Chưa có sự kiện cho giai đoạn này/);
   await page.getByRole("button", { name: "Bắt đầu replay tự động" }).click();
-  try {
-    await panel.getByText("Zeek synthetic fixture flows", { exact: true }).waitFor({ state: "visible", timeout: 12000 });
-  } catch (error) {
-    console.error("DIAGNOSTIC createCalls=", createCalls);
-    console.error("DIAGNOSTIC alerts=", await page.locator('[role="alert"]').allTextContents());
-    console.error("DIAGNOSTIC selected panel=", (await panel.innerText()).slice(0, 1800));
-    console.error("DIAGNOSTIC body=", (await page.locator("body").innerText()).slice(0, 1800));
-    console.error("DIAGNOSTIC page errors=", errors);
-    throw error;
-  }
+  await panel.locator("ol li").filter({ hasText: "Zeek synthetic fixture flows" }).waitFor({ state: "visible", timeout: 12000 });
   assert.equal(createCalls, 1);
   const cases = [
     [/Red Team · Planner/, "Red fixture decision"],
@@ -142,7 +135,7 @@ try {
     const button = group.getByRole("button", { name: label });
     await button.click();
     assert.equal(await button.getAttribute("aria-pressed"), "true");
-    await panel.getByText(message, { exact: true }).waitFor({ state: "visible" });
+    await panel.locator("ol li").filter({ hasText: message }).waitFor({ state: "visible" });
     assert.match(await panel.textContent(), /Nguồn: SYNTHETIC REPLAY/);
   }
   const [download] = await Promise.all([
@@ -156,8 +149,15 @@ try {
   assert.equal(payload.report_kind, "synthetic_replay_telemetry_only");
   assert.equal(payload.provenance.vmware_connected, false);
   assert.equal(payload.verified_ai_alerts, 0);
+  // Fail-closed UX must reject an API envelope that falsely claims VMware.
+  sendForgedProvenance = true;
+  await page.getByRole("button", { name: "Bắt đầu replay tự động" }).click();
+  await page.locator('[role="alert"]').filter({ hasText: "Phản hồi session không khớp hợp đồng SYNTHETIC REPLAY" })
+    .waitFor({ state: "visible" });
+  assert.equal(createCalls, 2);
+  assert.match(await panel.innerText(), /Chưa có sự kiện cho giai đoạn này/);
   assert.equal(errors.length, 0, "Browser page must not emit uncaught errors: " + errors.join("; "));
-  console.log("PASS: real Chromium Step-by-Step event filters and provenance-safe JSON download (mock API, not VMware)");
+  console.log("PASS: Chromium stage filters, report download and forged VMware provenance rejection (mock API, not VMware)");
 } finally {
   await browser.close();
 }
