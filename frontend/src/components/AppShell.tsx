@@ -64,6 +64,13 @@ const NAV_ITEMS: NavItem[] = [
     group: "red",
     icon: Activity,
   },
+  {
+    href: "/vmware-progress",
+    label: "VMware Stage Viewer",
+    subtitle: "LOCAL JSONL · READ ONLY",
+    group: "red",
+    icon: FileSearch,
+  },
 ];
 
 export function AppShell({
