@@ -102,24 +102,32 @@ def create_live_router(synthetic_zeek_fixture: bytes) -> APIRouter:
                     },
                 )
                 await asyncio.sleep(0.65)
+                if session["status"] != "running":
+                    return
                 emit(
                     session, "zeek",
                     "Đang phát lại dữ liệu Zeek tổng hợp; KHÔNG phải log VMware trực tiếp.",
                     details={"sample_flow_count": fixture_flow_count, "round": round_number},
                 )
                 await asyncio.sleep(0.65)
+                if session["status"] != "running":
+                    return
                 emit(
                     session, "blue",
                     "Blue Team chưa chạy suy luận trên Zeek; không phát sinh dự đoán hay cảnh báo.",
                     details={"model_inference": False, "alerts": 0, "round": round_number},
                 )
                 await asyncio.sleep(0.65)
+                if session["status"] != "running":
+                    return
                 emit(
                     session, "soc",
                     "Lưu trạng thái replay; không tạo SOC case hoặc kết luận tấn công.",
                     details={"verified_cases": 0, "round": round_number},
                 )
                 await asyncio.sleep(0.4)
+                if session["status"] != "running":
+                    return
             if session["status"] == "running":
                 session["status"] = "completed"
                 session["finished_at"] = _now()
