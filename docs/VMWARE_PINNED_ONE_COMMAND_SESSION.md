@@ -40,6 +40,24 @@ After finalizing the JSON and before invoking the launcher, record the hash sepa
 
 Do not edit the profile after recording its SHA-256; any modification requires re-review and a newly recorded digest. A matching hash verifies file bytes against the operator-supplied pin, not permission to run or physical network isolation.
 
+## Step 2a — Check private profile readiness without making a session
+
+After recording the independently calculated SHA-256, a safe local-only gate verifies the profile structure and, if configured, the private Blue Zeek v1 model's hash and schema. It creates **no JSONL**, Red plan receipt or session lock; it makes **no network requests**, predictions or SOC records.
+
+```powershell
+py -3.12 scripts/run_vmware_session_profile.py --config-file 'E:\\DA005_Private\\captures\\operator-profile.json' --expected-config-sha256 $profileSha --validate-only
+```
+
+For a two-module research demo, **require** a privately stored, already available and independently SHA-256-pinned compatible Blue Zeek v1 model:
+
+```powershell
+py -3.12 scripts/run_vmware_session_profile.py --config-file 'E:\\DA005_Private\\captures\\operator-profile.json' --expected-config-sha256 $profileSha --validate-only --require-blue-research
+```
+
+If `model_path` or `expected_model_sha256` is null, the second command **refuses** the profile. If a supplied Blue model is missing, tampered, unreadable or has an incompatible Zeek feature schema, it also refuses. The JSON output uses `blue_model_pinned_and_schema_verified` to distinguish model readiness from a model-free profile; it always records `network_activity_performed=false`, `vmware_isolation_verified=false` and `operational_ai_detection_verified=false`. Do **not** interpret readiness as real detection or physical isolation.
+
+For an authorized actual session after independent VMware Host-only preflight, append `--require-blue-research` to the Step 4 launcher command as well. This prevents silently running Blue=SKIPPED when a model is required and refuses invalid Blue models **before** creating the progress JSONL or Red receipt and before attempting a packet. This flag does not auto-create or train a model and does not turn benign probes into cyberattacks. The ordinary optional-Blue dry-run remains backward-compatible.
+
 ## Step 3 — Dry-run the entire local CLI path (network OFF)
 
 From the project root on the Windows host, set $profileSha to the 64 lowercase characters you independently recorded, then run:
