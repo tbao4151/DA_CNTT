@@ -639,3 +639,109 @@ def test_required_blue_dryrun_still_has_no_network_and_no_false_detection(monkey
     assert rows[-1]["result"]["network_attempts"] == 0
     assert rows[-1]["result"]["blue_research_scoring_performed"] is False
     assert audit.audit(output, digest(output))["terminal_status"] == "dry_run"
+
+
+def _host_snapshot_v2(tmp_path, *, source_ip="192.168.77.1", version=2):
+    """Synthetic Host-only adapter metadata. No VMware access or sockets."""
+    item = {
+        "schema_version": version,
+        "capture_origin": "windows_host_network_configuration",
+        "adapter_name": "VMware Network Adapter VMnet2",
+        "adapter_status": "Up",
+        "adapter_ipv4": [{"address": source_ip, "prefix_length": 24}],
+        "adapter_default_routes": [],
+        "adapter_dns_servers": [],
+    }
+    if version == 2:
+        item.update({
+            "adapter_ipv6": ["fe80::123%17"],
+            "adapter_default_routes_ipv6": [],
+            "adapter_dns_servers_ipv6": [],
+        })
+    path = tmp_path / "host-adapter.json"
+    path.write_text(json.dumps(item) + "\n", encoding="utf-8")
+    return path
+
+
+def test_readonly_profile_check_binds_pinned_host_v2_and_source_ipv4(tmp_path, capsys):
+    profile, config = fixture_profile(tmp_path)
+    host = _host_snapshot_v2(tmp_path)
+    folder = Path(config["output_dir"])
+    assert launcher.main([
+        "--config-file", str(profile),
+        "--expected-config-sha256", digest(profile),
+        "--validate-only",
+        "--host-snapshot", str(host),
+        "--expected-host-sha256", digest(host),
+        "--host-adapter", "VMware Network Adapter VMnet2",
+    ]) == 0
+    readiness = json.loads(capsys.readouterr().out)
+    assert readiness["host_snapshot_pinned_and_profile_bound"] is True
+    assert readiness["vmware_isolation_verified"] is False
+    assert readiness["network_activity_performed"] is False
+    assert "192.168.77." not in json.dumps(readiness)
+    assert not list(folder.iterdir())
+
+
+@pytest.mark.parametrize("problem", [
+    "wrong_ip", "wrong_digest", "legacy_ipv4_only", "dns", "wrong_adapter",
+])
+def test_host_binding_fail_closed_before_any_receipt(tmp_path, problem):
+    profile, config = _profile_v2(tmp_path)
+    host = _host_snapshot_v2(
+        tmp_path,
+        source_ip="192.168.77.9" if problem == "wrong_ip" else "192.168.77.1",
+        version=1 if problem == "legacy_ipv4_only" else 2,
+    )
+    if problem == "dns":
+        item = json.loads(host.read_text(encoding="utf-8"))
+        item["adapter_dns_servers"] = ["8.8.8.8"]
+        host.write_text(json.dumps(item), encoding="utf-8")
+    output = Path(config["output_dir"]) / "denied.jsonl"
+    with pytest.raises(ValueError):
+        launcher.run_profile(
+            config_file=profile, expected_sha256=digest(profile),
+            jsonl_file=output, execute=True, operator_confirmed_hostonly=True,
+            host_snapshot=host,
+            expected_host_sha256="0" * 64 if problem == "wrong_digest" else digest(host),
+            host_adapter="Wrong adapter" if problem == "wrong_adapter"
+                         else "VMware Network Adapter VMnet2",
+        )
+    assert not output.exists()
+    assert not output.with_name("denied.red-plan.json").exists()
+    assert not (output.parent / "DA005_ACTIVE_SESSION.lock").exists()
+
+
+@pytest.mark.parametrize("missing", ["snapshot", "digest", "adapter"])
+def test_incomplete_host_snapshot_flags_are_rejected(tmp_path, missing):
+    profile, config = fixture_profile(tmp_path)
+    host = _host_snapshot_v2(tmp_path)
+    kwargs = dict(
+        config_file=profile, expected_sha256=digest(profile),
+        host_snapshot=host, expected_host_sha256=digest(host),
+        host_adapter="VMware Network Adapter VMnet2",
+    )
+    names = {"snapshot": "host_snapshot", "digest": "expected_host_sha256",
+             "adapter": "host_adapter"}
+    kwargs[names[missing]] = None
+    with pytest.raises(ValueError, match="requires"):
+        launcher.validate_operator_profile(**kwargs)
+    assert not list(Path(config["output_dir"]).iterdir())
+
+
+def test_valid_host_bound_dryrun_still_sends_zero_packets(monkeypatch, tmp_path):
+    profile, config = fixture_profile(tmp_path)
+    host = _host_snapshot_v2(tmp_path)
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe",
+                        lambda **kw: pytest.fail("No socket in pinned dry-run"))
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **kw: pytest.fail("No SSH in pinned dry-run"))
+    output = Path(config["output_dir"]) / "pinned-host-dry-run.jsonl"
+    assert launcher.run_profile(
+        config_file=profile, expected_sha256=digest(profile),
+        jsonl_file=output, host_snapshot=host,
+        expected_host_sha256=digest(host),
+        host_adapter="VMware Network Adapter VMnet2",
+    ) == 0
+    assert audit.audit(output, digest(output))["terminal_status"] == "dry_run"
+    assert not (output.parent / "DA005_ACTIVE_SESSION.lock").exists()

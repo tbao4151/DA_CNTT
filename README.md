@@ -268,6 +268,17 @@ A Windows **guest-side** read-only NIC/IPv4/IPv6/default-route/DNS snapshot coll
 Cyber Lab có thêm công cụ **đối chiếu cấu hình host/guest ngoại tuyến**: `scripts/check_paired_network_preflight.py` (hướng dẫn tại [WINDOWS_PAIRED_NETWORK_PREFLIGHT.md](docs/WINDOWS_PAIRED_NETWORK_PREFLIGHT.md)). Công cụ chỉ đối chiếu hai snapshot SHA-256 đã khai báo, không xác nhận cô lập VMware, không phát lưu lượng và không tạo cảnh báo tấn công.
 
 
+## Chuẩn bị demo VMware thật trên Windows 11
+
+Phân biệt rõ hai chế độ:
+
+- **/automated-lab**: phát lại sự kiện **synthetic**, không truy cập VMware và không chứng minh đã phát hiện tấn công thật.
+- **/vmware-progress**: đọc JSONL tiến độ và biên nhận Red từ một phiên chạy bằng lệnh trên Windows; hỗ trợ theo dõi tệp và nhập đồng thời hai tệp. Giao diện không thực thi SSH, Zeek hay tấn công.
+
+Thực hiện [quy trình profile SHA-256, Blue model và host adapter v2](docs/VMWARE_PINNED_ONE_COMMAND_SESSION.md) trước, dùng đúng tên VMnet thực tế thay vì các ví dụ VMnet1/VMnet2 trong tài liệu. Kiểm tra VMware Virtual Network Editor, từng NIC guest, IPv4/IPv6, routes, SSH host key, Zeek interface và quyền thử nghiệm bằng chứng độc lập. Tùy chọn `--require-blue-research` từ chối phiên thiếu mô hình Blue tương thích thay vì âm thầm bỏ qua.
+
+Tham khảo [bằng chứng vật lý VMware](docs/FIRST_VMWARE_HOSTONLY_EVIDENCE_SESSION.md) và [quy trình huấn luyện mô hình Zeek riêng](docs/ZEEK_PRIVATE_MODEL_EXPORT.md) khi đã có PCAP, conn.log và nhãn được xác minh. Kiểm thử CI offline không phải bằng chứng VMware hay độ chính xác phát hiện thực tế; không đăng bằng chứng riêng tư lên GitHub.
+
 ## Giao diện SOC Next.js + FastAPI (`/api/v1`)
 
 Ngoài giao diện Streamlit gốc, nhánh này cung cấp kiến trúc frontend hiện đại **Next.js (App Router, TypeScript, Tailwind CSS) + FastAPI (`/api/v1`)** bọc trực tiếp các module nghiệp vụ Python trong `src/siem_ai/`, `src/blue_team_ai/`, `src/red_team_ai/` và `scripts/triage_zeek_new_log.py`.
