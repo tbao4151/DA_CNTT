@@ -68,10 +68,47 @@ try {
   assert.doesNotMatch(await log.innerText(), /Red · Lưu lượng/);
   assert.doesNotMatch(await log.innerText(), /Zeek · Thu thập/);
 
+  // Genuine Python profile-v2 UCB1 planning decision, *not* a hand-written
+  // JavaScript mock. Python emits the planning receipt + dry-run JSONL from
+  // pinned private configuration and explicitly forbids all networking.
+  const ucb1Progress = load("python_ucb1.jsonl");
+  const ucb1Receipt = load("python_ucb1.red-plan.json");
+  await open("python_ucb1.jsonl", ucb1Progress);
+  await page.getByText("Dry-run", { exact: true }).first().waitFor();
+  const redInput = page.getByLabel("Mở biên nhận Red Team");
+  const redPanel = page.locator('section[aria-labelledby="vmware-red-policy"]');
+  await redInput.setInputFiles({
+    name: "python_ucb1.red-plan.json", mimeType: "application/json", buffer: ucb1Receipt,
+  });
+  await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).waitFor();
+  const text = await redPanel.innerText();
+  assert.match(text, /UCB1/);
+  assert.match(text, /Số phản hồi nhập tay:\s*3/);
+  assert.match(text, /SHA-256 profile tự khai/);
+  assert.match(text, /không xác nhận nó đã được thực thi/);
+  assert.equal(unsafeRequests.length, 0, "Python Red plan cannot be uploaded to API");
+
+  const forgedPlan = JSON.parse(ucb1Receipt.toString("utf8"));
+  forgedPlan.attack_executed = true;
+  await redInput.setInputFiles({
+    name: "python_ucb1.red-plan.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(forgedPlan)),
+  });
+  await redPanel.getByRole("alert").filter({ hasText: "sai provenance" }).waitFor();
+  assert.equal(await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).count(), 0);
+
+  await redInput.setInputFiles({
+    name: "python_ucb1.red-plan.json", mimeType: "application/json", buffer: ucb1Receipt,
+  });
+  await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).waitFor();
+
   const completed = load("python_mock_completed.jsonl");
   assert.equal(completed.toString("utf8").split("\n").filter(Boolean).length, 10);
   await open("python_mock_completed.jsonl", completed);
   await page.getByText("Phần mềm kết thúc", { exact: true }).first().waitFor();
+  assert.equal(await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).count(), 0,
+    "Changing JSONL sessions must remove the previous Python UCB1 selection");
   await log.getByText(/9 sự kiện/).waitFor();
   assert.equal(await log.locator("li").count(), 9);
   assert.match(await log.innerText(), /Red · Lưu lượng lành tính/);
