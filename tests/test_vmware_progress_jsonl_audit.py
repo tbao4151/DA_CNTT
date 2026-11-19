@@ -156,6 +156,23 @@ def test_rejects_backward_and_noncanonical_utc_even_with_matching_hash(tmp_path)
         verifier.audit(exotic, pin(exotic))
 
 
+def test_rejects_microsecond_clock_backtrack_and_invalid_calendar(tmp_path):
+    source = generate(tmp_path)["mock_completed"]
+    def backwards(rows):
+        rows[0]["observed_at_utc"] = "2026-11-19T09:00:00.123456+00:00"
+        rows[1]["observed_at_utc"] = "2026-11-19T09:00:00.123455+00:00"
+    backward = copied_mutation(tmp_path, source, backwards)
+    with pytest.raises(ValueError, match="backwards"):
+        verifier.audit(backward, pin(backward))
+    backward.unlink()
+    invalid = copied_mutation(
+        tmp_path, source,
+        lambda rows: rows[0].update({"observed_at_utc": "2026-02-30T05:00:00.000001+00:00"}),
+    )
+    with pytest.raises(ValueError, match="Unparseable"):
+        verifier.audit(invalid, pin(invalid))
+
+
 def test_allows_equal_utc_stage_timestamps_for_fast_cli_events(tmp_path):
     source = generate(tmp_path)["mock_completed"]
     # Same exact timestamp is possible for consecutive Python stage emissions.
