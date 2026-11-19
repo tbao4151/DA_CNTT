@@ -109,6 +109,68 @@ def test_mocked_operator_execute_to_full_jsonl_and_auditor(monkeypatch, tmp_path
     assert audit.audit(output, digest(output))["terminal_status"] == "completed"
 
 
+def test_mocked_operator_profile_runs_optional_pinned_blue_research(monkeypatch, tmp_path):
+    """The same command routes the *optional* model to the Blue research bridge."""
+    path, config = fixture_profile(tmp_path)
+    model = tmp_path / "private_zeek_research.json"
+    model.write_text('{"private_test_only":true}\n', encoding="utf-8")
+    config["model_path"] = str(model)
+    config["expected_model_sha256"] = digest(model)
+    path.write_text(json.dumps(config) + "\n", encoding="utf-8")
+    observed = []
+    raw = fake_raw()
+
+    def validate_model(model_file, *, expected_sha256):
+        observed.append("model_pinned_before_traffic")
+        assert model_file == model
+        assert expected_sha256 == digest(model)
+
+    def fake_stimulus(**kwargs):
+        if kwargs["execute"]:
+            assert observed == ["model_pinned_before_traffic"]
+            observed.append("red_probe_mocked")
+            return fake_receipt()
+        return {"network_attempts": 0}
+
+    def fake_blue(**kwargs):
+        observed.append("blue_research_mocked")
+        assert kwargs["model_path"] == model
+        assert kwargs["expected_model_sha256"] == digest(model)
+        assert kwargs["host"] == "192.168.77.20"
+        (Path(config["output_dir"]) / "conn.log").write_bytes(raw)
+        return {
+            "log_file": "conn.log",
+            "log_sha256": hashlib.sha256(raw).hexdigest(),
+            "flow_count": 2,
+            "report_file": "conn.research.json",
+            "research_candidate_count": 1,
+        }
+
+    monkeypatch.setattr(stepwise.blue, "load_pinned_zeek_research_model", validate_model)
+    monkeypatch.setattr(stepwise.stimulus, "run", fake_stimulus)
+    monkeypatch.setattr(stepwise.blue, "run_bridge", fake_blue)
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **_args: pytest.fail("Blue bridge owns its own Zeek fetch"))
+    progress = Path(config["output_dir"]) / "optional-blue.jsonl"
+    assert launcher.run_profile(config_file=path, expected_sha256=digest(path),
+                                jsonl_file=progress, execute=True,
+                                operator_confirmed_hostonly=True) == 0
+    assert observed == [
+        "model_pinned_before_traffic", "red_probe_mocked",
+        "blue_research_mocked",
+    ]
+    rows = [json.loads(line) for line in progress.read_text(encoding="utf-8").splitlines()]
+    blue_stage = next(row for row in rows if row.get("stage") == "blue")
+    assert blue_stage["status"] == "completed"
+    assert blue_stage["counts"]["research_candidate_count"] == 1
+    assert blue_stage["operational_ai_detection_verified"] is False
+    assert blue_stage["soc_alerts_created"] is False
+    assert rows[-1]["result"]["blue_research_scoring_performed"] is True
+    assert rows[-1]["result"]["research_candidate_count"] == 1
+    assert rows[-1]["result"]["operational_ai_detection_verified"] is False
+    assert audit.audit(progress, digest(progress))["terminal_status"] == "completed"
+
+
 def test_execute_refused_without_both_confirmation_and_fresh_stop(monkeypatch, tmp_path):
     path, config = fixture_profile(tmp_path)
     progress = Path(config["output_dir"]) / "phase.jsonl"
