@@ -1,0 +1,40 @@
+name: DA005 VMware pinned one-command operator profile (offline)
+# Tests only dry-run and fully mocked bounded sessions. Zero real VMware, SSH or packets.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' && github.ref != 'refs/heads/main' }}
+on:
+  push:
+    paths:
+      - 'scripts/run_vmware_session_profile.py'
+      - 'tests/test_vmware_session_profile.py'
+      - '.github/workflows/vmware-session-profile.yml'
+  pull_request:
+    paths:
+      - 'scripts/run_vmware_session_profile.py'
+      - 'tests/test_vmware_session_profile.py'
+      - '.github/workflows/vmware-session-profile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  private-profile:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.9'
+          cache: pip
+          cache-dependency-path: requirements-app.txt
+      - name: Install offline application and test requirements
+        run: python -m pip install -r requirements-app.txt
+      - name: Python compile contract
+        run: python -m compileall -q scripts/run_vmware_session_profile.py
+      - name: Strict pinned profile integration and offline regression
+        run: python -m pytest -q tests/test_vmware_session_profile.py tests/test_vmware_stepwise.py tests/test_vmware_progress_file.py tests/test_vmware_progress_jsonl_audit.py
