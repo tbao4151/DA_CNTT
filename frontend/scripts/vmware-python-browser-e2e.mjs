@@ -82,6 +82,14 @@ try {
   assert.match(await page.locator("body").innerText(), /Chỉ xem tiến độ cục bộ/);
   assert.equal(unsafeRequests.length, 0, "No evidence bytes may be uploaded to API");
 
+  // Internal proof of consistency: a syntactically valid terminal is
+  // rejected if it reports a different packet count than the Red event.
+  const contradictory = completed.toString("utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
+  contradictory[contradictory.length - 1].result.network_attempts = 3;
+  await open("contradictory.jsonl", Buffer.from(contradictory.map((row) => JSON.stringify(row)).join("\n") + "\n"));
+  await page.getByRole("alert").filter({ hasText: "không khớp bộ đếm giai đoạn" }).waitFor();
+  assert.match(await log.innerText(), /0 sự kiện/);
+
   // A previously successful real-CLI shape must not allow a forged
   // vmware_isolation_verified flag to be treated as physical proof.
   const forged = completed.toString("utf8").split("\n").filter(Boolean).map(JSON.parse);
