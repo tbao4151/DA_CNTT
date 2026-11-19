@@ -64,7 +64,7 @@ export function parseVmwareRedPlan(text: string): VMwareRedPlan {
   // The schema is deliberately flat and all legitimate string values are
   // token-like. Reject duplicate/escaped/unknown source property names
   // instead of silently accepting JSON.parse's last-key-wins behavior.
-  const sourceKeys = [...text.matchAll(/"([a-z_]+)"\s*:/g)].map((m) => m[1]);
+  const sourceKeys = [...text.matchAll(/"([a-z0-9_]+)"\s*:/g)].map((m) => m[1]);
   if (
     sourceKeys.length !== REQUIRED_KEYS.length ||
     new Set(sourceKeys).size !== REQUIRED_KEYS.length ||
