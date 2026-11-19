@@ -89,3 +89,62 @@ def test_completed_replay_has_true_provenance_and_all_stages():
         assert client.get(f"/api/v1/live-sessions/{sid}/report").json()[
             "verified_detection_metrics"
         ] is None
+
+
+
+def test_stop_during_first_replay_delay_never_emits_later_stages():
+    """Stopping after Red selection must not leak Zeek/Blue/SOC events."""
+    with TestClient(create_app()) as client:
+        created = client.post("/api/v1/live-sessions", json={"rounds": 2})
+        assert created.status_code == 201
+        sid = created.json()["session_id"]
+        deadline = time.monotonic() + 3
+        state = created.json()
+        while time.monotonic() < deadline:
+            state = client.get(f"/api/v1/live-sessions/{sid}").json()
+            if any(event["stage"] == "red" for event in state["events"]):
+                break
+            time.sleep(0.01)
+        assert any(event["stage"] == "red" for event in state["events"])
+        assert not any(event["stage"] == "zeek" for event in state["events"])
+        stopped = client.post(f"/api/v1/live-sessions/{sid}/stop")
+        assert stopped.status_code == 200
+        assert stopped.json()["status"] == "stopped"
+        event_count = stopped.json()["event_count"]
+        time.sleep(0.85)
+        final = client.get(f"/api/v1/live-sessions/{sid}").json()
+        assert final["status"] == "stopped"
+        assert final["event_count"] == event_count
+        assert not any(
+            event["stage"] in {"zeek", "blue", "soc"}
+            for event in final["events"]
+        )
+        assert client.post(f"/api/v1/live-sessions/{sid}/stop").json()["event_count"] == event_count
+
+
+
+def test_stop_after_zeek_stage_prevents_blue_and_soc_events():
+    """A stop during the Zeek-to-Blue delay cannot publish later stages."""
+    with TestClient(create_app()) as client:
+        created = client.post("/api/v1/live-sessions", json={"rounds": 2})
+        assert created.status_code == 201
+        sid = created.json()["session_id"]
+        deadline = time.monotonic() + 4
+        state = created.json()
+        while time.monotonic() < deadline:
+            state = client.get(f"/api/v1/live-sessions/{sid}").json()
+            if any(event["stage"] == "zeek" for event in state["events"]):
+                break
+            time.sleep(0.01)
+        assert any(event["stage"] == "zeek" for event in state["events"])
+        assert not any(event["stage"] in {"blue", "soc"} for event in state["events"])
+        stopped = client.post(f"/api/v1/live-sessions/{sid}/stop")
+        assert stopped.status_code == 200
+        assert stopped.json()["status"] == "stopped"
+        count = stopped.json()["event_count"]
+        time.sleep(0.85)
+        final = client.get(f"/api/v1/live-sessions/{sid}").json()
+        assert final["status"] == "stopped"
+        assert final["event_count"] == count
+        assert not any(event["stage"] in {"blue", "soc"} for event in final["events"])
+        assert client.post(f"/api/v1/live-sessions/{sid}/stop").json()["event_count"] == count

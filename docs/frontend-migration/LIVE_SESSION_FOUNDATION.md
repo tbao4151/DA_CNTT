@@ -33,3 +33,7 @@ This branch adds a bounded synthetic event-stream foundation, NOT deployed attac
 5. Produce Step-by-Step and One-Click workflows from actual observations; PDF reports follow verified measurements.
 
 No real attack, live Zeek test, successful CI run, browser screenshot, or model metric is claimed here.
+
+## Stop race regression (19 November 2026)
+
+The replay coroutine checks terminal status immediately after each synthetic delay and before emitting the next Zeek, Blue, or SOC stage. An operator Stop during a delay must leave the session stopped with no subsequent stage events. The regression in `tests/test_live_sessions.py` checks event count stability and idempotent Stop after the first Red label. This does not validate real VMware execution, network kill switches, or AI inference. Exact-head CI and Windows laptop verification remain pending until observed.
