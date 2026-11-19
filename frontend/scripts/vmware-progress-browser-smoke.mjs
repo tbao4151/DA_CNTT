@@ -94,6 +94,14 @@ try {
   await page.getByText("Phần mềm kết thúc", { exact: true }).first().waitFor();
   assert.match(await page.locator("body").innerText(), /Flow trong snapshot/);
   assert.match(await page.locator("body").innerText(), /UID trùng khớp ứng viên/);
+  const kpis = page.locator('section[aria-labelledby="vmware-kpis"]');
+  const progressbar = kpis.getByRole("progressbar", { name: "Số giai đoạn phần mềm có kết quả" });
+  assert.equal(await progressbar.getAttribute("aria-valuenow"), "6");
+  assert.match(await kpis.innerText(), /6\/6 giai đoạn có kết quả/);
+  assert.match(await kpis.innerText(), /Lượt thử Red lành tính\s*2/);
+  assert.match(await kpis.innerText(), /Flow Zeek snapshot\s*2/);
+  assert.match(await kpis.innerText(), /Ứng viên nghiên cứu Blue\s*Không chạy/);
+  assert.match(await kpis.innerText(), /Khớp UID ứng viên\s*1/);
   assert.match(await page.locator("body").innerText(), /Chưa xác minh|chưa xác minh|CHƯA XÁC MINH/);
   assert.equal(uploads, 0, "JSONL must not be posted to any API");
 
@@ -115,6 +123,9 @@ try {
   });
   await page.getByText("Dry-run", { exact: true }).first().waitFor();
   assert.match(await progress.innerText(), /1 sự kiện/);
+  assert.equal(await progressbar.getAttribute("aria-valuenow"), "1");
+  assert.match(await kpis.innerText(), /1\/6 giai đoạn có kết quả/);
+  assert.match(await kpis.innerText(), /Ứng viên nghiên cứu Blue\s*—/);
 
   // A terminal containing the original unredacted private path is not accepted.
   await page.getByLabel("Mở tệp JSONL VMware").setInputFiles({
@@ -125,6 +136,8 @@ try {
   });
   await page.getByRole("alert").filter({ hasText: "thuộc tính không được phép" }).waitFor();
   assert.match(await progress.innerText(), /0 sự kiện/);
+  assert.equal(await progressbar.getAttribute("aria-valuenow"), "0");
+  assert.match(await kpis.innerText(), /Khớp UID ứng viên\s*—/);
 
   const forged = entries.map((x) => ({ ...x }));
   forged[0] = { ...forged[0], vmware_isolation_verified: true };

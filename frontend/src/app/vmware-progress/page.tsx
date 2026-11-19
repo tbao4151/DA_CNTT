@@ -247,6 +247,23 @@ function LocalProgressView() {
   }, [snapshot]);
 
   const terminal = snapshot?.terminal ?? null;
+  const resolvedStages = STAGES.filter((stage) => {
+    const status = latest.get(stage)?.status;
+    return status === "completed" || status === "skipped" || status === "dry_run";
+  }).length;
+  const redAttempts = latest.get("red")?.counts.attempted_probes;
+  const zeekFlows = latest.get("zeek")?.counts.snapshot_flow_count;
+  const blueStage = latest.get("blue");
+  const blueCandidates = blueStage?.status === "skipped"
+    ? "Không chạy"
+    : (blueStage?.counts.research_candidate_count ?? "—");
+  const candidateMatches = latest.get("audit")?.counts.candidate_matches;
+  const sessionStats = [
+    { label: "Lượt thử Red lành tính", value: redAttempts ?? "—" },
+    { label: "Flow Zeek snapshot", value: zeekFlows ?? "—" },
+    { label: "Ứng viên nghiên cứu Blue", value: blueCandidates },
+    { label: "Khớp UID ứng viên", value: candidateMatches ?? "—" },
+  ] as const;
   return (
     <AppShell
       title="VMware · Local Evidence Timeline"
@@ -331,6 +348,38 @@ function LocalProgressView() {
           </div>
           {snapshot?.pendingLastLine &&
             <p className="mt-2 text-xs text-amber-300">Có một dòng đang ghi dở; chưa được tính là sự kiện hoàn thành.</p>}
+        </section>
+
+        <section aria-labelledby="vmware-kpis" className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="vmware-kpis" className="text-sm font-semibold text-slate-100">
+              Thông số tiến độ từ JSONL cục bộ
+            </h2>
+            <p className="text-xs font-mono text-slate-300">
+              {resolvedStages}/{STAGES.length} giai đoạn có kết quả
+            </p>
+          </div>
+          <div role="progressbar" aria-label="Số giai đoạn phần mềm có kết quả"
+            aria-valuemin={0} aria-valuemax={STAGES.length} aria-valuenow={resolvedStages}
+            className="mt-3 h-2 overflow-hidden rounded-full bg-slate-800">
+            <div className="h-full bg-blue-500 transition-[width] duration-300"
+              style={{ width: `${(resolvedStages / STAGES.length) * 100}%` }} />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {sessionStats.map((stat) => (
+              <div key={stat.label} className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+                <p className="text-[11px] text-slate-400">{stat.label}</p>
+                <p className="mt-2 font-mono text-lg font-semibold tabular-nums text-slate-100">
+                  {stat.value}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs leading-5 text-slate-400">
+            Các chỉ số này chỉ phản ánh dữ liệu sự kiện phần mềm đã đọc.
+            Số lượt thử, số flow, ứng viên Blue và UID khớp không phải số tấn công được xác minh,
+            độ chính xác mô hình hay cảnh báo SOC đang hoạt động.
+          </p>
         </section>
 
         <section aria-labelledby="vmware-stages" className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
