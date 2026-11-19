@@ -258,7 +258,7 @@ def main(argv: list[str] | None = None) -> int:
             "status": "completed" if report["mode"] != "DRY_RUN_EXECUTION_OFF" else "dry_run",
             "result": {
                 "mode": report["mode"],
-                "network_attempts": report.get("traffic", {}).get("network_attempts", 0),
+                "network_attempts": report.get("traffic_attempts", report.get("traffic", {}).get("network_attempts", 0)),
                 "captured_log_flow_count": report.get("captured_log_flow_count"),
                 "research_candidate_count": report.get("research_candidate_count"),
                 "ssh_fetch_performed": report.get("ssh_fetch_performed", False),
