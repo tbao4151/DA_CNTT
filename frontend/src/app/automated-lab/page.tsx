@@ -79,6 +79,30 @@ function assertSyntheticSession(value: LiveSession): LiveSession {
   return value;
 }
 
+type SyntheticReport = LiveSession & {
+  report_kind: "synthetic_replay_telemetry_only";
+  verified_detection_metrics: null;
+  real_network_flows: 0;
+  verified_ai_alerts: 0;
+  limitations: string[];
+};
+
+function assertSyntheticReport(value: SyntheticReport, sessionId: string): SyntheticReport {
+  assertSyntheticSession(value);
+  if (
+    value.session_id !== sessionId ||
+    value.report_kind !== "synthetic_replay_telemetry_only" ||
+    value.verified_detection_metrics !== null ||
+    value.real_network_flows !== 0 ||
+    value.verified_ai_alerts !== 0 ||
+    !Array.isArray(value.limitations) ||
+    !value.limitations.every((item) => typeof item === "string")
+  ) {
+    throw new Error("Báo cáo không khớp hợp đồng SYNTHETIC REPLAY. Đã chặn tải xuống.");
+  }
+  return value;
+}
+
 function formatTime(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleTimeString("vi-VN");
@@ -205,9 +229,10 @@ export default function AutomatedLabPage() {
     setBusy(true);
     setError(null);
     try {
-      const report = await apiRequest<Record<string, unknown>>(
+      const response = await apiRequest<SyntheticReport>(
         "/live-sessions/" + encodeURIComponent(session.session_id) + "/report"
       );
+      const report = assertSyntheticReport(response, session.session_id);
       const blob = new Blob([JSON.stringify(report, null, 2)], {
         type: "application/json",
       });
