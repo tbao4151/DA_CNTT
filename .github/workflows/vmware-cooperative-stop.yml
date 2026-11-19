@@ -1,0 +1,35 @@
+name: DA005 VMware cooperative STOP (offline)
+# Never executes sockets, SSH, VM network probes, or Blue inference.
+on:
+  push:
+    paths:
+      - 'scripts/run_vmware_stepwise.py'
+      - 'scripts/run_hostonly_benign_traffic.py'
+      - 'tests/test_vmware_cooperative_stop.py'
+      - '.github/workflows/vmware-cooperative-stop.yml'
+  pull_request:
+    paths:
+      - 'scripts/run_vmware_stepwise.py'
+      - 'scripts/run_hostonly_benign_traffic.py'
+      - 'tests/test_vmware_cooperative_stop.py'
+      - '.github/workflows/vmware-cooperative-stop.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cooperative-stop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.9'
+      - name: Install application and test dependencies
+        run: python -m pip install -r requirements-app.txt
+      - name: Network-free stop marker and cancellation tests
+        run: python -m pytest -q tests/test_vmware_cooperative_stop.py tests/test_hostonly_benign_traffic.py tests/test_vmware_stepwise.py tests/test_vmware_stage_progress.py

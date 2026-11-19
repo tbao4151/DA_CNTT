@@ -23,6 +23,10 @@ ROOT = Path(__file__).resolve().parents[1]
 RFC1918 = tuple(ipaddress.ip_network(s) for s in (
     "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16",
 ))
+class OperatorStopRequested(RuntimeError):
+    """A cooperative lab stop was requested before another network attempt."""
+
+
 SCENARIOS = {
     "baseline_web": {"protocol": "tcp", "port": 8080, "purpose": "HTTP HEAD to owned lab-only web service"},
     "dns_variation": {"protocol": "udp", "port": 53, "purpose": "Nonrecursive A query for da005.invalid"},
@@ -133,7 +137,10 @@ def run(
     timeout_s: float = 1.0, execute: bool = False,
     operator_confirmed_hostonly: bool = False,
     output_dir: Path | None = None,
+    stop_requested=None,
 ) -> dict[str, object]:
+    if stop_requested is not None and not callable(stop_requested):
+        raise ValueError("Stop checker must be callable")
     scope = validate_scope(source_ip=source_ip, target_ip=target_ip, cidr=cidr)
     if scenario_id not in SCENARIOS:
         raise ValueError("Unknown fixed scenario")
@@ -177,6 +184,10 @@ def run(
     if not execute:
         return report
     for index in range(count):
+        # Cooperative cancellation is checked before *each* new socket.
+        # It cannot interrupt a socket already in flight.
+        if stop_requested is not None and stop_requested():
+            raise OperatorStopRequested("Operator requested stop before network probe")
         event = send_benign_probe(
             scenario_id=scenario_id,
             source_ip=scope["source_ip"], target_ip=scope["target_ip"],

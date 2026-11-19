@@ -40,6 +40,7 @@ def run_sequence(
     model_path: Path | None = None,
     expected_model_sha256: str | None = None,
     progress_sink: Callable[[dict[str, object]], None] | None = None,
+    stop_requested: Callable[[], bool] | None = None,
 ) -> dict[str, object]:
     """Prepare all credentials and pinned model *before* sending a packet.
 
@@ -49,6 +50,13 @@ def run_sequence(
     """
     if progress_sink is not None and not callable(progress_sink):
         raise ValueError("Progress sink must be callable")
+    if stop_requested is not None and not callable(stop_requested):
+        raise ValueError("Stop checker must be callable")
+
+    def check_stop() -> None:
+        if stop_requested is not None and stop_requested():
+            raise stimulus.OperatorStopRequested("Operator requested a cooperative stop")
+
     progress_seq = 0
 
     def emit(stage: str, status: str, **counts: int) -> None:
@@ -104,6 +112,9 @@ def run_sequence(
         }
     if operator_confirmed_hostonly is not True:
         raise ValueError("Operator must independently confirm VMware Host-only isolation")
+    # A preexisting stop marker blocks an executable session before its first
+    # socket, including cases in which earlier session cleanup was incomplete.
+    check_stop()
     # Hard fail before network traffic if private directories/key files or
     # local model are not prepared. The scp subprocess enforces host-key pinning.
     stimulus._private_dir(output_dir)
@@ -116,19 +127,29 @@ def run_sequence(
             resolved_model, expected_sha256=expected_model_sha256
         )
 
+    check_stop()
     emit("preflight", "completed")
+    check_stop()
     emit("red", "running")
-    traffic_result = stimulus.run(
+    traffic_options = dict(
         source_ip=source_ip, target_ip=target_ip, cidr=cidr,
         scenario_id=scenario_id, count=attempts, execute=True,
         operator_confirmed_hostonly=True, output_dir=output_dir,
     )
+    if stop_requested is not None:
+        traffic_options["stop_requested"] = stop_requested
+    traffic_result = stimulus.run(**traffic_options)
+    check_stop()
     emit("red", "completed", attempted_probes=traffic_result["network_attempts"])
+    check_stop()
     emit("zeek", "running")
     # Zeek may append a completed conn.log record asynchronously.
     # This does not prove that the record corresponds to our probes.
     if settle_s:
+        # This small flush wait is non-interruptible by a stop marker; the
+        # requested stop is enforced immediately afterward, before SCP.
         time.sleep(settle_s)
+    check_stop()
     if model_path is None:
         zeek_receipt = collector.fetch(
             host=target_ip, cidr=cidr,
@@ -153,6 +174,7 @@ def run_sequence(
         # report each completion only AFTER it returns, not before.
         emit("zeek", "completed", snapshot_flow_count=flow_count)
         emit("blue", "completed", research_candidate_count=blue_result["research_candidate_count"])
+    check_stop()
     emit("audit", "running")
     # Verify the locally fetched bytes AGAIN at the session-correlation boundary.
     # Filename and digest originate from the bounded SCP receipt/bridge.
@@ -163,6 +185,7 @@ def run_sequence(
         traffic_result, raw, expected_log_sha256=str(log_sha),
     )
     correlation_file = log_path.with_suffix(".candidate-links.json")
+    check_stop()
     if correlation_file.is_symlink():
         raise ValueError("Candidate link output symlink rejected")
     with correlation_file.open("x", encoding="utf-8") as stream:
@@ -173,6 +196,7 @@ def run_sequence(
     emit("audit", "completed",
          candidate_matches=correlation["candidate_match_count"],
          unmatched_attempts=correlation["unmatched_probe_count"])
+    check_stop()
     emit("soc", "skipped")
     return {
         "mode": "STEPWISE_VMWARE_BENIGN_CAPTURE",
@@ -198,6 +222,28 @@ def run_sequence(
     }
 
 
+def _make_stop_checker(stop_file: Path | None, output_dir: Path):
+    """Bind an optional STOP marker to the exact private evidence directory.
+
+    Only the literal DA005_STOP.flag name is supported. Never read file bytes,
+    resolve shell commands, or allow an arbitrary destination.
+    """
+    if stop_file is None:
+        return None
+    if not stop_file.is_absolute() or stop_file.name != "DA005_STOP.flag":
+        raise ValueError("STOP marker must be the pinned absolute DA005_STOP.flag")
+    private_dir = stimulus._private_dir(output_dir)
+    if stop_file.parent.resolve(strict=True) != private_dir or stop_file.is_symlink():
+        raise ValueError("STOP marker must be inside the exact private evidence directory")
+
+    def check() -> bool:
+        # A newly created marker or a tampered symlink requests an immediate
+        # refusal at the next boundary, without reading it or following links.
+        return stop_file.is_symlink() or stop_file.exists()
+
+    return check
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-ip", required=True)
@@ -213,6 +259,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-model-sha256")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--operator-confirmed-hostonly", action="store_true")
+    parser.add_argument("--stop-file", type=Path,
+                        help="Optional fixed private DA005_STOP.flag marker checked between phases")
     parser.add_argument("--progress-jsonl", action="store_true",
                         help="Stream provenance-limited JSONL stage events to stdout, not verified live AI alerts")
     options = parser.parse_args(argv)
@@ -231,13 +279,14 @@ def main(argv: list[str] | None = None) -> int:
             expected_model_sha256=options.expected_model_sha256,
             execute=options.execute,
             operator_confirmed_hostonly=options.operator_confirmed_hostonly,
+            stop_requested=_make_stop_checker(options.stop_file, options.output_dir),
             progress_sink=(
                 (lambda event: print(json.dumps(event, ensure_ascii=False,
                                                 allow_nan=False), flush=True))
                 if options.progress_jsonl else None
             ),
         )
-    except (ValueError, OSError, RuntimeError, TypeError):
+    except (ValueError, OSError, RuntimeError, TypeError, KeyboardInterrupt):
         if options.progress_jsonl:
             print(json.dumps({
                 "kind": "da005_vmware_stepwise_terminal_v1",
