@@ -332,7 +332,7 @@ def test_pinned_ucb1_selected_benign_scenario_reaches_actual_stepwise_runner_onl
 ):
     path, config = _profile_v2(tmp_path)
     calls = []
-    raw = fake_raw()
+    raw = fake_raw().replace(b"\t22\ttcp", b"\t53\tudp")
     def mock_benign_traffic(**kw):
         calls.append(("stimulus", kw["scenario_id"], kw["execute"]))
         if kw["execute"]:
@@ -340,6 +340,8 @@ def test_pinned_ucb1_selected_benign_scenario_reaches_actual_stepwise_runner_onl
             receipt["scenario_id"] = "dns_variation"
             for event in receipt["events"]:
                 event["scenario_id"] = "dns_variation"
+                event["protocol"] = "udp"
+                event["port"] = 53
             return receipt
         return {"network_attempts": 0}
     def fake_fetch(**kw):
