@@ -190,3 +190,50 @@ def test_invalid_setup_never_sends_network(monkeypatch, tmp_path, invalid):
             **{**args(tmp_path), **invalid}, execute=True,
             operator_confirmed_hostonly=True,
         )
+
+
+def test_stepwise_forwards_operator_private_snapshot_key_without_credential_leak(monkeypatch, tmp_path):
+    opts = args(tmp_path)
+    identity = tmp_path / "id_ed25519_da005"
+    identity.write_text("TEST ONLY KEY", encoding="utf-8")
+    snapshot = "/home/ubuntu/da005-private-logs/conn-20261119T161546.log"
+    passed = []
+
+    def fake_run(**kwargs):
+        return fake_receipt() if kwargs["execute"] else {"network_attempts": 0}
+
+    def fake_fetch(**kwargs):
+        passed.append(kwargs)
+        raw = fake_raw()
+        (tmp_path / "zeek.log").write_bytes(raw)
+        return {
+            "local_log_filename": "zeek.log",
+            "log_sha256": hashlib.sha256(raw).hexdigest(),
+            "flow_count": 2,
+        }
+
+    monkeypatch.setattr(mod.stimulus, "run", fake_run)
+    monkeypatch.setattr(mod.collector, "fetch", fake_fetch)
+    report = mod.run_sequence(
+        **opts, identity_file=identity, remote_path=snapshot,
+        execute=True, operator_confirmed_hostonly=True, settle_s=0,
+    )
+    assert passed[0]["identity_file"] == identity
+    assert passed[0]["remote_path"] == snapshot
+    assert report["candidate_matching_attempts"] == 2
+    assert report["operational_detection_verified"] is False
+    assert report["full_one_click_dual_ai"] is False
+
+
+def test_stepwise_denies_unsafe_snapshot_before_running_probe(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        mod.stimulus, "send_benign_probe",
+        lambda **_kw: pytest.fail("No packets for unsafe remote path"),
+    )
+    with pytest.raises(ValueError, match="not allowlisted"):
+        mod.run_sequence(
+            **args(tmp_path),
+            remote_path="/etc/shadow",
+            execute=True,
+            operator_confirmed_hostonly=True,
+        )
