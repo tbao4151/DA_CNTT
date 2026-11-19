@@ -113,6 +113,46 @@ def test_v2_ipv6_link_local_only_and_legacy_v1_explicitly_unscreened():
     assert "fe80" not in json.dumps(report)
 
 
+def test_v2_windows_legacy_dns_placeholder_triple_is_audited_and_not_operational_dns():
+    data = snapshot_v2()
+    data["adapter_dns_servers_ipv6"] = [
+        "fec0:0:0:ffff::1", "fec0:0:0:ffff::2", "fec0:0:0:ffff::3",
+    ]
+    report = check(data)
+    assert report["host_adapter_configuration_passed"] is True
+    assert report["host_ipv6_legacy_dns_placeholders_observed"] is True
+    assert report["host_ipv6_default_route_dns_absent"] is True
+    assert report["physical_host_only_isolation_verified"] is False
+    assert "fec0:" not in json.dumps(report)
+
+
+@pytest.mark.parametrize("dns", [
+    ["fec0:0:0:ffff::1"],
+    ["fec0:0:0:ffff::1", "fec0:0:0:ffff::2"],
+    ["fec0:0:0:ffff::1"] * 3,
+    ["fec0:0:0:ffff::1", "fec0:0:0:ffff::2", "fe80::53"],
+    ["fec0:0:0:ffff::1", "fec0:0:0:ffff::2", "fec0:0:0:ffff::3", "2001:4860:4860::8888"],
+    ["2001:4860:4860::8888"],
+    "fec0:0:0:ffff::1",
+    [None],
+])
+def test_v2_refuses_incomplete_or_unsafe_dns_even_with_placeholder_values(dns):
+    data = snapshot_v2()
+    data["adapter_dns_servers_ipv6"] = dns
+    with pytest.raises(LabPreflightError):
+        check(data)
+
+
+def test_v2_placeholder_dns_does_not_override_ipv6_route_rejection():
+    data = snapshot_v2()
+    data["adapter_dns_servers_ipv6"] = [
+        "fec0:0:0:ffff::1", "fec0:0:0:ffff::2", "fec0:0:0:ffff::3",
+    ]
+    data["adapter_default_routes_ipv6"] = ["fe80::1"]
+    with pytest.raises(LabPreflightError):
+        check(data)
+
+
 @pytest.mark.parametrize("field,value", [
     ("adapter_ipv6", ["2001:4860::1"]),
     ("adapter_ipv6", ["fd00::1"]),
