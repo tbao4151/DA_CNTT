@@ -99,10 +99,10 @@ function eventFrom(value: unknown, expectedSeq: number): VMwareStageEvent {
     const entries = Object.entries(object(item.counts));
     if (entries.length > 5) throw new Error("Số lượng bộ đếm không hợp lệ.");
     for (const [key, value] of entries) {
-      if (!COUNTS.has(key) || !Number.isSafeInteger(value) || Number(value) < 0 || Number(value) > 10000) {
+      if (!COUNTS.has(key) || typeof value !== "number" || !Number.isSafeInteger(value) || value < 0 || value > 10000) {
         throw new Error("Bộ đếm thử nghiệm JSONL không hợp lệ.");
       }
-      counts[key] = Number(value);
+      counts[key] = value;
     }
   }
   return {
