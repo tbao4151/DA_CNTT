@@ -276,3 +276,169 @@ def test_cli_reports_only_generic_error_not_private_paths(tmp_path, capsys):
     assert str(path) not in printed.err
     assert "192.168." not in printed.err
     assert printed.out == ""
+
+
+def _profile_v2(tmp_path: Path, *, strategy="ucb1", seed=42):
+    path, config = fixture_profile(tmp_path)
+    feedback = [
+        {"scenario_id": "baseline_web", "blue_flagged": True},
+        {"scenario_id": "dns_variation", "blue_flagged": False},
+        {"scenario_id": "connection_shift", "blue_flagged": True},
+    ]
+    config["version"] = 2
+    config["scenario_id"] = "dns_variation"
+    config["red_policy"] = {
+        "strategy": strategy,
+        "seed": seed,
+        "feedback": feedback,
+        "expected_scenario_id": "dns_variation",
+    }
+    path.write_text(json.dumps(config, sort_keys=True) + "\n", encoding="utf-8")
+    return path, config
+
+
+def test_pinned_ucb1_v2_dryrun_records_truthful_private_planner_receipt(monkeypatch, tmp_path):
+    path, config = _profile_v2(tmp_path)
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe",
+                        lambda **kw: pytest.fail("Never call socket in dry-run"))
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **kw: pytest.fail("Never fetch Zeek in dry-run"))
+    out = Path(config["output_dir"]) / "policy-dryrun.jsonl"
+    assert launcher.run_profile(config_file=path, expected_sha256=digest(path), jsonl_file=out) == 0
+    plan_file = out.with_name("policy-dryrun.red-plan.json")
+    assert plan_file.is_file()
+    receipt = json.loads(plan_file.read_text(encoding="utf-8"))
+    assert receipt == {
+        "kind": "da005_operator_approved_red_policy_v1",
+        "profile_sha256": digest(path),
+        "strategy": "ucb1",
+        "seed": 42,
+        "selected_scenario_id": "dns_variation",
+        "feedback_count": 3,
+        "feedback_origin": "operator_entered_unverified",
+        "policy_reproducible_from_pinned_profile": True,
+        "planning_only": True,
+        "attack_executed": False,
+        "verified_ai_detection": False,
+        "soc_alerts_created": False,
+    }
+    assert "192.168." not in plan_file.read_text(encoding="utf-8")
+    assert str(tmp_path) not in plan_file.read_text(encoding="utf-8")
+    assert audit.audit(out, digest(out))["terminal_status"] == "dry_run"
+
+
+def test_pinned_ucb1_selected_benign_scenario_reaches_actual_stepwise_runner_only_when_consented(
+    monkeypatch, tmp_path,
+):
+    path, config = _profile_v2(tmp_path)
+    calls = []
+    raw = fake_raw()
+    def mock_benign_traffic(**kw):
+        calls.append(("stimulus", kw["scenario_id"], kw["execute"]))
+        if kw["execute"]:
+            receipt = fake_receipt()
+            receipt["scenario_id"] = "dns_variation"
+            for event in receipt["events"]:
+                event["scenario_id"] = "dns_variation"
+            return receipt
+        return {"network_attempts": 0}
+    def fake_fetch(**kw):
+        calls.append(("zeek", kw["host"]))
+        log = Path(config["output_dir"]) / "conn.log"
+        log.write_bytes(raw)
+        return {"local_log_filename": "conn.log",
+                "log_sha256": hashlib.sha256(raw).hexdigest(), "flow_count": 2}
+    monkeypatch.setattr(stepwise.stimulus, "run", mock_benign_traffic)
+    monkeypatch.setattr(stepwise.collector, "fetch", fake_fetch)
+    output = Path(config["output_dir"]) / "ucb1-execute.jsonl"
+    with pytest.raises(ValueError, match="confirmation"):
+        launcher.run_profile(config_file=path, expected_sha256=digest(path),
+                             jsonl_file=output, execute=True)
+    assert not calls and not output.exists()
+    assert not output.with_name("ucb1-execute.red-plan.json").exists()
+    assert launcher.run_profile(
+        config_file=path, expected_sha256=digest(path), jsonl_file=output,
+        execute=True, operator_confirmed_hostonly=True,
+    ) == 0
+    assert calls == [("stimulus", "dns_variation", False),
+                     ("stimulus", "dns_variation", True),
+                     ("zeek", "192.168.77.20")]
+    assert audit.audit(output, digest(output))["terminal_status"] == "completed"
+    rows = [json.loads(row) for row in output.read_text(encoding="utf-8").splitlines()]
+    assert rows[-1]["result"]["attack_executed"] is False
+    assert rows[-1]["result"]["operational_ai_detection_verified"] is False
+    assert rows[-1]["result"]["soc_alerts_created"] is False
+
+
+def test_pinned_v2_random_plan_requires_exact_human_approval(monkeypatch, tmp_path):
+    path, config = _profile_v2(tmp_path, strategy="random", seed=123)
+    from red_team_ai.scenario_policy import choose_scenario
+    result = choose_scenario(config["red_policy"]["feedback"], strategy="random", seed=123)
+    config["scenario_id"] = result["scenario_id"]
+    config["red_policy"]["expected_scenario_id"] = result["scenario_id"]
+    path.write_text(json.dumps(config) + "\n", encoding="utf-8")
+    output = Path(config["output_dir"]) / "random.jsonl"
+    assert launcher.run_profile(
+        config_file=path, expected_sha256=digest(path), jsonl_file=output,
+    ) == 0
+    receipt = json.loads(output.with_name("random.red-plan.json").read_text(encoding="utf-8"))
+    assert receipt["strategy"] == "random"
+    assert receipt["selected_scenario_id"] == result["scenario_id"]
+    assert receipt["planning_only"] is True
+    assert audit.audit(output, digest(output))["terminal_status"] == "dry_run"
+
+
+@pytest.mark.parametrize("corruption", [
+    {"version": 3},
+    {"red_policy": {}},
+    {"red_policy": {"strategy": "unsupported", "seed": 42, "feedback": [], "expected_scenario_id": "dns_variation"}},
+    {"red_policy": {"strategy": "ucb1", "seed": True, "feedback": [], "expected_scenario_id": "dns_variation"}},
+    {"scenario_id": "baseline_web"},
+    {"red_policy": {"strategy": "ucb1", "seed": 42,
+                    "feedback": [{"scenario_id": "dns_variation", "blue_flagged": "true"}],
+                    "expected_scenario_id": "dns_variation"}},
+    {"red_policy": {"strategy": "ucb1", "seed": 42,
+                    "feedback": [{"scenario_id": "dns_variation", "blue_flagged": False, "packet": "arbitrary"}],
+                    "expected_scenario_id": "dns_variation"}},
+    {"red_policy": {"strategy": "ucb1", "seed": 42,
+                    "feedback": [{"scenario_id": "baseline_web", "blue_flagged": True}] * 129,
+                    "expected_scenario_id": "dns_variation"}},
+])
+def test_invalid_v2_policy_cannot_start_runner_or_create_evidence(tmp_path, corruption):
+    path, config = _profile_v2(tmp_path)
+    config.update(corruption)
+    path.write_text(json.dumps(config, sort_keys=True) + "\n", encoding="utf-8")
+    out = Path(config["output_dir"]) / "refused.jsonl"
+    with pytest.raises(ValueError):
+        launcher.run_profile(
+            config_file=path, expected_sha256=digest(path), jsonl_file=out,
+        )
+    assert not out.exists()
+    assert not out.with_name("refused.red-plan.json").exists()
+
+
+def test_v2_policy_source_hash_mismatch_or_receipt_collision_blocks_execution(tmp_path):
+    path, config = _profile_v2(tmp_path)
+    out = Path(config["output_dir"]) / "collision.jsonl"
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        launcher.run_profile(
+            config_file=path, expected_sha256="0" * 64, jsonl_file=out,
+        )
+    receipt = out.with_name("collision.red-plan.json")
+    receipt.write_text("existing independently saved plan\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="already exists"):
+        launcher.run_profile(
+            config_file=path, expected_sha256=digest(path), jsonl_file=out,
+        )
+    assert not out.exists()
+    assert receipt.read_text(encoding="utf-8") == "existing independently saved plan\n"
+
+
+def test_v1_profile_has_no_policy_receipt_for_backwards_compatibility(tmp_path):
+    path, config = fixture_profile(tmp_path)
+    progress = Path(config["output_dir"]) / "old-profile.jsonl"
+    assert launcher.run_profile(
+        config_file=path, expected_sha256=digest(path), jsonl_file=progress,
+    ) == 0
+    assert audit.audit(progress, digest(progress))["terminal_status"] == "dry_run"
+    assert not progress.with_name("old-profile.red-plan.json").exists()
