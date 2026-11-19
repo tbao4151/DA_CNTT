@@ -225,6 +225,41 @@ def _write_red_plan_receipt(
     return receipt
 
 
+
+def validate_operator_profile(
+    *, config_file: Path, expected_sha256: str,
+    require_blue_research: bool = False,
+) -> dict[str, object]:
+    """Read-only, network-free profile and optional Zeek-model readiness check.
+
+    No JSONL, plan receipt, lock, socket, SSH, prediction or SOC write occurs.
+    This result must not be used as proof of VMware Host-only isolation.
+    """
+    profile = load_config(config_file, expected_sha256)
+    model_ready = profile["model_path"] is not None
+    if require_blue_research and not model_ready:
+        raise ValueError("A pinned private Blue research model is required")
+    if model_ready:
+        # The trusted-model loader checks original bytes, SHA-256 and data-only
+        # Zeek model schema; no executable pickle deserialization is involved.
+        stepwise.blue.load_pinned_zeek_research_model(
+            Path(profile["model_path"]),
+            expected_sha256=profile["expected_model_sha256"],
+        )
+    return {
+        "kind": "da005_private_profile_readiness_v1",
+        "profile_sha256_verified": True,
+        "profile_version": profile["version"],
+        "red_policy_approved_offline": profile["version"] == 2,
+        "blue_model_pinned_and_schema_verified": model_ready,
+        "blue_model_required": require_blue_research,
+        "network_activity_performed": False,
+        "vmware_isolation_verified": False,
+        "operational_ai_detection_verified": False,
+        "soc_alerts_created": False,
+    }
+
+
 def run_profile(
     *,
     config_file: Path,
@@ -232,9 +267,16 @@ def run_profile(
     jsonl_file: Path,
     execute: bool = False,
     operator_confirmed_hostonly: bool = False,
+    require_blue_research: bool = False,
 ) -> int:
     """One operator command; delegates all networking to existing safe runner."""
     profile = load_config(config_file, expected_sha256)
+    if require_blue_research:
+        # Fail before creating a Red plan receipt, lock or progress JSONL.
+        validate_operator_profile(
+            config_file=config_file, expected_sha256=expected_sha256,
+            require_blue_research=True,
+        )
     if execute:
         if operator_confirmed_hostonly is not True:
             raise ValueError("Explicit operator Host-only confirmation is mandatory")
@@ -292,17 +334,35 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config-file", type=Path, required=True)
     parser.add_argument("--expected-config-sha256", required=True)
-    parser.add_argument("--jsonl-file", type=Path, required=True)
+    parser.add_argument("--jsonl-file", type=Path,
+                        help="Required for dry-run or execution, forbidden with --validate-only")
     parser.add_argument("--execute", action="store_true", help="OFF by default; approved benign Host-only probes only")
     parser.add_argument("--operator-confirmed-hostonly", action="store_true")
+    parser.add_argument("--validate-only", action="store_true",
+                        help="Offline private profile/model validation; creates no evidence or lock")
+    parser.add_argument("--require-blue-research", action="store_true",
+                        help="Refuse without a privately pinned and schema-verified Zeek research model")
     args = parser.parse_args(argv)
     try:
+        if args.validate_only:
+            if args.jsonl_file is not None or args.execute or args.operator_confirmed_hostonly:
+                raise ValueError("Validate-only must not request progress output or network execution")
+            readiness = validate_operator_profile(
+                config_file=args.config_file,
+                expected_sha256=args.expected_config_sha256,
+                require_blue_research=args.require_blue_research,
+            )
+            print(json.dumps(readiness, indent=2, ensure_ascii=False, allow_nan=False))
+            return 0
+        if args.jsonl_file is None:
+            raise ValueError("An unused private JSONL path is required to run the session")
         exit_code = run_profile(
             config_file=args.config_file,
             expected_sha256=args.expected_config_sha256,
             jsonl_file=args.jsonl_file,
             execute=args.execute,
             operator_confirmed_hostonly=args.operator_confirmed_hostonly,
+            require_blue_research=args.require_blue_research,
         )
     except (ValueError, OSError, TypeError, UnicodeError, RecursionError):
         print("DA005 operator session refused. Check private profile pins, consent and fresh paths.",
