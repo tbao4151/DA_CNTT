@@ -105,6 +105,54 @@ try {
   assert.match(await page.locator("body").innerText(), /Chưa xác minh|chưa xác minh|CHƯA XÁC MINH/);
   assert.equal(uploads, 0, "JSONL must not be posted to any API");
 
+  const planInput = page.getByLabel("Mở biên nhận Red Team");
+  const redPanel = page.locator('section[aria-labelledby="vmware-red-policy"]');
+  const redReceipt = {
+    kind: "da005_operator_approved_red_policy_v1",
+    profile_sha256: "a".repeat(64),
+    strategy: "ucb1", seed: 42,
+    selected_scenario_id: "dns_variation",
+    feedback_count: 3,
+    feedback_origin: "operator_entered_unverified",
+    policy_reproducible_from_pinned_profile: true,
+    planning_only: true,
+    attack_executed: false,
+    verified_ai_detection: false,
+    soc_alerts_created: false,
+  };
+  const correctPlanName = "vmware-stage-progress.red-plan.json";
+  const uploadRed = async (name, receipt) => {
+    await planInput.setInputFiles({
+      name, mimeType: "application/json", buffer: Buffer.from(JSON.stringify(receipt) + "\n"),
+    });
+  };
+  await uploadRed(correctPlanName, redReceipt);
+  await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).waitFor();
+  assert.match(await redPanel.innerText(), /UCB1/);
+  assert.match(await redPanel.innerText(), /Số phản hồi nhập tay:\s*3/);
+  assert.match(await redPanel.innerText(), /không xác nhận nó đã được thực thi/);
+  assert.match(await redPanel.innerText(), new RegExp("a{64}"));
+  assert.equal(uploads, 0, "Local Red policy receipt must not be uploaded");
+
+  await uploadRed(correctPlanName, { ...redReceipt, attack_executed: true });
+  await redPanel.getByRole("alert").filter({ hasText: "sai provenance" }).waitFor();
+  assert.equal(await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).count(), 0);
+  await uploadRed(correctPlanName, redReceipt);
+  await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).waitFor();
+
+  const duplicateKey = JSON.stringify(redReceipt).replace(
+    '"strategy":"ucb1"', '"strategy":"ucb1","strategy":"random"',
+  );
+  await planInput.setInputFiles({
+    name: correctPlanName, mimeType: "application/json",
+    buffer: Buffer.from(duplicateKey),
+  });
+  await redPanel.getByRole("alert").filter({ hasText: "thuộc tính trùng" }).waitFor();
+  assert.equal(await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).count(), 0);
+
+  await uploadRed(correctPlanName, redReceipt);
+  await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).waitFor();
+
   // This is the exact redacted dry-run summary from the Python CLI.
   const dryRun = {
     kind: "da005_vmware_stepwise_terminal_v1",
@@ -122,6 +170,11 @@ try {
     buffer: Buffer.from([event(1, "preflight", "dry_run"), dryRun].map((x) => JSON.stringify(x)).join("\n") + "\n"),
   });
   await page.getByText("Dry-run", { exact: true }).first().waitFor();
+  assert.equal(await redPanel.getByText("DNS .invalid (UDP/53)", { exact: true }).count(), 0,
+    "Switching JSONL files must reset previous Red policy receipt");
+  await uploadRed(correctPlanName, redReceipt);
+  await redPanel.getByRole("alert").filter({ hasText: "không khớp tệp JSONL" }).waitFor();
+  assert.equal(uploads, 0, "No JSONL or Red policy files may be sent to server");
   assert.match(await progress.innerText(), /1 sự kiện/);
   assert.equal(await progressbar.getAttribute("aria-valuenow"), "1");
   assert.match(await kpis.innerText(), /1\/6 giai đoạn có kết quả/);
