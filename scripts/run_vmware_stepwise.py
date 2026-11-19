@@ -256,7 +256,18 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({
             "kind": "da005_vmware_stepwise_terminal_v1",
             "status": "completed" if report["mode"] != "DRY_RUN_EXECUTION_OFF" else "dry_run",
-            "result": report,
+            "result": {
+                "mode": report["mode"],
+                "network_attempts": report.get("traffic", {}).get("network_attempts", 0),
+                "captured_log_flow_count": report.get("captured_log_flow_count"),
+                "research_candidate_count": report.get("research_candidate_count"),
+                "ssh_fetch_performed": report.get("ssh_fetch_performed", False),
+                "blue_research_scoring_performed": report.get("blue_research_scoring_performed", False),
+                "vmware_isolation_verified": False,
+                "attack_executed": False,
+                "operational_ai_detection_verified": False,
+                "soc_alerts_created": False,
+            },
         }, ensure_ascii=False, allow_nan=False), flush=True)
     else:
         print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False))
