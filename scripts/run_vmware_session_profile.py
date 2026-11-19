@@ -8,6 +8,7 @@ This utility does not modify VMware networking or verify physical isolation.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import hashlib
 import hmac
 import json
@@ -159,6 +160,40 @@ def _red_plan(profile: dict[str, object]) -> dict[str, object]:
     return result
 
 
+@contextmanager
+def _exclusive_session_lock(output_dir: Path):
+    """Prevent overlapping profile sessions from sharing a private evidence folder.
+
+    This is an exclusive CREATE lock, not a host/VMware isolation attestation.
+    A process crash intentionally leaves a stale lock for human review; never
+    delete another session's lock or automatically guess that it is stale.
+    """
+    lock = output_dir / "DA005_ACTIVE_SESSION.lock"
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    flags |= getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        fd = os.open(lock, flags, 0o600)
+    except FileExistsError as exc:
+        raise ValueError(
+            "Another DA005 profile session may be active; inspect the private session lock"
+        ) from exc
+    try:
+        identity = os.fstat(fd)
+    finally:
+        os.close(fd)
+    try:
+        yield
+    finally:
+        # Do not delete a replaced lock; another process may have taken over.
+        try:
+            current = lock.lstat()
+        except FileNotFoundError as exc:
+            raise RuntimeError("Active session lock disappeared unexpectedly") from exc
+        if not os.path.samestat(identity, current):
+            raise RuntimeError("Active session lock was replaced; manual review required")
+        lock.unlink()
+
+
 def _write_red_plan_receipt(
     *, jsonl_file: Path, decision: dict[str, object], profile_sha256: str,
     profile: dict[str, object],
@@ -219,37 +254,38 @@ def run_profile(
         raise ValueError("STOP marker exists: no new execution may begin")
     if jsonl_file.exists() or jsonl_file.is_symlink():
         raise ValueError("Progress JSONL already exists")
-    if profile["version"] == 2:
-        # Decision is calculated from the profile's immutable, SHA-pinned
-        # operator feedback and must match two explicitly approved labels.
-        # Store only a non-executable plan receipt. No runtime feedback loops
-        # or post-hoc relabeling are performed here.
-        decision = _red_plan(profile)
-        _write_red_plan_receipt(
-            jsonl_file=jsonl_file,
-            decision=decision,
-            profile_sha256=expected_sha256,
-            profile=profile,
-        )
-
-    args = [
-        "--source-ip", profile["source_ip"],
-        "--target-ip", profile["target_ip"],
-        "--cidr", profile["cidr"],
-        "--scenario", profile["scenario_id"],
-        "--user", profile["username"],
-        "--known-hosts", profile["known_hosts"],
-        "--output-dir", profile["output_dir"],
-        "--stop-file", profile["stop_file"],
-        "--attempts", str(profile["attempts"]),
-        "--settle-s", str(profile["settle_s"]),
-    ]
-    if profile["model_path"] is not None:
-        args += ["--model", profile["model_path"],
-                 "--expected-model-sha256", profile["expected_model_sha256"]]
-    if execute:
-        args += ["--execute", "--operator-confirmed-hostonly"]
-    return writer.run_to_file(jsonl_file=jsonl_file, cli_args=args)
+    with _exclusive_session_lock(private_dir):
+        if profile["version"] == 2:
+            # Decision is calculated from the profile's immutable, SHA-pinned
+            # operator feedback and must match two explicitly approved labels.
+            # Store only a non-executable plan receipt. No runtime feedback loops
+            # or post-hoc relabeling are performed here.
+            decision = _red_plan(profile)
+            _write_red_plan_receipt(
+                jsonl_file=jsonl_file,
+                decision=decision,
+                profile_sha256=expected_sha256,
+                profile=profile,
+            )
+    
+        args = [
+            "--source-ip", profile["source_ip"],
+            "--target-ip", profile["target_ip"],
+            "--cidr", profile["cidr"],
+            "--scenario", profile["scenario_id"],
+            "--user", profile["username"],
+            "--known-hosts", profile["known_hosts"],
+            "--output-dir", profile["output_dir"],
+            "--stop-file", profile["stop_file"],
+            "--attempts", str(profile["attempts"]),
+            "--settle-s", str(profile["settle_s"]),
+        ]
+        if profile["model_path"] is not None:
+            args += ["--model", profile["model_path"],
+                     "--expected-model-sha256", profile["expected_model_sha256"]]
+        if execute:
+            args += ["--execute", "--operator-confirmed-hostonly"]
+        return writer.run_to_file(jsonl_file=jsonl_file, cli_args=args)
 
 
 def main(argv: list[str] | None = None) -> int:
