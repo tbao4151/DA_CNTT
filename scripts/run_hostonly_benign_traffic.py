@@ -225,7 +225,18 @@ def run(
         report["events"].append(event)
         report["network_attempts"] = index + 1
         if index + 1 < count:
-            time.sleep(delay_ms / 1000)
+            try:
+                time.sleep(delay_ms / 1000)
+            except KeyboardInterrupt:
+                # The previous socket attempt has returned and is known.
+                # Preserve only those known attempts; an interrupted
+                # in-flight socket cannot be reconstructed by this receipt.
+                report["mode"] = "BENIGN_LAB_ABORTED"
+                report["completion_status"] = "keyboard_interrupt_between_probes"
+                report["probe_sequence_completed"] = False
+                report["ended_at_utc"] = _now()
+                _write_private_receipt(evidence_dir, report)
+                raise
     report["ended_at_utc"] = _now()
     report["completion_status"] = "completed"
     report["probe_sequence_completed"] = True
