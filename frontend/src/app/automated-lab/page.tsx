@@ -150,6 +150,7 @@ export default function AutomatedLabPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [streamStatus, setStreamStatus] = useState("Chưa kết nối");
+  const [selectedStep, setSelectedStep] = useState<"red" | "zeek" | "blue" | "soc">("red");
 
   const refresh = useCallback(async (sessionId: string) => {
     const next = await apiRequest<LiveSession>(
@@ -294,6 +295,11 @@ export default function AutomatedLabPage() {
     [session?.events]
   );
 
+  const selectedEvidence = useMemo(
+    () => session?.events.filter((event) => event.stage === selectedStep) ?? [],
+    [session?.events, selectedStep]
+  );
+
   const latestFor = (stage: Stage) =>
     [...(session?.events ?? [])].reverse().find((item) => item.stage === stage);
 
@@ -419,6 +425,55 @@ export default function AutomatedLabPage() {
             </div>
           </section>
         </div>
+
+        <section aria-labelledby="stepwise-title" className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+          <h2 id="stepwise-title" className="text-sm font-semibold text-slate-100">Step-by-Step · Kiểm tra bằng chứng theo giai đoạn</h2>
+          <p className="mt-2 text-xs leading-5 text-slate-400">
+            Chỉ duyệt sự kiện đã nhận từ API. Không kích hoạt Red Team, Zeek, Blue Team hoặc SOC thật.
+            Các bước không có dữ liệu được ghi là chưa có bằng chứng, không tự sinh kết quả.
+          </p>
+          <div role="group" aria-label="Chọn giai đoạn để xem sự kiện" className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {STAGES.map(({ stage, label }) => (
+              <button
+                key={stage}
+                type="button"
+                aria-pressed={selectedStep === stage}
+                onClick={() => setSelectedStep(stage as "red" | "zeek" | "blue" | "soc")}
+                className={"min-w-0 rounded-md border px-2 py-2 text-left text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 " +
+                  (selectedStep === stage ? "border-blue-400 bg-blue-950 text-white" : "border-slate-700 text-slate-300 hover:bg-slate-800")}
+              >
+                {label}
+                <span className="mt-1 block font-mono text-[11px]">
+                  {session?.events.filter((event) => event.stage === stage).length ?? 0} sự kiện
+                </span>
+              </button>
+            ))}
+          </div>
+          <div aria-live="polite" className="mt-3 rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+            <p className="text-xs font-semibold text-amber-200">Nguồn: SYNTHETIC REPLAY · VMware chưa xác minh</p>
+            {selectedEvidence.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-400">Chưa có sự kiện cho giai đoạn này. Không có bằng chứng để trình bày.</p>
+            ) : (
+              <ol className="mt-2 max-h-52 space-y-2 overflow-y-auto">
+                {selectedEvidence.map((event) => (
+                  <li key={event.seq} className="border-b border-slate-800 pb-2 text-xs text-slate-200">
+                    <span className="font-mono text-slate-400">#{event.seq} · {formatTime(event.time)} · </span>
+                    {event.message}
+                    <p className="mt-1 break-all font-mono text-[11px] text-slate-400">
+                      {event.stage === "zeek" ? "Synthetic fixture flows: " + String(event.details.sample_flow_count ?? "không có") :
+                        event.stage === "red" ? "Scenario label: " + String(event.details.scenario_id ?? "không có") :
+                        event.stage === "blue" ? "Model inference: OFF" : "Verified SOC cases: 0"}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Đường kiểm thử VMware giai đoạn 1 chạy riêng bằng CLI read-only; không nhập kết quả SSH/SCP hoặc research scoring vào phiên SSE synthetic này.
+            Xem docs/VMWARE_ZEEK_RESEARCH_BRIDGE.md.
+          </p>
+        </section>
 
         <section className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
