@@ -60,6 +60,12 @@ A second Windows PowerShell can request a cooperative STOP:
 
 The local /vmware-progress UI can also create this fixed marker after explicit directory selection and second confirmation. It is not an instantaneous OS-level kill switch: a socket/SSH transfer already in flight may finish or time out. Partial benign attempts are privately archived with BENIGN_LAB_ABORTED and are not treated as completed sessions or accepted as Zeek correlation proof.
 
+## Exclusive session lock (same private evidence directory)
+
+The Python profile launcher now creates `DA005_ACTIVE_SESSION.lock` exclusively inside the approved private evidence folder **before** writing the optional Red plan or invoking the stepwise runner. A second launcher using the same folder refuses to start, even when it uses a different JSONL filename. The lock contains no credentials or IP addresses and is automatically removed on normal completion or a handled runner error, only if it is still the same file.
+
+If Windows is forcibly terminated or loses power, the lock may remain. Treat it as a **fail-closed condition**: inspect Task Manager / running Python processes and preserve the existing JSONL and receipt before manually handling the lock. Never delete this lock while a session is active, and never assume a missing lock proves network isolation or a successful run. This mechanism coordinates only cooperating profile-launcher invocations in one directory; it does not lock all tools, other evidence directories or separate host processes.
+
 ## Step 5 — Independent post-run checks
 
     (Get-FileHash 'E:\DA005_Private\captures\session-001.jsonl' -Algorithm SHA256).Hash.ToLowerInvariant()
