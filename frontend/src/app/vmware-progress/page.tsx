@@ -67,7 +67,13 @@ function LocalProgressView() {
         if (!disposed) await applyFile(file, generation);
       } catch {
         if (!disposed) {
-          setError("Không thể tiếp tục đọc tệp hoặc nội dung JSONL không hợp lệ. Đã ngừng theo dõi.");
+          // Never leave a previously valid "completed" snapshot on-screen
+          // after later bytes fail provenance/schema validation.
+          setSnapshot(null);
+          setFilename("");
+          setUpdated("");
+          seen.current = "";
+          setError("Tệp đang theo dõi không còn hợp lệ hoặc không thể đọc. Đã xóa toàn bộ tiến độ cũ và ngừng theo dõi.");
           setWatching(false);
           op.current += 1;
           handle.current = null;

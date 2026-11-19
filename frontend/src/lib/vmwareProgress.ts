@@ -199,6 +199,7 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
   const nonempty = lines.filter((line) => line.trim().length !== 0);
   if (nonempty.length > MAX_LINES) throw new Error("Quá nhiều dòng tiến độ trong một phiên.");
   let terminal: TerminalStatus | null = null;
+  let redactedTerminalCounts: Record<string, unknown> | null = null;
   const events: VMwareStageEvent[] = [];
   // A valid completed CLI trace has exactly these nine stage records.
   // Before completion, only a prefix is accepted (e.g. interrupted SCP).
@@ -227,6 +228,9 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
     if (terminal !== null) throw new Error("Tệp có sự kiện sau dòng kết thúc.");
     if (record.kind === "da005_vmware_stepwise_terminal_v1") {
       terminal = terminalFrom(record);
+      if (terminal === "completed") {
+        redactedTerminalCounts = object(record.result);
+      }
       continue;
     }
     const event = eventFrom(record, events.length + 1);
@@ -261,6 +265,20 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
        events[events.length - 1].stage !== "soc" ||
        events[events.length - 1].status !== "skipped")) {
     throw new Error("Phiên kết thúc trước khi có bằng chứng các bước.");
+  }
+  // Event/terminal consistency: even fully schema-valid JSONL must not
+  // display contradictory probe or Zeek counts as software evidence.
+  // This checks only internal coherence, NOT physical packet authenticity.
+  if (terminal === "completed") {
+    const report = redactedTerminalCounts;
+    if (!report ||
+        report.network_attempts !== events[2].counts.attempted_probes ||
+        report.captured_log_flow_count !== events[4].counts.snapshot_flow_count ||
+        report.blue_research_scoring_performed !== (events[5].status === "completed") ||
+        (events[5].status === "completed" &&
+          report.research_candidate_count !== events[5].counts.research_candidate_count)) {
+      throw new Error("Dòng tổng kết JSONL không khớp bộ đếm giai đoạn. Từ chối hiển thị.");
+    }
   }
   return {
     events,
