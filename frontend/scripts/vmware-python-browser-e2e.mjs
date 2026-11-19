@@ -90,6 +90,20 @@ try {
   await page.getByRole("alert").filter({ hasText: "không khớp bộ đếm giai đoạn" }).waitFor();
   assert.match(await log.innerText(), /0 sự kiện/);
 
+  // The strict timeline rejects records whose stage sequence is valid
+  // but whose timestamps move backwards. No live VM clock is implied.
+  const reverseTime = completed.toString("utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
+  reverseTime[3].observed_at_utc = "2001-01-01T00:00:00+00:00";
+  await open("reverse-time.jsonl", Buffer.from(reverseTime.map(JSON.stringify).join("\n") + "\n"));
+  await page.getByRole("alert").filter({ hasText: "Thời gian UTC của sự kiện đi ngược" }).waitFor();
+  assert.match(await log.innerText(), /0 sự kiện/);
+
+  const noncanonicalTime = completed.toString("utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
+  noncanonicalTime[1].observed_at_utc = "2026-11-19 05:00:00+00:00";
+  await open("noncanonical-time.jsonl", Buffer.from(noncanonicalTime.map(JSON.stringify).join("\n") + "\n"));
+  await page.getByRole("alert").filter({ hasText: "Thứ tự hoặc provenance" }).waitFor();
+  assert.match(await log.innerText(), /0 sự kiện/);
+
   // A previously successful real-CLI shape must not allow a forged
   // vmware_isolation_verified flag to be treated as physical proof.
   const forged = completed.toString("utf8").split("\n").filter(Boolean).map(JSON.parse);
