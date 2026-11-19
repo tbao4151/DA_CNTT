@@ -44,3 +44,23 @@ py -3.12 -m pytest -q tests/test_hostonly_benign_traffic.py
 ## Next steps after local acceptance
 
 Connect this approved execution backend to the Red Team policy controller only with a verified per-session scope contract and explicit user opt-in; route original Zeek logs to an independently pinned Zeek v1 model and SOC review. After that, add Step-by-Step and One-Click orchestration plus abort/kill-switch verification. None of these later steps is claimed completed by this script.
+
+## One command for the first real STEPWISE acceptance (manual mode, NOT One-Click AI)
+
+After independently verifying Host-only isolation, Zeek capture NIC, SSH key and known_hosts, the following performs a **fixed benign probe → wait for Zeek flush → SCP snapshot**:
+
+```powershell
+py -3.12 scripts/run_vmware_stepwise.py --source-ip 192.168.77.1 --target-ip 192.168.77.20 --cidr 192.168.77.0/24 --scenario connection_shift --user YOUR_UBUNTU_USER --known-hosts "$HOME\.ssh\known_hosts" --output-dir 'E:\DA005_Private\captures' --attempts 2 --settle-s 2 --execute --operator-confirmed-hostonly
+```
+
+**Dry-run first:** omit `--execute --operator-confirmed-hostonly`; no packets or SSH activity occur. This first acceptance needs NO model; returned flow count is the WHOLE copied conn.log, not necessarily only flows generated in this session.
+
+If there is a trusted private **Zeek v1 JSON model**, add both options:
+
+```powershell
+--model 'E:\DA005_Private\models\zeek_research.json' --expected-model-sha256 YOUR_PINNED_MODEL_SHA256
+```
+
+The model is validated **before any network probe**, and the subsequent Zeek research scoring is never reported as a confirmed attack or operational SOC alert. The first end-to-end acceptance remains an operator-assisted research process. The full autonomous two-AI One-Click workflow still requires verified session correlation, a secure Red Team controller, a model suitable for the lab and SOC evidence linkage.
+
+CI now runs `tests/test_hostonly_benign_traffic.py` and `tests/test_vmware_stepwise.py` on Windows, both using network-free mocks. Real evidence must still come from the user's VM, not CI.
