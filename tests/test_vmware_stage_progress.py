@@ -153,7 +153,11 @@ def test_jsonl_dry_run_cli_emits_progress_and_terminal(tmp_path, capsys):
     assert lines[0]["status"] == "dry_run"
     assert lines[1]["kind"] == "da005_vmware_stepwise_terminal_v1"
     assert lines[1]["status"] == "dry_run"
-    assert lines[1]["result"]["traffic"]["network_attempts"] == 0
+    assert lines[1]["result"]["network_attempts"] == 0
+    assert "traffic" not in lines[1]["result"]
+    assert "scope" not in lines[1]["result"]
+    assert "192.168." not in json.dumps(lines[1])
+    assert str(options["output_dir"]) not in json.dumps(lines[1])
 
 
 def test_progress_sink_must_be_callable(tmp_path):
