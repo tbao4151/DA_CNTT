@@ -15,7 +15,9 @@ SOURCE=/opt/zeek/logs/current/conn.log
 DEST_DIR=/home/da005/da005-private-logs
 MAX_BYTES=15728640
 MAX_SNAPSHOTS=100
-LOCK=/run/lock/da005-zeek-export.lock
+# /run is root-owned; /run/lock may be writable by unprivileged users.
+# Never redirect root output into a path an SSH user can precreate.
+LOCK=/run/da005-zeek-export.lock
 
 # Serialize concurrent sessions and ensure the static account-specific folder
 # is exactly the operator-owned directory, not an arbitrary user-selected path.
