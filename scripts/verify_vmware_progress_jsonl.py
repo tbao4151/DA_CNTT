@@ -203,7 +203,7 @@ def _read_private(path: Path, expected_sha256: str) -> bytes:
             raise ValueError("Expected regular evidence file")
         data = stream.read(MAX_BYTES + 1)
     if not data or len(data) > MAX_BYTES or hashlib.sha256(data).hexdigest() != expected_sha256:
-        raise ValueError("Missing, oversized or altered progress file")
+        raise ValueError("Missing, oversized, SHA-256 mismatched or altered progress file")
     if not data.endswith(b"\n") or data.startswith(b"\xef\xbb\xbf"):
         raise ValueError("Incomplete final line or UTF-8 BOM")
     return data
