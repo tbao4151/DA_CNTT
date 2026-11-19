@@ -29,6 +29,12 @@ The viewer never opens raw PCAP, conn.log or private model files. Every event mu
 
 This screen verifies JSON structure, NOT VM Host-only isolation, Zeek capture provenance, packet-to-flow causality, model accuracy, verified attacks, precision/recall/F1, SOC live alerts, or complete autonomous dual-AI One-Click. Maintain the original evidence privately and separately use scripts/verify_vmware_snapshot_bundle.py to cross-check the Zeek capture receipts and model research reports.
 
+## Bảng thông số tiến độ phần mềm
+
+Trang VMware có một thanh tiến độ 0–6 giai đoạn, chỉ tính các giai đoạn đã có kết quả từ JSONL (completed, skipped, dry_run). Bốn thông số tổng hợp được suy ra duy nhất từ bản ghi đã qua bộ kiểm tra cấu trúc: lượt thử Red lành tính, flow Zeek trong snapshot, ứng viên nghiên cứu Blue và số UID khớp ứng viên ở bước audit.
+
+Số liệu chưa có sự kiện được thể hiện bằng dấu “—”; Blue bị bỏ qua được ghi “Không chạy” thay vì đánh đồng với 0 ca phát hiện. Khi một tệp JSONL bị từ chối, bảng số liệu và thanh tiến độ được xóa theo sự kiện, không giữ giá trị của phiên cũ. Đây KHÔNG phải số vụ tấn công, xác nhận dương tính, mô hình detection live, độ trễ cảnh báo hay SOC thật. Việc cập nhật theo tệp đòi quyền File System Access trên localhost và không tự chạy máy ảo.
+
 ## CI
 
 The new workflow .github/workflows/vmware-viewer-browser.yml runs typecheck, lint, production build, and real Chromium smoke using synthetic local JSONL. It checks stage changes, forged provenance rejection, partially written lines, and absence of POST/PUT file uploads. Tests are network-free except serving the local frontend.
