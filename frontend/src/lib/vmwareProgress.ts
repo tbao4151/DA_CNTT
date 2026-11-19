@@ -72,7 +72,7 @@ function eventFrom(value: unknown, expectedSeq: number): VMwareStageEvent {
     item.mode !== "operator_assisted_benign_hostonly_experiment" ||
     item.stage_evidence !== "program_execution_only_not_independently_verified" ||
     typeof item.observed_at_utc !== "string" ||
-    !/(Z|\+00:00)$/.test(item.observed_at_utc) ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|\+00:00)$/.test(item.observed_at_utc) ||
     Number.isNaN(Date.parse(item.observed_at_utc)) ||
     typeof item.stage !== "string" ||
     !STAGES.includes(item.stage as Stage) ||
@@ -234,6 +234,12 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
       continue;
     }
     const event = eventFrom(record, events.length + 1);
+    if (events.length > 0) {
+      const previousTime = Date.parse(events[events.length - 1].observed_at_utc);
+      if (Date.parse(event.observed_at_utc) < previousTime) {
+        throw new Error("Thời gian UTC của sự kiện đi ngược, từ chối phiên JSONL.");
+      }
+    }
     if (events.length === 0 && event.stage === "preflight" && event.status === "dry_run") {
       dryRunSeen = true;
     } else {
