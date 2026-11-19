@@ -42,7 +42,38 @@ def test_probe_stop_between_attempts_blocks_later_sockets(monkeypatch, tmp_path)
                      operator_confirmed_hostonly=True,
                      stop_requested=lambda: len(calls) >= 1)
     assert len(calls) == 1
-    assert list(tmp_path.iterdir()) == []
+    receipts = sorted(tmp_path.glob("da005_benign_*.json"))
+    assert len(receipts) == 1
+    receipt = json.loads(receipts[0].read_text(encoding="utf-8"))
+    assert receipt["mode"] == "BENIGN_LAB_ABORTED"
+    assert receipt["completion_status"] == "operator_stopped_before_next_probe"
+    assert receipt["probe_sequence_completed"] is False
+    assert receipt["network_attempts"] == len(receipt["events"]) == 1
+    assert receipt["planned_attempts"] == 4
+    assert receipt["ended_at_utc"] is not None
+    assert receipt["network_capture_verified"] is False
+    assert receipt["attack_executed"] is False
+    assert receipt["ai_detection_performed"] is False
+    assert receipt["model_metrics_computed"] is False
+    assert "private_receipt_filename" not in receipt
+
+
+def test_stop_receipt_does_not_override_existing_capture(monkeypatch, tmp_path):
+    first = tmp_path / "da005_benign_20261119T050000Z_deadbeefabcd.json"
+    first.write_text("prior private evidence\n", encoding="utf-8")
+    seen = []
+    monkeypatch.setattr(stimulus, "send_benign_probe", lambda **kw: (
+        seen.append(kw) or {"socket_operation_success": False}
+    ))
+    monkeypatch.setattr(stimulus.time, "sleep", lambda _seconds: None)
+    with pytest.raises(stimulus.OperatorStopRequested):
+        stimulus.run(**BASE, count=2, execute=True, output_dir=tmp_path,
+                     operator_confirmed_hostonly=True,
+                     stop_requested=lambda: len(seen) > 0)
+    assert first.read_text(encoding="utf-8") == "prior private evidence\n"
+    new = [file for file in tmp_path.glob("da005_benign_*.json") if file != first]
+    assert len(new) == 1
+    assert json.loads(new[0].read_text(encoding="utf-8"))["network_attempts"] == 1
 
 
 def test_noncallable_stop_checker_is_refused_before_packet(monkeypatch, tmp_path):
