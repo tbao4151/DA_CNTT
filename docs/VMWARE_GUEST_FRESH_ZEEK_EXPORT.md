@@ -4,6 +4,8 @@ Operator must review and install the root-owned helper manually on the
 authorized Ubuntu VM. Neither this guide nor the Python script automatically
 changes sudoers, VMware, or Zeek configuration.
 
+The sudoers empty-argument marker (`""`) denies every argument to the helper.
+The root-owned lock resides in /run, not a potentially writable /run/lock.
 The helper accepts no arguments. It reads only
 /opt/zeek/logs/current/conn.log (max 15 MiB), stores a temporary copy under
 root-private /run, then drops privileges to write a new file under
@@ -35,7 +37,7 @@ cat /home/da005/da005-export-zeek-snapshot.stage
 sudo install -o root -g root -m 0755 /home/da005/da005-export-zeek-snapshot.stage /usr/local/sbin/da005-export-zeek-snapshot
 sudo bash -n /usr/local/sbin/da005-export-zeek-snapshot
 sudo stat -c '%U:%G %a %n' /usr/local/sbin/da005-export-zeek-snapshot
-printf '%s\n' 'da005 ALL=(root) NOPASSWD: /usr/local/sbin/da005-export-zeek-snapshot' | sudo tee /etc/sudoers.d/da005-zeek-export >/dev/null
+printf '%s\n' 'da005 ALL=(root) NOPASSWD: /usr/local/sbin/da005-export-zeek-snapshot ""' | sudo tee /etc/sudoers.d/da005-zeek-export >/dev/null
 sudo chown root:root /etc/sudoers.d/da005-zeek-export
 sudo chmod 0440 /etc/sudoers.d/da005-zeek-export
 sudo visudo -cf /etc/sudoers.d/da005-zeek-export
