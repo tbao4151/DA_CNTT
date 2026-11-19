@@ -71,6 +71,18 @@ $profileSha = (Get-FileHash 'E:\DA005_Private\captures\operator-profile.json' -A
 py -3.12 scripts/run_vmware_session_profile.py --config-file 'E:\DA005_Private\captures\operator-profile.json' --expected-config-sha256 $profileSha --validate-only --host-snapshot $hostPath --expected-host-sha256 $hostSha --host-adapter $adapter
 ~~~
 
+**Windows legacy IPv6 DNS placeholders (VMnet2):** Windows may report exactly
+`fec0:0:0:ffff::1`, `fec0:0:0:ffff::2`, and
+`fec0:0:0:ffff::3` as historical site-local DNS fallback addresses.
+The read-only host preflight recognizes only this exact three-address set
+(not subsets, duplicates, additional DNS servers, or default IPv6 routes)
+and reports `host_ipv6_legacy_dns_placeholders_observed=true`. Do not
+disable IPv6 or edit adapter DNS solely to force a blank list.
+A placeholder exception is **not** evidence of unreachable DNS services,
+safe physical isolation, or permission to run experiments; preserve and
+independently inspect the original immutable host snapshot and actual VMware
+configuration. Any effective IPv6 DNS or default route continues to fail closed.
+
 The output includes \`host_snapshot_pinned_and_profile_bound=true\` only if the **independently hashed** v2 snapshot has the exact adapter name, active and unique host IPv4, matching CIDR/prefix and source IP from the operator profile, no adapter default routes or DNS, and no unsafe IPv6. A mismatch fails before writing private progress files. For a research two-module run also include \`--require-blue-research\`.
 
 After **separate** manual authorization and inspection of all VMware/guest NICs, routes, IPv6, firewall/forwarding, SSH host key, Zeek capture and model, repeat the same \`--host-snapshot\`, \`--expected-host-sha256\`, \`--host-adapter\` arguments on the eventual Step 4 invocation **with** \`--execute --operator-confirmed-hostonly\`. The check is offline metadata consistency, not proof that the snapshot is current, that VMware truly isolates the VM or that the network experiment is authorized.
