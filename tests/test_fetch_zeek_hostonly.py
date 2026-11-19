@@ -105,3 +105,37 @@ def test_reject_unknown_remote_path_without_running_scp(monkeypatch, tmp_path):
         mod.fetch(host="192.168.77.20", cidr="192.168.77.0/24",
                   username="ubuntu", known_hosts=known, output_dir=out,
                   remote_path="/etc/shadow")
+
+
+@pytest.mark.parametrize("host,cidr", [
+    ("127.0.0.2", "127.0.0.0/24"),
+    ("169.254.10.5", "169.254.10.0/24"),
+    ("100.64.1.3", "100.64.1.0/24"),
+    ("192.0.2.10", "192.0.2.0/24"),
+])
+def test_reject_non_rfc1918_special_ranges(host, cidr):
+    with pytest.raises(ValueError):
+        mod.validate_guest(host, cidr)
+
+
+def test_failed_receipt_write_rolls_back_published_log(monkeypatch, tmp_path):
+    known = tmp_path / "known_hosts"
+    known.write_text("192.168.77.20 ssh-ed25519 TEST_ONLY_KEY\\n", encoding="utf-8")
+    out = tmp_path / "evidence"
+    out.mkdir()
+    monkeypatch.setattr(
+        mod.subprocess, "run",
+        lambda argv, **kwargs: Path(argv[-1]).write_bytes(sample_log()),
+    )
+    original_dump = mod.json.dump
+
+    def fail_dump(*args, **kwargs):
+        args[1].write('{"incomplete":')
+        raise OSError("simulated disk failure")
+
+    monkeypatch.setattr(mod.json, "dump", fail_dump)
+    with pytest.raises(OSError, match="simulated disk failure"):
+        mod.fetch(host="192.168.77.20", cidr="192.168.77.0/24",
+                  username="ubuntu", known_hosts=known, output_dir=out)
+    assert not list(out.glob("zeek_conn_*"))
+    assert not list(out.glob(".da005-fetch-*"))
