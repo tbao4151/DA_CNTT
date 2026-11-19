@@ -36,6 +36,10 @@ REQUIRED = frozenset({
 })
 
 REQUIRED_V2 = REQUIRED | {"red_policy"}
+# v3 binds the exact operator-owned SSH identity path and pre-exported Zeek
+# snapshot filename into the original independently SHA-256-pinned profile.
+# It does not run a guest-side privileged copy or promise live capture.
+REQUIRED_V3 = REQUIRED | {"ssh_identity_file", "remote_zeek_path"}
 RED_POLICY_KEYS = frozenset({"strategy", "seed", "feedback", "expected_scenario_id"})
 MAX_OPERATOR_FEEDBACK = 128
 
@@ -89,7 +93,8 @@ def load_config(config_file: Path, expected_sha256: str) -> dict[str, object]:
     if not isinstance(obj, dict) or type(obj.get("version")) is not int:
         raise ValueError("Operator profile must declare an integer version")
     version = obj["version"]
-    if version not in (1, 2) or set(obj) != (REQUIRED if version == 1 else REQUIRED_V2):
+    schemas = {1: REQUIRED, 2: REQUIRED_V2, 3: REQUIRED_V3}
+    if version not in schemas or set(obj) != schemas[version]:
         raise ValueError("Operator profile contains unsupported version or properties")
     for field in ("source_ip", "target_ip", "cidr"):
         if not isinstance(obj[field], str):
@@ -130,6 +135,16 @@ def load_config(config_file: Path, expected_sha256: str) -> dict[str, object]:
             raise ValueError("Blue research model may not be in Git")
         if not isinstance(model_pin, str) or PIN.fullmatch(model_pin) is None:
             raise ValueError("Expected lowercase SHA-256 for private Blue model")
+    if version == 3:
+        identity = _private_string_path(
+            obj["ssh_identity_file"], purpose="operator SSH identity",
+        )
+        resolved_key = stepwise.collector._private_path(identity, must_be_file=True)
+        if not 0 < resolved_key.stat().st_size <= stepwise.collector.MAX_SSH_IDENTITY_BYTES:
+            raise ValueError("SSH private identity must be an existing bounded file")
+        if resolved_key == known_resolved:
+            raise ValueError("SSH identity cannot be the known_hosts file")
+        stepwise.collector.validate_remote_path(obj["remote_zeek_path"], obj["username"])
     if version == 2:
         # The offline planner cannot expand the existing fixed benign scenario
         # catalog. The operator must independently approve the exact decision
@@ -291,6 +306,8 @@ def validate_operator_profile(
         "blue_model_pinned_and_schema_verified": model_ready,
         "blue_model_required": require_blue_research,
         "host_snapshot_pinned_and_profile_bound": host_ready,
+        "operator_owned_ssh_snapshot_configured": profile["version"] == 3,
+        "fresh_post_probe_zeek_snapshot_verified": False,
         "network_activity_performed": False,
         "vmware_isolation_verified": False,
         "operational_ai_detection_verified": False,
@@ -369,6 +386,11 @@ def run_profile(
             "--attempts", str(profile["attempts"]),
             "--settle-s", str(profile["settle_s"]),
         ]
+        if profile["version"] == 3:
+            args += [
+                "--identity-file", profile["ssh_identity_file"],
+                "--remote-path", profile["remote_zeek_path"],
+            ]
         if profile["model_path"] is not None:
             args += ["--model", profile["model_path"],
                      "--expected-model-sha256", profile["expected_model_sha256"]]
