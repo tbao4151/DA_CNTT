@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from blue_team_ai.lab_scope import inspect_zeek_lab_scope
 from blue_team_ai.zeek import MAX_LOG_BYTES, parse_zeek_conn_log
+from fetch_zeek_hostonly import REMOTE_PATHS, validate_guest
 
 MAX_JSON_BYTES = 16 * 1024 * 1024
 _RECEIPT = re.compile(r"zeek_conn_[0-9]{8}T[0-9]{6}Z_[0-9a-f]{12}\.receipt\.json\Z")
@@ -132,9 +133,10 @@ def verify_bundle(
     receipt = _json(receipt_raw)
     base = receipt_path.name[:-len(".receipt.json")]
     log_name = base + ".log"
-    if (receipt.get("version") != 1
+    if (type(receipt.get("version")) is not int or receipt["version"] != 1
             or receipt.get("capture_kind") != "read_only_vmware_scp_snapshot_unverified"
             or receipt.get("local_log_filename") != log_name
+            or receipt.get("remote_path") not in REMOTE_PATHS
             or not _digest(receipt.get("log_sha256"))
             or receipt.get("scope_screen_passed") is not True):
         raise ValueError("Invalid bounded SCP receipt contract")
@@ -148,6 +150,9 @@ def verify_bundle(
     cidr = receipt.get("declared_cidr")
     if not isinstance(cidr, str):
         raise ValueError("Missing declared lab CIDR")
+    host, canonical_cidr = validate_guest(receipt.get("remote_host"), cidr)
+    if receipt["remote_host"] != host or receipt["declared_cidr"] != canonical_cidr:
+        raise ValueError("Snapshot receipt has invalid pinned guest endpoint")
     # Re-run strict Zeek parsing and subnet checks on the original pinned bytes.
     scope = inspect_zeek_lab_scope(raw, [cidr])
     if (type(receipt.get("flow_count")) is not int
@@ -164,7 +169,7 @@ def verify_bundle(
         report_raw = _bytes(research_report_path, MAX_JSON_BYTES)
         report_sha = _require_digest(report_raw, expected_research_sha256)
         report = _json(report_raw)
-        if (report.get("report_version") != 1
+        if (type(report.get("report_version")) is not int or report["report_version"] != 1
                 or report.get("mode") != "offline_new_zeek_research_inference_only"
                 or report.get("origin") != "offline_zeek_log"
                 or report.get("source_sha256") != log_sha
