@@ -67,6 +67,51 @@ function utcChronologyKey(timestamp: string): string {
   return whole + "." + fraction.padEnd(6, "0");
 }
 
+// JSON.parse silently keeps the final occurrence of a repeated property.
+// Scan the validated JSON source *before* trusting that normalized object.
+// Keep a separate key set per object, including nested counts and result.
+// Strings are consumed as whole tokens so embedded quotes/braces cannot
+// masquerade as object syntax. Escaped key spellings are refused as well.
+function rejectAmbiguousJsonKeys(source: string): void {
+  type Scope = { kind: "object"; keys: Set<string> } | { kind: "array" };
+  const scopes: Scope[] = [];
+  for (let i = 0; i < source.length; i += 1) {
+    const char = source[i];
+    if (char === '"') {
+      const start = ++i;
+      while (i < source.length) {
+        if (source[i] === "\\") {
+          i += 2;
+          continue;
+        }
+        if (source[i] === '"') break;
+        i += 1;
+      }
+      let next = i + 1;
+      while (next < source.length && /\s/.test(source[next])) next += 1;
+      if (source[next] !== ":") continue;
+      const scope = scopes[scopes.length - 1];
+      if (!scope || scope.kind !== "object") {
+        throw new Error("Khóa JSONL không thuộc đối tượng hợp lệ.");
+      }
+      const key = source.slice(start, i);
+      if (key.includes("\\")) {
+        throw new Error("Từ chối tên khóa JSONL dùng ký tự escape.");
+      }
+      if (scope.keys.has(key)) {
+        throw new Error("Từ chối khóa JSONL trùng lặp, kể cả trong đối tượng lồng nhau.");
+      }
+      scope.keys.add(key);
+    } else if (char === "{") {
+      scopes.push({ kind: "object", keys: new Set<string>() });
+    } else if (char === "[") {
+      scopes.push({ kind: "array" });
+    } else if (char === "}" || char === "]") {
+      scopes.pop();
+    }
+  }
+}
+
 function eventFrom(value: unknown, expectedSeq: number): VMwareStageEvent {
   const item = object(value);
   keysMatch(item, [
@@ -233,6 +278,7 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
     } catch {
       throw new Error("Tệp JSONL có dòng không phải JSON hoàn chỉnh.");
     }
+    rejectAmbiguousJsonKeys(line);
     const record = object(decoded);
     if (terminal !== null) throw new Error("Tệp có sự kiện sau dòng kết thúc.");
     if (record.kind === "da005_vmware_stepwise_terminal_v1") {

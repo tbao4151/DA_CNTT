@@ -161,6 +161,31 @@ try {
   await page.getByRole("alert").filter({ hasText: "không khớp bộ đếm giai đoạn" }).waitFor();
   assert.match(await log.innerText(), /0 sự kiện/);
 
+  // JSON.parse normally silently accepts repeated keys (last-key-wins).
+  // Reject top-level, nested and escaped source keys before trusting a trace.
+  const originalLines = completed.toString("utf8").split("\n").filter(Boolean);
+  const duplicateTop = [...originalLines];
+  duplicateTop[0] = duplicateTop[0].replace("{", '{"seq":1,');
+  await open("duplicate-top.jsonl", Buffer.from(duplicateTop.join("\n") + "\n"));
+  await page.getByRole("alert").filter({ hasText: "trùng lặp" }).waitFor();
+  await log.getByText(/0 sự kiện/).waitFor();
+
+  const duplicateNested = [...originalLines];
+  duplicateNested[2] = duplicateNested[2].replace(
+    /"attempted_probes"\s*:/, '"attempted_probes":2,"attempted_probes":'
+  );
+  assert.notEqual(duplicateNested[2], originalLines[2], "Test must target a nested counts key");
+  await open("duplicate-nested.jsonl", Buffer.from(duplicateNested.join("\n") + "\n"));
+  await page.getByRole("alert").filter({ hasText: "trùng lặp" }).waitFor();
+  await log.getByText(/0 sự kiện/).waitFor();
+
+  const escapedKey = [...originalLines];
+  escapedKey[0] = escapedKey[0].replace('"kind"', String.raw`"ki\u006ed"`);
+  assert.notEqual(escapedKey[0], originalLines[0], "Test must include an escaped source key");
+  await open("escaped-key.jsonl", Buffer.from(escapedKey.join("\n") + "\n"));
+  await page.getByRole("alert").filter({ hasText: "escape" }).waitFor();
+  await log.getByText(/0 sự kiện/).waitFor();
+
   // The strict timeline rejects records whose stage sequence is valid
   // but whose timestamps move backwards. No live VM clock is implied.
   const reverseTime = completed.toString("utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
