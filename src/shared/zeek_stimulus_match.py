@@ -58,7 +58,7 @@ def screen_candidate_zeek_matches(
     if hashlib.sha256(zeek_raw).hexdigest() != expected_log_sha256:
         raise ValueError("Zeek capture source bytes do not match pinned SHA-256")
     scenario = traffic_receipt.get("scenario_id")
-    if scenario not in _PORTS:
+    if not isinstance(scenario, str) or scenario not in _PORTS:
         raise ValueError("Unknown fixed benign scenario")
     proto, port = _PORTS[scenario]
     scope = traffic_receipt.get("scope")
@@ -85,6 +85,7 @@ def screen_candidate_zeek_matches(
     attempts = traffic_receipt.get("events")
     if (
         type(planned) is not int or not 1 <= planned <= 4
+        or type(traffic_receipt.get("network_attempts")) is not int
         or traffic_receipt.get("network_attempts") != planned
         or not isinstance(attempts, list) or len(attempts) != planned
     ):
