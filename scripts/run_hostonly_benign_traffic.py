@@ -131,6 +131,26 @@ def send_benign_probe(*, scenario_id: str, source_ip: str, target_ip: str,
     return result
 
 
+def _write_private_receipt(evidence_dir: Path, report: dict[str, object]) -> str:
+    """Exclusively archive honest original attempts; never overwrite evidence.
+
+    Called only for completed benign runs or partial runs with at least one
+    returned socket-attempt event. A cancellation receipt is NOT a successful
+    capture or an AI detection claim.
+    """
+    receipt = evidence_dir / (
+        "da005_benign_"
+        + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        + "_" + uuid.uuid4().hex[:12] + ".json"
+    )
+    with receipt.open("x", encoding="utf-8") as stream:
+        json.dump(report, stream, indent=2, ensure_ascii=False, allow_nan=False)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    return receipt.name
+
+
 def run(
     *, source_ip: str, target_ip: str, cidr: str,
     scenario_id: str, count: int = 1, delay_ms: int = 500,
@@ -183,10 +203,19 @@ def run(
     }
     if not execute:
         return report
+    assert evidence_dir is not None
     for index in range(count):
         # Cooperative cancellation is checked before *each* new socket.
         # It cannot interrupt a socket already in flight.
         if stop_requested is not None and stop_requested():
+            if report["network_attempts"]:
+                # The first probe(s) already happened. Preserve these facts
+                # privately, but NEVER publish a successful-session receipt.
+                report["mode"] = "BENIGN_LAB_ABORTED"
+                report["completion_status"] = "operator_stopped_before_next_probe"
+                report["probe_sequence_completed"] = False
+                report["ended_at_utc"] = _now()
+                _write_private_receipt(evidence_dir, report)
             raise OperatorStopRequested("Operator requested stop before network probe")
         event = send_benign_probe(
             scenario_id=scenario_id,
@@ -196,21 +225,22 @@ def run(
         report["events"].append(event)
         report["network_attempts"] = index + 1
         if index + 1 < count:
-            time.sleep(delay_ms / 1000)
+            try:
+                time.sleep(delay_ms / 1000)
+            except KeyboardInterrupt:
+                # The previous socket attempt has returned and is known.
+                # Preserve only those known attempts; an interrupted
+                # in-flight socket cannot be reconstructed by this receipt.
+                report["mode"] = "BENIGN_LAB_ABORTED"
+                report["completion_status"] = "keyboard_interrupt_between_probes"
+                report["probe_sequence_completed"] = False
+                report["ended_at_utc"] = _now()
+                _write_private_receipt(evidence_dir, report)
+                raise
     report["ended_at_utc"] = _now()
-    assert evidence_dir is not None
-    receipt = evidence_dir / (
-        "da005_benign_"
-        + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        + "_" + uuid.uuid4().hex[:12] + ".json"
-    )
-    # Exclusive create; do not overwrite another experiment's evidence.
-    with receipt.open("x", encoding="utf-8") as stream:
-        json.dump(report, stream, indent=2, ensure_ascii=False, allow_nan=False)
-        stream.write("\n")
-        stream.flush()
-        os.fsync(stream.fileno())
-    report["private_receipt_filename"] = receipt.name
+    report["completion_status"] = "completed"
+    report["probe_sequence_completed"] = True
+    report["private_receipt_filename"] = _write_private_receipt(evidence_dir, report)
     return report
 
 

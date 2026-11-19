@@ -1,6 +1,7 @@
 """Cooperative STOP guard acceptance (all network and SSH calls mocked)."""
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -12,6 +13,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "tests"))
 import run_hostonly_benign_traffic as stimulus
 import run_vmware_stepwise as stepwise
+import run_vmware_progress_file as writer
+import verify_vmware_progress_jsonl as verifier
+from shared.zeek_stimulus_match import screen_candidate_zeek_matches
 from test_vmware_stepwise import args, fake_receipt, fake_raw
 
 
@@ -42,7 +46,38 @@ def test_probe_stop_between_attempts_blocks_later_sockets(monkeypatch, tmp_path)
                      operator_confirmed_hostonly=True,
                      stop_requested=lambda: len(calls) >= 1)
     assert len(calls) == 1
-    assert list(tmp_path.iterdir()) == []
+    receipts = sorted(tmp_path.glob("da005_benign_*.json"))
+    assert len(receipts) == 1
+    receipt = json.loads(receipts[0].read_text(encoding="utf-8"))
+    assert receipt["mode"] == "BENIGN_LAB_ABORTED"
+    assert receipt["completion_status"] == "operator_stopped_before_next_probe"
+    assert receipt["probe_sequence_completed"] is False
+    assert receipt["network_attempts"] == len(receipt["events"]) == 1
+    assert receipt["planned_attempts"] == 4
+    assert receipt["ended_at_utc"] is not None
+    assert receipt["network_capture_verified"] is False
+    assert receipt["attack_executed"] is False
+    assert receipt["ai_detection_performed"] is False
+    assert receipt["model_metrics_computed"] is False
+    assert "private_receipt_filename" not in receipt
+
+
+def test_stop_receipt_does_not_override_existing_capture(monkeypatch, tmp_path):
+    first = tmp_path / "da005_benign_20261119T050000Z_deadbeefabcd.json"
+    first.write_text("prior private evidence\n", encoding="utf-8")
+    seen = []
+    monkeypatch.setattr(stimulus, "send_benign_probe", lambda **kw: (
+        seen.append(kw) or {"socket_operation_success": False}
+    ))
+    monkeypatch.setattr(stimulus.time, "sleep", lambda _seconds: None)
+    with pytest.raises(stimulus.OperatorStopRequested):
+        stimulus.run(**BASE, count=2, execute=True, output_dir=tmp_path,
+                     operator_confirmed_hostonly=True,
+                     stop_requested=lambda: len(seen) > 0)
+    assert first.read_text(encoding="utf-8") == "prior private evidence\n"
+    new = [file for file in tmp_path.glob("da005_benign_*.json") if file != first]
+    assert len(new) == 1
+    assert json.loads(new[0].read_text(encoding="utf-8"))["network_attempts"] == 1
 
 
 def test_noncallable_stop_checker_is_refused_before_packet(monkeypatch, tmp_path):
@@ -156,6 +191,115 @@ def test_cli_preexisting_stop_emits_terminal_refusal_not_completion(monkeypatch,
     assert len(lines) == 1 and lines[0]["status"] == "refused"
     assert lines[0]["attack_executed"] is False
     assert lines[0]["soc_alerts_created"] is False
+
+
+
+
+def test_private_writer_stepwise_stop_after_one_probe_preserves_receipt_and_refuses(monkeypatch, tmp_path):
+    """Real Python CLI/writer/auditor, all physical network calls patched."""
+    opts = args(tmp_path)
+    marker = tmp_path / "DA005_STOP.flag"
+    saved = tmp_path / "partial-stop.jsonl"
+    calls = []
+
+    def mock_probe(**kwargs):
+        calls.append(kwargs)
+        marker.write_bytes(b"")
+        return {
+            "scenario_id": kwargs["scenario_id"],
+            "protocol": "tcp", "port": 22,
+            "attempted_at_utc": "2026-11-19T09:00:00+00:00",
+            "socket_operation_success": False,
+            "network_capture_verified": False,
+            "ai_detection_performed": False,
+        }
+
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe", mock_probe)
+    monkeypatch.setattr(stepwise.stimulus.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **_kwargs: pytest.fail("STOP must block SCP"))
+    options = [
+        "--source-ip", opts["source_ip"], "--target-ip", opts["target_ip"],
+        "--cidr", opts["cidr"], "--scenario", opts["scenario_id"],
+        "--user", opts["username"], "--known-hosts", str(opts["known_hosts"]),
+        "--output-dir", str(opts["output_dir"]),
+        "--attempts", "3", "--stop-file", str(marker),
+        "--execute", "--operator-confirmed-hostonly",
+    ]
+    assert writer.run_to_file(jsonl_file=saved, cli_args=options) == 1
+    assert len(calls) == 1
+    records = [json.loads(line) for line in saved.read_text(encoding="utf-8").splitlines()]
+    assert [(r["stage"], r["status"]) for r in records[:-1]] == [
+        ("preflight", "completed"), ("red", "running"),
+    ]
+    assert records[-1]["kind"] == "da005_vmware_stepwise_terminal_v1"
+    assert records[-1]["status"] == "refused"
+    assert all(r.get("status") != "completed" for r in records[1:])
+    sha256 = hashlib.sha256(saved.read_bytes()).hexdigest()
+    audit = verifier.audit(saved, sha256)
+    assert audit["terminal_status"] == "refused"
+    assert audit["stage_events"] == 2
+    assert audit["vmware_isolation_verified"] is False
+    assert "192.168." not in saved.read_text(encoding="utf-8")
+    private_receipts = list(tmp_path.glob("da005_benign_*.json"))
+    assert len(private_receipts) == 1
+    data = json.loads(private_receipts[0].read_text(encoding="utf-8"))
+    assert data["mode"] == "BENIGN_LAB_ABORTED"
+    assert data["probe_sequence_completed"] is False
+    assert data["network_attempts"] == 1
+    assert data["planned_attempts"] == 3
+    assert len(data["events"]) == 1
+    # A partial STOP receipt must NEVER be promoted to the existing
+    # successful-run Zeek UID correlation contract.
+    raw = fake_raw()
+    with pytest.raises(ValueError, match="Not an executed"):
+        screen_candidate_zeek_matches(
+            data, raw, expected_log_sha256=hashlib.sha256(raw).hexdigest()
+        )
+
+
+def test_ctrlc_between_known_probes_archives_partial_without_zeek(monkeypatch, tmp_path):
+    opts = args(tmp_path)
+    jsonl = tmp_path / "ctrlc-interrupted.jsonl"
+    packets = []
+
+    def fake_probe(**kwargs):
+        packets.append(kwargs)
+        return {
+            "scenario_id": "connection_shift", "protocol": "tcp", "port": 22,
+            "attempted_at_utc": "2026-11-19T09:00:00+00:00",
+            "socket_operation_success": False,
+            "network_capture_verified": False,
+            "ai_detection_performed": False,
+        }
+
+    def interrupt(_duration):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(stepwise.stimulus, "send_benign_probe", fake_probe)
+    monkeypatch.setattr(stepwise.stimulus.time, "sleep", interrupt)
+    monkeypatch.setattr(stepwise.collector, "fetch",
+                        lambda **_kwargs: pytest.fail("Ctrl+C must preclude Zeek SCP"))
+    args_cli = [
+        "--source-ip", opts["source_ip"], "--target-ip", opts["target_ip"],
+        "--cidr", opts["cidr"], "--scenario", opts["scenario_id"],
+        "--user", opts["username"], "--known-hosts", str(opts["known_hosts"]),
+        "--output-dir", str(opts["output_dir"]), "--attempts", "3",
+        "--execute", "--operator-confirmed-hostonly",
+    ]
+    assert writer.run_to_file(jsonl_file=jsonl, cli_args=args_cli) == 1
+    assert len(packets) == 1
+    records = [json.loads(line) for line in jsonl.read_text(encoding="utf-8").splitlines()]
+    assert records[-1]["status"] == "refused"
+    assert verifier.audit(jsonl, hashlib.sha256(jsonl.read_bytes()).hexdigest())["terminal_status"] == "refused"
+    receipts = list(tmp_path.glob("da005_benign_*.json"))
+    assert len(receipts) == 1
+    report = json.loads(receipts[0].read_text(encoding="utf-8"))
+    assert report["mode"] == "BENIGN_LAB_ABORTED"
+    assert report["completion_status"] == "keyboard_interrupt_between_probes"
+    assert report["network_attempts"] == 1
+    assert report["probe_sequence_completed"] is False
+    assert report["ai_detection_performed"] is False
 
 
 def test_keyboard_interrupt_emits_refused_terminal_without_traceback(monkeypatch, tmp_path, capsys):
