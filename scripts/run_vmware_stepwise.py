@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +20,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import fetch_zeek_hostonly as collector
 import run_hostonly_benign_traffic as stimulus
 import run_vmware_zeek_research as blue
+from shared.zeek_stimulus_match import screen_candidate_zeek_matches
 
 
 def run_sequence(
@@ -89,6 +92,7 @@ def run_sequence(
         )
         blue_result = None
         log_name = zeek_receipt["local_log_filename"]
+        log_sha = zeek_receipt["log_sha256"]
         flow_count = zeek_receipt["flow_count"]
     else:
         blue_result = blue.run_bridge(
@@ -97,7 +101,24 @@ def run_sequence(
             model_path=model_path, expected_model_sha256=expected_model_sha256,
         )
         log_name = blue_result["log_file"]
+        log_sha = blue_result["log_sha256"]
         flow_count = blue_result["flow_count"]
+    # Verify the locally fetched bytes AGAIN at the session-correlation boundary.
+    # Filename and digest originate from the bounded SCP receipt/bridge.
+    log_path = output_dir.resolve(strict=True) / str(log_name)
+    with log_path.open("rb") as stream:
+        raw = stream.read(collector.MAX_LOG_BYTES + 1)
+    correlation = screen_candidate_zeek_matches(
+        traffic_result, raw, expected_log_sha256=str(log_sha),
+    )
+    correlation_file = log_path.with_suffix(".candidate-links.json")
+    if correlation_file.is_symlink():
+        raise ValueError("Candidate link output symlink rejected")
+    with correlation_file.open("x", encoding="utf-8") as stream:
+        json.dump(correlation, stream, indent=2, ensure_ascii=False, allow_nan=False)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
     return {
         "mode": "STEPWISE_VMWARE_BENIGN_CAPTURE",
         "scope": scope,
@@ -106,6 +127,9 @@ def run_sequence(
         "traffic_attempts": traffic_result["network_attempts"],
         "log_filename": log_name,
         "captured_log_flow_count": flow_count,
+        "candidate_links_file": correlation_file.name,
+        "candidate_matching_attempts": correlation["candidate_match_count"],
+        "unmatched_attempts": correlation["unmatched_probe_count"],
         "research_report_filename": blue_result["report_file"] if blue_result else None,
         "research_candidate_count": blue_result["research_candidate_count"] if blue_result else None,
         "ssh_fetch_performed": True,
