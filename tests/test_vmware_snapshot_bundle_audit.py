@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 from blue_team_ai.lab_scope import inspect_zeek_lab_scope
 from blue_team_ai.zeek import parse_zeek_conn_log
