@@ -33,7 +33,7 @@ REMOTE_PATHS = (
 # original Zeek install paths. Reject shell tokens, traversal and other users.
 _OPERATOR_SNAPSHOT = re.compile(
     r"/home/([a-z_][a-z0-9_-]{0,31})/da005-private-logs/"
-    r"conn-[0-9]{8}T[0-9]{6}\\.log\\Z"
+    r"conn-[0-9]{8}T[0-9]{6}[.]log"
 )
 MAX_SSH_IDENTITY_BYTES = 64 * 1024
 MAX_KNOWN_HOSTS = 1024 * 1024
