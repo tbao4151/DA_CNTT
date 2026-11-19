@@ -10,6 +10,17 @@ import ipaddress
 from collections.abc import Mapping
 
 
+# Windows may surface these three historical site-local DNS fallback addresses
+# even when no reachable IPv6 DNS resolver is configured. Accept ONLY the exact
+# three-entry set; arbitrary IPv6 DNS, subsets, duplicates and routes remain
+# fail-closed. This is a Windows metadata exception, not isolation evidence.
+_LEGACY_WINDOWS_IPV6_DNS_PLACEHOLDERS = frozenset({
+    "fec0:0:0:ffff::1",
+    "fec0:0:0:ffff::2",
+    "fec0:0:0:ffff::3",
+})
+
+
 class LabPreflightError(ValueError):
     """Invalid, incomplete, or unsafe declared lab configuration."""
 
@@ -87,10 +98,21 @@ def assess_host_only_snapshot(
     if snapshot.get("adapter_dns_servers") != []:
         raise LabPreflightError("Lab adapter must not declare DNS servers")
     ipv6_screened = snapshot["schema_version"] == 2
+    legacy_windows_ipv6_dns_placeholders = False
     if ipv6_screened:
-        if (snapshot["adapter_default_routes_ipv6"] != []
-                or snapshot["adapter_dns_servers_ipv6"] != []):
-            raise LabPreflightError("Lab adapter must not have IPv6 default routes or DNS")
+        if snapshot["adapter_default_routes_ipv6"] != []:
+            raise LabPreflightError("Lab adapter must not have IPv6 default routes")
+        dns_addresses = snapshot["adapter_dns_servers_ipv6"]
+        if not isinstance(dns_addresses, list) or not all(
+            isinstance(address, str) for address in dns_addresses
+        ):
+            raise LabPreflightError("Invalid host IPv6 DNS inventory")
+        legacy_windows_ipv6_dns_placeholders = (
+            len(dns_addresses) == 3
+            and set(dns_addresses) == _LEGACY_WINDOWS_IPV6_DNS_PLACEHOLDERS
+        )
+        if dns_addresses and not legacy_windows_ipv6_dns_placeholders:
+            raise LabPreflightError("Lab adapter must not have effective IPv6 DNS servers")
         ipv6_addresses = snapshot["adapter_ipv6"]
         if not isinstance(ipv6_addresses, list) or len(ipv6_addresses) > 8:
             raise LabPreflightError("Invalid bounded host IPv6 inventory")
@@ -119,6 +141,7 @@ def assess_host_only_snapshot(
         "host_ipv6_screened": ipv6_screened,
         "host_non_link_local_ipv6_absent": True if ipv6_screened else None,
         "host_ipv6_default_route_dns_absent": True if ipv6_screened else None,
+        "host_ipv6_legacy_dns_placeholders_observed": legacy_windows_ipv6_dns_placeholders,
         "vmware_virtual_network_editor_verified": False,
         "guest_nics_and_routes_verified": False,
         "physical_host_only_isolation_verified": False,
@@ -126,7 +149,8 @@ def assess_host_only_snapshot(
         "network_activity_performed": False,
         "interpretation": (
             "Host-side IPv4 configuration passed offline checks. "
-            + ("IPv6 addresses/routes/DNS were checked in snapshot v2. "
+            + ("IPv6 addresses/routes/DNS were checked in snapshot v2; only the exact "
+               "Windows legacy DNS placeholder triple is exempted from the DNS refusal. "
                if ipv6_screened else
                "Legacy v1 does NOT record IPv6; collect v2 before lab acceptance. ")
             + "Inspect VMware mode, all host/guest NICs/routes and written "

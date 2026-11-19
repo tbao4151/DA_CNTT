@@ -683,6 +683,29 @@ def test_readonly_profile_check_binds_pinned_host_v2_and_source_ipv4(tmp_path, c
     assert not list(folder.iterdir())
 
 
+def test_readonly_profile_accepts_exact_windows_legacy_ipv6_dns_snapshot(tmp_path, capsys):
+    profile, config = fixture_profile(tmp_path)
+    host = _host_snapshot_v2(tmp_path)
+    item = json.loads(host.read_text(encoding="utf-8"))
+    item["adapter_dns_servers_ipv6"] = [
+        "fec0:0:0:ffff::1", "fec0:0:0:ffff::2", "fec0:0:0:ffff::3",
+    ]
+    host.write_text(json.dumps(item) + "\n", encoding="utf-8")
+    assert launcher.main([
+        "--config-file", str(profile),
+        "--expected-config-sha256", digest(profile),
+        "--validate-only",
+        "--host-snapshot", str(host),
+        "--expected-host-sha256", digest(host),
+        "--host-adapter", "VMware Network Adapter VMnet2",
+    ]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["host_snapshot_pinned_and_profile_bound"] is True
+    assert report["vmware_isolation_verified"] is False
+    assert report["network_activity_performed"] is False
+    assert not list(Path(config["output_dir"]).iterdir())
+
+
 @pytest.mark.parametrize("problem", [
     "wrong_ip", "wrong_digest", "legacy_ipv4_only", "dns", "wrong_adapter",
 ])
