@@ -436,6 +436,66 @@ def test_v2_policy_source_hash_mismatch_or_receipt_collision_blocks_execution(tm
     assert receipt.read_text(encoding="utf-8") == "existing independently saved plan\n"
 
 
+def test_same_evidence_directory_rejects_overlapping_profile_sessions(monkeypatch, tmp_path):
+    """A second SHA-pinned session cannot mix receipts with the first run."""
+    path, config = fixture_profile(tmp_path)
+    folder = Path(config["output_dir"])
+    first = folder / "first.jsonl"
+    second = folder / "second.jsonl"
+    lock = folder / "DA005_ACTIVE_SESSION.lock"
+    calls = []
+
+    def nested_without_network(*, jsonl_file, cli_args):
+        calls.append(jsonl_file.name)
+        assert lock.is_file()
+        with pytest.raises(ValueError, match="session may be active"):
+            launcher.run_profile(
+                config_file=path, expected_sha256=digest(path), jsonl_file=second,
+            )
+        assert not second.exists()
+        return 0
+
+    monkeypatch.setattr(launcher.writer, "run_to_file", nested_without_network)
+    assert launcher.run_profile(
+        config_file=path, expected_sha256=digest(path), jsonl_file=first,
+    ) == 0
+    assert calls == ["first.jsonl"]
+    assert not lock.exists()
+
+
+def test_existing_session_lock_fails_closed_without_touching_evidence(tmp_path):
+    path, config = _profile_v2(tmp_path)
+    folder = Path(config["output_dir"])
+    lock = folder / "DA005_ACTIVE_SESSION.lock"
+    lock.write_text("unverified prior run — do not remove automatically", encoding="utf-8")
+    progress = folder / "must-not-run.jsonl"
+    with pytest.raises(ValueError, match="session may be active"):
+        launcher.run_profile(
+            config_file=path, expected_sha256=digest(path), jsonl_file=progress,
+        )
+    assert not progress.exists()
+    assert not progress.with_name("must-not-run.red-plan.json").exists()
+    assert lock.read_text(encoding="utf-8").startswith("unverified prior run")
+
+
+def test_profile_session_lock_is_cleaned_on_runner_exception(monkeypatch, tmp_path):
+    path, config = fixture_profile(tmp_path)
+    folder = Path(config["output_dir"])
+    lock = folder / "DA005_ACTIVE_SESSION.lock"
+
+    def fail_before_network(*, jsonl_file, cli_args):
+        assert lock.exists()
+        raise OSError("synthetic local writer error")
+
+    monkeypatch.setattr(launcher.writer, "run_to_file", fail_before_network)
+    with pytest.raises(OSError, match="synthetic local writer error"):
+        launcher.run_profile(
+            config_file=path, expected_sha256=digest(path),
+            jsonl_file=folder / "runner-error.jsonl",
+        )
+    assert not lock.exists()
+
+
 def test_v1_profile_has_no_policy_receipt_for_backwards_compatibility(tmp_path):
     path, config = fixture_profile(tmp_path)
     progress = Path(config["output_dir"]) / "old-profile.jsonl"
