@@ -34,7 +34,7 @@ Nếu hệ điều hành chấm dứt tiến trình hoặc người vận hành 
 
 GIỚI HẠN: Đây là dừng HỢP TÁC tại ranh giới các bước, KHÔNG phải kill switch thời gian thực. Không bảo đảm ngắt socket hoặc SCP đang thực hiện. Trong trường hợp khẩn cấp, dừng phiên bằng terminal hoặc cô lập VM theo đúng quy trình.
 
-Có thể nhấn Ctrl+C trên terminal CLI; chương trình cố gắng phát refused khi nhận KeyboardInterrupt. Nếu process bị kill tức thời, dòng terminal có thể không xuất hiện; JSONL lúc đó là DỞ DANG. Không bao giờ sửa bằng chứng để tạo kết quả completed giả.
+Có thể nhấn Ctrl+C trên terminal CLI; chương trình cố gắng phát refused khi nhận KeyboardInterrupt. Nếu Ctrl+C xảy ra TRONG KHOẢNG CHỜ giữa hai lượt kết nối đã có ít nhất một sự kiện trả về, hệ thống còn lưu biên nhận BENIGN_LAB_ABORTED với completion_status = keyboard_interrupt_between_probes. Nếu Ctrl+C xảy ra ngay trong một socket chưa trả về, bộ đếm có thể không phản ánh chính xác lưu lượng đã gửi. Nếu process bị kill tức thời, dòng terminal có thể không xuất hiện; JSONL lúc đó là DỞ DANG. Không bao giờ sửa bằng chứng để tạo kết quả completed giả.
 
 Chỉ sau khi chắc chắn không còn phiên chạy, nhóm mới có thể lưu marker cùng dấu thời gian vào hồ sơ riêng rồi xóa marker có chủ đích trước phiên kế tiếp.
 
