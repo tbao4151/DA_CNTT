@@ -163,3 +163,45 @@ def test_jsonl_dry_run_cli_emits_progress_and_terminal(tmp_path, capsys):
 def test_progress_sink_must_be_callable(tmp_path):
     with pytest.raises(ValueError, match="callable"):
         mod.run_sequence(**args(tmp_path), progress_sink=123)
+
+
+
+def test_cli_completed_terminal_redacts_paths_and_reports_real_attempts(monkeypatch, tmp_path, capsys):
+    """The completed JSONL must carry actual probe count, not a default zero."""
+    opts = args(tmp_path)
+    report = {
+        "mode": "STEPWISE_VMWARE_BENIGN_CAPTURE",
+        "traffic_attempts": 2,
+        "captured_log_flow_count": 4,
+        "research_candidate_count": None,
+        "ssh_fetch_performed": True,
+        "blue_research_scoring_performed": False,
+        "vmware_isolation_verified": False,
+        "attack_executed": False,
+        "operational_detection_verified": False,
+        "automated_soc_alerts": False,
+        "full_one_click_dual_ai": False,
+        "log_filename": "private_conn.log",
+        "candidate_links_file": "secret.candidate-links.json",
+        "scope": {"source_ip": "192.168.77.1", "target_ip": "192.168.77.20"},
+    }
+    monkeypatch.setattr(mod, "run_sequence", lambda **_kw: report)
+    argv = [
+        "--source-ip", opts["source_ip"], "--target-ip", opts["target_ip"],
+        "--cidr", opts["cidr"], "--scenario", opts["scenario_id"],
+        "--user", opts["username"], "--known-hosts", str(opts["known_hosts"]),
+        "--output-dir", str(opts["output_dir"]), "--progress-jsonl",
+        "--execute", "--operator-confirmed-hostonly",
+    ]
+    assert mod.main(argv) == 0
+    printed = capsys.readouterr().out
+    payload = json.loads(printed)
+    assert payload["status"] == "completed"
+    assert payload["result"]["mode"] == "STEPWISE_VMWARE_BENIGN_CAPTURE"
+    assert payload["result"]["network_attempts"] == 2
+    assert payload["result"]["captured_log_flow_count"] == 4
+    assert payload["result"]["ssh_fetch_performed"] is True
+    assert "192.168." not in printed
+    assert "private_conn.log" not in printed
+    assert "secret.candidate-links.json" not in printed
+    assert str(opts["output_dir"]) not in printed
