@@ -30,6 +30,8 @@ scenario_id can only be connection_shift (TCP connect/close without SSH authenti
 
 Blue research is optional: model_path and expected_model_sha256 must both be set to an already existing, independently hashed, privately stored compatible Zeek research model. Leaving them null makes the Blue stage SKIPPED, not zero detections. Research candidates are not verified attacks or SOC alerts. The offline UCB1 planner is not wired into execution; operator chooses the fixed benign scenario.
 
+**Optional UCB1 bridge:** Profile v2 retains all v1 fields but adds a strictly validated `red_policy` object. Its deterministic proposal must exactly match the operator-approved `scenario_id` before the existing fixed benign runner can proceed; a private `.red-plan.json` receipt records this non-executable planning decision. See `docs/VMWARE_PINNED_RED_POLICY.md`. Profile v1 stays unchanged. No automatic exploitation or confirmed Blue feedback is implied.
+
 ## Step 2 — Pin the profile independently
 
 After finalizing the JSON and before invoking the launcher, record the hash separately in your private notebook:
