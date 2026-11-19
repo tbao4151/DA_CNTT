@@ -178,3 +178,46 @@ def test_reject_receipt_path_traversal(monkeypatch, tmp_path):
     })
     with pytest.raises(RuntimeError, match="Invalid capture file name"):
         bridge.run_bridge(**kwargs(evidence, model, known))
+
+
+def test_actual_research_scorer_on_mocked_transport(monkeypatch, tmp_path):
+    """Only the SSH transport is mocked; model validation and scoring are real."""
+    from blue_team_ai.model_artifact import build_zeek_research_artifact
+    from test_zeek_offline_baseline import _dataset
+    from test_zeek_new_log_inference import _log
+
+    evidence, model_file, known = setup_paths(tmp_path)
+    artifact = build_zeek_research_artifact(
+        _dataset(), input_manifest_sha256="a" * 64
+    )
+    model_bytes = json.dumps(artifact, allow_nan=False).encode("utf-8")
+    model_file.write_bytes(model_bytes)
+    model_sha = hashlib.sha256(model_bytes).hexdigest()
+
+    raw = _log()
+    log_name = "zeek_conn_20261119T040000Z_abcdef123456.log"
+
+    def mock_ssh_fetch(**params):
+        assert params["host"] == "192.168.56.20"
+        (evidence / log_name).write_bytes(raw)
+        return {
+            "local_log_filename": log_name,
+            "log_sha256": hashlib.sha256(raw).hexdigest(),
+            "flow_count": 2,
+        }
+
+    monkeypatch.setattr(bridge, "fetch", mock_ssh_fetch)
+    summary = bridge.run_bridge(
+        host="192.168.56.20", cidr="192.168.56.0/24",
+        username="ubuntu", known_hosts=known, output_dir=evidence,
+        model_path=model_file, expected_model_sha256=model_sha,
+    )
+    assert summary["flow_count"] == 2
+    assert summary["model_sha256"] == model_sha
+    report = json.loads((evidence / log_name.replace(".log", ".research.json")).read_text())
+    assert len(report["predictions"]) == 2
+    assert report["model_sha256"] == model_sha
+    assert report["source_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert report["labels_used"] is False
+    assert report["automated_alerts"] is False
+    assert report["operational_attack_detection_verified"] is False
