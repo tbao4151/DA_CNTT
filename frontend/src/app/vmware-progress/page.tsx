@@ -98,13 +98,14 @@ function LocalProgressView() {
   };
 
   const startWatch = async () => {
-    const picker = (window as BrowserWithFilePicker).showOpenFilePicker;
+    const pickerHost = window as BrowserWithFilePicker;
+    const picker = pickerHost.showOpenFilePicker;
     if (!picker) {
       setError("Trình duyệt hiện tại không hỗ trợ theo dõi tệp cục bộ. Hãy dùng Chrome/Edge qua localhost hoặc chọn tệp thủ công.");
       return;
     }
     try {
-      const files = await picker({
+      const files = await picker.call(pickerHost, {
         multiple: false,
         types: [{ description: "DA005 JSONL", accept: { "application/x-ndjson": [".jsonl"] } }],
       });
