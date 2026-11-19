@@ -62,8 +62,31 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+const VALID_STAGES: readonly Stage[] = ["red", "zeek", "blue", "soc", "system"];
+
+function isSyntheticEvent(value: unknown): value is LiveEvent {
+  if (typeof value !== "object" || value === null) return false;
+  const event = value as Partial<LiveEvent>;
+  return (
+    event.source === "synthetic_replay" &&
+    Number.isSafeInteger(event.seq) && Number(event.seq) >= 0 &&
+    typeof event.time === "string" && !Number.isNaN(Date.parse(event.time)) &&
+    typeof event.stage === "string" && VALID_STAGES.includes(event.stage as Stage) &&
+    typeof event.message === "string" &&
+    typeof event.details === "object" && event.details !== null &&
+    !Array.isArray(event.details)
+  );
+}
+
 function assertSyntheticSession(value: LiveSession): LiveSession {
+  // JSON is untrusted at runtime even when apiRequest has a TypeScript type.
+  // Validate the envelope before accessing nested provenance fields.
   if (
+    typeof value !== "object" || value === null ||
+    typeof value.session_id !== "string" || !value.session_id ||
+    !["running", "completed", "stopped", "failed"].includes(value.status) ||
+    typeof value.provenance !== "object" || value.provenance === null ||
+    Array.isArray(value.provenance) ||
     value.mode !== "synthetic_replay" ||
     value.provenance.source !== "hardcoded_synthetic_zeek_fixture" ||
     value.provenance.network_execution !== false ||
@@ -72,9 +95,36 @@ function assertSyntheticSession(value: LiveSession): LiveSession {
     value.provenance.verified_attack_events !== 0 ||
     value.provenance.verified_ai_alerts !== 0 ||
     !Array.isArray(value.events) ||
-    value.events.some((event) => event.source !== "synthetic_replay")
+    value.events.some((event) => !isSyntheticEvent(event)) ||
+    !Number.isSafeInteger(value.event_count) || value.event_count < 0 ||
+    !Number.isSafeInteger(value.rounds) || value.rounds < 1 ||
+    !Number.isSafeInteger(value.current_round) || value.current_round < 0
   ) {
     throw new Error("Phản hồi session không khớp hợp đồng SYNTHETIC REPLAY. Từ chối hiển thị để tránh nhầm với dữ liệu live.");
+  }
+  return value;
+}
+
+type SyntheticReport = LiveSession & {
+  report_kind: "synthetic_replay_telemetry_only";
+  verified_detection_metrics: null;
+  real_network_flows: 0;
+  verified_ai_alerts: 0;
+  limitations: string[];
+};
+
+function assertSyntheticReport(value: SyntheticReport, sessionId: string): SyntheticReport {
+  assertSyntheticSession(value);
+  if (
+    value.session_id !== sessionId ||
+    value.report_kind !== "synthetic_replay_telemetry_only" ||
+    value.verified_detection_metrics !== null ||
+    value.real_network_flows !== 0 ||
+    value.verified_ai_alerts !== 0 ||
+    !Array.isArray(value.limitations) ||
+    !value.limitations.every((item) => typeof item === "string")
+  ) {
+    throw new Error("Báo cáo không khớp hợp đồng SYNTHETIC REPLAY. Đã chặn tải xuống.");
   }
   return value;
 }
@@ -114,7 +164,7 @@ export default function AutomatedLabPage() {
       let event: LiveEvent;
       try {
         event = JSON.parse((message as MessageEvent).data) as LiveEvent;
-        if (event.source !== "synthetic_replay") throw new Error("Sai nguồn dữ liệu");
+        if (!isSyntheticEvent(event)) throw new Error("Sự kiện SSE không hợp lệ");
       } catch {
         provenanceRejected = true;
         source.close();
@@ -205,9 +255,10 @@ export default function AutomatedLabPage() {
     setBusy(true);
     setError(null);
     try {
-      const report = await apiRequest<Record<string, unknown>>(
+      const response = await apiRequest<SyntheticReport>(
         "/live-sessions/" + encodeURIComponent(session.session_id) + "/report"
       );
+      const report = assertSyntheticReport(response, session.session_id);
       const blob = new Blob([JSON.stringify(report, null, 2)], {
         type: "application/json",
       });
