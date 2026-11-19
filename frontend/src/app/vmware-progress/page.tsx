@@ -8,6 +8,13 @@ import {
   VMWARE_STAGE_LABELS,
   type VMwareProgressSnapshot,
 } from "@/lib/vmwareProgress";
+import {
+  expectedRedPlanFilename,
+  MAX_VMWARE_RED_PLAN_BYTES,
+  parseVmwareRedPlan,
+  RED_SCENARIO_LABELS,
+  type VMwareRedPlan,
+} from "@/lib/vmwareRedPlan";
 
 type LocalFileHandle = {
   getFile(): Promise<File>;
@@ -46,6 +53,9 @@ const COUNT_LABELS: Record<string, string> = {
 
 function LocalProgressView() {
   const [snapshot, setSnapshot] = useState<VMwareProgressSnapshot | null>(null);
+  const [redPlan, setRedPlan] = useState<VMwareRedPlan | null>(null);
+  const [redPlanError, setRedPlanError] = useState("");
+  const [redPlanFilename, setRedPlanFilename] = useState("");
   const [error, setError] = useState("");
   const [filename, setFilename] = useState("");
   const [updated, setUpdated] = useState("");
@@ -89,6 +99,9 @@ function LocalProgressView() {
           // Never leave a previously valid "completed" snapshot on-screen
           // after later bytes fail provenance/schema validation.
           setSnapshot(null);
+          setRedPlan(null);
+          setRedPlanFilename("");
+          setRedPlanError("");
           setFilename("");
           setUpdated("");
           seen.current = "";
@@ -118,6 +131,9 @@ function LocalProgressView() {
     setStopStatus("");
     seen.current = "";
     setSnapshot(null);
+    setRedPlan(null);
+    setRedPlanFilename("");
+    setRedPlanError("");
     setError("");
     try {
       await applyFile(file, op.current);
@@ -142,6 +158,10 @@ function LocalProgressView() {
       op.current += 1;
       seen.current = "";
       setSnapshot(null);
+      setRedPlan(null);
+      setRedPlanFilename("");
+      setRedPlanError("");
+      setFilename("");
       setError("");
       handle.current = files[0];
       setStopPrompt(null);
@@ -163,9 +183,38 @@ function LocalProgressView() {
     setStopPrompt(null);
     setStopStatus("");
     setSnapshot(null);
+    setRedPlan(null);
+    setRedPlanFilename("");
+    setRedPlanError("");
     setFilename("");
     setUpdated("");
     setError("");
+  };
+
+  const importRedPlan = async (file?: File) => {
+    if (!file) return;
+    const generation = op.current;
+    setRedPlan(null);
+    setRedPlanFilename("");
+    setRedPlanError("");
+    try {
+      if (!snapshot || !filename) {
+        throw new Error("Cần mở tệp JSONL của phiên trước khi nhập quyết định Red.");
+      }
+      if (file.name !== expectedRedPlanFilename(filename)) {
+        throw new Error("Tên biên nhận Red không khớp tệp JSONL đang mở.");
+      }
+      if (file.size > MAX_VMWARE_RED_PLAN_BYTES) {
+        throw new Error("Biên nhận Red vượt giới hạn 4 KiB.");
+      }
+      const parsed = parseVmwareRedPlan(await file.text());
+      if (generation !== op.current) return;
+      setRedPlan(parsed);
+      setRedPlanFilename(file.name);
+    } catch (reason) {
+      if (generation !== op.current) return;
+      setRedPlanError(reason instanceof Error ? reason.message : "Từ chối biên nhận Red.");
+    }
   };
 
   // Explicit, two-step browser permission flow: NEVER writes a STOP marker
@@ -348,6 +397,59 @@ function LocalProgressView() {
           </div>
           {snapshot?.pendingLastLine &&
             <p className="mt-2 text-xs text-amber-300">Có một dòng đang ghi dở; chưa được tính là sự kiện hoàn thành.</p>}
+        </section>
+
+        <section aria-labelledby="vmware-red-policy" className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+          <h2 id="vmware-red-policy" className="text-sm font-semibold text-slate-100">
+            Red Team · Quyết định chọn kịch bản offline
+          </h2>
+          <p className="mt-2 text-xs leading-5 text-slate-400">
+            Chỉ profile v2 mới có biên nhận quyết định UCB1 hoặc seeded-random. Tệp được đọc ngay trong
+            trình duyệt, không tải lên API. Lựa chọn thuật toán là một nhãn kịch bản kết nối lành tính,
+            không phải bằng chứng AI tấn công, Blue phát hiện hay kết quả mạng thực tế.
+          </p>
+          <label className="mt-3 inline-block cursor-pointer rounded-lg border border-slate-600 px-3 py-2 text-xs font-semibold text-slate-100 hover:bg-slate-800">
+            Mở biên nhận Red Team
+            <input aria-label="Mở biên nhận Red Team" type="file" accept=".json"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                void importRedPlan(file);
+                event.currentTarget.value = "";
+              }} />
+          </label>
+          {redPlanError &&
+            <p role="alert" className="mt-3 rounded-md border border-red-700 bg-red-950/40 p-3 text-xs text-red-200">
+              {redPlanError}
+            </p>}
+          {redPlan ? (
+            <div className="mt-3 grid gap-3 rounded-lg border border-slate-700 p-3 text-xs text-slate-300 md:grid-cols-2">
+              <p>Kịch bản đã chọn: <span className="font-semibold text-slate-100">
+                {RED_SCENARIO_LABELS[redPlan.selected_scenario_id]}
+              </span></p>
+              <p>Thuật toán: <span className="font-semibold text-slate-100">
+                {redPlan.strategy === "ucb1" ? "UCB1" : "Seeded random"}
+              </span></p>
+              <p>Số phản hồi nhập tay: <span className="font-mono text-slate-100">{redPlan.feedback_count}</span></p>
+              <p>Seed: <span className="font-mono text-slate-100">{redPlan.seed}</span></p>
+              <p className="break-all md:col-span-2">
+                Biên nhận: {redPlanFilename}
+              </p>
+              <p className="break-all md:col-span-2">
+                SHA-256 profile tự khai: <span className="font-mono text-slate-100">{redPlan.profile_sha256}</span>
+              </p>
+              <p className="md:col-span-2 text-amber-200">
+                Biên nhận chưa được xác minh độc lập bằng tệp profile. Phản hồi nhập tay không phải
+                nhãn ground truth; việc chọn kịch bản không xác nhận nó đã được thực thi.
+              </p>
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-slate-500">
+              {snapshot
+                ? "Chưa có biên nhận Red Team phù hợp với tên tệp JSONL này."
+                : "Chưa mở phiên JSONL. Không có kết quả UCB1 để hiển thị."}
+            </p>
+          )}
         </section>
 
         <section aria-labelledby="vmware-kpis" className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
