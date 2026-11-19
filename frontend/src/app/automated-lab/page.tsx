@@ -62,6 +62,22 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+const VALID_STAGES: readonly Stage[] = ["red", "zeek", "blue", "soc", "system"];
+
+function isSyntheticEvent(value: unknown): value is LiveEvent {
+  if (typeof value !== "object" || value === null) return false;
+  const event = value as Partial<LiveEvent>;
+  return (
+    event.source === "synthetic_replay" &&
+    Number.isSafeInteger(event.seq) && Number(event.seq) >= 0 &&
+    typeof event.time === "string" && !Number.isNaN(Date.parse(event.time)) &&
+    typeof event.stage === "string" && VALID_STAGES.includes(event.stage as Stage) &&
+    typeof event.message === "string" &&
+    typeof event.details === "object" && event.details !== null &&
+    !Array.isArray(event.details)
+  );
+}
+
 function assertSyntheticSession(value: LiveSession): LiveSession {
   if (
     value.mode !== "synthetic_replay" ||
@@ -72,7 +88,7 @@ function assertSyntheticSession(value: LiveSession): LiveSession {
     value.provenance.verified_attack_events !== 0 ||
     value.provenance.verified_ai_alerts !== 0 ||
     !Array.isArray(value.events) ||
-    value.events.some((event) => event.source !== "synthetic_replay")
+    value.events.some((event) => !isSyntheticEvent(event))
   ) {
     throw new Error("Phản hồi session không khớp hợp đồng SYNTHETIC REPLAY. Từ chối hiển thị để tránh nhầm với dữ liệu live.");
   }
@@ -138,7 +154,7 @@ export default function AutomatedLabPage() {
       let event: LiveEvent;
       try {
         event = JSON.parse((message as MessageEvent).data) as LiveEvent;
-        if (event.source !== "synthetic_replay") throw new Error("Sai nguồn dữ liệu");
+        if (!isSyntheticEvent(event)) throw new Error("Sự kiện SSE không hợp lệ");
       } catch {
         provenanceRejected = true;
         source.close();
