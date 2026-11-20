@@ -81,6 +81,36 @@ sudo -n /usr/local/sbin/da005-export-zeek-snapshot
 Expected stdout: exactly one DA005_ZEEK_SNAPSHOT_V1 line containing the
 generated filename and a lowercase 64-hex SHA-256.
 
+## If the helper exits 66 with no snapshot output
+
+The guest helper only exports the **currently active** Zeek
+/opt/zeek/logs/current/conn.log. If Zeek rotated the earlier log and
+no new finished connection has been logged, current/conn.log may not
+exist. The helper correctly refuses to copy an arbitrary archived log;
+this is a readiness condition, not SSH or sudoers failure.
+
+Read-only checks on Ubuntu (no firewall/service/network changes):
+
+~~~bash
+sudo /opt/zeek/bin/zeekctl status
+sudo ls -ld /opt/zeek/logs/current
+sudo ls -la /opt/zeek/logs/current
+sudo test -f /opt/zeek/logs/current/conn.log && echo ZEEK_CURRENT_CONN_PRESENT || echo ZEEK_CURRENT_CONN_MISSING
+stat -c '%U:%G %a %n' /home/da005/da005-private-logs
+~~~
+
+Do NOT chmod Zeek logs or copy a stale archived log simply to make an
+empty/new session pass. If Zeek is running and isolation was manually
+verified, an authorized short benign TCP connection from the Windows
+VMnet2 address to the Ubuntu guest can create a new Zeek conn.log flow.
+After its close/flush, independently re-check the current source and
+only then run the helper again. The helper never generates traffic.
+
+The new Windows collector distinguishes the precise guest stderr marker
+DA005_ZEEK_CURRENT_LOG_NOT_READY with a static, safe explanation and
+does not run SCP after that refusal. In the original helper version
+the same missing source returned 66 silently.
+
 ## Windows: one command to export then transfer after Zeek flushes
 
 Use the command below only after manual Host-only isolation review:
