@@ -27,6 +27,7 @@ export type VMwareProgressSnapshot = {
   terminal: TerminalStatus | null;
   pendingLastLine: boolean;
   hasActivity: boolean;
+  freshGuestSnapshotExported?: boolean;
 };
 const COUNTS = new Set([
   "attempted_probes",
@@ -261,6 +262,7 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
   if (nonempty.length > MAX_LINES) throw new Error("Quá nhiều dòng tiến độ trong một phiên.");
   let terminal: TerminalStatus | null = null;
   let redactedTerminalCounts: Record<string, unknown> | null = null;
+  let freshGuestSnapshotExported = false;
   const events: VMwareStageEvent[] = [];
   // A valid completed CLI trace has exactly these nine stage records.
   // Before completion, only a prefix is accepted (e.g. interrupted SCP).
@@ -292,6 +294,7 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
       terminal = terminalFrom(record);
       if (terminal === "completed") {
         redactedTerminalCounts = object(record.result);
+        freshGuestSnapshotExported = redactedTerminalCounts.fresh_guest_snapshot_export_performed === true;
       }
       continue;
     }
@@ -353,6 +356,7 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
     terminal,
     pendingLastLine: !endsInNewline && text.length > 0,
     hasActivity: nonempty.length > 0,
+    freshGuestSnapshotExported,
   };
 }
 
