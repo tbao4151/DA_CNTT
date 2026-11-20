@@ -165,6 +165,15 @@ def test_guest_helper_root_lock_is_not_in_world_writable_lock_dir():
     assert "flock -n 9" in helper
 
 
+def test_guest_helper_is_checked_out_with_lf_even_on_windows():
+    helper = ROOT / "scripts" / "guest" / "da005-export-zeek-snapshot.sh"
+    raw = helper.read_bytes()
+    assert raw.startswith(b"#!/usr/bin/env bash\n")
+    assert b"\r" not in raw, "Git must checkout guest helpers with LF, not CRLF"
+    attr = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+    assert "scripts/guest/*.sh text eol=lf" in attr
+
+
 def test_guest_helper_has_valid_bash_syntax_when_bash_available():
     bash = shutil.which("bash")
     if bash is None:
