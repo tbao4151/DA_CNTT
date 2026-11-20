@@ -1,0 +1,3 @@
+# Keep Ubuntu Bash helpers runnable when Git is checked out on Windows with core.autocrlf=true.
+# Otherwise scp faithfully transports CRLF bytes and Bash reports unexpected end of file.
+scripts/guest/*.sh text eol=lf
