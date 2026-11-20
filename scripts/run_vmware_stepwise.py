@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import fetch_zeek_hostonly as collector
+import export_and_fetch_zeek_hostonly as fresh_export
 import run_hostonly_benign_traffic as stimulus
 import run_vmware_zeek_research as blue
 from shared.zeek_stimulus_match import screen_candidate_zeek_matches
@@ -35,6 +36,7 @@ def run_sequence(
     output_dir: Path,
     identity_file: Path | None = None,
     remote_path: str = collector.REMOTE_PATHS[0],
+    fresh_guest_snapshot: bool = False,
     execute: bool = False,
     operator_confirmed_hostonly: bool = False,
     attempts: int = 2,
@@ -96,6 +98,21 @@ def run_sequence(
         raise ValueError("Pinned model and expected SHA-256 must be supplied together")
     if type(settle_s) is not int or not 0 <= settle_s <= 5:
         raise ValueError("Capture settle seconds must be in range 0..5")
+    # The fresh guest helper is a deliberately separate, operator-installed
+    # privileged export. No arbitrary remote path or model bridge fallback.
+    # All these checks run before ANY network probe, even in dry-run.
+    if type(fresh_guest_snapshot) is not bool:
+        raise ValueError("Fresh guest snapshot selection must be boolean")
+    if fresh_guest_snapshot and (
+        username != "da005"
+        or identity_file is None
+        or remote_path != collector.REMOTE_PATHS[0]
+        or model_path is not None
+    ):
+        raise ValueError(
+            "Fresh guest snapshot requires da005, a pinned SSH identity, "
+            "default remote-path setting, and no unverified Blue model bridge"
+        )
     # Dry-run still validates bounded execution parameters but opens no socket.
     planned = stimulus.run(
         source_ip=source_ip, target_ip=target_ip, cidr=cidr,
@@ -158,11 +175,27 @@ def run_sequence(
         time.sleep(settle_s)
     check_stop()
     if model_path is None:
-        zeek_receipt = collector.fetch(
+        if fresh_guest_snapshot:
+            # One bounded SSH sudo helper call, then pinned SCP; the guest
+            # creates this snapshot AFTER benign traffic rather than fetching
+            # a stale pre-probe export. No model inference is implied.
+            zeek_receipt = fresh_export.export_and_fetch(
+                host=target_ip, cidr=cidr, username=username,
+                known_hosts=known_hosts, identity_file=identity_file,
+                output_dir=output_dir, execute=True,
+                operator_confirmed_hostonly=True,
+            )
+            if (
+                zeek_receipt.get("guest_export_and_scp_sha256_consistent") is not True
+                or zeek_receipt.get("scp_executed") is not True
+            ):
+                raise RuntimeError("Fresh guest export receipt failed verification")
+        else:
+            zeek_receipt = collector.fetch(
             host=target_ip, cidr=cidr,
             username=username, known_hosts=known_hosts, output_dir=output_dir,
-            identity_file=identity_file, remote_path=remote_path,
-        )
+                identity_file=identity_file, remote_path=remote_path,
+            )
         blue_result = None
         log_name = zeek_receipt["local_log_filename"]
         log_sha = zeek_receipt["log_sha256"]
@@ -221,6 +254,7 @@ def run_sequence(
         "research_report_filename": blue_result["report_file"] if blue_result else None,
         "research_candidate_count": blue_result["research_candidate_count"] if blue_result else None,
         "ssh_fetch_performed": True,
+        "fresh_guest_snapshot_export_performed": fresh_guest_snapshot,
         "blue_research_scoring_performed": blue_result is not None,
         "source_to_log_correlation_verified": False,
         "vmware_isolation_verified": False,
@@ -266,6 +300,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--remote-path", default=collector.REMOTE_PATHS[0],
                         help="Original Zeek path or tightly allowlisted snapshot")
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--fresh-guest-snapshot", action="store_true",
+                        help="Opt in to the fixed, root-owned da005 helper for a post-probe snapshot, then SCP. No Blue model.")
     parser.add_argument("--attempts", type=int, default=2)
     parser.add_argument("--settle-s", type=int, default=2)
     parser.add_argument("--model", type=Path)
@@ -287,6 +323,7 @@ def main(argv: list[str] | None = None) -> int:
             known_hosts=options.known_hosts,
             identity_file=options.identity_file,
             remote_path=options.remote_path,
+            fresh_guest_snapshot=options.fresh_guest_snapshot,
             output_dir=options.output_dir,
             attempts=options.attempts,
             settle_s=options.settle_s,
@@ -326,6 +363,7 @@ def main(argv: list[str] | None = None) -> int:
                 "captured_log_flow_count": report.get("captured_log_flow_count"),
                 "research_candidate_count": report.get("research_candidate_count"),
                 "ssh_fetch_performed": report.get("ssh_fetch_performed", False),
+                "fresh_guest_snapshot_export_performed": report.get("fresh_guest_snapshot_export_performed", False),
                 "blue_research_scoring_performed": report.get("blue_research_scoring_performed", False),
                 "vmware_isolation_verified": False,
                 "attack_executed": False,
