@@ -192,8 +192,8 @@ def run_sequence(
                 raise RuntimeError("Fresh guest export receipt failed verification")
         else:
             zeek_receipt = collector.fetch(
-            host=target_ip, cidr=cidr,
-            username=username, known_hosts=known_hosts, output_dir=output_dir,
+                host=target_ip, cidr=cidr,
+                username=username, known_hosts=known_hosts, output_dir=output_dir,
                 identity_file=identity_file, remote_path=remote_path,
             )
         blue_result = None
