@@ -15,6 +15,10 @@ from pathlib import Path
 
 import fetch_zeek_hostonly as collector
 
+class ZeekCurrentLogNotReady(RuntimeError):
+    """Expected guest readiness condition; no snapshot or SCP was performed."""
+
+
 REMOTE_HELPER = "/usr/local/sbin/da005-export-zeek-snapshot"
 _HELPER_OUTPUT = re.compile(
     r"DA005_ZEEK_SNAPSHOT_V1 "
@@ -77,6 +81,14 @@ def export_and_fetch(
         encoding="utf-8", errors="strict", timeout=timeout,
         check=False,
     )
+    if (
+        proc.returncode == 66
+        and proc.stderr.strip() == "DA005_ZEEK_CURRENT_LOG_NOT_READY"
+    ):
+        raise ZeekCurrentLogNotReady(
+            "Zeek current conn.log is absent; check Zeek status and generate "
+            "an authorized fresh lab connection before retrying."
+        )
     if proc.returncode != 0 or len(proc.stdout) > 512:
         # Never print SSH stderr, credentials, guest paths or raw command.
         raise RuntimeError("Bounded guest Zeek export refused")
@@ -136,6 +148,13 @@ def main(argv: list[str] | None = None) -> int:
             operator_confirmed_hostonly=args.operator_confirmed_hostonly,
             timeout=args.timeout,
         )
+    except ZeekCurrentLogNotReady:
+        print(
+            "Guest Zeek current conn.log is not ready. Check Zeek status "
+            "and wait for a fresh authorized Host-only flow.",
+            file=sys.stderr,
+        )
+        return 1
     except (ValueError, OSError, RuntimeError, UnicodeError,
             subprocess.SubprocessError):
         print(
