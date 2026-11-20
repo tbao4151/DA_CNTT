@@ -17,6 +17,33 @@ Never grant NOPASSWD: ALL or chmod 777 on Zeek logs. The sudo rule must
 permit precisely /usr/local/sbin/da005-export-zeek-snapshot. Installing
 privileged helpers increases risk, so inspect the complete source first.
 
+## Windows CRLF regression and mandatory syntax gate
+
+On a Windows 11 checkout with Git core.autocrlf=true the shell helper may
+contain CRLF. SCP preserves these bytes; Ubuntu Bash then reports
+"syntax error: unexpected end of file" around the final source line. The
+repository now pins LF with .gitattributes, but files transferred before this
+fix must be normalized and checked independently. A matching hash proves
+transfer integrity, **not** Bash parseability.
+
+If the staged file on Ubuntu previously failed bash -n, repair the
+**unprivileged staging copy only**, not the root-owned executable:
+
+~~~bash
+sed -i 's/\r$//' /home/da005/da005-export-zeek-snapshot.stage
+bash -n /home/da005/da005-export-zeek-snapshot.stage
+sha256sum /home/da005/da005-export-zeek-snapshot.stage
+~~~
+
+For the source at PR #429, the expected Linux LF SHA-256 is:
+5a19c99a744e4592d6ffc7d9bc1985fe49f66b3f7f36b8e5370d391598f921c1
+
+Do NOT execute an installed script when bash -n fails. Only after both
+syntax and digest match should the operator replace the root-owned
+/usr/local/sbin script with sudo install, revalidate bash -n at the
+installed path, and ensure visudo -c succeeds. The sudoers entry grants
+a bounded command but cannot validate Bash contents by itself.
+
 ## First: install helper, once
 
 Windows PowerShell at E:\DA_CNTT (each line is a separate command):
