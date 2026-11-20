@@ -25,7 +25,12 @@ exec 9>"$LOCK"
 flock -n 9 || { echo "DA005_EXPORT_LOCKED" >&2; exit 75; }
 [[ -d "$DEST_DIR" && ! -L "$DEST_DIR" ]] || exit 66
 [[ "$(stat -c %U "$DEST_DIR")" == da005 ]] || exit 66
-[[ -f "$SOURCE" && ! -L "$SOURCE" ]] || exit 66
+if [[ ! -f "$SOURCE" || -L "$SOURCE" ]]; then
+    # Normal after rotation with no completed flows; never use archived logs
+    # or invent a successful/fresh capture to bypass this readiness gate.
+    echo "DA005_ZEEK_CURRENT_LOG_NOT_READY" >&2
+    exit 66
+fi
 
 # Fail rather than exhaust the isolated VM disk during repeated demo runs.
 count=$(find "$DEST_DIR" -maxdepth 1 -type f -name 'conn-*.log' | wc -l)

@@ -127,6 +127,43 @@ def test_invalid_helper_receipt_prevents_scp(monkeypatch, tmp_path, stdout):
         )
 
 
+def test_missing_current_zeek_log_has_safe_diagnostic_and_never_fetches(
+    monkeypatch, tmp_path, capsys,
+):
+    monkeypatch.setattr(
+        module.subprocess, "run",
+        lambda argv, **_kw: subprocess.CompletedProcess(
+            argv, 66, "", "DA005_ZEEK_CURRENT_LOG_NOT_READY\n"
+        ),
+    )
+    monkeypatch.setattr(
+        module.collector, "fetch",
+        lambda **_kw: pytest.fail("No SCP without current Zeek log"),
+    )
+    with pytest.raises(module.ZeekCurrentLogNotReady, match="absent"):
+        module.export_and_fetch(
+            **files(tmp_path), execute=True, operator_confirmed_hostonly=True,
+        )
+    paths = files(tmp_path)
+    argv = [
+        "--host", paths["host"], "--cidr", paths["cidr"],
+        "--user", paths["username"],
+        "--known-hosts", str(paths["known_hosts"]),
+        "--identity-file", str(paths["identity_file"]),
+        "--output-dir", str(paths["output_dir"]),
+        "--execute", "--operator-confirmed-hostonly",
+    ]
+    assert module.main(argv) == 1
+    assert "current conn.log is not ready" in capsys.readouterr().err
+
+
+def test_helper_reports_no_current_log_without_fallback_to_rotated_logs():
+    helper = (ROOT / "scripts" / "guest" / "da005-export-zeek-snapshot.sh").read_text(encoding="utf-8")
+    assert 'echo "DA005_ZEEK_CURRENT_LOG_NOT_READY" >&2' in helper
+    assert 'exit 66' in helper
+    assert "SOURCE=/opt/zeek/logs/current/conn.log" in helper
+
+
 def test_guest_export_failure_does_not_fetch(monkeypatch, tmp_path):
     monkeypatch.setattr(
         module.subprocess, "run",
