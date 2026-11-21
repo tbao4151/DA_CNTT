@@ -48,6 +48,52 @@ def test_real_python_dryrun_mock_complete_and_refusal_are_audited(tmp_path):
         assert str(tmp_path) not in json.dumps(report)
 
 
+def test_fresh_guest_export_terminal_is_accepted_only_with_verified_scp(tmp_path):
+    source = generate(tmp_path)["mock_completed"]
+    # The archived fixture predates the optional boolean flag.
+    assert verifier.audit(source, pin(source))["terminal_status"] == "completed"
+
+    changed = copied_mutation(
+        tmp_path, source,
+        lambda rows: rows[-1]["result"].update({
+            "fresh_guest_snapshot_export_performed": True
+        }),
+    )
+    assert verifier.audit(changed, pin(changed))["terminal_status"] == "completed"
+
+    changed.unlink()
+    no_scp = copied_mutation(
+        tmp_path, source,
+        lambda rows: rows[-1]["result"].update({
+            "fresh_guest_snapshot_export_performed": True,
+            "ssh_fetch_performed": False,
+        }),
+    )
+    with pytest.raises(ValueError, match="contradicts"):
+        verifier.audit(no_scp, pin(no_scp))
+
+    no_scp.unlink()
+    bad_type = copied_mutation(
+        tmp_path, source,
+        lambda rows: rows[-1]["result"].update({
+            "fresh_guest_snapshot_export_performed": "true",
+        }),
+    )
+    with pytest.raises(ValueError, match="contradicts"):
+        verifier.audit(bad_type, pin(bad_type))
+
+    bad_type.unlink()
+    model_claim = copied_mutation(
+        tmp_path, source,
+        lambda rows: rows[-1]["result"].update({
+            "fresh_guest_snapshot_export_performed": True,
+            "blue_research_scoring_performed": True,
+        }),
+    )
+    with pytest.raises(ValueError, match="contradicts"):
+        verifier.audit(model_claim, pin(model_claim))
+
+
 def test_cli_prints_only_redacted_receipt(tmp_path, capsys):
     path = generate(tmp_path)["dry_run"]
     assert verifier.main(["--jsonl-file", str(path), "--expected-sha256", pin(path)]) == 0

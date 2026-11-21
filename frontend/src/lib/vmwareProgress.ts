@@ -27,6 +27,7 @@ export type VMwareProgressSnapshot = {
   terminal: TerminalStatus | null;
   pendingLastLine: boolean;
   hasActivity: boolean;
+  freshGuestSnapshotExported?: boolean;
 };
 const COUNTS = new Set([
   "attempted_probes",
@@ -199,6 +200,7 @@ function terminalFrom(value: unknown): TerminalStatus {
   keysMatch(result, [
     "mode", "network_attempts", "captured_log_flow_count",
     "research_candidate_count", "ssh_fetch_performed",
+    "fresh_guest_snapshot_export_performed",
     "blue_research_scoring_performed", "vmware_isolation_verified",
     "attack_executed", "operational_ai_detection_verified",
     "soc_alerts_created",
@@ -215,6 +217,11 @@ function terminalFrom(value: unknown): TerminalStatus {
     result.operational_ai_detection_verified !== false ||
     result.soc_alerts_created !== false ||
     typeof result.ssh_fetch_performed !== "boolean" ||
+    !(result.fresh_guest_snapshot_export_performed === undefined ||
+      typeof result.fresh_guest_snapshot_export_performed === "boolean") ||
+    (result.fresh_guest_snapshot_export_performed === true &&
+      (result.ssh_fetch_performed !== true ||
+       result.blue_research_scoring_performed !== false)) ||
     typeof result.blue_research_scoring_performed !== "boolean"
   ) {
     throw new Error("Dòng tổng kết JSONL chứa dữ liệu hoặc tuyên bố không hợp lệ.");
@@ -225,6 +232,7 @@ function terminalFrom(value: unknown): TerminalStatus {
         result.captured_log_flow_count !== null ||
         result.research_candidate_count !== null ||
         result.ssh_fetch_performed !== false ||
+        result.fresh_guest_snapshot_export_performed === true ||
         result.blue_research_scoring_performed !== false) {
       throw new Error("Dry-run không được tuyên bố kết nối VMware, AI hoặc SOC.");
     }
@@ -254,6 +262,7 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
   if (nonempty.length > MAX_LINES) throw new Error("Quá nhiều dòng tiến độ trong một phiên.");
   let terminal: TerminalStatus | null = null;
   let redactedTerminalCounts: Record<string, unknown> | null = null;
+  let freshGuestSnapshotExported = false;
   const events: VMwareStageEvent[] = [];
   // A valid completed CLI trace has exactly these nine stage records.
   // Before completion, only a prefix is accepted (e.g. interrupted SCP).
@@ -285,6 +294,7 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
       terminal = terminalFrom(record);
       if (terminal === "completed") {
         redactedTerminalCounts = object(record.result);
+        freshGuestSnapshotExported = redactedTerminalCounts.fresh_guest_snapshot_export_performed === true;
       }
       continue;
     }
@@ -346,6 +356,7 @@ export function parseVMwareProgressJsonl(text: string): VMwareProgressSnapshot {
     terminal,
     pendingLastLine: !endsInNewline && text.length > 0,
     hasActivity: nonempty.length > 0,
+    freshGuestSnapshotExported,
   };
 }
 
