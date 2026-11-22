@@ -122,6 +122,142 @@ def test_manual_capture_only_sequencing(monkeypatch, tmp_path):
     assert result["source_to_log_correlation_verified"] is False
 
 
+def test_fresh_guest_snapshot_runs_after_benign_probe_without_blue_model(
+    monkeypatch, tmp_path,
+):
+    opts = {**args(tmp_path), "username": "da005"}
+    identity = tmp_path / "id_ed25519_da005"
+    identity.write_text("MOCK KEY ONLY", encoding="utf-8")
+    opts["identity_file"] = identity
+    actions = []
+
+    def mock_probe(**kw):
+        actions.append(("probe", kw["execute"]))
+        return fake_receipt() if kw["execute"] else {"network_attempts": 0}
+
+    def never_legacy_fetch(**_kw):
+        pytest.fail("Fresh snapshot must not use legacy SCP of a pre-probe log")
+
+    def mock_fresh(**kw):
+        actions.append(("fresh_export", kw["execute"]))
+        assert kw["identity_file"] == identity
+        assert kw["host"] == "192.168.77.20"
+        assert kw["username"] == "da005"
+        assert kw["operator_confirmed_hostonly"] is True
+        raw = fake_raw()
+        (tmp_path / "fresh-zeek.log").write_bytes(raw)
+        return {
+            "local_log_filename": "fresh-zeek.log",
+            "log_sha256": hashlib.sha256(raw).hexdigest(),
+            "flow_count": 2,
+            "guest_export_and_scp_sha256_consistent": True,
+            "scp_executed": True,
+        }
+
+    monkeypatch.setattr(mod.stimulus, "run", mock_probe)
+    monkeypatch.setattr(mod.collector, "fetch", never_legacy_fetch)
+    monkeypatch.setattr(mod.fresh_export, "export_and_fetch", mock_fresh)
+    monkeypatch.setattr(mod.time, "sleep",
+                        lambda seconds: actions.append(("settle", seconds)))
+    result = mod.run_sequence(
+        **opts, fresh_guest_snapshot=True,
+        execute=True, operator_confirmed_hostonly=True, settle_s=2,
+    )
+    assert actions == [
+        ("probe", False), ("probe", True),
+        ("settle", 2), ("fresh_export", True),
+    ]
+    assert result["fresh_guest_snapshot_export_performed"] is True
+    assert result["ssh_fetch_performed"] is True
+    assert result["candidate_matching_attempts"] == 2
+    assert result["unmatched_attempts"] == 0
+    assert result["blue_research_scoring_performed"] is False
+    assert result["full_one_click_dual_ai"] is False
+
+
+@pytest.mark.parametrize("change", [
+    {"username": "ubuntu"},
+    {"identity_file": None},
+    {"remote_path": "/home/da005/da005-private-logs/conn-20261120T080742.log"},
+    {"model_path": Path("not-a-model.json"), "expected_model_sha256": "a" * 64},
+])
+def test_invalid_fresh_guest_configuration_refuses_before_probes(
+    monkeypatch, tmp_path, change,
+):
+    opts = {**args(tmp_path), "username": "da005"}
+    key = tmp_path / "id_ed25519_da005"
+    key.write_text("MOCK KEY ONLY", encoding="utf-8")
+    opts["identity_file"] = key
+    opts.update(change)
+    monkeypatch.setattr(
+        mod.stimulus, "run",
+        lambda **_kw: pytest.fail("No probe even during config failure"),
+    )
+    monkeypatch.setattr(
+        mod.fresh_export, "export_and_fetch",
+        lambda **_kw: pytest.fail("No SSH on invalid config"),
+    )
+    with pytest.raises(ValueError, match="Fresh guest snapshot"):
+        mod.run_sequence(
+            **opts, fresh_guest_snapshot=True,
+            execute=True, operator_confirmed_hostonly=True,
+        )
+
+
+def test_missing_guest_export_failure_blocks_candidate_report(
+    monkeypatch, tmp_path,
+):
+    opts = {**args(tmp_path), "username": "da005"}
+    identity = tmp_path / "id_ed25519_da005"
+    identity.write_text("MOCK KEY ONLY", encoding="utf-8")
+    opts["identity_file"] = identity
+    monkeypatch.setattr(
+        mod.stimulus, "run",
+        lambda **kw: fake_receipt() if kw["execute"] else {"network_attempts": 0},
+    )
+    monkeypatch.setattr(
+        mod.fresh_export, "export_and_fetch",
+        lambda **_kw: (_ for _ in ()).throw(
+            mod.fresh_export.ZeekCurrentLogNotReady("No current conn.log")
+        ),
+    )
+    with pytest.raises(mod.fresh_export.ZeekCurrentLogNotReady):
+        mod.run_sequence(
+            **opts, fresh_guest_snapshot=True, execute=True,
+            operator_confirmed_hostonly=True, settle_s=0,
+        )
+    assert not list(tmp_path.glob("*.candidate-links.json"))
+
+
+def test_invalid_fresh_receipt_blocks_candidate_report(
+    monkeypatch, tmp_path,
+):
+    opts = {**args(tmp_path), "username": "da005"}
+    identity = tmp_path / "id_ed25519_da005"
+    identity.write_text("MOCK KEY ONLY", encoding="utf-8")
+    opts["identity_file"] = identity
+    monkeypatch.setattr(
+        mod.stimulus, "run",
+        lambda **kw: fake_receipt() if kw["execute"] else {"network_attempts": 0},
+    )
+    monkeypatch.setattr(
+        mod.fresh_export, "export_and_fetch",
+        lambda **_kw: {
+            "local_log_filename": "fresh-zeek.log",
+            "log_sha256": "a" * 64,
+            "flow_count": 2,
+            "guest_export_and_scp_sha256_consistent": False,
+            "scp_executed": True,
+        },
+    )
+    with pytest.raises(RuntimeError, match="receipt failed"):
+        mod.run_sequence(
+            **opts, fresh_guest_snapshot=True, execute=True,
+            operator_confirmed_hostonly=True, settle_s=0,
+        )
+    assert not list(tmp_path.glob("*.candidate-links.json"))
+
+
 def test_optional_blue_research_is_checked_before_stimulus(monkeypatch, tmp_path):
     opts = args(tmp_path)
     model = tmp_path / "zeek.json"

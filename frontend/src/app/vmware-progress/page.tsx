@@ -380,6 +380,12 @@ function LocalProgressView() {
             Trạng thái hoàn thành chỉ xác nhận chương trình
             đã hoàn thành bước xử lý, chưa chứng minh cô lập mạng Host-only, tính xác thực PCAP, AI phát hiện tấn công hoặc SOC live.
           </p>
+          {snapshot?.freshGuestSnapshotExported && (
+            <p className="mt-2 text-xs text-sky-200" role="status">
+              Zeek: chương trình đã thực hiện xuất snapshot qua helper Ubuntu và SCP. Đây chỉ là trạng thái
+              thực thi phần mềm, không xác nhận độc lập nguồn gốc gói tin hoặc khả năng phát hiện tấn công.
+            </p>
+          )}
           <p className="mt-2 text-xs text-slate-400">
             Luồng SYNTHETIC REPLAY ở trang Automated Lab được giữ tách biệt hoàn toàn với màn hình này.
           </p>

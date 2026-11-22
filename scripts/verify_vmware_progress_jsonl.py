@@ -137,8 +137,19 @@ def _terminal(obj: dict, events: list[dict]) -> str:
     if set(obj) != {"kind", "status", "result"}:
         raise ValueError("Unexpected terminal property")
     report = obj.get("result")
-    if not isinstance(report, dict) or set(report) != TERMINAL_FIELDS:
+    if not isinstance(report, dict) or set(report) not in (
+        TERMINAL_FIELDS, TERMINAL_FIELDS | {"fresh_guest_snapshot_export_performed"},
+    ):
         raise ValueError("Terminal must be a strictly redacted summary")
+    # New code records an optional verified-software-path flag, while old
+    # SHA-pinned private audit files remain backward compatible. Any claimed
+    # guest export requires real SCP and cannot be paired with a Blue bridge.
+    fresh = report.get("fresh_guest_snapshot_export_performed", False)
+    if type(fresh) is not bool or (fresh and (
+        report.get("ssh_fetch_performed") is not True
+        or report.get("blue_research_scoring_performed") is not False
+    )):
+        raise ValueError("Fresh guest export contradicts SCP or Blue research mode")
     if any(report.get(k) is not False for k in (
         "vmware_isolation_verified", "attack_executed",
         "operational_ai_detection_verified", "soc_alerts_created",
@@ -167,6 +178,7 @@ def _terminal(obj: dict, events: list[dict]) -> str:
             report["captured_log_flow_count"] is not None,
             report["research_candidate_count"] is not None,
             report["ssh_fetch_performed"],
+            fresh,
             report["blue_research_scoring_performed"],
         )):
             raise ValueError("Dry-run claims network or inference")
