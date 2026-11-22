@@ -25,6 +25,10 @@ import run_vmware_zeek_research as blue
 from shared.zeek_stimulus_match import screen_candidate_zeek_matches
 
 
+class IncompleteFreshZeekCorrelation(RuntimeError):
+    """Guest export succeeded, but the snapshot lacks UID candidates for probes."""
+
+
 def run_sequence(
     *,
     source_ip: str,
@@ -254,6 +258,14 @@ def run_sequence(
     emit("audit", "completed",
          candidate_matches=correlation["candidate_match_count"],
          unmatched_attempts=correlation["unmatched_probe_count"])
+    # A valid SSH/SCP receipt proves transport, not that Zeek recorded the
+    # traffic from this session. Never label an incomplete fresh-guest run
+    # as integrated success. Preserve original log and private candidate
+    # report for later diagnosis (even when there are zero UID candidates).
+    if fresh_guest_snapshot and correlation["unmatched_probe_count"] != 0:
+        raise IncompleteFreshZeekCorrelation(
+            "Fresh guest Zeek snapshot did not match every benign probe"
+        )
     check_stop()
     emit("soc", "skipped")
     return {
@@ -357,7 +369,7 @@ def main(argv: list[str] | None = None) -> int:
                 if options.progress_jsonl else None
             ),
         )
-    except (ValueError, OSError, RuntimeError, TypeError, KeyboardInterrupt):
+    except (ValueError, OSError, RuntimeError, TypeError, KeyboardInterrupt) as exc:
         if options.progress_jsonl:
             print(json.dumps({
                 "kind": "da005_vmware_stepwise_terminal_v1",
@@ -366,11 +378,20 @@ def main(argv: list[str] | None = None) -> int:
                 "operational_ai_detection_verified": False,
                 "soc_alerts_created": False,
             }, ensure_ascii=False), flush=True)
-        print(
-            "VMware stepwise experiment refused. Check local authorized Host-only "
-            "scope, evidence, Zeek path, SSH host key and Zeek model.",
-            file=sys.stderr,
-        )
+        if isinstance(exc, IncompleteFreshZeekCorrelation):
+            print(
+                "DA005_ZEEK_UID_MATCH_INCOMPLETE: Guest export/SCP may have "
+                "succeeded, but one or more Red probes lacked Zeek UID "
+                "candidates. Inspect the private .candidate-links.json and "
+                "Zeek capture readiness; no integrated success was claimed.",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                "VMware stepwise experiment refused. Check local authorized Host-only "
+                "scope, evidence, Zeek path, SSH host key and Zeek model.",
+                file=sys.stderr,
+            )
         return 1
     if options.progress_jsonl:
         print(json.dumps({

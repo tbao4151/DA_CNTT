@@ -88,6 +88,32 @@ Zeek flush guarantee. Existing snapshots and receipt SHA-256 must be
 preserved; never overwrite a failed JSONL session or claim that an unmatched
 UID was detected.
 
+## Fresh export acceptance requires correlation, not merely SCP
+
+On 2026-11-22 a real operator run produced a complete 9-stage JSONL
+and verified 3 Zeek flows, but both new TCP probes from 06:01:16-17Z
+had **zero** UID candidates in the exported snapshot. The snapshot
+contained only much earlier 00:10 and 00:22Z Zeek flow timestamps.
+A 165-second wait did not fix this observation. This does **not**
+demonstrate an SSH failure or imply that Zeek is functioning as a
+current network capture source.
+
+Fresh-helper sessions now fail closed if `unmatched_probe_count != 0`
+after successful snapshot and UID screening. The private original
+log, SCP receipt and `.candidate-links.json` are still preserved;
+the JSONL includes `audit.completed` with the candidate/unmatched
+counters followed by a terminal `refused` (not `completed`).
+A static, redacted `DA005_ZEEK_UID_MATCH_INCOMPLETE` stderr code
+distinguishes this from generic preflight failure without leaking
+local paths or packet content. This screen is still only candidate
+matching by tuple and timestamp, never causality proof.
+
+If this occurs, do **not** keep increasing `--zeek-wait-s`. Check
+the guest's current `conn.log` record timestamps, Zeek's live
+ens33 interface and packet counters, and any capture filters/rotated
+logs before running another full stepwise session. Do not mark any
+failed session as a completed lab or operational AI detection.
+
 ## Safety / model boundary
 
 The fresh-helper mode presently **refuses** `--model` or a custom

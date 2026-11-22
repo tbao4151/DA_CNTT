@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -294,6 +295,84 @@ def test_nonfresh_mode_cannot_request_guest_grace_wait(monkeypatch, tmp_path):
     with pytest.raises(ValueError, match="only available for fresh"):
         mod.run_sequence(**args(tmp_path), zeek_wait_s=1,
                          execute=True, operator_confirmed_hostonly=True)
+
+
+@pytest.mark.parametrize("unmatched", [1, 2])
+def test_fresh_guest_refuses_incomplete_uid_matches_but_keeps_evidence(
+    monkeypatch, tmp_path, unmatched,
+):
+    opts = {**args(tmp_path), "username": "da005"}
+    key = tmp_path / "id_ed25519_da005"
+    key.write_text("MOCK KEY", encoding="utf-8")
+    opts["identity_file"] = key
+    events = []
+
+    monkeypatch.setattr(
+        mod.stimulus, "run",
+        lambda **kw: fake_receipt() if kw["execute"] else {"network_attempts": 0},
+    )
+
+    def mock_export(**_kw):
+        # Produce real valid Zeek ASCII bytes with one/two events unrelated
+        # to the probe source; no network or guest script is invoked.
+        raw = fake_raw().replace(
+            b"192.168.77.1\t54321", b"192.168.77.9\t54321",
+            unmatched,
+        )
+        (tmp_path / "stale-zeek.log").write_bytes(raw)
+        return {
+            "local_log_filename": "stale-zeek.log",
+            "log_sha256": hashlib.sha256(raw).hexdigest(),
+            "flow_count": 2,
+            "guest_export_and_scp_sha256_consistent": True,
+            "scp_executed": True,
+        }
+
+    monkeypatch.setattr(mod.fresh_export, "export_and_fetch", mock_export)
+    with pytest.raises(
+        mod.IncompleteFreshZeekCorrelation, match="did not match every",
+    ):
+        mod.run_sequence(
+            **opts, fresh_guest_snapshot=True, execute=True,
+            operator_confirmed_hostonly=True, settle_s=0,
+            progress_sink=events.append,
+        )
+    correlation_path = tmp_path / "stale-zeek.candidate-links.json"
+    assert correlation_path.is_file()
+    correlation = json.loads(correlation_path.read_text(encoding="utf-8"))
+    assert correlation["unmatched_probe_count"] == unmatched
+    assert correlation["candidate_match_count"] == 2 - unmatched
+    assert events[-1]["stage"] == "audit"
+    assert events[-1]["status"] == "completed"
+    assert events[-1]["counts"]["unmatched_attempts"] == unmatched
+    assert not any(event["stage"] == "soc" for event in events)
+
+
+def test_incomplete_fresh_guest_cli_emits_refused_not_completed(monkeypatch, capsys):
+    monkeypatch.setattr(
+        mod, "run_sequence",
+        lambda **_kw: (_ for _ in ()).throw(
+            mod.IncompleteFreshZeekCorrelation("incomplete")
+        ),
+    )
+    cli = [
+        "--source-ip", "192.168.77.1",
+        "--target-ip", "192.168.77.20",
+        "--cidr", "192.168.77.0/24",
+        "--scenario", "connection_shift",
+        "--user", "da005",
+        "--known-hosts", "unused-for-mock",
+        "--output-dir", "unused-for-mock",
+        "--fresh-guest-snapshot", "--progress-jsonl",
+        "--execute", "--operator-confirmed-hostonly",
+    ]
+    assert mod.main(cli) == 1
+    output = capsys.readouterr()
+    terminal = json.loads(output.out)
+    assert terminal["kind"] == "da005_vmware_stepwise_terminal_v1"
+    assert terminal["status"] == "refused"
+    assert terminal["soc_alerts_created"] is False
+    assert "DA005_ZEEK_UID_MATCH_INCOMPLETE" in output.err
 
 
 def test_missing_guest_export_failure_blocks_candidate_report(
