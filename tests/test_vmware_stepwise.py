@@ -316,7 +316,7 @@ def test_fresh_guest_refuses_incomplete_uid_matches_but_keeps_evidence(
         # Produce real valid Zeek ASCII bytes with one/two events unrelated
         # to the probe source; no network or guest script is invoked.
         raw = fake_raw().replace(
-            b"192.168.77.1\\t54321", b"192.168.77.9\\t54321",
+            b"192.168.77.1\t54321", b"192.168.77.9\t54321",
             unmatched,
         )
         (tmp_path / "stale-zeek.log").write_bytes(raw)
