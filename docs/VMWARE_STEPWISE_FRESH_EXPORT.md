@@ -64,6 +64,30 @@ and a private `candidate_links_file`; the candidate match count may be
 lower than the number of attempted probes if packet visibility, clocks or
 capture flush differ. Do not silently replace unmatched flows.
 
+## Zeek conn.log may appear minutes after a short TCP probe
+
+Zeek can defer a conn.log record until connection termination or an inactivity
+timer. The original 2-second settle is not a proof that the guest has flushed
+the two probe records. If a verified Host-only test produces two successful
+Red socket receipts but export sees no current conn.log, use the explicit,
+bounded extra grace interval:
+
+```powershell
+# Add to an authorized, executable --fresh-guest-snapshot command:
+--zeek-wait-s 165
+```
+
+This adds a fixed 0..180-second **optional** delay after the normal 0..5s
+settle and before requesting **exactly one** privileged snapshot. The delay
+checks the private STOP marker every second. Dry-run still performs no socket
+activity or waiting, and non-fresh modes reject this argument. It is a
+reliability workaround, NOT low-latency detection: real-time SOC requires a
+separate live Zeek event ingestion and Blue inference path. The 165-second
+value is evidence-driven from a single observed lab run, not a portable
+Zeek flush guarantee. Existing snapshots and receipt SHA-256 must be
+preserved; never overwrite a failed JSONL session or claim that an unmatched
+UID was detected.
+
 ## Safety / model boundary
 
 The fresh-helper mode presently **refuses** `--model` or a custom

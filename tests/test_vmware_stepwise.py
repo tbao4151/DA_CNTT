@@ -204,6 +204,98 @@ def test_invalid_fresh_guest_configuration_refuses_before_probes(
         )
 
 
+def test_bounded_guest_log_grace_wait_is_cooperative_and_uses_one_export(
+    monkeypatch, tmp_path,
+):
+    opts = {**args(tmp_path), "username": "da005"}
+    key = tmp_path / "id_ed25519_da005"
+    key.write_text("MOCK KEY", encoding="utf-8")
+    opts["identity_file"] = key
+    calls = []
+
+    def fake_probe(**kw):
+        calls.append(("probe", kw["execute"]))
+        return fake_receipt() if kw["execute"] else {"network_attempts": 0}
+
+    def fake_export(**kw):
+        calls.append(("export", kw["execute"]))
+        raw = fake_raw()
+        (tmp_path / "delayed.log").write_bytes(raw)
+        return {
+            "local_log_filename": "delayed.log",
+            "log_sha256": hashlib.sha256(raw).hexdigest(),
+            "flow_count": 2,
+            "guest_export_and_scp_sha256_consistent": True,
+            "scp_executed": True,
+        }
+
+    monkeypatch.setattr(mod.stimulus, "run", fake_probe)
+    monkeypatch.setattr(mod.fresh_export, "export_and_fetch", fake_export)
+    monkeypatch.setattr(mod.time, "sleep",
+                        lambda duration: calls.append(("sleep", duration)))
+    result = mod.run_sequence(
+        **opts, fresh_guest_snapshot=True, zeek_wait_s=3,
+        settle_s=2, execute=True, operator_confirmed_hostonly=True,
+    )
+    assert calls == [
+        ("probe", False), ("probe", True), ("sleep", 2),
+        ("sleep", 1), ("sleep", 1), ("sleep", 1), ("export", True),
+    ]
+    assert result["candidate_matching_attempts"] == 2
+    assert result["fresh_guest_snapshot_export_performed"] is True
+
+
+def test_stop_during_guest_grace_wait_prevents_snapshot_export(
+    monkeypatch, tmp_path,
+):
+    opts = {**args(tmp_path), "username": "da005"}
+    key = tmp_path / "id_ed25519_da005"
+    key.write_text("MOCK KEY", encoding="utf-8")
+    opts["identity_file"] = key
+    stopped = {"value": False}
+
+    monkeypatch.setattr(
+        mod.stimulus, "run",
+        lambda **kw: fake_receipt() if kw["execute"] else {"network_attempts": 0},
+    )
+    monkeypatch.setattr(
+        mod.fresh_export, "export_and_fetch",
+        lambda **_kw: pytest.fail("STOP must prevent the guest export"),
+    )
+    def fake_sleep(seconds):
+        if seconds == 1:
+            stopped["value"] = True
+    monkeypatch.setattr(mod.time, "sleep", fake_sleep)
+    with pytest.raises(mod.stimulus.OperatorStopRequested):
+        mod.run_sequence(
+            **opts, fresh_guest_snapshot=True, zeek_wait_s=5,
+            execute=True, operator_confirmed_hostonly=True,
+            stop_requested=lambda: stopped["value"],
+        )
+    assert not list(tmp_path.glob("*.candidate-links.json"))
+
+
+@pytest.mark.parametrize("wait", [-1, 181, True, 1.5])
+def test_invalid_zeek_wait_fails_before_traffic(monkeypatch, tmp_path, wait):
+    monkeypatch.setattr(
+        mod.stimulus, "run",
+        lambda **_kw: pytest.fail("Invalid grace wait must not send traffic"),
+    )
+    with pytest.raises(ValueError, match="Extra Zeek log wait"):
+        mod.run_sequence(**args(tmp_path), zeek_wait_s=wait,
+                         execute=True, operator_confirmed_hostonly=True)
+
+
+def test_nonfresh_mode_cannot_request_guest_grace_wait(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        mod.stimulus, "run",
+        lambda **_kw: pytest.fail("Invalid grace wait must not send traffic"),
+    )
+    with pytest.raises(ValueError, match="only available for fresh"):
+        mod.run_sequence(**args(tmp_path), zeek_wait_s=1,
+                         execute=True, operator_confirmed_hostonly=True)
+
+
 def test_missing_guest_export_failure_blocks_candidate_report(
     monkeypatch, tmp_path,
 ):
