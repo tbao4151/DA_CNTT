@@ -41,6 +41,7 @@ def run_sequence(
     operator_confirmed_hostonly: bool = False,
     attempts: int = 2,
     settle_s: int = 2,
+    zeek_wait_s: int = 0,
     model_path: Path | None = None,
     expected_model_sha256: str | None = None,
     progress_sink: Callable[[dict[str, object]], None] | None = None,
@@ -98,6 +99,13 @@ def run_sequence(
         raise ValueError("Pinned model and expected SHA-256 must be supplied together")
     if type(settle_s) is not int or not 0 <= settle_s <= 5:
         raise ValueError("Capture settle seconds must be in range 0..5")
+    # A Zeek conn.log record can appear long after a TCP probe has closed.
+    # Optional, bounded extra grace time avoids exporting an empty/stale log.
+    # No speculative guest log reads, extra traffic or repeated snapshots.
+    if type(zeek_wait_s) is not int or not 0 <= zeek_wait_s <= 180:
+        raise ValueError("Extra Zeek log wait seconds must be in range 0..180")
+    if zeek_wait_s and not fresh_guest_snapshot:
+        raise ValueError("Extra Zeek log wait is only available for fresh guest snapshots")
     # The fresh guest helper is a deliberately separate, operator-installed
     # privileged export. No arbitrary remote path or model bridge fallback.
     # All these checks run before ANY network probe, even in dry-run.
@@ -173,6 +181,14 @@ def run_sequence(
         # This small flush wait is non-interruptible by a stop marker; the
         # requested stop is enforced immediately afterward, before SCP.
         time.sleep(settle_s)
+    check_stop()
+    if fresh_guest_snapshot:
+        # Zeek may emit conn.log on timeout rather than socket close. Keep
+        # this additional wait opt-in, limited and cooperative with STOP.
+        # Only ONE privileged snapshot export is requested afterward.
+        for _ in range(zeek_wait_s):
+            check_stop()
+            time.sleep(1)
     check_stop()
     if model_path is None:
         if fresh_guest_snapshot:
@@ -304,6 +320,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Opt in to the fixed, root-owned da005 helper for a post-probe snapshot, then SCP. No Blue model.")
     parser.add_argument("--attempts", type=int, default=2)
     parser.add_argument("--settle-s", type=int, default=2)
+    parser.add_argument("--zeek-wait-s", type=int, default=0,
+                        help="Additional 0..180 second bounded cooperative wait for delayed conn.log before ONE fresh export")
     parser.add_argument("--model", type=Path)
     parser.add_argument("--expected-model-sha256")
     parser.add_argument("--execute", action="store_true")
@@ -327,6 +345,7 @@ def main(argv: list[str] | None = None) -> int:
             output_dir=options.output_dir,
             attempts=options.attempts,
             settle_s=options.settle_s,
+            zeek_wait_s=options.zeek_wait_s,
             model_path=options.model,
             expected_model_sha256=options.expected_model_sha256,
             execute=options.execute,
